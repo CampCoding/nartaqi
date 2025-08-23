@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import {
   Avatar,
   Badge,
@@ -10,30 +11,68 @@ import {
   Divider,
   Row,
   Col,
+  message,
 } from "antd";
-import React, { useEffect, useState } from "react";
 import DataTable from "../layout/DataTable";
 import { Mail } from "lucide-react";
 
-import Button from './../atoms/Button';
+import Button from "./../atoms/Button";
 import {
-  SearchOutlined,
-  PlusOutlined,
   EyeOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  UserOutlined,
-  MailOutlined,
-  PhoneOutlined,
-  BookOutlined,
-  CalendarOutlined,
-  TrophyOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
+  CalendarOutlined,
+  TrophyOutlined,
 } from "@ant-design/icons";
 
 const { Text, Title } = Typography;
+
+const statusLabelAr = (status) => {
+  switch (status) {
+    case "pending":
+      return "قيد المراجعة";
+    case "approved":
+      return "معتمد";
+    case "rejected":
+      return "مرفوض";
+    default:
+      return status;
+  }
+};
+
+const getStatusColor = (status) => {
+  switch (status) {
+    case "pending":
+      return "orange";
+    case "approved":
+      return "green";
+    case "rejected":
+      return "red";
+    default:
+      return "default";
+  }
+};
+
+const getStatusIcon = (status) => {
+  switch (status) {
+    case "pending":
+      return <ClockCircleOutlined />;
+    case "approved":
+      return <CheckCircleOutlined />;
+    case "rejected":
+      return <CloseCircleOutlined />;
+    default:
+      return null;
+  }
+};
+
+const getInitials = (name) =>
+  name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
 
 const TeachersTable = ({ searchText, selectedStatus }) => {
   const [teachers, setTeachers] = useState([
@@ -98,10 +137,12 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
       avatar: null,
     },
   ]);
+
   const [filteredTeachers, setFilteredTeachers] = useState(teachers);
   const [loading, setLoading] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [viewModalVisible, setViewModalVisible] = useState(false);
+
   const handleStatusChange = (teacherId, newStatus) => {
     setLoading(true);
     setTimeout(() => {
@@ -110,7 +151,9 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
           teacher.id === teacherId ? { ...teacher, status: newStatus } : teacher
         )
       );
-      message.success(`Teacher ${newStatus} successfully!`);
+      message.success(
+        `تم تغيير حالة المعلم إلى: ${statusLabelAr(newStatus)} بنجاح`
+      );
       setLoading(false);
     }, 500);
   };
@@ -125,39 +168,33 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
     }
 
     if (searchText) {
+      const term = searchText.toLowerCase();
       filtered = filtered.filter(
         (teacher) =>
-          teacher.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          teacher.subjects.includes(searchText.toLowerCase()) ||
-          teacher.email.toLowerCase().includes(searchText.toLowerCase())
+          teacher.name.toLowerCase().includes(term) ||
+          teacher.email.toLowerCase().includes(term) ||
+          (teacher.subjects || [])
+            .join(" ")
+            .toLowerCase()
+            .includes(term)
       );
     }
 
     setFilteredTeachers(filtered);
   }, [teachers, selectedStatus, searchText]);
 
-  const getInitials = (name) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
-
-  
   const handleViewTeacher = (teacher) => {
     setSelectedTeacher(teacher);
     setViewModalVisible(true);
   };
 
-
   const columns = [
     {
-      title: "Teacher",
+      title: "المعلم",
       dataIndex: "name",
       key: "name",
       render: (name, record) => (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3" dir="rtl">
           <Avatar
             size={48}
             className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold"
@@ -167,7 +204,7 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
           <div>
             <Text className="text-gray-900">{name}</Text>
             <div className="text-sm text-gray-500 flex items-center mt-1">
-              <Mail className="mr-1 text-xs" />
+              <Mail className="ml-1 text-xs" />
               {record.email}
             </div>
           </div>
@@ -175,11 +212,11 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
       ),
     },
     {
-      title: "Subjects",
+      title: "المواد",
       dataIndex: "subjects",
       key: "subjects",
       render: (subject) => (
-        <div className="flex flex-wrap w-full max-w-[200px] gap-2">
+        <div className="flex flex-wrap w-full max-w-[240px] gap-2" dir="rtl">
           {subject.map((sub, i) => (
             <Tag
               key={i}
@@ -189,7 +226,6 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
                 color: "white",
               }}
             >
-              {/* <BookOutlined className="mr-1" /> */}
               {sub}
             </Tag>
           ))}
@@ -197,7 +233,7 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
       ),
     },
     {
-      title: "Status",
+      title: "الحالة",
       dataIndex: "status",
       key: "status",
       render: (status) => (
@@ -205,40 +241,40 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
           status={getStatusColor(status)}
           text={
             <span className="capitalize font-medium">
-              {getStatusIcon(status)} {status}
+              {getStatusIcon(status)} {statusLabelAr(status)}
             </span>
           }
         />
       ),
     },
     {
-      title: "Experience",
+      title: "الخبرة",
       dataIndex: "experience",
       key: "experience",
       render: (experience) => (
-        <div className="flex items-center text-gray-700">
-          <TrophyOutlined className="mr-2 text-yellow-500" />
+        <div className="flex items-center text-gray-700" dir="rtl">
+          <TrophyOutlined className="ml-2 text-yellow-500" />
           {experience}
         </div>
       ),
     },
     {
-      title: "Join Date",
+      title: "تاريخ الانضمام",
       dataIndex: "joinDate",
       key: "joinDate",
       render: (date) => (
-        <div className="flex items-center text-gray-700">
-          <CalendarOutlined className="mr-2 text-blue-500" />
-          {new Date(date).toLocaleDateString()}
+        <div className="flex items-center text-gray-700" dir="rtl">
+          <CalendarOutlined className="ml-2 text-blue-500" />
+          {new Date(date).toLocaleDateString("ar-EG")}
         </div>
       ),
     },
     {
-      title: "Actions",
+      title: "إجراءات",
       key: "actions",
       render: (_, record) => (
-        <Space size="small">
-          <Tooltip title="View Details">
+        <Space size="small" direction="horizontal" style={{ direction: "rtl" }}>
+          <Tooltip title="عرض التفاصيل">
             <Button
               type="primary"
               icon={<EyeOutlined />}
@@ -255,7 +291,7 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
               loading={loading}
               onClick={() => handleStatusChange(record.id, "approved")}
             >
-              Approve
+              اعتماد
             </Button>
           )}
           {record.status !== "rejected" && (
@@ -265,7 +301,7 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
               loading={loading}
               onClick={() => handleStatusChange(record.id, "rejected")}
             >
-              Reject
+              رفض
             </Button>
           )}
         </Space>
@@ -273,35 +309,9 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
     },
   ];
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "pending":
-        return "orange";
-      case "approved":
-        return "green";
-      case "rejected":
-        return "red";
-      default:
-        return "default";
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "pending":
-        return <ClockCircleOutlined />;
-      case "approved":
-        return <CheckCircleOutlined />;
-      case "rejected":
-        return <CloseCircleOutlined />;
-      default:
-        return null;
-    }
-  };
-
   return (
     <>
-      <Card className="shadow-lg border-0">
+      <Card className="shadow-lg border-0" dir="rtl">
         <DataTable
           searchable={false}
           table={{ header: columns, rows: filteredTeachers }}
@@ -311,7 +321,7 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
             showQuickJumper: true,
             showTotal: (total, range) => (
               <span className="text-gray-600">
-                Showing {range[0]}-{range[1]} of {total} teachers
+                عرض {range[0]}–{range[1]} من {total} معلّمًا
               </span>
             ),
           }}
@@ -320,11 +330,7 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
 
       {/* View Teacher Modal */}
       <Modal
-        title={
-          <div className="text-xl font-semibold text-gray-800">
-            Teacher Details
-          </div>
-        }
+        title={<div className="text-xl font-semibold text-gray-800">تفاصيل المعلم</div>}
         open={viewModalVisible}
         onCancel={() => setViewModalVisible(false)}
         footer={null}
@@ -332,8 +338,8 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
         className="teacher-modal"
       >
         {selectedTeacher && (
-          <div className="py-6">
-            {/* Teacher Header */}
+          <div className="py-6" dir="rtl">
+            {/* Header */}
             <div className="text-center mb-8">
               <Avatar
                 size={100}
@@ -349,7 +355,7 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
                 text={
                   <span className="capitalize font-medium text-lg">
                     {getStatusIcon(selectedTeacher.status)}{" "}
-                    {selectedTeacher.status}
+                    {statusLabelAr(selectedTeacher.status)}
                   </span>
                 }
               />
@@ -357,15 +363,14 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
 
             <Divider />
 
-            {/* Teacher Information Grid */}
+            {/* Info Grid */}
             <Row gutter={[24, 24]} className="mb-8">
               <Col span={12}>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <Text strong className="text-gray-700 flex items-center mb-2">
-                    <BookOutlined className="mr-2 text-yellow-600" />
-                    Subjects
+                    المواد
                   </Text>
-                  <div className="flex flex-wrap items-center  space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {selectedTeacher.subjects.map((item, i) => (
                       <Tag
                         key={i}
@@ -384,18 +389,14 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
               </Col>
               <Col span={12}>
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <Text strong className="text-gray-700 flex items-center mb-2">
-                    <TrophyOutlined className="mr-2 text-yellow-600" />
-                    Experience
-                  </Text>
+                  <Text strong className="text-gray-700 mb-2">الخبرة</Text>
                   <Text className="text-lg">{selectedTeacher.experience}</Text>
                 </div>
               </Col>
               <Col span={12}>
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <Text strong className="text-gray-700 flex items-center mb-2">
-                    <MailOutlined className="mr-2 text-blue-600" />
-                    Email
+                  <Text strong className="text-gray-700 mb-2">
+                    البريد الإلكتروني
                   </Text>
                   <Text className="text-sm text-blue-600">
                     {selectedTeacher.email}
@@ -404,49 +405,43 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
               </Col>
               <Col span={12}>
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <Text strong className="text-gray-700 flex items-center mb-2">
-                    <PhoneOutlined className="mr-2 text-green-600" />
-                    Phone
-                  </Text>
+                  <Text strong className="text-gray-700 mb-2">الهاتف</Text>
                   <Text>{selectedTeacher.phone}</Text>
                 </div>
               </Col>
               <Col span={12}>
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <Text strong className="text-gray-700 flex items-center mb-2">
-                    <CalendarOutlined className="mr-2 text-purple-600" />
-                    Join Date
+                  <Text strong className="text-gray-700 mb-2">
+                    تاريخ الانضمام
                   </Text>
                   <Text>
-                    {new Date(selectedTeacher.joinDate).toLocaleDateString()}
+                    {new Date(selectedTeacher.joinDate).toLocaleDateString(
+                      "ar-EG"
+                    )}
                   </Text>
                 </div>
               </Col>
               <Col span={12}>
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <Text strong className="text-gray-700 flex items-center mb-2">
-                    <TrophyOutlined className="mr-2 text-indigo-600" />
-                    Qualification
-                  </Text>
+                  <Text strong className="text-gray-700 mb-2">المؤهل</Text>
                   <Text>{selectedTeacher.qualification}</Text>
                 </div>
               </Col>
             </Row>
 
-            {/* Action Buttons */}
+            {/* Actions */}
             <div className="text-center gap-4">
               {selectedTeacher.status !== "approved" && (
                 <Button
                   type="primary"
                   size="large"
                   className="bg-green-600 hover:bg-green-700 border-green-600 px-8"
-                  icon={<CheckCircleOutlined />}
                   onClick={() => {
                     handleStatusChange(selectedTeacher.id, "approved");
                     setViewModalVisible(false);
                   }}
                 >
-                  Approve Teacher
+                  اعتماد المعلم
                 </Button>
               )}
               {selectedTeacher.status !== "rejected" && (
@@ -454,13 +449,12 @@ const TeachersTable = ({ searchText, selectedStatus }) => {
                   danger
                   size="large"
                   className="px-8"
-                  icon={<CloseCircleOutlined />}
                   onClick={() => {
                     handleStatusChange(selectedTeacher.id, "rejected");
                     setViewModalVisible(false);
                   }}
                 >
-                  Reject Teacher
+                  رفض المعلم
                 </Button>
               )}
             </div>

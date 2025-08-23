@@ -14,6 +14,14 @@ import {
   ChevronDown,
   BookOpen,
   Cog,
+  CircleAlert,
+  User,
+  Users2,
+  Book,
+  Star,
+  Text,
+  ClockFading,
+  BookOpenIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
@@ -103,7 +111,43 @@ export default function Sidebar() {
       badge: notifications,
       path: "/notifications",
     },
-    { name: "الإعدادات", icon: Settings, path: "/" },
+    {
+      name:"المدونة",
+      icon : BookOpenIcon,
+      path:"/blog"
+    },
+    {
+      name:"متجر الكتب",
+      icon : Book ,
+      path : "/book-store"
+    },
+    {
+      name:"فريق العمل",
+      icon:Users2  ,
+      path:"/teams"
+    },
+    {
+      name:"التقييم",
+      icon :  Star ,
+      path:"/rating"
+    },
+    {
+      name:"بوابة الدعم",
+      icon : ClockFading,
+      path:"/support" 
+    },
+    {
+      name:"أسئلة شائعة",
+      icon : Text ,
+      path:"/faq"
+    },
+    {
+      name:"الشروط والأحكام",
+      icon: CircleAlert ,
+      badge:"",
+      path :"/privacy-policy"
+    },
+    { name: "الإعدادات", icon: Settings, path: "/settings" },
   ];
 
   useEffect(() => {
@@ -134,7 +178,7 @@ export default function Sidebar() {
   return (
     <div
       dir="rtl"
-      className="fixed right-0 top-0 h-full w-64 bg-white shadow-lg border-l border-gray-100"
+      className="fixed right-0 top-0 h-screen overflow-y-auto w-64 bg-white shadow-lg border-l border-gray-100"
     >
       <div className="p-6 border-b-2 border-accent/30 border-dashed">
         {/* Logo */}

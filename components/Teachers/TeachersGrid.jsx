@@ -38,13 +38,12 @@ const PALETTE = {
   text: "#202938",
 };
 
-// --- Status helpers ---
 const toStatus = (s) => (s ?? "").toString().trim().toLowerCase();
 
 const STATUS_META = {
-  approved: { color: "success", dot: "🟢", label: "Approved" },
-  pending: { color: "warning", dot: "🟡", label: "Pending" },
-  rejected: { color: "error", dot: "🔴", label: "Rejected" },
+  approved: { color: "success", dot: "🟢", label: "معتمد" },
+  pending: { color: "warning", dot: "🟡", label: "قيد المراجعة" },
+  rejected: { color: "error", dot: "🔴", label: "مرفوض" },
 };
 
 function initials(name = "") {
@@ -66,9 +65,8 @@ function TeacherCards({
   const [ps, setPs] = useState(defaultPageSize);
   const [edit, setEdit] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
-  const [statusFilter, setStatusFilter] = useState("all"); // "all" | "approved" | "pending" | "rejected"
+  const [statusFilter, setStatusFilter] = useState("all"); // all | approved | pending | rejected
 
-  // normalize once
   const normalizedData = useMemo(
     () =>
       (data || []).map((t) => ({
@@ -78,7 +76,6 @@ function TeacherCards({
     [data]
   );
 
-  // counts for badges
   const counts = useMemo(() => {
     const c = { approved: 0, pending: 0, rejected: 0, all: normalizedData.length };
     normalizedData.forEach((t) => {
@@ -87,7 +84,6 @@ function TeacherCards({
     return c;
   }, [normalizedData]);
 
-  // filtering
   const filtered = useMemo(() => {
     if (statusFilter === "all") return normalizedData;
     return normalizedData.filter((t) => t._status === statusFilter);
@@ -95,34 +91,33 @@ function TeacherCards({
 
   const total = filtered.length;
 
-  // pagination slice
   const pageData = useMemo(() => {
     const start = (page - 1) * ps;
     return filtered.slice(start, start + ps);
   }, [filtered, page, ps]);
 
-  // keep page valid when filter/page size changes
   useEffect(() => {
     const maxPage = Math.max(1, Math.ceil(total / ps));
     if (page > maxPage) setPage(1);
   }, [total, ps, page]);
 
-  const STATUS_OPTIONS = Object.keys(STATUS_META).map((k) => ({
-    label: `${STATUS_META[k].dot} ${STATUS_META[k].label}`,
-    value: k,
-  }));
+  const STATUS_OPTIONS = [
+    { label: `${STATUS_META.approved.dot} ${STATUS_META.approved.label}`, value: "approved" },
+    { label: `${STATUS_META.pending.dot} ${STATUS_META.pending.label}`, value: "pending" },
+    { label: `${STATUS_META.rejected.dot} ${STATUS_META.rejected.label}`, value: "rejected" },
+  ];
 
   const moreMenu = (teacher) => ({
     items: [
       {
         key: "edit",
         icon: <EditOutlined />,
-        label: "Edit",
+        label: "تعديل",
       },
       {
         key: "status",
         icon: <SyncOutlined />,
-        label: "Change Status",
+        label: "تغيير الحالة",
         children: STATUS_OPTIONS.map((s) => ({
           key: `status:${s.value}`,
           label: s.label,
@@ -133,7 +128,7 @@ function TeacherCards({
         key: "delete",
         danger: true,
         icon: <DeleteOutlined />,
-        label: "Delete",
+        label: "حذف",
       },
     ],
     onClick: ({ key }) => {
@@ -149,19 +144,30 @@ function TeacherCards({
       }
       if (key === "delete") {
         Modal.confirm({
-          title: "Delete teacher?",
-          content: `This will permanently remove ${teacher.name}.`,
-          okText: "Delete",
-          okType: "danger",
-          cancelText: "Cancel",
+          title: "حذف المعلم؟",
+          content: `سيتم حذف ${teacher.name} نهائيًا.`,
+          okText: "حذف",
+          cancelText: "إلغاء",
+          okButtonProps: { danger: true },
           onOk: () => onDelete?.(teacher),
         });
       }
     },
   });
 
+  const footerLabel = useMemo(() => {
+    const map = {
+      all: "المعلمين",
+      approved: "المعلمين المعتمدين",
+      pending: "المعلمين قيد المراجعة",
+      rejected: "المعلمين المرفوضين",
+    };
+    return map[statusFilter];
+  }, [statusFilter]);
+
   return (
     <ConfigProvider
+      direction="rtl"
       theme={{
         token: {
           colorPrimary: PALETTE.primary,
@@ -170,7 +176,7 @@ function TeacherCards({
         },
       }}
     >
-      <div className="space-y-4">
+      <div className="space-y-4" dir="rtl">
         {/* Header filters */}
         <div className="flex items-center justify-between">
           <Segmented
@@ -183,15 +189,16 @@ function TeacherCards({
               {
                 label: (
                   <div className="flex items-center gap-2 px-5">
-                      <span>All</span>
-                    <Badge count={counts.all} />                  </div>
+                    <span>الكل</span>
+                    <Badge count={counts.all} />
+                  </div>
                 ),
                 value: "all",
               },
               {
                 label: (
                   <div className="flex items-center gap-2">
-                    <span>🟢 Approved</span>
+                    <span>🟢 معتمد</span>
                     <Badge count={counts.approved} />
                   </div>
                 ),
@@ -200,7 +207,7 @@ function TeacherCards({
               {
                 label: (
                   <div className="flex items-center gap-2">
-                    <span>🟡 Pending</span>
+                    <span>🟡 قيد المراجعة</span>
                     <Badge count={counts.pending} />
                   </div>
                 ),
@@ -209,7 +216,7 @@ function TeacherCards({
               {
                 label: (
                   <div className="flex items-center gap-2">
-                    <span>🔴 Rejected</span>
+                    <span>🔴 مرفوض</span>
                     <Badge count={counts.rejected} />
                   </div>
                 ),
@@ -226,7 +233,7 @@ function TeacherCards({
               setPage(1);
             }}
             options={pageSizeOptions.map((n) => ({
-              label: `${n} / page`,
+              label: `${n} / صفحة`,
               value: n,
             }))}
             className="min-w-[130px] rounded-lg"
@@ -265,7 +272,7 @@ function TeacherCards({
                         color={meta.color}
                         className="rounded-full px-3 py-1 text-[12px]"
                       >
-                        <span className="mr-1">{meta.dot}</span>
+                        <span className="ml-1">{meta.dot}</span>
                         {meta.label}
                       </Tag>
                     </div>
@@ -304,13 +311,13 @@ function TeacherCards({
 
                   {/* Actions */}
                   <div className="mt-5 flex items-center justify-between">
-                    <Tooltip title="View profile">
+                    <Tooltip title="عرض الملف الشخصي">
                       <Button
                         icon={<EyeOutlined />}
                         onClick={() => onView?.(t)}
                         className="rounded-lg"
                       >
-                        View
+                        عرض
                       </Button>
                     </Tooltip>
 
@@ -322,7 +329,7 @@ function TeacherCards({
                           icon={<CheckCircleOutlined />}
                           onClick={() => onApprove?.(t)}
                         >
-                          Approve
+                          اعتماد
                         </Button>
                       )}
                       {t._status !== "rejected" && (
@@ -331,15 +338,11 @@ function TeacherCards({
                           icon={<CloseCircleOutlined />}
                           onClick={() => onReject?.(t)}
                         >
-                          Reject
+                          رفض
                         </Button>
                       )}
 
-                      <Dropdown
-                        trigger={["click"]}
-                        placement="bottomRight"
-                        menu={moreMenu(t)}
-                      >
+                      <Dropdown trigger={["click"]} placement="bottomRight" menu={moreMenu(t)}>
                         <Button className="rounded-lg" icon={<MoreOutlined />} />
                       </Dropdown>
                     </div>
@@ -353,12 +356,11 @@ function TeacherCards({
         {/* Footer: pagination + range info */}
         <div className="flex items-center justify-between pt-2">
           <div className="text-sm text-gray-600">
-            Showing{" "}
+            عرض{" "}
             <span className="font-medium">
               {total === 0 ? 0 : (page - 1) * ps + 1}-{Math.min(page * ps, total)}
             </span>{" "}
-            of <span className="font-medium">{total}</span>{" "}
-            {statusFilter === "all" ? "teachers" : `${statusFilter} teachers`}
+            من <span className="font-medium">{total}</span> {footerLabel}
           </div>
 
           <Pagination

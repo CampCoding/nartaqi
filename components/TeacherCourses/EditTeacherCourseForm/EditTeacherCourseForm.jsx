@@ -27,6 +27,7 @@ import {
   Divider,
 } from "antd";
 import dayjs from "dayjs";
+// import 'react-quill/dist/quill.snow.css';
 import "react-quill-new/dist/quill.snow.css";
 import dynamic from "next/dynamic";
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
@@ -34,6 +35,7 @@ const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 const { Dragger } = Upload;
 const { TextArea } = Input;
 const { RangePicker } = DatePicker;
+
 const quillModules = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
@@ -46,14 +48,15 @@ const quillModules = {
     ["clean"],
   ],
 };
+
 const quillFormats = [
   "header",
   "bold",
   "italic",
   "underline",
   "strike",
-  "list",
-  "bullet",
+  "list",    // Add "list" to ensure list formats are available
+  "bullet",  // Make sure bullet is included
   "align",
   "direction",
   "color",
@@ -71,11 +74,12 @@ const RichTextField = ({ value, onChange, placeholder }) => (
       value={value}
       onChange={(html) => onChange?.(html)}
       modules={quillModules}
-      formats={quillFormats}
+      // formats={quillFormats}
       placeholder={placeholder}
     />
   </div>
 );
+
 // Helper: convert file -> base64
 const getBase64 = (file) =>
   new Promise((resolve, reject) => {
@@ -85,7 +89,7 @@ const getBase64 = (file) =>
     reader.onerror = reject;
   });
 
-const AddTeacherCourseForm = ({ open, setOpen }) => {
+const EditTeacherCourseForm = ({ open, setOpen, rowData, setRowData }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(1);
@@ -93,9 +97,19 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
   const [imagePreview, setImagePreview] = useState(null);
   const [features, setFeatures] = useState([]);
   const [lessons, setLessons] = useState([]);
-  const [newFeature, setNewFeature] = useState({ title: "", description: "", icon: "" });
-  const [newLesson, setNewLesson] = useState({ name: "", videos: [{ link: "", duration: "" }] });
+  const [newFeature, setNewFeature] = useState({
+    title: "",
+    description: "",
+    icon: "",
+  });
+  const [newLesson, setNewLesson] = useState({
+    name: "",
+    videos: [{ link: "", duration: "" }],
+  });
 
+  useEffect(() => {
+    console.log(rowData);
+  }, [rowData]);
   const beforeUpload = async (file) => {
     const isImage = file.type?.startsWith("image/");
     if (!isImage) {
@@ -142,7 +156,7 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
   const handleAddVideoToLesson = () => {
     setNewLesson({
       ...newLesson,
-      videos: [...newLesson.videos, { link: "", duration: "" }]
+      videos: [...newLesson.videos, { link: "", duration: "" }],
     });
   };
 
@@ -152,7 +166,7 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
       newVideos.splice(videoIndex, 1);
       setNewLesson({
         ...newLesson,
-        videos: newVideos
+        videos: newVideos,
       });
     }
   };
@@ -162,13 +176,16 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
     newVideos[videoIndex][field] = value;
     setNewLesson({
       ...newLesson,
-      videos: newVideos
+      videos: newVideos,
     });
   };
 
   const handleAddLesson = () => {
-    if (newLesson.name && newLesson.videos.length > 0 && 
-        newLesson.videos.every(v => v.link && v.duration)) {
+    if (
+      newLesson.name &&
+      newLesson.videos.length > 0 &&
+      newLesson.videos.every((v) => v.link && v.duration)
+    ) {
       setLessons([...lessons, { ...newLesson }]);
       setNewLesson({ name: "", videos: [{ link: "", duration: "" }] });
       message.success("تم إضافة الدرس بنجاح!");
@@ -239,10 +256,10 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
     setNewFeature({ title: "", description: "", icon: "" });
     setNewLesson({ name: "", videos: [{ link: "", duration: "" }] });
   };
-  
+
   useEffect(() => {
-    console.log(features)
-  } , [features])
+    console.log(features);
+  }, [features]);
 
   return (
     <ConfigProvider
@@ -271,10 +288,10 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                   <PlusOutlined className="text-white text-lg" />
                 </div>
                 <h1 className="text-3xl font-bold text-[#202938]">
-                  إضافة دورة جديدة
+                  تعديل دورة جديدة
                 </h1>
               </div>
-              <p className="text-gray-600">إنشاء وتكوين دورة تعليمية جديدة</p>
+              <p className="text-gray-600">تعديل دورة تعليمية جديدة</p>
             </div>
 
             <div className="bg-white border-0 rounded-2xl overflow-hidden p-6">
@@ -284,18 +301,21 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                 onFinish={handleFinish}
                 initialValues={{
                   code: "MTH101",
-                  name: "الرياضيات",
-                  price: 499,
+                  name: rowData?.specialization,
+                  price: rowData?.price,
                   duration: "3 شهور",
                   attachment: "شامل كتاب الدورة pdf",
-                  description: "مفاهيم الرياضيات الأساسية بما في ذلك الجبر والهندسة وحساب التفاضل والتكامل",
-                  status: "نشط",
+                  description:
+                    "مفاهيم الرياضيات الأساسية بما في ذلك الجبر والهندسة وحساب التفاضل والتكامل",
+                  status: rowData?.status,
                   genderPolicy: "female",
                   capacity: 300,
                   availableRange: [dayjs("2025-08-01"), dayjs("2025-12-01")],
                   summary: "<p>نبذة سريعة عن الدورة.</p>",
-                  terms: "<ul><li>سياسة الاسترجاع...</li><li>حقوق الاستخدام...</li></ul>",
-                  overview: "<p>تفاصيل موسعة عن محاور الدورة وأهداف التعلم.</p>",
+                  terms:
+                    "<ul><li>سياسة الاسترجاع...</li><li>حقوق الاستخدام...</li></ul>",
+                  overview:
+                    "<p>تفاصيل موسعة عن محاور الدورة وأهداف التعلم.</p>",
                 }}
                 className="space-y-6"
               >
@@ -344,7 +364,9 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                           validator: (_, value) =>
                             !value || value.trim().length >= 2
                               ? Promise.resolve()
-                              : Promise.reject(new Error("الاسم لا يقل عن حرفين")),
+                              : Promise.reject(
+                                  new Error("الاسم لا يقل عن حرفين")
+                                ),
                         },
                       ]}
                     >
@@ -391,7 +413,9 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                           validator: (_, value) =>
                             !value || value.trim().length >= 10
                               ? Promise.resolve()
-                              : Promise.reject(new Error("الوصف لا يقل عن 10 أحرف")),
+                              : Promise.reject(
+                                  new Error("الوصف لا يقل عن 10 أحرف")
+                                ),
                         },
                       ]}
                     >
@@ -455,7 +479,10 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                       label={<span className="font-medium">الإتاحة</span>}
                       name="availableRange"
                       rules={[
-                        { required: true, message: "حدد فترة الإتاحة (من/إلى)" },
+                        {
+                          required: true,
+                          message: "حدد فترة الإتاحة (من/إلى)",
+                        },
                       ]}
                     >
                       <RangePicker className="w-full" />
@@ -496,42 +523,42 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                     {/* نبذه مختصه */}
                     {activeTab === 1 && (
                       <Form.Item
-                                         label="نبذة مختصرة"
-                                         name="summary"
-                                         valuePropName="value"
-                                         getValueFromEvent={(v) => v}
-                                       >
-                                         <RichTextField placeholder="اكتب نبذة مختصرة عن الدورة..." />
-                                       </Form.Item>
+                        label="نبذة مختصرة"
+                        name="summary"
+                        valuePropName="value"
+                        getValueFromEvent={(v) => v}
+                      >
+                        <RichTextField placeholder="اكتب نبذة مختصرة عن الدورة..." />
+                      </Form.Item>
                     )}
 
                     {/* الشروط والأحكام */}
                     {activeTab === 2 && (
                       <Form.Item
-                                         label="الشروط والأحكام"
-                                         name="privacy policy"
-                                         valuePropName="value"
-                                         getValueFromEvent={(v) => v}
-                                       >
-                                         <RichTextField placeholder="اكتب نبذة مختصرة عن الدورة..." />
-                                       </Form.Item>
+                        label="الشروط والأحكام"
+                        name="privacy policy"
+                        valuePropName="value"
+                        getValueFromEvent={(v) => v}
+                      >
+                        <RichTextField placeholder="اكتب نبذة مختصرة عن الدورة..." />
+                      </Form.Item>
                     )}
 
                     {/* التقييم */}
                     {activeTab === 3 && (
-                    <div className="flex flex-col gap-2">
-                      <Form.Item label="اسم الشخص">
-                        <Input  />
-                      </Form.Item>
+                      <div className="flex flex-col gap-2">
+                        <Form.Item label="اسم الشخص">
+                          <Input />
+                        </Form.Item>
 
-                       <Form.Item label="الوصف">
-                        <Input  />
-                      </Form.Item>
+                        <Form.Item label="الوصف">
+                          <Input />
+                        </Form.Item>
 
                         <Form.Item label="التقييم">
-                        <Rate />
-                      </Form.Item>
-                    </div>
+                          <Rate />
+                        </Form.Item>
+                      </div>
                     )}
 
                     {/* مميزات الدورة */}
@@ -542,7 +569,12 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                             <Form.Item label="عنوان الميزة">
                               <Input
                                 value={newFeature.title}
-                                onChange={(e) => setNewFeature({...newFeature, title: e.target.value})}
+                                onChange={(e) =>
+                                  setNewFeature({
+                                    ...newFeature,
+                                    title: e.target.value,
+                                  })
+                                }
                                 placeholder="أدخل عنوان الميزة"
                               />
                             </Form.Item>
@@ -551,7 +583,12 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                             <Form.Item label="وصف الميزة">
                               <Input
                                 value={newFeature.description}
-                                onChange={(e) => setNewFeature({...newFeature, description: e.target.value})}
+                                onChange={(e) =>
+                                  setNewFeature({
+                                    ...newFeature,
+                                    description: e.target.value,
+                                  })
+                                }
                                 placeholder="أدخل وصف الميزة"
                               />
                             </Form.Item>
@@ -560,18 +597,23 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                             <Form.Item label="أيقونة الميزة">
                               <Input
                                 value={newFeature.icon}
-                                onChange={(e) => setNewFeature({...newFeature, icon: e.target.value})}
+                                onChange={(e) =>
+                                  setNewFeature({
+                                    ...newFeature,
+                                    icon: e.target.value,
+                                  })
+                                }
                                 placeholder="أدخل رابط الأيقونة"
                               />
                             </Form.Item>
                           </Col>
                         </Row>
-                        
-                        <Button 
-                          type="dashed" 
+
+                        <Button
+                          type="dashed"
                           onClick={() => {
-                            handleAddFeature()
-                            console.log("clickkeddd")
+                            handleAddFeature();
+                            console.log("clickkeddd");
                           }}
                           className="mb-4"
                           block
@@ -587,16 +629,24 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                           {features.length > 0 ? (
                             <Row gutter={16}>
                               {features.map((feature, index) => (
-                                <Col xs={24} md={12} lg={8} key={index} className="mb-3">
-                                  <Card 
-                                    size="small" 
+                                <Col
+                                  xs={24}
+                                  md={12}
+                                  lg={8}
+                                  key={index}
+                                  className="mb-3"
+                                >
+                                  <Card
+                                    size="small"
                                     title={feature.title}
                                     extra={
-                                      <Button 
-                                        type="text" 
-                                        danger 
+                                      <Button
+                                        type="text"
+                                        danger
                                         icon={<DeleteOutlined />}
-                                        onClick={() => handleRemoveFeature(index)}
+                                        onClick={() =>
+                                          handleRemoveFeature(index)
+                                        }
                                       />
                                     }
                                   >
@@ -607,7 +657,9 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                               ))}
                             </Row>
                           ) : (
-                            <p className="text-gray-500">لم يتم إضافة أي ميزات بعد</p>
+                            <p className="text-gray-500">
+                              لم يتم إضافة أي ميزات بعد
+                            </p>
                           )}
                         </div>
                       </div>
@@ -619,11 +671,16 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                         <Form.Item label="اسم الدرس">
                           <Input
                             value={newLesson.name}
-                            onChange={(e) => setNewLesson({...newLesson, name: e.target.value})}
+                            onChange={(e) =>
+                              setNewLesson({
+                                ...newLesson,
+                                name: e.target.value,
+                              })
+                            }
                             placeholder="أدخل اسم الدرس"
                           />
                         </Form.Item>
-                        
+
                         <h4 className="mb-2">فيديوهات الدرس:</h4>
                         {newLesson.videos.map((video, index) => (
                           <Card key={index} size="small" className="mb-3">
@@ -632,7 +689,13 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                                 <Form.Item label={`رابط الفيديو ${index + 1}`}>
                                   <Input
                                     value={video.link}
-                                    onChange={(e) => handleUpdateVideoInLesson(index, "link", e.target.value)}
+                                    onChange={(e) =>
+                                      handleUpdateVideoInLesson(
+                                        index,
+                                        "link",
+                                        e.target.value
+                                      )
+                                    }
                                     placeholder="أدخل رابط الفيديو"
                                   />
                                 </Form.Item>
@@ -641,17 +704,25 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                                 <Form.Item label={`مدة الفيديو ${index + 1}`}>
                                   <Input
                                     value={video.duration}
-                                    onChange={(e) => handleUpdateVideoInLesson(index, "duration", e.target.value)}
+                                    onChange={(e) =>
+                                      handleUpdateVideoInLesson(
+                                        index,
+                                        "duration",
+                                        e.target.value
+                                      )
+                                    }
                                     placeholder="أدخل مدة الفيديو"
                                   />
                                 </Form.Item>
                               </Col>
                               <Col xs={24} md={4}>
                                 {newLesson.videos.length > 1 && (
-                                  <Button 
-                                    danger 
+                                  <Button
+                                    danger
                                     icon={<DeleteOutlined />}
-                                    onClick={() => handleRemoveVideoFromLesson(index)}
+                                    onClick={() =>
+                                      handleRemoveVideoFromLesson(index)
+                                    }
                                   >
                                     حذف
                                   </Button>
@@ -660,9 +731,9 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                             </Row>
                           </Card>
                         ))}
-                        
-                        <Button 
-                          type="dashed" 
+
+                        <Button
+                          type="dashed"
                           onClick={handleAddVideoToLesson}
                           className="mb-4"
                           block
@@ -670,9 +741,9 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                         >
                           إضافة فيديو آخر
                         </Button>
-                        
-                        <Button 
-                          type="primary" 
+
+                        <Button
+                          type="primary"
                           onClick={handleAddLesson}
                           className="mb-4"
                           block
@@ -688,24 +759,35 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                           {lessons.length > 0 ? (
                             <Row gutter={16}>
                               {lessons.map((lesson, index) => (
-                                <Col xs={24} md={12} lg={8} key={index} className="mb-3">
-                                  <Card 
-                                    size="small" 
+                                <Col
+                                  xs={24}
+                                  md={12}
+                                  lg={8}
+                                  key={index}
+                                  className="mb-3"
+                                >
+                                  <Card
+                                    size="small"
                                     title={lesson.name}
                                     extra={
-                                      <Button 
-                                        type="text" 
-                                        danger 
+                                      <Button
+                                        type="text"
+                                        danger
                                         icon={<DeleteOutlined />}
-                                        onClick={() => handleRemoveLesson(index)}
+                                        onClick={() =>
+                                          handleRemoveLesson(index)
+                                        }
                                       />
                                     }
                                   >
-                                    <p>عدد الفيديوهات: {lesson.videos.length}</p>
+                                    <p>
+                                      عدد الفيديوهات: {lesson.videos.length}
+                                    </p>
                                     <ul>
                                       {lesson.videos.map((video, vidIndex) => (
                                         <li key={vidIndex}>
-                                          الفيديو {vidIndex + 1}: {video.duration}
+                                          الفيديو {vidIndex + 1}:{" "}
+                                          {video.duration}
                                         </li>
                                       ))}
                                     </ul>
@@ -714,12 +796,14 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                               ))}
                             </Row>
                           ) : (
-                            <p className="text-gray-500">لم يتم إضافة أي دروس بعد</p>
+                            <p className="text-gray-500">
+                              لم يتم إضافة أي دروس بعد
+                            </p>
                           )}
                         </div>
                       </div>
                     )}
-                  </div>            
+                  </div>
                 </div>
 
                 {/* Actions */}
@@ -752,4 +836,4 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
   );
 };
 
-export default AddTeacherCourseForm;
+export default EditTeacherCourseForm;

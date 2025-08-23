@@ -16,3 +16,19 @@
   right: 12px; /* عدّل المسافة حسب ذوقك */
   text-align: right;
 }
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+  border-radius: 10px;
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #0F7490; 
+    border-radius: 10px;
+}

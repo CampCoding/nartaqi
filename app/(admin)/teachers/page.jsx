@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Table,
   Input,
@@ -50,8 +50,6 @@ import AddTeacherModal from "../../../components/Teachers/AddTeacherModal.modal"
 import EditTeacherModal from "../../../components/Teachers/EditTeacher.modal";
 
 const { Text, Title } = Typography;
-const { Search } = Input;
-const { Option } = Select;
 
 const TeachersManagement = () => {
   const [teachers, setTeachers] = useState([
@@ -63,8 +61,8 @@ const TeachersManagement = () => {
       subjects: ["Math", "Physics", "Chemistry", "Biology", "English"],
       status: "pending",
       joinDate: "2024-01-15",
-      experience: "5 years",
-      qualification: "Masters in Mathematics",
+      experience: "5 سنوات",
+      qualification: "ماجستير رياضيات",
       avatar: null,
     },
     {
@@ -75,8 +73,8 @@ const TeachersManagement = () => {
       subjects: ["Math", "Biology", "English"],
       status: "approved",
       joinDate: "2023-09-10",
-      experience: "8 years",
-      qualification: "PhD in Physics",
+      experience: "8 سنوات",
+      qualification: "دكتوراه في الفيزياء",
       avatar: null,
     },
     {
@@ -87,8 +85,8 @@ const TeachersManagement = () => {
       subjects: ["Biology", "English"],
       status: "rejected",
       joinDate: "2024-02-20",
-      experience: "3 years",
-      qualification: "Bachelors in Biology",
+      experience: "3 سنوات",
+      qualification: "بكالوريوس أحياء",
       avatar: null,
     },
     {
@@ -99,8 +97,8 @@ const TeachersManagement = () => {
       subjects: ["English"],
       status: "approved",
       joinDate: "2023-11-05",
-      experience: "6 years",
-      qualification: "Masters in Chemistry",
+      experience: "6 سنوات",
+      qualification: "ماجستير كيمياء",
       avatar: null,
     },
     {
@@ -111,53 +109,21 @@ const TeachersManagement = () => {
       subjects: ["Math", "Physics"],
       status: "pending",
       joinDate: "2024-03-12",
-      experience: "4 years",
-      qualification: "Bachelors in English Literature",
+      experience: "4 سنوات",
+      qualification: "بكالوريوس أدب إنجليزي",
       avatar: null,
     },
   ]);
 
-  const [filteredTeachers, setFilteredTeachers] = useState(teachers);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchText, setSearchText] = useState("");
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
-  const [editTeacherModal, setEditTeacherModal] = useState(false);
   const [addNewModal, setAddNewModal] = useState(false);
 
-  const handleStatusChange = (teacherId, newStatus) => {
-    setLoading(true);
-    setTimeout(() => {
-      setTeachers((prevTeachers) =>
-        prevTeachers.map((teacher) =>
-          teacher.id === teacherId ? { ...teacher, status: newStatus } : teacher
-        )
-      );
-      message.success(`Teacher ${newStatus} successfully!`);
-      setLoading(false);
-    }, 500);
-  };
-
-  const handleViewTeacher = (teacher) => {
-    setSelectedTeacher(teacher);
-    setViewModalVisible(true);
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "pending":
-        return "orange";
-      case "approved":
-        return "green";
-      case "rejected":
-        return "red";
-      default:
-        return "default";
-    }
-  };
-
+  // خريطة الأيقونة لكل حالة
   const getStatusIcon = (status) => {
     switch (status) {
       case "pending":
@@ -171,59 +137,94 @@ const TeachersManagement = () => {
     }
   };
 
-  const getInitials = (name) => {
-    return name
+  // ترجمة نص الحالة للعرض
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case "pending":
+        return "قيد المراجعة";
+      case "approved":
+        return "مقبول";
+      case "rejected":
+        return "مرفوض";
+      default:
+        return "غير محدد";
+    }
+  };
+
+  // حالة شارة AntD المسموح بها: success | processing | default | error | warning
+  const getBadgeStatus = (status) => {
+    switch (status) {
+      case "pending":
+        return "warning";
+      case "approved":
+        return "success";
+      case "rejected":
+        return "error";
+      default:
+        return "default";
+    }
+  };
+
+  const getInitials = (name) =>
+    name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase();
+
+  const handleStatusChange = (teacherId, newStatus) => {
+    setLoading(true);
+    setTimeout(() => {
+      setTeachers((prev) =>
+        prev.map((t) => (t.id === teacherId ? { ...t, status: newStatus } : t))
+      );
+      message.success(`تم تغيير حالة المعلم إلى "${getStatusLabel(newStatus)}" بنجاح`);
+      setLoading(false);
+    }, 500);
   };
 
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
-    { label: "Teachers", href: "/teachers", icon: Users, current: true },
+    { label: "المعلمين", href: "/teachers", icon: Users, current: true },
   ];
 
   return (
     <PageLayout>
-      <BreadcrumbsShowcase items={breadcrumbs} variant="pill" />
-      <PagesHeader
-        title={"Manage Teachers"}
-        subtitle={"Review and manage teacher applications and profiles"}
-        extra={
-          <div className="flex items-center gap-4">
-            <Button type="default" icon={<Upload className="w-4 h-4" />}>
-              استيراد
-            </Button>
-            <Button type="secondary" icon={<Download className="w-4 h-4" />}>
-              تصدير
-            </Button>
-            <Button
-              onClick={() => setAddNewModal(true)}
-              type="primary"
-              size="large"
-              icon={<Plus className="w-5 h-5" />}
-            >
-              Add New Teacher
-            </Button>
-          </div>
-        }
-      />
-      <TeacherStats />
-      <div className="mx-auto">
-        {/* Filters Section */}
+      <div dir="rtl">
+        <BreadcrumbsShowcase items={breadcrumbs} variant="pill" />
 
+        <PagesHeader
+          title={"إدارة المعلمين"}
+          subtitle={"مراجعة وإدارة طلبات المعلمين وملفاتهم"}
+          extra={
+            <div className="flex items-center gap-4 gap-reverse">
+              <Button type="default" icon={<Upload className="w-4 h-4" />}>
+                استيراد
+              </Button>
+              <Button type="secondary" icon={<Download className="w-4 h-4" />}>
+                تصدير
+              </Button>
+              <Button
+                onClick={() => setAddNewModal(true)}
+                type="primary"
+                size="large"
+                icon={<Plus className="w-5 h-5" />}
+              >
+                إضافة معلم
+              </Button>
+            </div>
+          }
+        />
+
+        {/* بطاقات الإحصائيات (المكوّن الداخلي لديك) */}
+        <TeacherStats />
+
+        {/* فلاتر البحث وطريقة العرض */}
         <SearchAndFilters mode={viewMode} setMode={setViewMode} />
 
-        {/* Table */}
-
-        {viewMode == "table" ? (
-          <>
-            <TeachersTable
-              searchText={searchText}
-              selectedStatus={selectedStatus}
-            />
-          </>
+        {/* عرض الشبكة أو الجدول */}
+        {viewMode === "table" ? (
+          <TeachersTable searchText={searchText} selectedStatus={selectedStatus} />
         ) : (
           <TeacherCards
             data={teachers}
@@ -231,19 +232,15 @@ const TeachersManagement = () => {
               setSelectedTeacher(t);
               setViewModalVisible(true);
             }}
-            onApprove={(t) => console.log("approve", t)}
-            onReject={(t) => console.log("reject", t)}
+            onApprove={(t) => handleStatusChange(t.id, "approved")}
+            onReject={(t) => handleStatusChange(t.id, "rejected")}
           />
         )}
       </div>
 
-      {/* View Teacher Modal */}
+      {/* نافذة عرض تفاصيل المعلم */}
       <Modal
-        title={
-          <div className="text-xl font-semibold text-gray-800">
-            Teacher Details
-          </div>
-        }
+        title={<div className="text-xl font-semibold text-gray-800">تفاصيل المعلم</div>}
         open={viewModalVisible}
         onCancel={() => setViewModalVisible(false)}
         footer={null}
@@ -252,7 +249,7 @@ const TeachersManagement = () => {
       >
         {selectedTeacher && (
           <div className="py-6">
-            {/* Teacher Header */}
+            {/* رأس النافذة */}
             <div className="text-center mb-8">
               <Avatar
                 size={100}
@@ -263,12 +260,13 @@ const TeachersManagement = () => {
               <Title level={2} className="mb-2">
                 {selectedTeacher.name}
               </Title>
+
               <Badge
-                status={getStatusColor(selectedTeacher.status)}
+                status={getBadgeStatus(selectedTeacher.status)}
                 text={
-                  <span className="capitalize font-medium text-lg">
-                    {getStatusIcon(selectedTeacher.status)}{" "}
-                    {selectedTeacher.status}
+                  <span className="font-medium text-lg flex items-center gap-2">
+                    {getStatusIcon(selectedTeacher.status)}
+                    {getStatusLabel(selectedTeacher.status)}
                   </span>
                 }
               />
@@ -276,15 +274,15 @@ const TeachersManagement = () => {
 
             <Divider />
 
-            {/* Teacher Information Grid */}
+            {/* معلومات المعلم */}
             <Row gutter={[24, 24]} className="mb-8">
               <Col span={12}>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <Text strong className="text-gray-700 flex items-center mb-2">
                     <BookOutlined className="mr-2 text-yellow-600" />
-                    Subjects
+                    المواد
                   </Text>
-                  <div className="flex flex-wrap items-center  space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {selectedTeacher.subjects.map((item, i) => (
                       <Tag
                         key={i}
@@ -301,71 +299,75 @@ const TeachersManagement = () => {
                   </div>
                 </div>
               </Col>
+
               <Col span={12}>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <Text strong className="text-gray-700 flex items-center mb-2">
                     <TrophyOutlined className="mr-2 text-yellow-600" />
-                    Experience
+                    الخبرة
                   </Text>
                   <Text className="text-lg">{selectedTeacher.experience}</Text>
                 </div>
               </Col>
+
               <Col span={12}>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <Text strong className="text-gray-700 flex items-center mb-2">
                     <MailOutlined className="mr-2 text-blue-600" />
-                    Email
+                    البريد الإلكتروني
                   </Text>
-                  <Text className="text-sm text-blue-600">
-                    {selectedTeacher.email}
-                  </Text>
+                  <Text className="text-sm text-blue-600">{selectedTeacher.email}</Text>
                 </div>
               </Col>
+
               <Col span={12}>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <Text strong className="text-gray-700 flex items-center mb-2">
                     <PhoneOutlined className="mr-2 text-green-600" />
-                    Phone
+                    الهاتف
                   </Text>
                   <Text>{selectedTeacher.phone}</Text>
                 </div>
               </Col>
+
               <Col span={12}>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <Text strong className="text-gray-700 flex items-center mb-2">
                     <CalendarOutlined className="mr-2 text-purple-600" />
-                    Join Date
+                    تاريخ الانضمام
                   </Text>
                   <Text>
-                    {new Date(selectedTeacher.joinDate).toLocaleDateString()}
+                    {new Date(selectedTeacher.joinDate).toLocaleDateString("ar-EG")}
                   </Text>
                 </div>
               </Col>
+
               <Col span={12}>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <Text strong className="text-gray-700 flex items-center mb-2">
                     <TrophyOutlined className="mr-2 text-indigo-600" />
-                    Qualification
+                    المؤهل
                   </Text>
                   <Text>{selectedTeacher.qualification}</Text>
                 </div>
               </Col>
             </Row>
 
-            {/* Action Buttons */}
-            <div className="text-center gap-4">
+            {/* الأزرار */}
+            <div className="text-center flex items-center justify-center gap-3">
               {selectedTeacher.status !== "approved" && (
                 <Button
                   type="primary"
                   size="large"
                   className="bg-green-600 hover:bg-green-700 border-green-600 px-8"
                   icon={<CheckCircleOutlined />}
+                  loading={loading}
                   onClick={() => {
                     handleStatusChange(selectedTeacher.id, "approved");
                     setViewModalVisible(false);
                   }}
                 >
-                  Approve Teacher
+                  قبول المعلم
                 </Button>
               )}
               {selectedTeacher.status !== "rejected" && (
@@ -374,12 +376,13 @@ const TeachersManagement = () => {
                   size="large"
                   className="px-8"
                   icon={<CloseCircleOutlined />}
+                  loading={loading}
                   onClick={() => {
                     handleStatusChange(selectedTeacher.id, "rejected");
                     setViewModalVisible(false);
                   }}
                 >
-                  Reject Teacher
+                  رفض المعلم
                 </Button>
               )}
             </div>
@@ -387,11 +390,25 @@ const TeachersManagement = () => {
         )}
       </Modal>
 
+      {/* إضافة معلم جديد */}
       <AddTeacherModal
         open={addNewModal}
         onCancel={() => setAddNewModal(false)}
         subjectOptions={subjects}
-        onSubmit={(payload) => console.log(payload)}
+        onSubmit={(payload) => {
+          // إضافة المعلم للحالة الحالية
+          setTeachers((prev) => [
+            {
+              id: prev.length ? Math.max(...prev.map((t) => t.id)) + 1 : 1,
+              status: "pending",
+              avatar: null,
+              ...payload,
+            },
+            ...prev,
+          ]);
+          message.success("تمت إضافة المعلم بنجاح");
+          setAddNewModal(false);
+        }}
       />
     </PageLayout>
   );
