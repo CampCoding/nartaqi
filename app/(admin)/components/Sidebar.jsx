@@ -104,7 +104,7 @@ export default function Sidebar() {
     { name: "المعلمين", icon: Users, path: "/teachers" },
     { name: "الطلاب", icon: GraduationCap, path: "/students" },
     { name: "الأسئلة", icon: HelpCircle, path: "/questions" },
-    { name: "الامتحانات", icon: FileText, path: "/exams" },
+    { name: "الاختبارات", icon: FileText, path: "/exams" },
     {
       name: "الإشعارات",
       icon: Bell,
@@ -188,7 +188,7 @@ export default function Sidebar() {
             className="group flex items-center justify-center gap-4 gap-reverse transition-transform duration-300 hover:scale-105"
           >
             <img
-              src="/images/logo.png"
+              src="/images/logo.svg"
               className="w-24 h-24 mx-auto"
               alt="الشعار"
             />

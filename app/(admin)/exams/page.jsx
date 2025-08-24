@@ -1,746 +1,308 @@
 "use client";
-
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import PageLayout from "../../../components/layout/PageLayout";
+import BreadcrumbsShowcase from "../../../components/ui/BreadCrumbs";
 import {
-  Table,
-  Button,
-  Tag,
-  Space,
-  Avatar,
-  Tooltip,
-  Modal,
-  Input,
-  Select,
-  message,
-  Popconfirm,
-  Card,
-  Statistic,
-  Row,
-  Col,
-  Form,
-  Badge,
-  Typography,
-} from "antd";
-import DataTable from "./../../../components/layout/DataTable";
-import {
-  EyeOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  PlusOutlined,
-  UserOutlined,
-  BookOutlined,
-  ExperimentOutlined,
-  GlobalOutlined,
-  CalculatorOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  FileTextOutlined,
-  BarChartOutlined,
-  CalendarOutlined,
-  TeamOutlined,
-  TrophyOutlined,
-} from "@ant-design/icons";
+  BarChart3,
+  Download,
+  FileText,
+  Plus,
+  Upload,
+  Eye,
+  Edit3,
+  Trash2,
+  Clock,
+  Users,
+  Filter,
+  MoreVertical,
+  Calendar,
+  Target,
+} from "lucide-react";
+import PagesHeader from "../../../components/ui/PagesHeader";
+import Button from "../../../components/atoms/Button";
+import SearchAndFilters from "../../../components/ui/SearchAndFilters";
 
-const { Option } = Select;
-const { Text, Title } = Typography;
+const breadcrumbs = [
+  { label: "الرئيسية", href: "/", icon: BarChart3 },
+  { label: "الاختبارات", href: "/exams", icon: FileText, current: true },
+];
 
-const ExamManager = () => {
-  const [form] = Form.useForm();
+export default function ExamsPage() {
+  const [newModal, setAddNewModal] = useState(false);
+  const [viewMode, setViewMode] = useState("grid");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("all");
+
+  // مَنُيو النقاط: من فتوح؟
+  const [openMenuFor, setOpenMenuFor] = useState(null);
+  const menuRef = useRef(null);
+
+  // إغلاق القائمة عند الضغط خارجها
+  useEffect(() => {
+    const onClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpenMenuFor(null);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
 
   const [exams, setExams] = useState([
-    {
-      id: 1,
-      title: "Algebra Basics",
-      subject: "Math",
-      createdBy: "Ahmed Hassan",
-      status: "Published",
-      questions: 25,
-      duration: 60,
-      attempts: 145,
-      passRate: 85,
-      createdDate: "2024-01-15",
-      lastModified: "2024-01-20",
-    },
-    {
-      id: 2,
-      title: "Forces & Motion",
-      subject: "Physics",
-      createdBy: "Nour Adel",
-      status: "Draft",
-      questions: 30,
-      duration: 90,
-      attempts: 0,
-      passRate: 0,
-      createdDate: "2024-01-18",
-      lastModified: "2024-01-22",
-    },
-    {
-      id: 3,
-      title: "World Geography",
-      subject: "Geography",
-      createdBy: "Omar Salah",
-      status: "Published",
-      questions: 40,
-      duration: 75,
-      attempts: 89,
-      passRate: 92,
-      createdDate: "2024-01-10",
-      lastModified: "2024-01-25",
-    },
+    { id: 1, title: "اختبار الرياضيات المتقدم", description: "الجبر والهندسة التحليلية", questions: 20, status: "نشط", duration: 90, participants: 245, rating: 4.8, lastModified: "منذ يومين", difficulty: "متوسط", subject: "رياضيات" },
+    { id: 2, title: "اختبار اللغة الإنجليزية", description: "قواعد النحو والمفردات", questions: 15, status: "مسودة", duration: 60, participants: 0, rating: 0, lastModified: "منذ ساعة", difficulty: "سهل", subject: "لغة إنجليزية" },
+    { id: 3, title: "اختبار العلوم الطبيعية", description: "الفيزياء والكيمياء العضوية", questions: 25, status: "منشور", duration: 120, participants: 189, rating: 4.5, lastModified: "منذ 3 أيام", difficulty: "صعب", subject: "علوم" },
+    { id: 4, title: "اختبار التاريخ الحديث", description: "القرن العشرين والأحداث المعاصرة", questions: 18, status: "نشط", duration: 75, participants: 156, rating: 4.2, lastModified: "منذ أسبوع", difficulty: "متوسط", subject: "تاريخ" },
   ]);
 
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingExam, setEditingExam] = useState(null);
-  const [formData, setFormData] = useState({
-    title: "",
-    subject: "",
-    status: "",
-    questions: "",
-    duration: "",
-    createdBy: "",
+  const statusColors = {
+    نشط: "bg-green-50 text-green-700 border-green-200",
+    مسودة: "bg-yellow-50 text-yellow-700 border-yellow-200",
+    منشور: "bg-blue-50 text-blue-700 border-blue-200",
+  };
+
+  const difficultyColors = {
+    سهل: "bg-green-100 text-green-800",
+    متوسط: "bg-yellow-100 text-yellow-800",
+    صعب: "bg-red-100 text-red-800",
+  };
+
+  const filteredExams = exams.filter((exam) => {
+    const q = searchTerm.toLowerCase();
+    const matchesSearch =
+      exam.title.toLowerCase().includes(q) ||
+      exam.description.toLowerCase().includes(q) ||
+      exam.subject.toLowerCase().includes(q);
+    const matchesFilter = selectedFilter === "all" || exam.status === selectedFilter;
+    return matchesSearch && matchesFilter;
   });
 
-  const subjectIcons = {
-    Math: <CalculatorOutlined />,
-    Physics: <ExperimentOutlined />,
-    Geography: <GlobalOutlined />,
-    Literature: <BookOutlined />,
+  // Handlers للأكشنز
+  const handleView = (exam) => {
+    setOpenMenuFor(null);
+    // TODO: افتح صفحة/مودال المعاينة
+    console.log("عرض:", exam);
+  };
+  const handleEdit = (exam) => {
+    setOpenMenuFor(null);
+    // TODO: افتح مودال التعديل
+    console.log("تعديل:", exam);
+  };
+  const handleDelete = (exam) => {
+    setOpenMenuFor(null);
+    // حذف بسيط تجريبي
+    setExams((prev) => prev.filter((e) => e.id !== exam.id));
   };
 
-  const subjectColors = {
-    Math: "blue",
-    Physics: "purple",
-    Geography: "green",
-    Literature: "orange",
-  };
+  const stats = [
+    { label: "إجمالي الاختبارات", value: exams.length, icon: FileText, color: "bg-blue-500" },
+    { label: "الاختبارات النشطة", value: exams.filter((e) => e.status === "نشط").length, icon: Target, color: "bg-green-500" },
+    { label: "المسودات", value: exams.filter((e) => e.status === "مسودة").length, icon: Edit3, color: "bg-yellow-500" },
+    { label: "إجمالي المشاركين", value: exams.reduce((s, e) => s + e.participants, 0), icon: Users, color: "bg-purple-500" },
+  ];
 
-  const handleAddExam = () => {
-    setEditingExam(null);
-    setFormData({
-      title: "",
-      subject: "",
-      status: "",
-      questions: "",
-      duration: "",
-      createdBy: "",
-    });
-    setIsModalVisible(true);
-  };
+  return (
+    <PageLayout>
+      <div dir="rtl">
+        <BreadcrumbsShowcase items={breadcrumbs} variant="pill" />
 
-  const handleEditExam = (record) => {
-    setEditingExam(record);
-    setFormData(record);
-    setIsModalVisible(true);
-  };
-
-  const handleDeleteExam = (id) => {
-    setExams(exams.filter((exam) => exam.id !== id));
-    message.success("Exam deleted successfully");
-  };
-
-  const handleSubmit = () => {
-    // Basic validation
-    if (
-      !formData.title ||
-      !formData.subject ||
-      !formData.status ||
-      !formData.questions ||
-      !formData.duration ||
-      !formData.createdBy
-    ) {
-      message.error("Please fill in all required fields");
-      return;
-    }
-
-    if (editingExam) {
-      setExams(
-        exams.map((exam) =>
-          exam.id === editingExam.id
-            ? {
-                ...exam,
-                ...formData,
-                questions: parseInt(formData.questions),
-                duration: parseInt(formData.duration),
-                lastModified: new Date().toISOString().split("T")[0],
-              }
-            : exam
-        )
-      );
-      message.success("Exam updated successfully");
-    } else {
-      const newExam = {
-        ...formData,
-        id: Math.max(...exams.map((exam) => exam.id)) + 1,
-        questions: parseInt(formData.questions),
-        duration: parseInt(formData.duration),
-        attempts: 0,
-        passRate: 0,
-        createdDate: new Date().toISOString().split("T")[0],
-        lastModified: new Date().toISOString().split("T")[0],
-      };
-      setExams([...exams, newExam]);
-      message.success("Exam created successfully");
-    }
-    setIsModalVisible(false);
-    setFormData({
-      title: "",
-      subject: "",
-      status: "",
-      questions: "",
-      duration: "",
-      createdBy: "",
-    });
-  };
-
-  const columns = [
-    {
-      title: "Exam Details",
-      key: "examDetails",
-      render: (_, record) => (
-        <div className="flex items-center gap-3">
-          <div
-            className="w-12 h-12 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: "#F9FAFC", border: "1px solid #e5e7eb" }}
-          >
-            <FileTextOutlined style={{ color: "#0F7490", fontSize: "18px" }} />
-          </div>
-          <div>
-            <div
-              className="font-semibold text-base"
-              style={{ color: "#202938" }}
-            >
-              {record.title}
+        <PagesHeader
+          title={"إدارة الاختبارات"}
+          subtitle={"مراجعة وإدارة الاختبارات التعليمية"}
+          extra={
+            <div className="flex items-center gap-3 flex-row-reverse">
+              <Button type="default" icon={<Upload className="w-4 h-4" />}>استيراد</Button>
+              <Button type="secondary" icon={<Download className="w-4 h-4" />}>تصدير</Button>
+              <Button onClick={() => setAddNewModal(true)} type="primary" size="large" icon={<Plus className="w-5 h-5" />} className="shadow-lg hover:shadow-xl transition-shadow">
+                إضافة اختبار جديد
+              </Button>
             </div>
-            <div className="flex items-center text-sm text-gray-500 mt-1">
-              <CalendarOutlined className="mr-1" />
-              Created: {record.createdDate}
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "Subject",
-      dataIndex: "subject",
-      key: "subject",
-      render: (subject) => (
-        <Tag
-          icon={subjectIcons[subject]}
-          color={subjectColors[subject]}
-          className="px-3 py-1 font-medium"
-        >
-          {subject}
-        </Tag>
-      ),
-    },
-    {
-      title: "Creator",
-      dataIndex: "createdBy",
-      key: "createdBy",
-      render: (creator) => (
-        <div className="flex items-center gap-2">
-          <Avatar
-            size="small"
-            icon={<UserOutlined />}
-            style={{ backgroundColor: "#C9AE6C" }}
-          />
-          <span className="font-medium" style={{ color: "#202938" }}>
-            {creator}
-          </span>
-        </div>
-      ),
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => {
-        const statusConfig = {
-          Published: { color: "success", icon: <CheckCircleOutlined /> },
-          Draft: { color: "warning", icon: <ClockCircleOutlined /> },
-          Archived: { color: "default", icon: <FileTextOutlined /> },
-        };
+          }
+        />
 
-        return (
-          <Tag
-            color={statusConfig[status]?.color}
-            icon={statusConfig[status]?.icon}
-            className="px-3 py-1 font-medium"
-          >
-            {status}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: "Exam Info",
-      key: "examInfo",
-      render: (_, record) => (
-        <div className="space-y-1">
-          <div className="flex items-center text-sm">
-            <BookOutlined className="mr-2 text-gray-400" />
-            <span className="font-medium">{record.questions}</span>
-            <span className="text-gray-500 ml-1">questions</span>
-          </div>
-          <div className="flex items-center text-sm">
-            <ClockCircleOutlined className="mr-2 text-gray-400" />
-            <span className="font-medium">{record.duration}</span>
-            <span className="text-gray-500 ml-1">minutes</span>
-          </div>
-          <div className="flex items-center text-sm">
-            <TeamOutlined className="mr-2 text-gray-400" />
-            <span className="font-medium">{record.attempts}</span>
-            <span className="text-gray-500 ml-1">attempts</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "Performance",
-      key: "performance",
-      render: (_, record) => (
-        <div className="text-center">
-          {record.attempts > 0 ? (
-            <div>
-              <div
-                className="text-2xl font-bold mb-1"
-                style={{
-                  color:
-                    record.passRate >= 80
-                      ? "#22c55e"
-                      : record.passRate >= 60
-                      ? "#f59e0b"
-                      : "#ef4444",
-                }}
-              >
-                {record.passRate}%
+        {/* إحصائيات */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {stats.map((stat, i) => (
+            <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stat.value.toLocaleString()}</p>
+                </div>
+                <div className={`${stat.color} p-3 rounded-lg`}>
+                  <stat.icon className="w-6 h-6 text-white" />
+                </div>
               </div>
-              <div className="text-xs text-gray-500">Pass Rate</div>
             </div>
-          ) : (
-            <div className="text-gray-400">
-              <div className="text-sm">No attempts</div>
+          ))}
+        </div>
+
+        {/* البحث والفلاتر */}
+        {/* <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+            <SearchAndFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} mode={viewMode} setMode={setViewMode} />
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
+                {["all", "نشط", "مسودة", "منشور"].map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setSelectedFilter(filter)}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      selectedFilter === filter ? "bg-white text-blue-600 shadow-sm" : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    {filter === "all" ? "الكل" : filter}
+                  </button>
+                ))}
+              </div>
+              <Button type="default" icon={<Filter className="w-4 h-4" />}>فلاتر متقدمة</Button>
+            </div>
+          </div>
+        </div> */}
+        <SearchAndFilters mode={viewMode} searchTerm={searchTerm} setMode={setViewMode} setSearchTerm={setSearchTerm}/>
+
+        {/* الكروت + منيو النقاط */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredExams.map((exam) => (
+            <div
+              key={exam.id}
+              className="bg-white relative shadow-sm rounded-2xl border border-gray-100 hover:shadow-lg hover:border-gray-200 transition-all duration-200 overflow-hidden group"
+            >
+              {/* Decorative dots */}
+              <div className="absolute top-3 right-6 w-2 h-2 rounded-full bg-emerald-400 animate-ping opacity-70"></div>
+              <div className="absolute bottom-6 left-6 w-3 h-3 rounded-full bg-blue-400 animate-bounce opacity-80"></div>
+
+              {/* Blur circles */}
+              <div className="absolute w-14 h-14 rounded-full bg-teal-500/40 top-0 -right-5 blur-3xl"></div>
+              <div className="absolute w-14 h-14 rounded-full bg-indigo-500/40 bottom-0 -left-5 blur-3xl"></div>
+
+              {/* Header */}
+              <div className="p-6 pb-4 relative z-10">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
+                      {exam.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm">{exam.description}</p>
+                  </div>
+
+                  {/* زر النقاط + القائمة */}
+                  <div className="relative" ref={menuRef}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuFor((prev) => (prev === exam.id ? null : exam.id));
+                      }}
+                      className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-100"
+                      aria-label="فتح القائمة"
+                    >
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+
+                    {openMenuFor === exam.id && (
+                      <div
+                        className="absolute z-20 left-0 mt-2 w-40 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
+                        role="menu"
+                      >
+                        <button
+                          onClick={() => handleView(exam)}
+                          className="w-full text-right px-3 py-2 text-sm hover:bg-gray-50 flex items-center justify-between"
+                        >
+                          عرض <Eye className="w-4 h-4 text-gray-500" />
+                        </button>
+                        <button
+                          onClick={() => handleEdit(exam)}
+                          className="w-full text-right px-3 py-2 text-sm hover:bg-gray-50 flex items-center justify-between"
+                        >
+                          تعديل <Edit3 className="w-4 h-4 text-gray-500" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(exam)}
+                          className="w-full text-right px-3 py-2 text-sm hover:bg-red-50 text-red-600 flex items-center justify-between"
+                        >
+                          حذف <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Status & Subject */}
+                <div className="flex items-center gap-2 mb-4">
+                  <span className={`px-3 py-1 text-xs font-medium rounded-full border ${statusColors[exam.status]}`}>{exam.status}</span>
+                  <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-md">{exam.subject}</span>
+                  <span className={`px-2 py-1 text-xs rounded-md ${difficultyColors[exam.difficulty]}`}>{exam.difficulty}</span>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-4 text-center border-t border-gray-100 pt-4">
+                  <div>
+                    <div className="flex items-center justify-center text-gray-400 mb-1"><FileText className="w-4 h-4" /></div>
+                    <p className="text-sm font-semibold text-gray-900">{exam.questions}</p>
+                    <p className="text-xs text-gray-500">سؤال</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-center text-gray-400 mb-1"><Clock className="w-4 h-4" /></div>
+                    <p className="text-sm font-semibold text-gray-900">{exam.duration}</p>
+                    <p className="text-xs text-gray-500">دقيقة</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-center text-gray-400 mb-1"><Users className="w-4 h-4" /></div>
+                    <p className="text-sm font-semibold text-gray-900">{exam.participants}</p>
+                    <p className="text-xs text-gray-500">مشارك</p>
+                  </div>
+                </div>
+
+                {/* Last Modified */}
+                {exam.rating > 0 && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <Calendar className="w-3 h-3" />
+                      {exam.lastModified}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Actions (أزرار سريعة أسفل الكارت – اختياري) */}
+             
+            </div>
+          ))}
+
+          {filteredExams.length === 0 && (
+            <div className="col-span-full">
+              <div className="text-center text-gray-500 border-2 border-dashed border-gray-200 rounded-2xl p-12 bg-gray-50">
+                <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">لا توجد اختبارات</h3>
+                <p className="text-gray-500 mb-4">لم يتم العثور على اختبارات مطابقة لمعايير البحث</p>
+                <Button onClick={() => setSearchTerm("")} type="secondary">مسح البحث</Button>
+              </div>
             </div>
           )}
         </div>
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Space size="small">
-          <Tooltip title="View Exam">
-            <Button
-              type="text"
-              icon={<EyeOutlined />}
-              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-            />
-          </Tooltip>
-          <Tooltip title="Edit Exam">
-            <Button
-              type="text"
-              icon={<EditOutlined />}
-              onClick={() => handleEditExam(record)}
-              style={{ color: "#0F7490" }}
-              className="hover:bg-cyan-50"
-            />
-          </Tooltip>
-          <Popconfirm
-            title="Delete Exam"
-            description="Are you sure you want to delete this exam?"
-            onConfirm={() => handleDeleteExam(record.id)}
-            okText="Yes"
-            cancelText="No"
-            okButtonProps={{
-              style: { backgroundColor: "#ef4444", borderColor: "#ef4444" },
-            }}
-          >
-            <Tooltip title="Delete Exam">
-              <Button
-                type="text"
-                icon={<DeleteOutlined />}
-                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-              />
-            </Tooltip>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
 
-  const totalExams = exams.length;
-  const publishedExams = exams.filter(
-    (exam) => exam.status === "Published"
-  ).length;
-  const totalAttempts = exams.reduce((sum, exam) => sum + exam.attempts, 0);
-  const avgPassRate =
-    exams
-      .filter((exam) => exam.attempts > 0)
-      .reduce((sum, exam, _, arr) => sum + exam.passRate / arr.length, 0) || 0;
-
-  return (
-    <div style={{ backgroundColor: "#F9FAFC" }} className="min-h-screen ">
-      <div className="bg-gradient-to-r from-accent rounded-md shadow-2xl to-cyan-600 !text-white relative">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-10 left-10 w-20 h-20 bg-teal-200 rounded-full blur-lg opacity-20 animate-pulse"></div>
-          <div className="absolute top-40 right-20 w-16 h-16 bg-orange-200 rounded-full blur-lg opacity-30 animate-bounce delay-1000"></div>
-          <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-blue-200 rounded-full blur-lg opacity-25 animate-ping delay-2000"></div>
-          <div className="absolute top-20 right-1/3 w-8 h-8 bg-purple-200 rounded-full blur-lg opacity-30 animate-pulse delay-500"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-6 py-8 relative z-10">
-          <Title level={1} className="!text-white mb-2">
-            Manage Exams
-          </Title>
-          <Text className="text-white text-lg">
-            Create, monitor, and analyze your examination system
-          </Text>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        {/* <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleAddExam}
-              size="large"
-              className="shadow-lg font-medium"
-              style={{
-                backgroundColor: "#0F7490",
-                borderColor: "#0F7490",
-                height: "48px",
-                paddingLeft: "24px",
-                paddingRight: "24px",
-              }}
-            >
-              Create New Exam
-            </Button>
-          </div>
-        </div> */}
-
-        {/* Statistics Cards */}
-        <ExamStatsRow
-          stats={{
-            totalExams: 12,
-            publishedExams: 9,
-            totalAttempts: 340,
-            avgPassRate: 78.6,
-          }}
-        />
-
-        {/* Exams Table */}
-        <Card className="shadow-sm border-0">
-          <div className="flex items-center justify-between mb-6">
-            <div className="mb-6">
-              <h2
-                className="text-xl font-semibold"
-                style={{ color: "#202938" }}
-              >
-                Exam Overview
-              </h2>
-              <p className="text-gray-600 mt-1">
-                Manage and monitor all your examinations
-              </p>
-            </div>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleAddExam}
-              size="large"
-              className="shadow-lg font-medium"
-              style={{
-                backgroundColor: "#0F7490",
-                borderColor: "#0F7490",
-                height: "48px",
-                paddingLeft: "24px",
-                paddingRight: "24px",
-              }}
-            >
-              Create New Exam
-            </Button>
-          </div>
-
-          <DataTable
-            searchable={false}
-            table={{
-              header: columns,
-              rows: exams,
-            }}
-            rowKey="id"
-            pagination={{
-              pageSize: 10,
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} of ${total} exams`,
-              showSizeChanger: true,
-              showQuickJumper: true,
-            }}
-            className="border border-gray-100 rounded-lg overflow-hidden"
-            rowClassName="hover:bg-gray-50 transition-colors"
-          />
-          {/* 
-          <Table
-            columns={columns}
-            dataSource={exams}
-            rowKey="id"
-            pagination={{
-              pageSize: 10,
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} of ${total} exams`,
-              showSizeChanger: true,
-              showQuickJumper: true,
-            }}
-            className="border border-gray-100 rounded-lg overflow-hidden"
-            rowClassName="hover:bg-gray-50 transition-colors"
-          /> */}
-        </Card>
-
-        {/* Add/Edit Modal */}
-        <Modal
-          title={
+        {/* Pagination (شكل تجريبي) */}
+        {filteredExams.length > 0 && (
+          <div className="mt-8 flex items-center justify-center">
             <div className="flex items-center gap-2">
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: "#0F7490" }}
-              >
-                <PlusOutlined className="text-white" />
+              <Button type="default" disabled>السابق</Button>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3].map((page) => (
+                  <button
+                    key={page}
+                    className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
+                      page === 1 ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
               </div>
-              <span
-                className="text-lg font-semibold"
-                style={{ color: "#202938" }}
-              >
-                {editingExam ? "Edit Exam" : "Create New Exam"}
-              </span>
+              <Button type="default">التالي</Button>
             </div>
-          }
-          open={isModalVisible}
-          onCancel={() => setIsModalVisible(false)}
-          footer={null}
-          width={600}
-          className="top-8"
-        >
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleSubmit}
-            className="mt-6"
-          >
-            <Form.Item
-              name="title"
-              label={
-                <span className="font-medium" style={{ color: "#202938" }}>
-                  Exam Title
-                </span>
-              }
-              rules={[{ required: true, message: "Please enter exam title" }]}
-            >
-              <Input placeholder="Enter exam title" className="h-10" />
-            </Form.Item>
-
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="subject"
-                  label={
-                    <span className="font-medium" style={{ color: "#202938" }}>
-                      Subject
-                    </span>
-                  }
-                  rules={[{ required: true, message: "Please select subject" }]}
-                >
-                  <Select placeholder="Select subject" className="h-10">
-                    <Option value="Math">
-                      <Space>{subjectIcons.Math} Math</Space>
-                    </Option>
-                    <Option value="Physics">
-                      <Space>{subjectIcons.Physics} Physics</Space>
-                    </Option>
-                    <Option value="Geography">
-                      <Space>{subjectIcons.Geography} Geography</Space>
-                    </Option>
-                    <Option value="Literature">
-                      <Space>{subjectIcons.Literature} Literature</Space>
-                    </Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="status"
-                  label={
-                    <span className="font-medium" style={{ color: "#202938" }}>
-                      Status
-                    </span>
-                  }
-                  rules={[{ required: true, message: "Please select status" }]}
-                >
-                  <Select placeholder="Select status" className="h-10">
-                    <Option value="Draft">
-                      <Space>
-                        <ClockCircleOutlined /> Draft
-                      </Space>
-                    </Option>
-                    <Option value="Published">
-                      <Space>
-                        <CheckCircleOutlined /> Published
-                      </Space>
-                    </Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="questions"
-                  label={
-                    <span className="font-medium" style={{ color: "#202938" }}>
-                      Number of Questions
-                    </span>
-                  }
-                  rules={[
-                    {
-                      required: true,
-                      message: "Please enter number of questions",
-                    },
-                  ]}
-                >
-                  <Input type="number" placeholder="25" className="h-10" />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="duration"
-                  label={
-                    <span className="font-medium" style={{ color: "#202938" }}>
-                      Duration (minutes)
-                    </span>
-                  }
-                  rules={[{ required: true, message: "Please enter duration" }]}
-                >
-                  <Input type="number" placeholder="60" className="h-10" />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Form.Item
-              name="createdBy"
-              label={
-                <span className="font-medium" style={{ color: "#202938" }}>
-                  Created By
-                </span>
-              }
-              rules={[{ required: true, message: "Please enter creator name" }]}
-            >
-              <Input placeholder="Enter creator name" className="h-10" />
-            </Form.Item>
-
-            <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
-              <Button
-                onClick={() => setIsModalVisible(false)}
-                className="h-10 px-6 font-medium"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="primary"
-                htmlType="submit"
-                className="h-10 px-6 font-medium"
-                style={{
-                  backgroundColor: "#0F7490",
-                  borderColor: "#0F7490",
-                }}
-              >
-                {editingExam ? "Update Exam" : "Create Exam"}
-              </Button>
-            </div>
-          </Form>
-        </Modal>
+          </div>
+        )}
       </div>
-    </div>
-  );
-};
-
-export default ExamManager;
-
-function ExamStatsRow({
-  stats = {
-    totalExams: 0,
-    publishedExams: 0,
-    totalAttempts: 0,
-    avgPassRate: 0,
-  },
-}) {
-  const examStatCards = [
-    {
-      title: "Total Exams",
-      valueKey: "totalExams",
-      icon: <FileTextOutlined className="text-white text-2xl" />,
-      bgColor: "#0F7490",
-      valueStyle: { color: "#0F7490" },
-    },
-    {
-      title: "Published",
-      valueKey: "publishedExams",
-      icon: <CheckCircleOutlined className="text-white text-2xl" />,
-      bgColor: "#22c55e",
-      valueStyle: { color: "#22c55e" },
-    },
-    {
-      title: "Total Attempts",
-      valueKey: "totalAttempts",
-      icon: <TeamOutlined className="text-white text-2xl" />,
-      bgColor: "#8B5CF6",
-      valueStyle: { color: "#8B5CF6" },
-    },
-    {
-      title: "Avg Pass Rate",
-      valueKey: "avgPassRate",
-      icon: <TrophyOutlined className="text-white text-2xl" />,
-      bgColor: "#C9AE6C",
-      suffix: "%",
-      formatter: (v) => Math.round(v),
-      valueStyle: { color: "#C9AE6C" },
-    },
-  ];
-
-  return (
-    <Row gutter={[24, 24]} className="mb-8 mt-8">
-      {examStatCards.map((c) => {
-        const rawValue = stats[c.valueKey];
-        const displayValue = c.formatter ? c.formatter(rawValue) : rawValue;
-        return (
-          <Col key={c.valueKey} xs={24} sm={12} md={6}>
-            <Card className="text-center   border-1 border-primary/30  shadow-sm hover:shadow-md transition-shadow ">
-              <div className="mb-3">
-                <div
-                  className="w-16 h-16 rounded-full mx-auto flex items-center justify-center"
-                  style={{ backgroundColor: c.bgColor }}
-                >
-                  {c.icon}
-                </div>
-              </div>
-              <Statistic
-                title={
-                  <span className="text-gray-600 font-medium">{c.title}</span>
-                }
-                value={displayValue}
-                suffix={c.suffix}
-                valueStyle={{
-                  fontSize: "32px",
-                  fontWeight: "bold",
-                  ...c.valueStyle,
-                }}
-              />
-            </Card>
-          </Col>
-        );
-      })}
-    </Row>
+    </PageLayout>
   );
 }

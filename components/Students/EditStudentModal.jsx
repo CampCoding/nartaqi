@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Modal,
   Form,
@@ -15,7 +15,7 @@ import {
   message,
 } from "antd";
 import {
-  PlusOutlined,
+  EditOutlined,
   InboxOutlined,
   UserOutlined,
   TeamOutlined,
@@ -26,6 +26,7 @@ import {
   PhoneOutlined,
   MailOutlined,
 } from "@ant-design/icons";
+import dayjs from "dayjs";
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
@@ -41,6 +42,8 @@ const PALETTE = {
 const toISO = (d) =>
   d ? (typeof d.toDate === "function" ? d.toDate().toISOString() : d.toISOString?.()) : null;
 
+const toDayjs = (v) => (v ? dayjs(v) : null);
+
 const initials = (name = "") =>
   name
     .trim()
@@ -51,21 +54,16 @@ const initials = (name = "") =>
 
 /**
  * Props:
- * open, onCancel, onSubmit(payload)
- * gradeOptions: [{label, value}], classOptions: [{label, value}]
- * subjectOptions: [{ id?, name, code? }...]
- * defaults: { gradeValue?, classValue? }
- *
- * ملاحظة: الـ payload الناتج متوافق مع شبكة الطلاب الحالية:
- * {
- *   name, email, grade, status, joinDate (YYYY-MM-DD),
- *   // باقي الحقول اختيارية للمستقبل
- * }
+ * open, onCancel, onSubmit, student
+ * gradeOptions, classOptions, subjectOptions, defaults
+ * - onSubmit(payload) يجب أن تحدّث الطالب في الواجهة (وأيضًا في الباك إند لو موجود)
+ * - payload يتضمن: { id, name, email, grade, status, joinDate, ... }
  */
-function AddStudentModal({
+function EditStudentModal({
   open,
   onCancel,
   onSubmit,
+  student, // { id, name, email, phone, grade, status, joinDate, dob, subjects, ... }
   gradeOptions = [],
   classOptions = [],
   subjectOptions = [],
@@ -76,6 +74,7 @@ function AddStudentModal({
   const [photoPreview, setPhotoPreview] = useState(null);
   const [age, setAge] = useState(null);
 
+  // subjects options
   const normalizedSubjects = useMemo(
     () =>
       (subjectOptions || []).map((s) => ({
@@ -84,6 +83,44 @@ function AddStudentModal({
       })),
     [subjectOptions]
   );
+
+  // عند فتح/تغيّر الطالب: عبّي الفورم بالبيانات الحالية
+  useEffect(() => {
+    if (!open) return;
+    const init = {
+      fullName: student?.name || "",
+      studentId: student?.studentId || "",
+      email: student?.email || "",
+      phone: student?.phone || "",
+      gender: student?.gender || "ذكر",
+      status: student?.status || "approved", // approved|pending|rejected
+      grade: student?.grade || defaults.gradeValue,
+      classSection: student?.classSection || defaults.classValue,
+      subjects: student?.subjects || [],
+      enrollmentDate: toDayjs(student?.joinDate),
+      dob: toDayjs(student?.dob),
+      transport: student?.transport || "None",
+      guardianName: student?.guardianName || "",
+      guardianPhone: student?.guardianPhone || "",
+      guardianEmail: student?.guardianEmail || "",
+      emergencyName: student?.emergencyName || "",
+      emergencyPhone: student?.emergencyPhone || "",
+      address: student?.address || "",
+      notes: student?.notes || "",
+      sendInvite: !!student?.sendInvite,
+    };
+    form.setFieldsValue(init);
+    setPhotoPreview(student?.photo || null);
+
+    // احتساب العمر (إن وجد dob)
+    if (student?.dob) {
+      const dt = new Date(student.dob);
+      const diff = Date.now() - dt.getTime();
+      setAge(Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000)));
+    } else {
+      setAge(null);
+    }
+  }, [open, student, form, defaults.gradeValue, defaults.classValue]);
 
   const handleDobChange = (d) => {
     if (!d) return setAge(null);
@@ -94,14 +131,16 @@ function AddStudentModal({
   };
 
   const handleFinish = async (values) => {
-    // نطابق أسماء الحقول مع شبكة الطلاب: name, email, grade, status, joinDate
+    // payload متوافق مع شبكة الطلاب لديك
     const payload = {
+      id: student?.id,
       name: values.fullName?.trim(),
       email: values.email?.trim() || "",
       grade: values.grade,
       status: values.status, // approved | pending | rejected
       joinDate: (toISO(values.enrollmentDate) || "").slice(0, 10), // YYYY-MM-DD
-      // معلومات إضافية اختيارية للمستقبل (لا تؤثر على الشبكة الحالية)
+
+      // حقول إضافية للتخزين المستقبلي
       studentId: values.studentId,
       phone: values.phone,
       gender: values.gender,
@@ -123,13 +162,10 @@ function AddStudentModal({
     try {
       setLoading(true);
       await (typeof onSubmit === "function" ? onSubmit(payload) : Promise.resolve());
-      message.success("تم إضافة الطالب بنجاح");
-      form.resetFields();
-      setPhotoPreview(null);
-      setAge(null);
+      message.success("تم حفظ التعديلات بنجاح");
       onCancel?.();
     } catch (e) {
-      message.error("حدث خطأ أثناء إضافة الطالب. حاول مرة أخرى.");
+      message.error("حدث خطأ أثناء حفظ التعديلات. حاول مرة أخرى.");
     } finally {
       setLoading(false);
     }
@@ -164,11 +200,11 @@ function AddStudentModal({
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-                <PlusOutlined className="text-white text-lg" />
+                <EditOutlined className="text-white text-lg" />
               </div>
-              <h2 className="text-3xl font-bold text-text">إضافة طالب جديد</h2>
+              <h2 className="text-3xl font-bold text-text">تعديل بيانات الطالب</h2>
             </div>
-            <p className="text-gray-600">أنشئ ملفًا لطالب واربطه بالصف والمواد.</p>
+            <p className="text-gray-600">حدّث بيانات الطالب واربطه بالصف والمواد.</p>
           </div>
 
           <div className="bg-white rounded-2xl p-6 shadow-sm">
@@ -176,28 +212,6 @@ function AddStudentModal({
               form={form}
               layout="vertical"
               onFinish={handleFinish}
-              initialValues={{
-                fullName: "",
-                studentId: "",
-                email: "",
-                phone: "",
-                gender: "ذكر",
-                status: "approved", // نشط افتراضيًا
-                grade: defaults.gradeValue,
-                classSection: defaults.classValue,
-                subjects: [],
-                enrollmentDate: null,
-                dob: null,
-                transport: "None",
-                guardianName: "",
-                guardianPhone: "",
-                guardianEmail: "",
-                emergencyName: "",
-                emergencyPhone: "",
-                address: "",
-                notes: "",
-                sendInvite: false,
-              }}
               className="grid grid-cols-1 xl:grid-cols-3 gap-6"
             >
               {/* العمود الأيسر */}
@@ -289,12 +303,14 @@ function AddStudentModal({
                   </div>
 
                   <div className="gap-4">
-                    <Form.Item label="تاريخ الميلاد" name="dob" rules={[{ required: true }]}>
+                    <Form.Item label="تاريخ الميلاد" name="dob">
                       <DatePicker className="w-full rounded-lg" onChange={handleDobChange} />
                     </Form.Item>
-
+                    
                   </div>
                 </div>
+
+            
               </div>
 
               {/* العمود الأيمن */}
@@ -340,7 +356,14 @@ function AddStudentModal({
                         </div>
                       )}
 
-                     
+                      <div>
+                        <h4 className="text-text font-semibold">
+                          {form.getFieldValue("fullName") || "اسم الطالب"}
+                        </h4>
+                        <p className="text-gray-500 text-sm">
+                          {form.getFieldValue("studentId") || "المعرف —"}
+                        </p>
+                      </div>
                     </div>
                     {photoPreview && (
                       <div className="mt-3">
@@ -372,9 +395,9 @@ function AddStudentModal({
                     htmlType="submit"
                     loading={loading}
                     className="px-8 py-3 bg-primary text-white rounded-lg hover:!bg-[#0d5f75]"
-                    icon={<PlusOutlined />}
+                    icon={<EditOutlined />}
                   >
-                    {loading ? "جاري الإضافة..." : "إضافة الطالب"}
+                    {loading ? "جاري الحفظ..." : "حفظ التغييرات"}
                   </Button>
                 </div>
               </div>
@@ -386,4 +409,4 @@ function AddStudentModal({
   );
 }
 
-export default AddStudentModal;
+export default EditStudentModal;

@@ -37,13 +37,13 @@ const BreadcrumbsShowcase = ({
                 : "hover:scale-105 border border-opacity-20"
             }`,
             linkStyle: item.current
-              ? { backgroundColor: "#8B5CF6" }
-              : { color: "#202938", borderColor: "#202938" },
+              ? { backgroundColor: "#0F7490" }
+              : { color: "#202938", borderColor: "#0F7490" },
             hoverStyle: !item.current
               ? {
-                  backgroundColor: "rgba(139, 92, 246, 0.05)",
-                  color: "#8B5CF6",
-                  borderColor: "#8B5CF6",
+                  backgroundColor: "#0F749040",
+                  color: "#0F7490",
+                  borderColor: "#0F7490",
                 }
               : {},
           };

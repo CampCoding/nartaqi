@@ -1,356 +1,333 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  Table,
-  Input,
-  Select,
-  Space,
-  Tag,
-  Modal,
-  message,
-  Tooltip,
-  Card,
-  Statistic,
-  Row,
-  Col,
   Avatar,
   Badge,
+  Card,
+  Tag,
+  Tooltip,
   Typography,
+  Space,
+  Modal,
   Divider,
-  Progress,
-  List,
+  Row,
+  Col,
+  message,
 } from "antd";
+import DataTable from "../layout/DataTable";
+import { Mail } from "lucide-react";
+
+import Button from "./../atoms/Button";
 import {
-  SearchOutlined,
-  PlusOutlined,
   EyeOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  UserOutlined,
-  MailOutlined,
-  PhoneOutlined,
-  BookOutlined,
-  CalendarOutlined,
-  TrophyOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  StopOutlined,
-  LockOutlined,
-  UnlockOutlined,
-  IdcardOutlined,
-  HomeOutlined,
-  StarOutlined,
+  CloseCircleOutlined,
+  CalendarOutlined,
+  TrophyOutlined,
 } from "@ant-design/icons";
-import { BarChart3, Download, GraduationCap, Plus, Users } from "lucide-react";
-import PageLayout from "../layout/PageLayout";
-import PagesHeader from "../ui/PagesHeader";
-import BreadcrumbsShowcase from "../ui/BreadCrumbs";
-import Upload from "antd/es/upload/Upload";
-import StudentsStats from "../Students/StudentsStats";
-import SearchAndFilters from "../ui/SearchAndFilters";
-import Button from "./../../components/atoms/Button";
 
 const { Text, Title } = Typography;
-const { Search } = Input;
-const { Option } = Select;
-const StudentsTable = ({handleViewStudent}) => {
+
+/* ---------- Helpers ---------- */
+const statusLabelAr = (status) => {
+  switch (status) {
+    case "pending":
+      return "قيد المراجعة";
+    case "approved":
+      return "نشط";
+    case "rejected":
+      return "محظور";
+    default:
+      return status;
+  }
+};
+
+// antd Badge statuses: success | processing | default | error | warning
+const getStatusColor = (status) => {
+  switch (status) {
+    case "pending":
+      return "warning";
+    case "approved":
+      return "success";
+    case "rejected":
+      return "error";
+    default:
+      return "default";
+  }
+};
+
+const getStatusIcon = (status) => {
+  switch (status) {
+    case "pending":
+      return <ClockCircleOutlined />;
+    case "approved":
+      return <CheckCircleOutlined />;
+    case "rejected":
+      return <CloseCircleOutlined />;
+    default:
+      return null;
+  }
+};
+
+const getInitials = (name = "") =>
+  name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+
+
+
+const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
+  // بيانات طلاب تجريبية (نفس البنية المستخدمة في صفحات الإدارة عندك)
   const [students, setStudents] = useState([
     {
       id: 1,
-      name: "Salma Ali",
-      email: "salma@example.com",
-      phone: "+20 100 111 2222",
-      enrolledAt: "2024-10-01",
-      status: "active",
-      grade: "12th Grade",
-      subjects: ["Math", "Physics", "Chemistry"],
-      gpa: 3.8,
-      address: "Cairo, Egypt",
-      parentName: "Ahmed Ali",
-      parentPhone: "+20 100 111 3333",
-      dateOfBirth: "2006-03-15",
-      studentId: "STU001",
+      name: "Youssef Ibrahim",
+      email: "youssef.ibr@school.edu",
+      phone: "+20 100 111 2233",
+      subjects: ["Math (G9)", "English", "Biology"],
+      status: "approved",
+      joinDate: "2024-09-10",
+      experience: "معدل حضور: 92%",
+      qualification: "الصف التاسع - قسم A",
       avatar: null,
     },
     {
       id: 2,
-      name: "Mahmoud Zaki",
-      email: "mahmoud@example.com",
-      phone: "+20 101 222 3333",
-      enrolledAt: "2024-08-12",
-      status: "blocked",
-      grade: "11th Grade",
-      subjects: ["Biology", "Chemistry", "English"],
-      gpa: 3.2,
-      address: "Alexandria, Egypt",
-      parentName: "Omar Zaki",
-      parentPhone: "+20 101 222 4444",
-      dateOfBirth: "2007-07-22",
-      studentId: "STU002",
+      name: "Mariam Tarek",
+      email: "mariam.tarek@school.edu",
+      phone: "+20 101 222 3344",
+      subjects: ["Physics (G10)", "Chemistry", "English"],
+      status: "pending",
+      joinDate: "2025-02-01",
+      experience: "معدل حضور: 86%",
+      qualification: "الصف العاشر - قسم B",
       avatar: null,
     },
     {
       id: 3,
-      name: "Lina Gamal",
-      email: "lina@example.com",
-      phone: "+20 102 333 4444",
-      enrolledAt: "2025-01-15",
-      status: "active",
-      grade: "10th Grade",
-      subjects: ["Math", "English", "History"],
-      gpa: 3.9,
-      address: "Giza, Egypt",
-      parentName: "Youssef Gamal",
-      parentPhone: "+20 102 333 5555",
-      dateOfBirth: "2008-12-10",
-      studentId: "STU003",
+      name: "Omar Salah",
+      email: "omar.salah@school.edu",
+      phone: "+20 102 333 4455",
+      subjects: ["History (G8)", "Arabic"],
+      status: "approved",
+      joinDate: "2023-11-20",
+      experience: "معدل حضور: 95%",
+      qualification: "الصف الثامن - قسم C",
       avatar: null,
     },
     {
       id: 4,
-      name: "Hassan Ahmed",
-      email: "hassan@example.com",
-      phone: "+20 103 444 5555",
-      enrolledAt: "2024-05-20",
-      status: "active",
-      grade: "12th Grade",
-      subjects: ["Physics", "Math", "Computer Science"],
-      gpa: 3.7,
-      address: "Tanta, Egypt",
-      parentName: "Mohamed Ahmed",
-      parentPhone: "+20 103 444 6666",
-      dateOfBirth: "2006-01-28",
-      studentId: "STU004",
+      name: "Hana Mohamed",
+      email: "hana.mohamed@school.edu",
+      phone: "+20 103 444 5566",
+      subjects: ["Math (G7)", "Science", "Computer"],
+      status: "rejected",
+      joinDate: "2024-01-05",
+      experience: "معدل حضور: 61%",
+      qualification: "الصف السابع - قسم A",
       avatar: null,
     },
     {
       id: 5,
-      name: "Nour Hassan",
-      email: "nour@example.com",
-      phone: "+20 104 555 6666",
-      enrolledAt: "2024-03-08",
-      status: "inactive",
-      grade: "11th Grade",
-      subjects: ["Biology", "Chemistry", "Math"],
-      gpa: 3.5,
-      address: "Mansoura, Egypt",
-      parentName: "Ali Hassan",
-      parentPhone: "+20 104 555 7777",
-      dateOfBirth: "2007-09-14",
-      studentId: "STU005",
+      name: "Karim Ali",
+      email: "karim.ali@school.edu",
+      phone: "+20 104 555 6677",
+      subjects: ["Geography (G9)", "English"],
+      status: "pending",
+      joinDate: "2024-03-12",
+      experience: "معدل حضور: 78%",
+      qualification: "الصف التاسع - قسم B",
       avatar: null,
     },
   ]);
+
   const [filteredStudents, setFilteredStudents] = useState(students);
-
   const [loading, setLoading] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [viewModalVisible, setViewModalVisible] = useState(false);
 
-  const getInitials = (name) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
+  const handleStatusChange = (studentId, newStatus) => {
+    setLoading(true);
+    setTimeout(() => {
+      setStudents((prev) =>
+        prev.map((s) => (s.id === studentId ? { ...s, status: newStatus } : s))
+      );
+      message.success(`تم تغيير حالة الطالب إلى: ${statusLabelAr(newStatus)} بنجاح`);
+      setLoading(false);
+    }, 400);
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "active":
-        return <CheckCircleOutlined />;
-      case "blocked":
-        return <StopOutlined />;
-      case "inactive":
-        return <ClockCircleOutlined />;
-      default:
-        return null;
+  useEffect(() => {
+    let filtered = students;
+
+    if (selectedStatus && selectedStatus !== "all") {
+      filtered = filtered.filter((s) => s.status === selectedStatus);
     }
-  };
 
-  const getGradeColor = (grade) => {
-    switch (grade) {
-      case "12th Grade":
-        return "#8B5CF6";
-      case "11th Grade":
-        return "#0F7490";
-      case "10th Grade":
-        return "#C9AE6C";
-      default:
-        return "#64748b";
+    if (searchText) {
+      const term = searchText.toLowerCase();
+      filtered = filtered.filter(
+        (s) =>
+          s.name.toLowerCase().includes(term) ||
+          s.email.toLowerCase().includes(term) ||
+          (s.qualification || "").toLowerCase().includes(term) ||
+          (s.subjects || []).join(" ").toLowerCase().includes(term)
+      );
     }
+
+    setFilteredStudents(filtered);
+  }, [students, selectedStatus, searchText]);
+
+  const handleViewStudent = (student) => {
+    setSelectedStudent(student);
+    setViewModalVisible(true);
   };
 
-  const getGPAColor = (gpa) => {
-    if (gpa >= 3.7) return "#10b981";
-    if (gpa >= 3.0) return "#f59e0b";
-    return "#ef4444";
-  };
-
-  
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "active":
-        return "green";
-      case "blocked":
-        return "red";
-      case "inactive":
-        return "orange";
-      default:
-        return "default";
-    }
-  };
-
-  const columns = [
-    {
-      title: "Student",
-      dataIndex: "name",
-      key: "name",
-      render: (name, record) => (
-        <div className="flex items-center gap-3">
-          <Avatar
-            size={48}
-            className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold"
-          >
-            {getInitials(name)}
-          </Avatar>
-          <div>
-            <Text strong className="text-gray-900">
-              {name}
-            </Text>
-            <div className="text-sm text-gray-500 flex items-center mt-1">
-              <IdcardOutlined className="mr-1 text-xs" />
-              {record.studentId}
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "Contact",
-      dataIndex: "email",
-      key: "email",
-      render: (email, record) => (
-        <div>
-          <div className="text-sm text-blue-600 flex items-center mb-1">
-            <MailOutlined className="mr-1 text-xs" />
-            {email}
-          </div>
-          <div className="text-sm text-gray-500 flex items-center">
-            <PhoneOutlined className="mr-1 text-xs" />
-            {record.phone}
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "Grade & GPA",
-      key: "academic",
-      render: (_, record) => (
-        <div>
-          <Tag
-            className="mb-2 px-3 py-1 text-xs font-medium border-0"
-            style={{
-              backgroundColor: getGradeColor(record.grade),
-              color: "white",
-            }}
-          >
-            {record.grade}
-          </Tag>
-          <div className="flex items-center">
-            <StarOutlined className="mr-1 text-yellow-500" />
-            <span style={{ color: getGPAColor(record.gpa), fontWeight: "600" }}>
-              {record.gpa} GPA
-            </span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => (
-        <Badge
-          status={getStatusColor(status)}
-          text={
-            <span className="capitalize font-medium">
-              {getStatusIcon(status)} {status}
-            </span>
-          }
-        />
-      ),
-    },
-    {
-      title: "Enrolled",
-      dataIndex: "enrolledAt",
-      key: "enrolledAt",
-      render: (date) => (
-        <div className="flex items-center text-gray-700">
-          <CalendarOutlined className="mr-2 text-blue-500" />
-          {new Date(date).toLocaleDateString()}
-        </div>
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Space size="small">
-          <Tooltip title="View Details">
-            <Button
-              type="primary"
-              icon={<EyeOutlined />}
-              size="small"
-              className="bg-purple-600 hover:bg-purple-700 border-purple-600"
-              onClick={() => handleViewStudent(record)}
-            />
-          </Tooltip>
-          {record.status !== "blocked" ? (
-            <Button
-              type="danger"
-              size="small"
-              icon={<LockOutlined />}
-              onClick={() => handleStatusChange(record.id, "blocked")}
-            >
-              Block
-            </Button>
-          ) : (
-            <Button
-              type="primary"
-              size="small"
-              icon={<UnlockOutlined />}
-              className="bg-green-600 hover:bg-green-700 border-green-600"
-              onClick={() => handleStatusChange(record.id, "active")}
-            >
-              Unblock
-            </Button>
-          )}
-        </Space>
-      ),
-    },
-  ];
+ const columns = [
+     {
+       title: "الطالب",
+       dataIndex: "name",
+       key: "name",
+       render: (name, record) => (
+         <div className="flex items-center gap-3" dir="rtl">
+           <Avatar
+             size={48}
+             className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold"
+           >
+             {getInitials(name)}
+           </Avatar>
+           <div>
+             <Text className="text-gray-900">{name}</Text>
+             <div className="text-sm text-gray-500 flex items-center mt-1">
+               <Mail className="ml-1 text-xs" />
+               {record.email}
+             </div>
+           </div>
+         </div>
+       ),
+     },
+     {
+       title: "المواد",
+       dataIndex: "subjects",
+       key: "subjects",
+       render: (subject) => (
+         <div className="flex flex-wrap w-full max-w-[240px] gap-2" dir="rtl">
+           {subject.map((sub, i) => (
+             <Tag
+               key={i}
+               className="px-3 py-1 w-fit text-xs font-medium border-0"
+               style={{
+                 backgroundColor: "#26829B",
+                 color: "white",
+               }}
+             >
+               {sub}
+             </Tag>
+           ))}
+         </div>
+       ),
+     },
+     {
+       title: "الحالة",
+       dataIndex: "status",
+       key: "status",
+       render: (status) => (
+         <Badge
+           status={getStatusColor(status)}
+           text={
+             <span className="capitalize font-medium">
+               {getStatusIcon(status)} {statusLabelAr(status)}
+             </span>
+           }
+         />
+       ),
+     },
+     {
+       title: "الخبرة",
+       dataIndex: "experience",
+       key: "experience",
+       render: (experience) => (
+         <div className="flex items-center text-gray-700" dir="rtl">
+           <TrophyOutlined className="ml-2 text-yellow-500" />
+           {experience}
+         </div>
+       ),
+     },
+     {
+       title: "تاريخ الانضمام",
+       dataIndex: "joinDate",
+       key: "joinDate",
+       render: (date) => (
+         <div className="flex items-center text-gray-700" dir="rtl">
+           <CalendarOutlined className="ml-2 text-blue-500" />
+           {new Date(date).toLocaleDateString("ar-EG")}
+         </div>
+       ),
+     },
+     {
+       title: "إجراءات",
+       key: "actions",
+       render: (_, record) => (
+         <Space size="small" direction="horizontal" style={{ direction: "rtl" }}>
+           <Tooltip title="عرض التفاصيل">
+             <Button
+               type="primary"
+               icon={<EyeOutlined />}
+               size="small"
+               className="bg-purple-600 !w-fit flex items-center justify-center hover:bg-purple-700 border-purple-600"
+               onClick={() => handleViewTeacher(record)}
+             />
+           </Tooltip>
+           {record.status !== "approved" && (
+             <Button
+               type="primary"
+               size="small"
+               className="bg-green-600 hover:bg-green-700 border-green-600"
+               loading={loading}
+               onClick={() => handleStatusChange(record.id, "approved")}
+             >
+               اعتماد
+             </Button>
+           )}
+           {record.status !== "rejected" && (
+             <Button
+               danger
+               size="small"
+               loading={loading}
+               onClick={() => handleStatusChange(record.id, "rejected")}
+             >
+               رفض
+             </Button>
+           )}
+         </Space>
+       ),
+     },
+   ];
 
   return (
-    <Card className="shadow-lg border-0">
-      <Table
-        columns={columns}
-        dataSource={filteredStudents}
-        rowKey="id"
-        loading={loading}
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total, range) => (
-            <span className="text-gray-600">
-              Showing {range[0]}-{range[1]} of {total} students
-            </span>
-          ),
-        }}
-        scroll={{ x: 800 }}
-        className="custom-table"
-      />
-    </Card>
+    <>
+      <Card className="shadow-lg border-0" dir="rtl">
+        <DataTable
+          searchable={false}
+          table={{ header: columns, rows: filteredStudents }}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => (
+              <span className="text-gray-600">
+                عرض {range[0]}–{range[1]} من {total} طالبًا
+              </span>
+            ),
+          }}
+          scroll={{ x: "max-content" }}
+        />
+      </Card>
+
+      
+    </>
   );
 };
 
