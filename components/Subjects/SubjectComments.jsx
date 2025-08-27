@@ -45,7 +45,7 @@ const quillFormats = [
   "italic",
   "underline",
   "list",
-  "bullet",
+  // "bullet",
   "align",
   "direction",
   "link",

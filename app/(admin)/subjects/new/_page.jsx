@@ -62,7 +62,7 @@ const quillFormats = [
   "underline",
   "strike",
   "list",
-  "bullet",
+  // "bullet",
   "align",
   "direction",
   "color",

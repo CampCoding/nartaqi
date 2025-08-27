@@ -139,7 +139,7 @@ export default function AddFaqModal({ open, setOpen, onSubmit, palette  , active
         onCancel={handleClose}
         title={null}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         className="!w-full max-w-6xl"
       >
         <div className="bg-white" dir="rtl">

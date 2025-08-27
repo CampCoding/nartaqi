@@ -26,6 +26,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Button from "../../atoms/Button";
 import PreserveSubjectLink from "../../PreserveSubjectLink";
 import { Dropdown, Button as AntdButton, Modal } from "antd";
+import '@ant-design/v5-patch-for-react-19';
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -85,6 +86,9 @@ const TeacherSubjectCard = ({
     ? Math.min((clampedEnrolled / capacity) * 100, 100)
     : 0;
 
+  // Round to 2 decimal places for hydration consistency
+  const roundedFillPct = Math.round(fillPct * 100) / 100;
+
   const getStatusColor = (status) => {
     switch (status) {
       case "active":
@@ -117,7 +121,7 @@ const TeacherSubjectCard = ({
     ? "bg-gray-200"
     : isFull
     ? "bg-red-500"
-    : fillPct >= 80
+    : roundedFillPct >= 80
     ? "bg-amber-500"
     : "bg-emerald-500";
 
@@ -181,7 +185,9 @@ const TeacherSubjectCard = ({
       if (availabilityPhase === "upcoming") return 0;
       if (availabilityPhase === "ended") return 100;
       const elapsed = now.getTime() - startDate.getTime();
-      return Math.min(Math.max((elapsed / total) * 100, 0), 100);
+      const calculatedPct = (elapsed / total) * 100;
+      // Round to 2 decimal places for hydration consistency
+      return Math.round(calculatedPct * 100) / 100;
     }
     return availabilityPhase === "ended"
       ? 100
@@ -300,7 +306,7 @@ const TeacherSubjectCard = ({
 
   // ---------- UI ----------
   return (
-    <Link href={`/teachers-courses/teacher-lessons/${subject?.id}`}>
+    <>
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
@@ -432,6 +438,35 @@ const TeacherSubjectCard = ({
                     aria-valuemin={0}
                     aria-valuemax={100}
                     aria-valuenow={Math.round(windowPct)}
+                    role="progressbar"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Capacity progress bar */}
+            {isCapped && (
+              <div className="mb-4">
+                <div className="flex items-center justify-between text-xs text-[#202938]/70 mb-1">
+                  <span>0</span>
+                  <span className="font-medium">
+                    {isFull
+                      ? "مكتمل"
+                      : remaining <= 5
+                      ? `متبقي ${remaining} مقاعد`
+                      : "متاح للتسجيل"}
+                  </span>
+                  <span>{capacity}</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
+                  <div
+                    className={`h-full ${capacityBarClass} transition-all`}
+                    style={{
+                      width: `${roundedFillPct}%` // Fixed: using rounded value
+                    }}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round(roundedFillPct)}
                     role="progressbar"
                   />
                 </div>
@@ -642,7 +677,7 @@ const TeacherSubjectCard = ({
           </motion.div>
         )}
       </AnimatePresence>
-    </Link>
+    </>
   );
 };
 

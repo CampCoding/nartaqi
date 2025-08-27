@@ -66,7 +66,7 @@ export default function AddSupportModal({ open, setOpen, onSubmit, palette }) {
         },
       }}
     >
-      <Modal open={open} onCancel={handleClose} title={null} footer={null} destroyOnClose className="!w-full max-w-3xl">
+      <Modal open={open} onCancel={handleClose} title={null} footer={null} destroyOnHidden className="!w-full max-w-3xl">
         <div className="bg-white" dir="rtl">
           {/* Header */}
           <div className="mb-3">

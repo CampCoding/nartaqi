@@ -54,7 +54,7 @@ const quillFormats = [
   "underline",
   "strike",
   "list",
-  "bullet",
+  // "bullet",
   "align",
   "direction",
   "color",
@@ -222,7 +222,7 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
       const raw = form.getFieldsValue(true);
 
       if (!imagePreview) {
-        message.error("من فضلك ارفع صورة المادة أولاً.");
+        // message.error("من فضلك ارفع صورة المادة أولاً.");
         setLoading(false);
         return;
       }
@@ -253,11 +253,11 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
 
       await new Promise((r) => setTimeout(r, 1200));
       console.log("Form Data:", payload);
-      message.success("تمت إضافة الدورة بنجاح!");
+      // message.success("تمت إضافة الدورة بنجاح!");
       handleReset();
       setOpen(false);
     } catch (e) {
-      message.error("فشل إضافة الدورة. حاول مرة أخرى.");
+      // message.error("فشل إضافة الدورة. حاول مرة أخرى.");
     } finally {
       setLoading(false);
     }

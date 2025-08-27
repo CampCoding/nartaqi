@@ -20,6 +20,7 @@ import {
   Divider,
 } from "antd";
 import DataTable from "./../../../components/layout/DataTable";
+import '@ant-design/v5-patch-for-react-19';
 import {
   SearchOutlined,
   PlusOutlined,

@@ -268,7 +268,7 @@ function StudentsGrid({
               <Card
                 key={t.id}
                 className="rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200 hover:shadow-md transition-all"
-                bodyStyle={{ padding: 16, height: "100%" }}
+                styles={{ body: { padding: 16, height: "100%" } }}
               >
                 {/* Header */}
                 <div className="flex items-start gap-3">

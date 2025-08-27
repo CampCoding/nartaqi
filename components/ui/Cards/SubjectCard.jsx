@@ -27,6 +27,8 @@ import Button from "../../atoms/Button";
 import PreserveSubjectLink from "../../PreserveSubjectLink";
 import { Dropdown, Button as AntdButton, Modal } from "antd";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 /**
  * Props:
@@ -52,7 +54,10 @@ const SubjectCard = ({
   setActivationModal,
   setDeleteModal,
 }) => {
+  const router = useRouter();
+  
   // ---------- Local state ----------
+  const [isMounted, setIsMounted] = useState(false);
   const [isStudentsOpen, setIsStudentsOpen] = useState(false);
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [studentsError, setStudentsError] = useState("");
@@ -60,6 +65,13 @@ const SubjectCard = ({
     Array.isArray(subject?.enrolledStudents) ? subject.enrolledStudents : []
   );
   const [query, setQuery] = useState("");
+  const [dateFormatter, setDateFormatter] = useState(null);
+  const [clientSideData, setClientSideData] = useState({});
+
+  useEffect(() => {
+    setIsMounted(true);
+    setDateFormatter(new Intl.DateTimeFormat("ar-EG", { dateStyle: "medium" }));
+  }, []);
 
   // ---------- Derived data ----------
   const enrolledCount = useMemo(() => {
@@ -119,94 +131,97 @@ const SubjectCard = ({
     ? "bg-amber-500"
     : "bg-emerald-500";
 
-  // ---------- Availability (new) ----------
-  const fmt = useMemo(
-    () => new Intl.DateTimeFormat("ar-EG", { dateStyle: "medium" }),
-    []
-  );
+  // Client-side calculations
+  useEffect(() => {
+    if (!isMounted || !dateFormatter) return;
+    
+    const now = new Date();
+    const startDate = subject?.availableFrom ? new Date(subject.availableFrom) : null;
+    const endDate = subject?.availableTo ? new Date(subject.availableTo) : null;
+    const hasStart = !!startDate;
+    const hasEnd = !!endDate;
 
-  const startDate = useMemo(() => {
-    const s = subject?.availableFrom;
-    const d = s ? new Date(s) : null;
-    return d && !isNaN(d) ? d : null;
-  }, [subject?.availableFrom]);
+    const availabilityPhase = (() => {
+      if (hasStart && hasEnd) {
+        if (now < startDate) return "upcoming";
+        if (now > endDate) return "ended";
+        return "ongoing";
+      }
+      if (hasStart && !hasEnd) {
+        return now < startDate ? "upcoming" : "ongoing";
+      }
+      if (!hasStart && hasEnd) {
+        return now <= endDate ? "ongoing" : "ended";
+      }
+      return "always";
+    })();
 
-  const endDate = useMemo(() => {
-    const e = subject?.availableTo;
-    const d = e ? new Date(e) : null;
-    return d && !isNaN(d) ? d : null;
-  }, [subject?.availableTo]);
+    const daysDiff = (a, b) =>
+      Math.ceil((a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));
+    const daysToStart = hasStart ? Math.max(daysDiff(startDate, now), 0) : null;
+    const daysToEnd = hasEnd ? Math.max(daysDiff(endDate, now), 0) : null;
 
-  const now = new Date();
-  const hasStart = !!startDate;
-  const hasEnd = !!endDate;
+    const windowPct = (() => {
+      if (hasStart && hasEnd) {
+        const total = endDate.getTime() - startDate.getTime();
+        if (total <= 0) return 100;
+        if (availabilityPhase === "upcoming") return 0;
+        if (availabilityPhase === "ended") return 100;
+        const elapsed = now.getTime() - startDate.getTime();
+        return Math.min(Math.max((elapsed / total) * 100, 0), 100);
+      }
+      return availabilityPhase === "ended"
+        ? 100
+        : availabilityPhase === "upcoming"
+        ? 0
+        : 100;
+    })();
 
-  const availabilityPhase = useMemo(() => {
-    if (hasStart && hasEnd) {
-      if (now < startDate) return "upcoming";
-      if (now > endDate) return "ended";
-      return "ongoing";
-    }
-    if (hasStart && !hasEnd) {
-      return now < startDate ? "upcoming" : "ongoing";
-    }
-    if (!hasStart && hasEnd) {
-      return now <= endDate ? "ongoing" : "ended";
-    }
-    return "always"; // لا يوجد نافذة محددة
-  }, [hasStart, hasEnd, now, startDate, endDate]);
+    const availabilityLabel = (() => {
+      if (availabilityPhase === "upcoming" && hasStart)
+        return `يبدأ ${dateFormatter.format(startDate)}${daysToStart ? ` (بعد ${daysToStart} يوم${daysToStart === 1 ? "" : "ًا"})` : ""}`;
+      if (availabilityPhase === "ongoing" && hasEnd)
+        return `ينتهي ${dateFormatter.format(endDate)}`;
+      if (availabilityPhase === "ended") return "منتهي";
+      if (hasStart && hasEnd)
+        return `من ${dateFormatter.format(startDate)} إلى ${dateFormatter.format(endDate)}`;
+      return null;
+    })();
 
-  const availabilityLabel = useMemo(() => {
-    if (availabilityPhase === "upcoming" && hasStart)
-      return `يبدأ ${fmt.format(startDate)}`;
-    if (availabilityPhase === "ongoing" && hasEnd)
-      return `ينتهي ${fmt.format(endDate)}`;
-    if (availabilityPhase === "ended") return "منتهي";
-    if (hasStart && hasEnd)
-      return `من ${fmt.format(startDate)} إلى ${fmt.format(endDate)}`;
-    return null;
-  }, [availabilityPhase, hasStart, hasEnd, startDate, endDate, fmt]);
-
-  const daysDiff = (a, b) =>
-    Math.ceil((a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));
-  const daysToStart = hasStart ? Math.max(daysDiff(startDate, now), 0) : null;
-  const daysToEnd = hasEnd ? Math.max(daysDiff(endDate, now), 0) : null;
-
-  const windowPct = useMemo(() => {
-    if (hasStart && hasEnd) {
-      const total = endDate.getTime() - startDate.getTime();
-      if (total <= 0) return 100;
-      if (availabilityPhase === "upcoming") return 0;
-      if (availabilityPhase === "ended") return 100;
-      const elapsed = now.getTime() - startDate.getTime();
-      return Math.min(Math.max((elapsed / total) * 100, 0), 100);
-    }
-    return availabilityPhase === "ended"
-      ? 100
-      : availabilityPhase === "upcoming"
-      ? 0
-      : 100;
-  }, [hasStart, hasEnd, startDate, endDate, availabilityPhase, now]);
-
-  const windowBarClass =
-    availabilityPhase === "upcoming"
+    const windowBarClass = availabilityPhase === "upcoming"
       ? "bg-gray-300"
       : availabilityPhase === "ended"
       ? "bg-red-500"
       : "bg-emerald-500";
 
-  const isAvailableNow =
-    availabilityPhase === "always" || availabilityPhase === "ongoing";
+    const isAvailableNow = availabilityPhase === "always" || availabilityPhase === "ongoing";
+
+    setClientSideData({
+      startDate,
+      endDate,
+      hasStart,
+      hasEnd,
+      availabilityPhase,
+      daysToStart,
+      daysToEnd,
+      windowPct,
+      availabilityLabel,
+      windowBarClass,
+      isAvailableNow
+    });
+  }, [isMounted, dateFormatter, subject]);
 
   const handleUnavailableClick = useCallback(() => {
+    if (!dateFormatter) return;
+    
     let content = "هذه الدورة غير متاحة حاليًا.";
-    if (availabilityPhase === "upcoming" && hasStart) {
-      content = `تبدأ الدورة في ${fmt.format(startDate)}${
-        daysToStart
-          ? ` (بعد ${daysToStart} يوم${daysToStart === 1 ? "" : "ًا"})`
+    if (clientSideData.availabilityPhase === "upcoming" && clientSideData.hasStart) {
+      content = `تبدأ الدورة في ${dateFormatter.format(clientSideData.startDate)}${
+        clientSideData.daysToStart
+          ? ` (بعد ${clientSideData.daysToStart} يوم${clientSideData.daysToStart === 1 ? "" : "ًا"})`
           : ""
       }.`;
-    } else if (availabilityPhase === "ended") {
+    } else if (clientSideData.availabilityPhase === "ended") {
       content = "تم انتهاء فترة إتاحة الدورة.";
     }
     Modal.info({
@@ -214,7 +229,7 @@ const SubjectCard = ({
       content,
       okText: "حسنًا",
     });
-  }, [availabilityPhase, hasStart, startDate, fmt, daysToStart]);
+  }, [clientSideData, dateFormatter]);
 
   // ---------- Handlers ----------
   const openStudents = useCallback(async () => {
@@ -292,22 +307,42 @@ const SubjectCard = ({
     },
   });
 
+  // Don't render anything until mounted to avoid hydration mismatch
+  if (!isMounted) {
+    return (
+      <Card className="p-0 overflow-hidden h-80 animate-pulse">
+        <div className="h-40 w-full bg-gray-200"></div>
+        <div className="p-6">
+          <div className="h-6 w-3/4 bg-gray-200 rounded mb-4"></div>
+          <div className="h-4 w-full bg-gray-200 rounded mb-2"></div>
+          <div className="h-4 w-2/3 bg-gray-200 rounded mb-6"></div>
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="h-12 bg-gray-200 rounded-2xl"></div>
+            <div className="h-12 bg-gray-200 rounded-2xl"></div>
+            <div className="h-12 bg-gray-200 rounded-2xl"></div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
   // ---------- UI ----------
   return (
-    <Link href={`/subjects/${subject.code}/units`}>
+    <div onClick={() => router.push(`/subjects/${subject.code}/units`)}>
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
         whileHover={{ scale: 1.05 }}
       >
-        <Card className="p-0 overflow-hidden hover:shadow-lg transition-all duration-300">
+        <Card className="p-0 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer">
           {/* Media header */}
           <div className="relative h-40 w-full">
             <img
               src={subject.imageUrl}
               alt={subject.name}
-              className="h-full w-full object-cover"
+              // fill
+              className="object-cover w-full h-full"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0" />
 
@@ -347,10 +382,10 @@ const SubjectCard = ({
                 ))}
 
               {/* شارة الإتاحة */}
-              {(hasStart || hasEnd) && availabilityLabel && (
+              {(clientSideData.hasStart || clientSideData.hasEnd) && clientSideData.availabilityLabel && (
                 <Badge className="w-fit bg-white/90 backdrop-blur text-[#202938] flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
-                  {availabilityLabel}
+                  {clientSideData.availabilityLabel}
                 </Badge>
               )}
             </div>
@@ -404,28 +439,28 @@ const SubjectCard = ({
             </div>
 
             {/* Availability timeline */}
-            {(hasStart || hasEnd) && (
+            {(clientSideData.hasStart || clientSideData.hasEnd) && (
               <div className="mb-4">
                 <div className="flex items-center justify-between text-xs text-[#202938]/70 mb-1">
-                  <span>{hasStart ? fmt.format(startDate) : "—"}</span>
+                  <span>{clientSideData.hasStart ? dateFormatter.format(clientSideData.startDate) : "—"}</span>
                   <span className="font-medium">
-                    {availabilityPhase === "upcoming" && hasStart
-                      ? `يبدأ بعد ${daysToStart} يوم`
-                      : availabilityPhase === "ongoing" && hasEnd
-                      ? `ينتهي بعد ${daysToEnd} يوم`
-                      : availabilityPhase === "ended"
+                    {clientSideData.availabilityPhase === "upcoming" && clientSideData.hasStart
+                      ? `يبدأ بعد ${clientSideData.daysToStart} يوم`
+                      : clientSideData.availabilityPhase === "ongoing" && clientSideData.hasEnd
+                      ? `ينتهي بعد ${clientSideData.daysToEnd} يوم`
+                      : clientSideData.availabilityPhase === "ended"
                       ? "انتهى"
                       : ""}
                   </span>
-                  <span>{hasEnd ? fmt.format(endDate) : "—"}</span>
+                  <span>{clientSideData.hasEnd ? dateFormatter.format(clientSideData.endDate) : "—"}</span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
                   <div
-                    className={`h-full ${windowBarClass} transition-all`}
-                    style={{ width: `${windowPct}%` }}
+                    className={`h-full ${clientSideData.windowBarClass} transition-all`}
+                    style={{ width: `${clientSideData.windowPct}%` }}
                     aria-valuemin={0}
                     aria-valuemax={100}
-                    aria-valuenow={Math.round(windowPct)}
+                    aria-valuenow={Math.round(clientSideData.windowPct)}
                     role="progressbar"
                   />
                 </div>
@@ -439,6 +474,7 @@ const SubjectCard = ({
                   <Button
                     onClick={(e) => {
                       e.preventDefault();
+                      e.stopPropagation();
                       openStudents();
                     }}
                     type="text"
@@ -457,31 +493,11 @@ const SubjectCard = ({
                   <h4 className="text-primary text-xl font-bold ">
                     <span className="font-mono">{subject.price}</span> ر.س
                   </h4>
-
-                  {/* {isAvailableNow ? (
-                    <PreserveSubjectLink
-                      href={`/subjects/${subject.code}/units`}
-                    >
-                      <Button
-                        type="default"
-                        size="small"
-                        className="hover:bg-gray-100"
-                      >
-                        عرض الوحدات
-                      </Button>
-                    </PreserveSubjectLink>
-                  ) : (
-                    <Button
-                      type="default"
-                      size="small"
-                      onClick={handleUnavailableClick}
-                      className="opacity-70 cursor-not-allowed"
-                    >
-                      عرض الوحدات
-                    </Button>
-                  )} */}
                 </div>
-                <div onClick={(e) => e.preventDefault()}>
+                <div onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}>
                   <Dropdown
                     trigger={["click"]}
                     placement="bottomRight"
@@ -490,6 +506,7 @@ const SubjectCard = ({
                     <AntdButton
                       onClick={(e) => {
                         e.preventDefault();
+                        e.stopPropagation();
                       }}
                       className="rounded-lg"
                       icon={<MoreVertical />}
@@ -636,7 +653,7 @@ const SubjectCard = ({
           </motion.div>
         )}
       </AnimatePresence>
-    </Link>
+    </div>
   );
 };
 

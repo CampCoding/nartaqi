@@ -13,19 +13,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "antd";
-import { useSearchParams } from "next/navigation";
 
-const TopicCard = ({ topic, onDeleteTopic = () => null }) => {
-  const searchParams = useSearchParams();
-
+const TopicCard = ({ topic, onDeleteTopic = () => null, subject }) => {
   // Dynamic counts (with graceful fallbacks)
   const questionsCount =
-    topic?.questions ??
-    (Array.isArray(topic?.questions) ? topic.questions.length : 0);
+    topic?.questions ?? (Array.isArray(topic?.questions) ? topic.questions.length : 0);
 
   const flashcardsCount =
-    topic?.flashcards ??
-    (Array.isArray(topic?.flashcards) ? topic.flashcards.length : 0);
+    topic?.flashcards ?? (Array.isArray(topic?.flashcards) ? topic.flashcards.length : 0);
 
   const flashcardsDelta = topic?.stats?.flashcardsDelta; // optional %, e.g. +12
 
@@ -57,7 +52,7 @@ const TopicCard = ({ topic, onDeleteTopic = () => null }) => {
         <Link
           href={{
             pathname: `topics/${topic.name}/questions`,
-            query: { subject: searchParams.get("subject") },
+            query: { subject }, // passing subject directly
           }}
           className="w-full mx-auto"
         >
@@ -115,7 +110,7 @@ const TopicCard = ({ topic, onDeleteTopic = () => null }) => {
             <Link
               href={{
                 pathname: `topics/${topic.name}`,
-                query: { subject: searchParams.get("subject") },
+                query: { subject }, // passing subject directly
               }}
               className="group/stat h-full"
             >
@@ -144,52 +139,6 @@ const TopicCard = ({ topic, onDeleteTopic = () => null }) => {
                 </div>
               </div>
             </Link>
-
-            {/* 🆕 Flashcards */}
-            {/* <div className="group/stat">
-              <Link
-                type="button"
-                href={{
-                  pathname: `topics/${topic.name}/flashcards`,
-                  query: { subject: searchParams.get("subject") },
-                }}
-                aria-label="Open flashcards"
-                className="w-full text-center p-6 rounded-2xl transition-all duration-300 hover:scale-105 border border-opacity-10 focus:outline-none focus:ring-2 focus:ring-[#0F7490]/40 cursor-pointer"
-                style={{
-                  backgroundColor: "rgba(15, 116, 144, 0.04)",
-                  borderColor: "#0F7490",
-                }}
-              >
-                <div className="mb-3">
-                  <span
-                    className="text-4xl font-bold bg-gradient-to-r from-current to-opacity-80 bg-clip-text"
-                    style={{ color: "#0F7490" }}
-                  >
-                    {flashcardsCount}
-                  </span>
-                </div>
-                <div className="flex items-center justify-center gap-2">
-                  <Layers
-                    className="w-4 h-4 opacity-70"
-                    style={{ color: "#0F7490" }}
-                  />
-                  <span
-                    className="text-sm font-medium opacity-70"
-                    style={{ color: "#202938" }}
-                  >
-                    Flashcards
-                  </span>
-                  {typeof flashcardsDelta === "number" && (
-                    <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-[#0F7490]/10 text-[#0F7490]">
-                      <TrendingUp className="w-3 h-3" />
-                      {flashcardsDelta > 0
-                        ? `+${flashcardsDelta}%`
-                        : `${flashcardsDelta}%`}
-                    </span>
-                  )}
-                </div>
-              </Link>
-            </div> */}
           </div>
         </Link>
 

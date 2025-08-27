@@ -15,21 +15,16 @@ import {
 import Link from "next/link";
 import Button from "../../atoms/Button";
 import PreserveSubjectLink from "../../PreserveSubjectLink";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 const UnitCard = ({ unit, onDeleteClick = () => null, onEditUnit = () => null }) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   return (
     <div
       className="relative overflow-hidden rounded-3xl shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 group cursor-pointer"
       style={{ backgroundColor: "white" }}
     >
-
-
-    
-
       {/* Decorative Elements */}
       <div
         className="absolute -top-10 -right-10 w-20 h-20 rounded-full opacity-10 group-hover:opacity-20 transition-opacity duration-300"
@@ -43,10 +38,7 @@ const UnitCard = ({ unit, onDeleteClick = () => null, onEditUnit = () => null })
       {/* Content */}
       <div className="relative p-8">
         <Link
-          href={{
-            pathname: `units/${unit.name}/topics`,
-            query: { subject: searchParams.get("subject") },
-          }}
+          href={`units/${unit.name}/topics`}
           className="w-full mx-auto"
         >
           {/* Header */}

@@ -49,20 +49,22 @@ function parseYouTubeId(url) {
   } catch {}
   return null;
 }
+
 function isYouTube(url) {
   return /youtu\.be|youtube\.com/.test(url);
 }
+
 function youtubeThumb(url) {
   const id = parseYouTubeId(url);
   return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : "";
 }
+
 function classNames(...arr) {
   return arr.filter(Boolean).join(" ");
 }
 
 /* ========================
    Sample Data (Support)
-   Fields: id, name, desc, video, createdAt, tags
 ======================== */
 const SUPPORT_DATA = [
   {
@@ -128,7 +130,6 @@ function SupportCard({ item, onEdit, onDelete, onPlay }) {
   return (
     <div className="rounded-2xl  border border-gray-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition relative">
       {/* Actions */}
-
       <div className="absolute w-24 h-24 left-0 rounded-full  bg-primary blur-3xl cursor-none -bottom-10"></div>
       <div className="absolute top-2 left-2 z-20 flex gap-2">
         <button
@@ -163,7 +164,6 @@ function SupportCard({ item, onEdit, onDelete, onPlay }) {
             preload="metadata"
           />
         )}
-
         <button
           onClick={() => onPlay(item)}
           className="absolute inset-0 flex items-center justify-center group"
@@ -243,83 +243,6 @@ function SupportTable({ rows, onEdit, onDelete, onPlay }) {
         </tbody>
       </table>
     </div>
-  );
-}
-
-/* ========================
-   Lightweight Modals (Add/Edit/Delete/Player)
-======================== */
-function ModalShell({ open, onClose, title, children, width = "max-w-3xl" }) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-[60]">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div
-        dir="rtl"
-        className={classNames(
-          "absolute left-1/2 top-10 -translate-x-1/2 w-[95vw] rounded-2xl bg-white shadow-xl border border-gray-200",
-          width
-        )}
-      >
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="text-lg font-bold">{title}</h3>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100"
-            title="إغلاق"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
-        </div>
-        <div className="p-4">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-
-
-function VideoPlayerModal({ open, onClose, item }) {
-  if (!open || !item) return null;
-  const yt = isYouTube(item.video);
-  const embed = yt
-    ? (() => {
-        const id = parseYouTubeId(item.video);
-        return id ? `https://www.youtube.com/embed/${id}` : "";
-      })()
-    : "";
-
-  return (
-    <ModalShell
-      open={open}
-      onClose={onClose}
-      title={item?.name}
-      width="max-w-5xl"
-    >
-      <div className="w-full">
-        {yt ? (
-          <div className="aspect-video w-full">
-            <iframe
-              className="w-full h-full rounded-xl"
-              src={`${embed}?autoplay=1&rel=0`}
-              title={item.name}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        ) : (
-          <video
-            className="w-full rounded-xl"
-            src={item.video}
-            controls
-            autoPlay
-          />
-        )}
-        {item.desc && (
-          <p className="text-gray-700 mt-3 leading-relaxed">{item.desc}</p>
-        )}
-      </div>
-    </ModalShell>
   );
 }
 
@@ -475,11 +398,11 @@ export default function SupportPage() {
         setOpen={setDeleteModal}
         rowData={rowData}
       />
-      <VideoPlayerModal
+      {/* <VideoPlayerModal
         open={playerModal}
         onClose={() => setPlayerModal(false)}
         item={rowData}
-      />
+      /> */}
     </PageLayout>
   );
 }

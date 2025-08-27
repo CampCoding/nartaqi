@@ -209,7 +209,7 @@ const SubjectDetails = ({ subjectId }) => {
                         <Progress
                           type="circle"
                           percent={Math.round(enrollmentProgress)}
-                          width={80}
+                          size={80}
                           strokeColor="#0F7490"
                           format={(percent) => `${percent}%`}
                         />

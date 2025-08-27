@@ -202,7 +202,7 @@ const normalizeItem = (item) => {
         onCancel={handleClose}
         title={null}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         className="!w-full max-w-6xl"
       >
         <div className="bg-white" dir="rtl">

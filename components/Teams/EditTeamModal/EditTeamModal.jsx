@@ -57,9 +57,9 @@ export default function EditTeamModal({ open, setOpen, rowData, setRowData }) {
               <div className="w-10 h-10 bg-[#0F7490] rounded-lg flex items-center justify-center">
                 <PlusOutlined className="text-white text-lg" />
               </div>
-              <h1 className="text-3xl font-bold text-[#202938]">إضافة فريق</h1>
+              <h1 className="text-3xl font-bold text-[#202938]">تعديل فريق</h1>
             </div>
-            <p className="text-gray-600">إضافة فريق </p>
+            <p className="text-gray-600">تعديل فريق </p>
           </div>
 
           <div className="mx-auto">
@@ -107,21 +107,23 @@ export default function EditTeamModal({ open, setOpen, rowData, setRowData }) {
                 <Input placeholder="Please Enter Role" />
               </Form.Item>
 
-              <Form.Item
-                label="صورة"
-                name="image"
-                rules={[{ required: true, message: "يرجى رفع صورة" }]}
-              >
-                <Upload
-                  name="file"
-                  action="/upload" // Add your upload URL here
-                  listType="picture"
-                  onChange={handleImageChange}
-                  showUploadList={false}
-                >
-                  <Button icon={<UploadOutlined />}>Click to Upload</Button>
-                </Upload>
-              </Form.Item>
+             <Form.Item
+  label="صورة"
+  name="image"
+  rules={[{ required: true, message: "يرجى رفع صورة" }]}
+>
+  <Upload
+    name="file"
+    action="/upload" // Add your upload URL here
+    listType="picture"
+    onChange={handleImageChange}
+    fileList={image ? [{ url: image }] : []} // Use fileList here
+    showUploadList={false}
+  >
+    <Button icon={<UploadOutlined />}>Click to Upload</Button>
+  </Upload>
+</Form.Item>
+
 
               <Form.Item>
                 <Button

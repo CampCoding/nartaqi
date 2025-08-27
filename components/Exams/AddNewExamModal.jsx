@@ -97,7 +97,7 @@ function AddNewExamModal({ open, setOpen, palette, onSubmit }) {
         onCancel={handleCancel}
         title={null}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         className="!w-full max-w-6xl"
       >
         <div className="bg-white" dir="rtl">
@@ -138,7 +138,7 @@ function AddNewExamModal({ open, setOpen, palette, onSubmit }) {
             onFinish={handleFinish}
           >
             {/* عنوان ووصف الامتحان */}
-            <Card bordered className="mb-6">
+            <Card variant="outlined" className="mb-6">
               <Form.Item
                 label="عنوان الامتحان"
                 name="title"
@@ -232,7 +232,7 @@ function AddNewExamModal({ open, setOpen, palette, onSubmit }) {
                             </Tooltip>
                           </div>
                         }
-                        bordered
+                        variant="outlined"
                       >
                         <Form.Item
                           {...restField}

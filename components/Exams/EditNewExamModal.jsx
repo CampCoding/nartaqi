@@ -168,7 +168,7 @@ function EditNewExamModal({ open, setOpen, palette, onSubmit, exam }) {
         onCancel={handleCancel}
         title={null}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         className="!w-full max-w-6xl"
       >
         <div className="bg-white" dir="rtl">
@@ -193,7 +193,7 @@ function EditNewExamModal({ open, setOpen, palette, onSubmit, exam }) {
 
           <Form form={form} layout="vertical" initialValues={initialValues} onFinish={handleFinish}>
             {/* بيانات الامتحان */}
-            <Card bordered className="mb-6">
+            <Card variant="outlined" className="mb-6">
               <Form.Item name="id" hidden>
                 <Input />
               </Form.Item>
@@ -285,7 +285,7 @@ function EditNewExamModal({ open, setOpen, palette, onSubmit, exam }) {
                             </Tooltip>
                           </div>
                         }
-                        bordered
+                        variant="outlined"
                       >
                         {/* hidden question id */}
                         <Form.Item {...restField} name={[name, "id"]} hidden>

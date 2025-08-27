@@ -133,7 +133,6 @@ export default function EditBlogModal({
         onCancel={handleClose}
         title={null}
         footer={null}
-        destroyOnClose
         className="!w-full max-w-3xl"
       >
         <div className="bg-white" dir="rtl">

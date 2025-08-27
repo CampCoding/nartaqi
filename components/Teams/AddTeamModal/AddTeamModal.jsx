@@ -95,21 +95,23 @@ export default function AddTeamModal({ open, setOpen }) {
                 <Input placeholder="Please Enter Role" />
               </Form.Item>
 
-              <Form.Item
-                label="صورة"
-                name="image"
-                rules={[{ required: true, message: "يرجى رفع صورة" }]}
-              >
-                <Upload
-                  name="file"
-                  action="/upload" // Add your upload URL here
-                  listType="picture"
-                  onChange={handleImageChange}
-                  showUploadList={false}
-                >
-                  <Button icon={<UploadOutlined />}>Click to Upload</Button>
-                </Upload>
-              </Form.Item>
+            <Form.Item
+  label="صورة"
+  name="image"
+  rules={[{ required: true, message: "يرجى رفع صورة" }]}
+>
+  <Upload
+    name="file"
+    action="/upload" // Add your upload URL here
+    listType="picture"
+    onChange={handleImageChange}
+    fileList={image ? [{ url: image }] : []} // Use fileList here
+    showUploadList={false}
+  >
+    <Button icon={<UploadOutlined />}>Click to Upload</Button>
+  </Upload>
+</Form.Item>
+
 
               <Form.Item>
                 <Button type="primary" className='!bg-primary  !text-white' htmlType="submit" >

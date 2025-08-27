@@ -20,6 +20,7 @@ import {
   InputNumber,
   Upload,
 } from "antd";
+import '@ant-design/v5-patch-for-react-19';
 import dayjs from "dayjs";
 
 import dynamic from "next/dynamic";
@@ -59,7 +60,7 @@ const quillFormats = [
   "underline",
   "strike",
   "list",
-  "bullet",
+  // "bullet",
   "align",
   "direction",
   "color",

@@ -163,7 +163,7 @@ export default function EditBookModal({ open, setOpen,rowData , setRowData, onSu
         onCancel={handleClose}
         title={null}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         className="!w-full max-w-6xl"
       >
         <div className="bg-white" dir="rtl">
@@ -235,7 +235,7 @@ export default function EditBookModal({ open, setOpen,rowData , setRowData, onSu
                   options={categories}
                   placeholder="اختر الفئة"
                   allowClear
-                  dropdownRender={(menu) => (
+                  popupRender={(menu) => (
                     <div>
                       {menu}
                       {/* quick add from dropdown as well */}
@@ -332,7 +332,7 @@ export default function EditBookModal({ open, setOpen,rowData , setRowData, onSu
         okText="حفظ"
         cancelText="إلغاء"
         onOk={saveNewCategory}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form layout="vertical">
           <Form.Item label="اسم الفئة">

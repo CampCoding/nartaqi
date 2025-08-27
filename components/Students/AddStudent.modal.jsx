@@ -14,6 +14,7 @@ import {
   ConfigProvider,
   message,
 } from "antd";
+import '@ant-design/v5-patch-for-react-19';
 import {
   PlusOutlined,
   InboxOutlined,

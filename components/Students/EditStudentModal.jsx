@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import '@ant-design/v5-patch-for-react-19';
 import {
   Modal,
   Form,
@@ -52,18 +53,11 @@ const initials = (name = "") =>
     .map((p) => p[0]?.toUpperCase() || "")
     .join("");
 
-/**
- * Props:
- * open, onCancel, onSubmit, student
- * gradeOptions, classOptions, subjectOptions, defaults
- * - onSubmit(payload) يجب أن تحدّث الطالب في الواجهة (وأيضًا في الباك إند لو موجود)
- * - payload يتضمن: { id, name, email, grade, status, joinDate, ... }
- */
 function EditStudentModal({
   open,
   onCancel,
   onSubmit,
-  student, // { id, name, email, phone, grade, status, joinDate, dob, subjects, ... }
+  student,
   gradeOptions = [],
   classOptions = [],
   subjectOptions = [],
@@ -93,7 +87,7 @@ function EditStudentModal({
       email: student?.email || "",
       phone: student?.phone || "",
       gender: student?.gender || "ذكر",
-      status: student?.status || "approved", // approved|pending|rejected
+      status: student?.status || "approved",
       grade: student?.grade || defaults.gradeValue,
       classSection: student?.classSection || defaults.classValue,
       subjects: student?.subjects || [],
@@ -131,16 +125,14 @@ function EditStudentModal({
   };
 
   const handleFinish = async (values) => {
-    // payload متوافق مع شبكة الطلاب لديك
     const payload = {
       id: student?.id,
       name: values.fullName?.trim(),
       email: values.email?.trim() || "",
       grade: values.grade,
-      status: values.status, // approved | pending | rejected
-      joinDate: (toISO(values.enrollmentDate) || "").slice(0, 10), // YYYY-MM-DD
+      status: values.status,
+      joinDate: (toISO(values.enrollmentDate) || "").slice(0, 10),
 
-      // حقول إضافية للتخزين المستقبلي
       studentId: values.studentId,
       phone: values.phone,
       gender: values.gender,
@@ -155,7 +147,7 @@ function EditStudentModal({
       emergencyPhone: values.emergencyPhone,
       address: values.address,
       notes: values.notes,
-      photo: photoPreview, // URL بعد الرفع إن لزم
+      photo: photoPreview,
       sendInvite: values.sendInvite ?? false,
     };
 
@@ -209,7 +201,7 @@ function EditStudentModal({
 
           <div className="bg-white rounded-2xl p-6 shadow-sm">
             <Form
-              form={form}
+              form={form} // This connects the form instance to the Form component
               layout="vertical"
               onFinish={handleFinish}
               className="grid grid-cols-1 xl:grid-cols-3 gap-6"
@@ -290,7 +282,6 @@ function EditStudentModal({
                     </Form.Item>
 
                     <Form.Item label="الحالة *" name="status" rules={[{ required: true }]}>
-                      {/* القيم متوافقة مع الشبكة: approved | pending | rejected */}
                       <Select
                         className="rounded-lg"
                         options={[
@@ -310,7 +301,149 @@ function EditStudentModal({
                   </div>
                 </div>
 
-            
+                {/* معلومات الصف والمواد */}
+                <div className="bg-gray-50 p-5 rounded-xl">
+                  <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
+                    <BookOutlined className="text-primary" />
+                    معلومات الصف والمواد
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Form.Item label="الصف" name="grade">
+                      <Select
+                        className="rounded-lg"
+                        options={gradeOptions.map(g => ({ label: g.label, value: g.value }))}
+                        placeholder="اختر الصف"
+                      />
+                    </Form.Item>
+
+                    <Form.Item label="الفصل" name="classSection">
+                      <Select
+                        className="rounded-lg"
+                        options={classOptions.map(c => ({ label: c.label, value: c.value }))}
+                        placeholder="اختر الفصل"
+                      />
+                    </Form.Item>
+
+                    <Form.Item label="المواد الدراسية" name="subjects" className="md:col-span-2">
+                      <Select
+                        mode="multiple"
+                        className="rounded-lg"
+                        options={normalizedSubjects}
+                        placeholder="اختر المواد"
+                      />
+                    </Form.Item>
+                  </div>
+                </div>
+
+                {/* معلومات التسجيل */}
+                <div className="bg-gray-50 p-5 rounded-xl">
+                  <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
+                    <CalendarOutlined className="text-primary" />
+                    معلومات التسجيل
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Form.Item label="تاريخ التسجيل" name="enrollmentDate">
+                      <DatePicker className="w-full rounded-lg" />
+                    </Form.Item>
+
+                    <Form.Item label="وسيلة النقل" name="transport">
+                      <Select
+                        className="rounded-lg"
+                        options={[
+                          { label: "لا يوجد", value: "None" },
+                          { label: "باص المدرسة", value: "School Bus" },
+                          { label: "مواصلات خاصة", value: "Private" },
+                        ]}
+                      />
+                    </Form.Item>
+                  </div>
+                </div>
+
+                {/* معلومات ولي الأمر */}
+                <div className="bg-gray-50 p-5 rounded-xl">
+                  <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
+                    <TeamOutlined className="text-primary" />
+                    معلومات ولي الأمر
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Form.Item label="اسم ولي الأمر" name="guardianName">
+                      <Input
+                        prefix={<UserOutlined className="text-gray-400 mr-2" />}
+                        placeholder="اسم ولي الأمر"
+                        className="rounded-lg px-4 py-3"
+                      />
+                    </Form.Item>
+
+                    <Form.Item label="هاتف ولي الأمر" name="guardianPhone">
+                      <Input
+                        prefix={<PhoneOutlined className="text-gray-400 mr-2" />}
+                        placeholder="+20 1X XXX XXXX"
+                        className="rounded-lg px-4 py-3"
+                      />
+                    </Form.Item>
+
+                    <Form.Item label="بريد ولي الأمر" name="guardianEmail" className="md:col-span-2">
+                      <Input
+                        prefix={<MailOutlined className="text-gray-400 mr-2" />}
+                        placeholder="guardian@email.com"
+                        className="rounded-lg px-4 py-3"
+                      />
+                    </Form.Item>
+                  </div>
+                </div>
+
+                {/* جهات الاتصال للطوارئ */}
+                <div className="bg-gray-50 p-5 rounded-xl">
+                  <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
+                    <PhoneOutlined className="text-primary" />
+                    جهات الاتصال للطوارئ
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Form.Item label="اسم جهة الاتصال" name="emergencyName">
+                      <Input
+                        prefix={<UserOutlined className="text-gray-400 mr-2" />}
+                        placeholder="اسم جهة الاتصال"
+                        className="rounded-lg px-4 py-3"
+                      />
+                    </Form.Item>
+
+                    <Form.Item label="هاتف الطوارئ" name="emergencyPhone">
+                      <Input
+                        prefix={<PhoneOutlined className="text-gray-400 mr-2" />}
+                        placeholder="+20 1X XXX XXXX"
+                        className="rounded-lg px-4 py-3"
+                      />
+                    </Form.Item>
+                  </div>
+                </div>
+
+                {/* العنوان والملاحظات */}
+                <div className="bg-gray-50 p-5 rounded-xl">
+                  <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
+                    <HomeOutlined className="text-primary" />
+                    العنوان والملاحظات
+                  </h3>
+
+                  <Form.Item label="العنوان" name="address">
+                    <TextArea
+                      rows={3}
+                      placeholder="العنوان الكامل"
+                      className="rounded-lg px-4 py-3"
+                    />
+                  </Form.Item>
+
+                  <Form.Item label="ملاحظات" name="notes">
+                    <TextArea
+                      rows={3}
+                      placeholder="ملاحظات إضافية"
+                      className="rounded-lg px-4 py-3"
+                    />
+                  </Form.Item>
+                </div>
               </div>
 
               {/* العمود الأيمن */}
@@ -327,7 +460,7 @@ function EditStudentModal({
                       const reader = new FileReader();
                       reader.onload = (e) => setPhotoPreview(e.target?.result);
                       reader.readAsDataURL(file);
-                      return false; // لا ترفع تلقائيًا
+                      return false;
                     }}
                   >
                     <p className="ant-upload-drag-icon">
@@ -375,6 +508,23 @@ function EditStudentModal({
                   </div>
                 </div>
 
+                {/* إعدادات إضافية */}
+                <div className="bg-gray-50 p-5 rounded-xl">
+                  <h3 className="text-lg font-semibold text-text mb-4">إعدادات إضافية</h3>
+                  
+                  <Form.Item name="sendInvite" valuePropName="checked">
+                    <div className="flex items-center justify-between">
+                      <span>إرسال دعوة للطالب</span>
+                      <Switch />
+                    </div>
+                  </Form.Item>
+                  
+                  {age !== null && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                      <p className="text-blue-700 font-medium">العمر: {age} سنة</p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* الأزرار */}
