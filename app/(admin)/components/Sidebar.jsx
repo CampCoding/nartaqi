@@ -51,7 +51,7 @@ export default function Sidebar() {
       icon: BookOpen,
       path: "/teachers-courses",
     },
-    { name: "إدارة مواد الطلاب", icon: Users, path: "/students-courses" },
+    // { name: "إدارة مواد الطلاب", icon: Users, path: "/students-courses" },
   ];
 
   // Subject items (translated)
@@ -103,14 +103,14 @@ export default function Sidebar() {
   const menuItems = [
     { name: "المعلمين", icon: Users, path: "/teachers" },
     { name: "الطلاب", icon: GraduationCap, path: "/students" },
-    { name: "الأسئلة", icon: HelpCircle, path: "/questions" },
+    // { name: "الأسئلة", icon: HelpCircle, path: "/questions" },
     { name: "الاختبارات", icon: FileText, path: "/exams" },
-    {
-      name: "الإشعارات",
-      icon: Bell,
-      badge: notifications,
-      path: "/notifications",
-    },
+    // {
+    //   name: "الإشعارات",
+    //   icon: Bell,
+    //   badge: notifications,
+    //   path: "/notifications",
+    // },
     {
       name:"المدونة",
       icon : BookOpenIcon,
@@ -147,7 +147,7 @@ export default function Sidebar() {
       badge:"",
       path :"/privacy-policy"
     },
-    { name: "الإعدادات", icon: Settings, path: "/settings" },
+    // { name: "الإعدادات", icon: Settings, path: "/settings" },
   ];
 
   useEffect(() => {

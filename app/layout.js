@@ -6,6 +6,8 @@ import "./styles/responsive.css";
 import Header from "../components/layout/Header";
 import FloatingButton from "../components/ui/FloatingButton";
 import AnimatedFooter from "../components/layout/Footer";
+// import './styles/globals.css';
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
