@@ -1,16 +1,20 @@
 import React, { useState } from "react";
 import { AlertTriangle, Trash2 } from "lucide-react";
-import CustomModal from "../../layout/Modal";
+import CustomModal from "../layout/Modal";
 
-const DeleteFaqModal = ({ open, setOpen, rowData }) => {
+const DeleteExamModal = ({ open, setOpen, rowData }) => {
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
     setLoading(true);
     try {
+      // Implement your deletion logic here, e.g., API call
+      // await deleteSubject(selectedSubject.id);
+      // Close the modal after successful deletion
       setOpen(false);
     } catch (error) {
-      console.error("فشل حذف السؤال:", error);
+      // Handle error (e.g., show a notification)
+      console.error("فشل حذف الاختبار:", error);
     } finally {
       setLoading(false);
     }
@@ -20,7 +24,7 @@ const DeleteFaqModal = ({ open, setOpen, rowData }) => {
     <CustomModal
       isOpen={!!open}
       onClose={() => setOpen(false)}
-      title="حذف السؤال"
+      title="حذف الاختبار"
       size="sm"
     >
       <div className="space-y-4">
@@ -35,8 +39,8 @@ const DeleteFaqModal = ({ open, setOpen, rowData }) => {
         </div>
 
         <div className="p-4 bg-gray-50 rounded-lg">
-          <p className="text-sm text-gray-600 mb-2">السؤال الذي سيتم حذفه:</p>
-          <p className="font-medium text-[#202938]">{rowData?.text}</p>
+          <p className="text-sm text-gray-600 mb-2">الاختبار الذي سيتم حذفه:</p>
+          <p className="font-medium text-[#202938]">{rowData?.title}</p>
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
@@ -57,7 +61,7 @@ const DeleteFaqModal = ({ open, setOpen, rowData }) => {
               "جاري الحذف..."
             ) : (
               <>
-                <Trash2 className="w-4 h-4" /> حذف السؤال
+                <Trash2 className="w-4 h-4" /> حذف الاختبار
               </>
             )}
           </button>
@@ -67,4 +71,4 @@ const DeleteFaqModal = ({ open, setOpen, rowData }) => {
   );
 };
 
-export default DeleteFaqModal;
+export default DeleteExamModal;

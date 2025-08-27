@@ -1,30 +1,26 @@
 import React from "react";
-import Card from "../atoms/Card";
-import {
-  Award,
-  BookOpen,
-  Check,
-  CheckCheck,
-  Clock,
-  Cpu,
-  Eye,
-  FileText,
-  Trophy,
-  User,
-  Users,
-  XCircle,
-} from "lucide-react";
-import StatsCard from "./../ui/StatsCard";
-import LineMatchingGame from "../drafts/Connect.draft";
-import WordArrangementPuzzle from "../drafts/Drag.draft";
 
-const ExamsStats = ({}) => {
+const ExamsStats = ({ stats }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-      <StatsCard icon={FileText} value={12} label={"Total Exams"} />
-      <StatsCard icon={CheckCheck} value={9} label={"Published"} />
-      <StatsCard icon={Users} value={340} label={"Total Attempts"} />
-      <StatsCard icon={Trophy} value={"79%"} label={"Avg Pass Rate"} />
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {stats.map((stat, i) => (
+        <div
+          key={i}
+          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {stat.value.toLocaleString()}
+              </p>
+            </div>
+            <div className={`${stat.color} p-3 rounded-lg`}>
+              <stat.icon className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

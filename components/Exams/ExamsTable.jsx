@@ -1,297 +1,257 @@
 "use client";
-
-import React, { useState } from "react";
-
+import React, { useMemo, useState } from "react";
 import {
-  Tag,
-  Space,
-  Avatar,
-  Tooltip,
-  Modal,
-  Input,
-  Select,
-  message,
-  Popconfirm,
-  Card,
-  Row,
-  Col,
-  Form,
-} from "antd";
-
-import {
-  EyeOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  PlusOutlined,
-  UserOutlined,
-  BookOutlined,
-  ExperimentOutlined,
-  GlobalOutlined,
-  CalculatorOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  FileTextOutlined,
-  CalendarOutlined,
-  TeamOutlined,
-} from "@ant-design/icons";
-import DataTable from "../layout/DataTable";
-
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Edit3,
+  Eye,
+  FileText,
+  Trash2,
+  Users,
+} from "lucide-react";
 import Button from "../atoms/Button";
-const ExamsTable = () => {
-  const subjectIcons = {
-    Math: <CalculatorOutlined />,
-    Physics: <ExperimentOutlined />,
-    Geography: <GlobalOutlined />,
-    Literature: <BookOutlined />,
+import { useRouter } from "next/navigation";
+
+export default function ExamsTable({
+  filteredExams = [],
+  statusColors = {},
+  difficultyColors = {},
+  setSearchTerm,
+  onView,
+  onEdit,
+  onDelete,
+}) {
+  const router = useRouter();
+
+  // Sorting
+  const [sortBy, setSortBy] = useState("title"); // default column
+  const [sortDir, setSortDir] = useState("asc"); // "asc" | "desc"
+
+  const sortedExams = useMemo(() => {
+    const data = [...filteredExams];
+    data.sort((a, b) => {
+      const A = a?.[sortBy];
+      const B = b?.[sortBy];
+
+      // Numeric sort if both numbers
+      if (typeof A === "number" && typeof B === "number") {
+        return sortDir === "asc" ? A - B : B - A;
+      }
+
+      // Fallback to string compare (Arabic aware)
+      const sA = (A ?? "").toString();
+      const sB = (B ?? "").toString();
+      return sortDir === "asc"
+        ? sA.localeCompare(sB, "ar")
+        : sB.localeCompare(sA, "ar");
+    });
+    return data;
+  }, [filteredExams, sortBy, sortDir]);
+
+  const toggleSort = (key) => {
+    if (sortBy === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(key);
+      setSortDir("asc");
+    }
   };
 
-  const subjectColors = {
-    Math: "blue",
-    Physics: "purple",
-    Geography: "green",
-    Literature: "orange",
+  const SortIcon = ({ col }) =>
+    sortBy === col ? (
+      sortDir === "asc" ? (
+        <ChevronUp className="w-4 h-4 inline-block" />
+      ) : (
+        <ChevronDown className="w-4 h-4 inline-block" />
+      )
+    ) : null;
+
+  const handleView = (exam) => {
+    if (onView) onView(exam);
+    else router.push(`/exams/${exam.id}`);
   };
 
-  const columns = [
-    {
-      title: "Exam Details",
-      key: "examDetails",
-      render: (_, record) => (
-        <div className="flex items-center gap-3">
-          <div
-            className="w-12 h-12 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: "#F9FAFC", border: "1px solid #e5e7eb" }}
-          >
-            <FileTextOutlined style={{ color: "#0F7490", fontSize: "18px" }} />
-          </div>
-          <div>
-            <div
-              className="font-semibold text-base"
-              style={{ color: "#202938" }}
-            >
-              {record.title}
-            </div>
-            <div className="flex items-center text-sm text-gray-500 mt-1">
-              <CalendarOutlined className="mr-1" />
-              Created: {record.createdDate}
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "Subject",
-      dataIndex: "subject",
-      key: "subject",
-      render: (subject) => (
-        <Tag
-          icon={subjectIcons[subject]}
-          color={subjectColors[subject]}
-          className="px-3 py-1 font-medium"
-        >
-          {subject}
-        </Tag>
-      ),
-    },
-    {
-      title: "Creator",
-      dataIndex: "createdBy",
-      key: "createdBy",
-      render: (creator) => (
-        <div className="flex items-center gap-2">
-          <Avatar
-            size="small"
-            icon={<UserOutlined />}
-            style={{ backgroundColor: "#C9AE6C" }}
-          />
-          <span className="font-medium" style={{ color: "#202938" }}>
-            {creator}
-          </span>
-        </div>
-      ),
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => {
-        const statusConfig = {
-          Published: { color: "success", icon: <CheckCircleOutlined /> },
-          Draft: { color: "warning", icon: <ClockCircleOutlined /> },
-          Archived: { color: "default", icon: <FileTextOutlined /> },
-        };
+  const handleEdit = (exam) => {
+    onEdit?.(exam);
+  };
 
-        return (
-          <Tag
-            color={statusConfig[status]?.color}
-            icon={statusConfig[status]?.icon}
-            className="px-3 py-1 font-medium"
-          >
-            {status}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: "Exam Info",
-      key: "examInfo",
-      render: (_, record) => (
-        <div className="space-y-1">
-          <div className="flex items-center text-sm">
-            <BookOutlined className="mr-2 text-gray-400" />
-            <span className="font-medium">{record.questions}</span>
-            <span className="text-gray-500 ml-1">questions</span>
-          </div>
-          <div className="flex items-center text-sm">
-            <ClockCircleOutlined className="mr-2 text-gray-400" />
-            <span className="font-medium">{record.duration}</span>
-            <span className="text-gray-500 ml-1">minutes</span>
-          </div>
-          <div className="flex items-center text-sm">
-            <TeamOutlined className="mr-2 text-gray-400" />
-            <span className="font-medium">{record.attempts}</span>
-            <span className="text-gray-500 ml-1">attempts</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "Performance",
-      key: "performance",
-      render: (_, record) => (
-        <div className="text-center">
-          {record.attempts > 0 ? (
-            <div>
-              <div
-                className="text-2xl font-bold mb-1"
-                style={{
-                  color:
-                    record.passRate >= 80
-                      ? "#22c55e"
-                      : record.passRate >= 60
-                      ? "#f59e0b"
-                      : "#ef4444",
-                }}
-              >
-                {record.passRate}%
-              </div>
-              <div className="text-xs text-gray-500">Pass Rate</div>
-            </div>
-          ) : (
-            <div className="text-gray-400">
-              <div className="text-sm">No attempts</div>
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Space size="small">
-          <Tooltip title="View Exam">
-            <Button
-              type="text"
-              icon={<EyeOutlined />}
-              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-            />
-          </Tooltip>
-          <Tooltip title="Edit Exam">
-            <Button
-              type="text"
-              icon={<EditOutlined />}
-              onClick={() => handleEditExam(record)}
-              style={{ color: "#0F7490" }}
-              className="hover:bg-cyan-50"
-            />
-          </Tooltip>
-          <Popconfirm
-            title="Delete Exam"
-            description="Are you sure you want to delete this exam?"
-            onConfirm={() => handleDeleteExam(record.id)}
-            okText="Yes"
-            cancelText="No"
-            okButtonProps={{
-              style: { backgroundColor: "#ef4444", borderColor: "#ef4444" },
-            }}
-          >
-            <Tooltip title="Delete Exam">
-              <Button
-                type="text"
-                icon={<DeleteOutlined />}
-                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-              />
-            </Tooltip>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
-
-  const [exams, setExams] = useState([
-    {
-      id: 1,
-      title: "Algebra Basics",
-      subject: "Math",
-      createdBy: "Ahmed Hassan",
-      status: "Published",
-      questions: 25,
-      duration: 60,
-      attempts: 145,
-      passRate: 85,
-      createdDate: "2024-01-15",
-      lastModified: "2024-01-20",
-    },
-    {
-      id: 2,
-      title: "Forces & Motion",
-      subject: "Physics",
-      createdBy: "Nour Adel",
-      status: "Draft",
-      questions: 30,
-      duration: 90,
-      attempts: 0,
-      passRate: 0,
-      createdDate: "2024-01-18",
-      lastModified: "2024-01-22",
-    },
-    {
-      id: 3,
-      title: "World Geography",
-      subject: "Geography",
-      createdBy: "Omar Salah",
-      status: "Published",
-      questions: 40,
-      duration: 75,
-      attempts: 89,
-      passRate: 92,
-      createdDate: "2024-01-10",
-      lastModified: "2024-01-25",
-    },
-  ]);
+  const handleDelete = (exam) => {
+    onDelete?.(exam);
+  };
 
   return (
-    <Card className="shadow-sm border-0">
-      <DataTable
-        searchable={false}
-        table={{
-          header: columns,
-          rows: exams,
-        }}
-        rowKey="id"
-        pagination={{
-          pageSize: 10,
-          showTotal: (total, range) =>
-            `${range[0]}-${range[1]} of ${total} exams`,
-          showSizeChanger: true,
-          showQuickJumper: true,
-        }}
-        className="border border-gray-100 rounded-lg overflow-hidden"
-        rowClassName="hover:bg-gray-50 transition-colors"
-      />
-    </Card>
-  );
-};
+    <div dir="rtl" className="w-full">
+      <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-gray-700">
+              <tr className="[&>th]:py-3 [&>th]:px-3 text-right">
+                <th
+                  onClick={() => toggleSort("title")}
+                  className="cursor-pointer select-none whitespace-nowrap"
+                >
+                  العنوان <SortIcon col="title" />
+                </th>
+                <th
+                  onClick={() => toggleSort("subject")}
+                  className="cursor-pointer select-none whitespace-nowrap"
+                >
+                  المادة <SortIcon col="subject" />
+                </th>
+                <th className="whitespace-nowrap">الحالة</th>
+                <th
+                  onClick={() => toggleSort("difficulty")}
+                  className="cursor-pointer select-none whitespace-nowrap"
+                >
+                  الصعوبة <SortIcon col="difficulty" />
+                </th>
+                <th
+                  onClick={() => toggleSort("questions")}
+                  className="cursor-pointer select-none whitespace-nowrap text-center"
+                >
+                  الأسئلة <SortIcon col="questions" />
+                </th>
+                <th
+                  onClick={() => toggleSort("duration")}
+                  className="cursor-pointer select-none whitespace-nowrap text-center"
+                >
+                  المدة (دقيقة) <SortIcon col="duration" />
+                </th>
+                <th
+                  onClick={() => toggleSort("participants")}
+                  className="cursor-pointer select-none whitespace-nowrap text-center"
+                >
+                  المشاركون <SortIcon col="participants" />
+                </th>
+                <th
+                  onClick={() => toggleSort("lastModified")}
+                  className="cursor-pointer select-none whitespace-nowrap"
+                >
+                  آخر تعديل <SortIcon col="lastModified" />
+                </th>
+                <th className="text-center whitespace-nowrap">إجراءات</th>
+              </tr>
+            </thead>
 
-export default ExamsTable;
+            <tbody className="divide-y">
+              {sortedExams.map((exam) => (
+                <tr key={exam.id} className="hover:bg-gray-50">
+                  {/* Title + description */}
+                  <td className="py-3 px-3 align-top">
+                    <div className="font-semibold text-gray-900">
+                      {exam.title}
+                    </div>
+                    {exam.description ? (
+                      <div className="text-gray-500 text-xs mt-0.5 line-clamp-2">
+                        {exam.description}
+                      </div>
+                    ) : null}
+                  </td>
+
+                  {/* Subject */}
+                  <td className="py-3 px-3 align-top">
+                    <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700">
+                      {exam.subject || "—"}
+                    </span>
+                  </td>
+
+                  {/* Questions */}
+                  <td className="py-3 px-3 align-top text-center">
+                    <div className="flex flex-col items-center">
+                      <FileText className="w-4 h-4 text-gray-400 mb-0.5" />
+                      <span className="font-semibold text-gray-900">
+                        {exam.questions}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Duration */}
+                  <td className="py-3 px-3 align-top text-center">
+                    <div className="flex flex-col items-center">
+                      <Clock className="w-4 h-4 text-gray-400 mb-0.5" />
+                      <span className="font-semibold text-gray-900">
+                        {exam.duration}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Participants */}
+                  <td className="py-3 px-3 align-top text-center">
+                    <div className="flex flex-col items-center">
+                      <Users className="w-4 h-4 text-gray-400 mb-0.5" />
+                      <span className="font-semibold text-gray-900">
+                        {exam.participants}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Last modified */}
+                  <td className="py-3 px-3 align-top">
+                    <div className="inline-flex items-center gap-1 text-xs text-gray-600">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {exam.lastModified}
+                    </div>
+                  </td>
+
+                  {/* Actions */}
+                  <td className="py-3 px-3 align-top">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => router.push(`/exams/${exam?.id}`)}
+                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg border text-gray-600 hover:bg-gray-50"
+                        title="عرض"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleEdit(exam)}
+                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg border text-blue-600 hover:bg-blue-50 border-blue-200"
+                        title="تعديل"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(exam)}
+                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg border text-red-600 hover:bg-red-50 border-red-200"
+                        title="حذف"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+
+              {/* Empty state */}
+              {sortedExams.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="p-12">
+                    <div className="text-center text-gray-500 border-2 border-dashed border-gray-200 rounded-2xl p-12 bg-gray-50">
+                      <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                        لا توجد اختبارات
+                      </h3>
+                      <p className="text-gray-500 mb-4">
+                        لم يتم العثور على اختبارات مطابقة لمعايير البحث
+                      </p>
+                      {setSearchTerm && (
+                        <Button
+                          onClick={() => setSearchTerm("")}
+                          type="secondary"
+                        >
+                          مسح البحث
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
