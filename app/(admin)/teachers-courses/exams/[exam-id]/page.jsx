@@ -1,527 +1,554 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
-// import PageLayout from "../../../components/layout/PageLayout";
-// import BreadcrumbsShowcase from "../../../components/ui/BreadCrumbs";
+
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  BarChart3,
-  Download,
-  FileText,
   Plus,
-  Upload,
+  BookOpen,
+  Trash2,
+  BarChart3,
+  Book,
+  AlertTriangle,
+  Filter,
+  Search,
+  Calendar,
+  Clock,
   Users,
-  Edit3,
-  Target,
+  Trophy,
+  Grid3X3,
+  List,
+  SortDesc,
+  FileText,
+  Play,
+  Pause,
+  Settings,
 } from "lucide-react";
-// import PagesHeader from "../../../components/ui/PagesHeader";
-// import Button from "../../../components/atoms/Button";
-// import SearchAndFilters from "../../../components/ui/SearchAndFilters";
-// import ExamsStats from "../../../components/Exams/ExamsStats";
-// import ExamsGrid from "../../../components/Exams/ExamsGrid";
-// import AddNewExamModal from "../../../components/Exams/AddNewExamModal";
-// import EditNewExamModal from "../../../components/Exams/EditNewExamModal";
-// import DeleteExamModal from "../../../components/Exams/DeleteExamModal";
-// import ExamsTable from "../../../components/Exams/ExamsTable";
-
-import { Modal, Tag, Divider, Space, Typography, Select } from "antd";
-import PageLayout from "@/components/layout/PageLayout";
-import BreadcrumbsShowcase from "@/components/ui/BreadCrumbs";
-import PagesHeader from "@/components/ui/PagesHeader";
-import Button from "@/components/atoms/Button";
-import ExamsStats from "@/components/Exams/ExamsStats";
-import SearchAndFilters from "@/components/ui/SearchAndFilters";
-import ExamsGrid from "@/components/Exams/ExamsGrid";
-import ExamsTable from "@/components/Exams/ExamsTable";
+import BreadcrumbsShowcase from "../../../../../components/ui/BreadCrumbs";
+import { subjects } from "../../../../../data/subjects";
 import { useParams } from "next/navigation";
-import { subjects } from "@/data/subjects";
-const { Text, Title } = Typography;
+import Link from "next/link";
+import Button from "../../../../../components/atoms/Button";
+import PagesHeader from "../../../../../components/ui/PagesHeader";
+// import ExamCard from "../../../components/ui/Cards/ExamCard";
+import { Modal, Select, Input, DatePicker } from "antd";
+import CustomModal from "../../../../../components/layout/Modal";
+import PageLayout from "../../../../../components/layout/PageLayout";
+import ExamCard from "../../../../../components/ui/Cards/QuestionCard";
 
-/* -------------------- Helpers -------------------- */
-// دمج/تطبيع الأنواع الأربعة للأسئلة
-// شكل الخرج الموحّد لكل سؤال:
-// { id, type: 'mcq'|'tf'|'written'|'fill', title, answers: [], meta: {} }
-const normalizeQuestions = (qs) =>
-  (qs || []).map((q, qi) => {
-    const base = {
-      id: q?.id ?? `q-${Date.now()}-${qi}`,
-      type: (q?.type || "mcq").toLowerCase(), // mcq | tf | written | fill
-      title: (q?.title || "").trim(),
-      answers: [],
-      meta: {},
-    };
+const { Option } = Select;
+const { RangePicker } = DatePicker;
 
-    if (base.type === "mcq") {
-      base.answers = (q?.answers || []).map((a, ai) => ({
-        id: a?.id ?? `a-${qi}-${ai}`,
-        text: (a?.text || "").trim(),
-        isCorrect: !!a?.isCorrect,
-      }));
-      // ضمان وجود إجابة صحيحة واحدة على الأقل
-      if (!base.answers.some((a) => a.isCorrect) && base.answers.length) {
-        base.answers[0].isCorrect = true;
-      }
-    } else if (base.type === "tf") {
-      // مصدر صحيح/خطأ: يمكن أن يأتي payload.correct = true|false
-      const correct = typeof q?.correct === "boolean" ? q.correct : true;
-      base.answers = [
-        { id: "true", text: "صح", isCorrect: !!correct },
-        { id: "false", text: "خطأ", isCorrect: !correct },
-      ];
-      base.meta = { correct };
-    } else if (base.type === "written") {
-      // إجابة نموذجية اختيارية
-      base.meta = { sampleAnswer: (q?.sampleAnswer || "").trim() };
-      base.answers = [];
-    } else if (base.type === "fill") {
-      // أكمل: إمّا مصفوفة فراغات أو نص بإجابات بين أقواس مثلاً
-      const gaps = Array.isArray(q?.gaps) ? q.gaps : [];
-      const answerText = (q?.answerText || "").trim();
-      base.meta = { gaps, answerText };
-      base.answers = [];
-    } else {
-      // fallback => اعتبره mcq
-      base.type = "mcq";
-      base.answers = (q?.answers || []).map((a, ai) => ({
-        id: a?.id ?? `a-${qi}-${ai}`,
-        text: (a?.text || "").trim(),
-        isCorrect: !!a?.isCorrect,
-      }));
-    }
-    return base;
-  });
-
-
-// خرائط ألوان للحالة/الصعوبة
-const statusColors = {
-  نشط: "bg-green-50 text-green-700 border-green-200",
-  مسودة: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  منشور: "bg-blue-50 text-blue-700 border-blue-200",
-};
-const difficultyColors = {
-  سهل: "bg-green-100 text-green-800",
-  متوسط: "bg-yellow-100 text-yellow-800",
-  صعب: "bg-red-100 text-red-800",
-};
-
-// خرائط نوع الاختبار
-const examTypeLabels = {
-  training: "تدريب",
-  mock: "اختبار محاكي",
-};
-const examTypeTagColor = {
-  training: "green",
-  mock: "blue",
-};
-
-/* ----------- معاينة الاختبار (يعرض كل الأنواع) ----------- */
-function ExamPreviewModal({ open, onClose, exam }) {
-  if (!exam) return null;
-  return (
-    <Modal title="معاينة الاختبار" open={open} onCancel={onClose} footer={null} width={800}>
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Title level={4} className="m-0">{exam.title}</Title>
-          <Tag color={examTypeTagColor[exam.examType] || "default"}>
-            {examTypeLabels[exam.examType] || exam.examType}
-          </Tag>
-        </div>
-        <Text type="secondary">{exam.description}</Text>
-        <Divider />
-        {(exam.questionsData || []).map((q, idx) => (
-          <div key={q.id} className="p-3 rounded-lg border">
-            <Space align="baseline" wrap>
-              <Tag color="default">
-                {q.type === "mcq" && "اختيار من متعدد"}
-                {q.type === "tf" && "صح / خطأ"}
-                {q.type === "written" && "سؤال مقالي"}
-                {q.type === "fill" && "أكمل الفراغ"}
-              </Tag>
-              <Text strong>س{idx + 1}:</Text>
-              <Text>{q.title}</Text>
-            </Space>
-
-            {q.type === "mcq" && (
-              <ul className="list-disc pr-5 mt-2">
-                {(q.answers || []).map((a) => (
-                  <li key={a.id} className={a.isCorrect ? "text-green-600 font-medium" : ""}>
-                    {a.text} {a.isCorrect ? "✓" : ""}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {q.type === "tf" && (
-              <div className="mt-2">
-                <Tag color={q.meta?.correct ? "green" : "red"}>
-                  الإجابة الصحيحة: {q.meta?.correct ? "صح" : "خطأ"}
-                </Tag>
-              </div>
-            )}
-
-            {q.type === "written" && (
-              <div className="mt-2">
-                <Text type="secondary">إجابة نموذجية (اختياري):</Text>
-                <div className="p-2 bg-gray-50 rounded mt-1">{q.meta?.sampleAnswer || "—"}</div>
-              </div>
-            )}
-
-            {q.type === "fill" && (
-              <div className="mt-2 space-y-1">
-                <Text type="secondary">إجابات الفراغات / النص:</Text>
-                {Array.isArray(q.meta?.gaps) && q.meta.gaps.length > 0 ? (
-                  <ul className="list-disc pr-5">
-                    {q.meta.gaps.map((g, i) => (
-                      <li key={i}>{g}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="p-2 bg-gray-50 rounded">{q.meta?.answerText || "—"}</div>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </Modal>
-  );
-}
-
-
-export const exams_data =   [
-  {
-    id: 1,
-    title: "اختبار الرياضيات المتقدم",
-    description: "الجبر والهندسة التحليلية",
-    questions: 4,
-    status: "نشط",
-    duration: 90,
-    participants: 245,
-    rating: 4.8,
-    lastModified: "منذ يومين",
-    difficulty: "متوسط",
-    subject: "رياضيات",
-    examType: "training", // تدريب
-    questionsData: normalizeQuestions([
-      {
-        type: "mcq",
-        title: "ما ناتج 2x + 3x ؟",
-        answers: [
-          { text: "5x", isCorrect: true },
-          { text: "6x", isCorrect: false },
-          { text: "x^2", isCorrect: false },
-        ],
-      },
-      {
-        type: "tf",
-        title: "الميل في y = 4x - 7 يساوي 4.",
-        correct: true,
-      },
-      {
-        type: "written",
-        title: "اشرح باختصار مفهوم المشتقة الأولى.",
-        sampleAnswer: "معدل التغير اللحظي للدالة بالنسبة للمتغير المستقل.",
-      },
-      {
-        type: "fill",
-        title: "أكمل: مساحة المستطيل = ____ × ____",
-        gaps: ["الطول", "العرض"],
-      },
-    ]),
-  },
-  {
-    id: 2,
-    title: "اختبار اللغة الإنجليزية",
-    description: "قواعد النحو والمفردات",
-    questions: 2,
-    status: "مسودة",
-    duration: 60,
-    participants: 0,
-    rating: 0,
-    lastModified: "منذ ساعة",
-    difficulty: "سهل",
-    subject: "لغة إنجليزية",
-    examType: "mock", // محاكي
-    questionsData: normalizeQuestions([
-      {
-        type: "mcq",
-        title: "Choose the correct past form of 'go':",
-        answers: [
-          { text: "went", isCorrect: true },
-          { text: "goed", isCorrect: false },
-        ],
-      },
-      {
-        type: "tf",
-        title: "The word 'childs' is the correct plural of 'child'.",
-        correct: false,
-      },
-    ]),
-  },
-  {
-    id: 3,
-    title: "اختبار العلوم الطبيعية",
-    description: "الفيزياء والكيمياء العضوية",
-    questions: 3,
-    status: "منشور",
-    duration: 120,
-    participants: 189,
-    rating: 4.5,
-    lastModified: "منذ 3 أيام",
-    difficulty: "صعب",
-    subject: "علوم",
-    examType: "mock",
-    questionsData: normalizeQuestions([
-      {
-        type: "tf",
-        title: "الشحنة الأساسية للإلكترون موجبة.",
-        correct: false,
-      },
-      {
-        type: "written",
-        title: "اذكر قانون حفظ الطاقة بصياغتك.",
-        sampleAnswer: "",
-      },
-      {
-        type: "mcq",
-        title: "أي مما يلي عنصر؟",
-        answers: [
-          { text: "ماء", isCorrect: false },
-          { text: "أكسجين", isCorrect: true },
-          { text: "ملح الطعام", isCorrect: false },
-        ],
-      },
-    ]),
-  },
-  {
-    id: 4,
-    title: "اختبار التاريخ الحديث",
-    description: "القرن العشرين والأحداث المعاصرة",
-    questions: 2,
-    status: "نشط",
-    duration: 75,
-    participants: 156,
-    rating: 4.2,
-    lastModified: "منذ أسبوع",
-    difficulty: "متوسط",
-    subject: "تاريخ",
-    examType: "training",
-    questionsData: normalizeQuestions([
-      {
-        type: "mcq",
-        title: "في أي سنة بدأت الحرب العالمية الثانية؟",
-        answers: [
-          { text: "1939", isCorrect: true },
-          { text: "1914", isCorrect: false },
-        ],
-      },
-      {
-        type: "fill",
-        title: "أكمل: تأسست هيئة الأمم المتحدة عام ____",
-        answerText: "1945",
-      },
-    ]),
-  },
-]
-
-export default function ExamsPage() {
-  // مودالات
-  const [newModal, setAddNewModal] = useState(false);
-  const [editModal, setEditModal] = useState(false);
-  const [deleteModal, setDeleteModal] = useState(false);
-  const [selectedExam, setSelectedExam] = useState(null);
-  const params = useParams();
-  // عرض/بحث/فلترة
-  const [viewMode, setViewMode] = useState("grid");
+const TopicExams = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("all"); // حالة الاختبار (نشط/مسودة/منشور)
-  const [examTypeFilter, setExamTypeFilter] = useState("all"); // نوع الاختبار (training/mock)
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("");
+  const [dateRange, setDateRange] = useState(null);
+  const [viewMode, setViewMode] = useState("grid"); // grid or list
+  const [sortBy, setSortBy] = useState("createdAt");
+  const { id, unitId, topicId } = useParams();
+  const [selectedExam, setSelectedExam] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const selectedSubjectAndUnitWithTopic = useMemo(() => {
+    const subject = subjects.find((subject) => subject.code === id);
+    const unit = subject?.units.find(
+      (unit) => unit.name == decodeURIComponent(unitId)
+    );
+    const topic = unit?.topics.find(
+      (topic) => topic.name == decodeURIComponent(topicId)
+    );
+    return { subject, unit, topic };
+  }, [id, unitId, topicId]);
+
+  const exams = [
+    {
+      id: 1,
+      title: "اختبار الرياضيات الشامل",
+      description:
+        "اختبار شامل يغطي جميع موضوعات الجبر والهندسة للفصل الدراسي الأول",
+      status: "active",
+      difficulty: "Medium",
+      questionsCount: 25,
+      duration: 90,
+      totalMarks: 100,
+      participantsCount: 45,
+      subjects: ["الجبر", "الهندسة"],
+      createdAt: "2024-08-01",
+      lastModified: "2024-08-15",
+      startDate: "2024-09-01",
+      endDate: "2024-09-30",
+      creator: "أحمد محمد",
+      attempts: 128,
+      averageScore: 78.5,
+    },
+    {
+      id: 2,
+      title: "اختبار التاريخ المعاصر",
+      description: "اختبار حول أحداث القرن العشرين والتطورات السياسية الحديثة",
+      status: "draft",
+      difficulty: "Hard",
+      questionsCount: 30,
+      duration: 120,
+      totalMarks: 150,
+      participantsCount: 0,
+      subjects: ["التاريخ المعاصر"],
+      createdAt: "2024-07-28",
+      lastModified: "2024-08-10",
+      startDate: "2024-10-01",
+      endDate: "2024-10-31",
+      creator: "فاطمة أحمد",
+      attempts: 0,
+      averageScore: 0,
+    },
+    {
+      id: 3,
+      title: "اختبار العلوم الطبيعية",
+      description:
+        "اختبار في الفيزياء والكيمياء يركز على المفاهيم الأساسية والتطبيقات العملية",
+      status: "completed",
+      difficulty: "Easy",
+      questionsCount: 20,
+      duration: 60,
+      totalMarks: 80,
+      participantsCount: 67,
+      subjects: ["الفيزياء", "الكيمياء"],
+      createdAt: "2024-07-15",
+      lastModified: "2024-07-20",
+      startDate: "2024-07-20",
+      endDate: "2024-08-20",
+      creator: "خالد عبدالله",
+      attempts: 189,
+      averageScore: 82.3,
+    },
+    {
+      id: 4,
+      title: "اختبار اللغة العربية",
+      description:
+        "اختبار شامل في النحو والصرف والأدب العربي الكلاسيكي والحديث",
+      status: "expired",
+      difficulty: "Hard",
+      questionsCount: 35,
+      duration: 150,
+      totalMarks: 120,
+      participantsCount: 23,
+      subjects: ["النحو", "الأدب"],
+      createdAt: "2024-06-01",
+      lastModified: "2024-06-05",
+      startDate: "2024-06-10",
+      endDate: "2024-07-10",
+      creator: "مريم سالم",
+      attempts: 76,
+      averageScore: 65.8,
+    },
+  ];
+
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [prevModal, setPrevModal] = useState(false);
+  const params = useParams();
   const exam_id = params["exam-id"];
-  const [filteredExam , setFilteredExam] = useState({});
+
+  const [selectedSub, setSelectedSub] = useState({});
 
   useEffect(() => {
-    setFilteredExam(subjects?.find(item => item?.code == exam_id))
-  } , [exam_id])
+    setSelectedSub(subjects?.find((item) => item?.code == exam_id));
+  }, [exam_id]);
 
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
-    {label :filteredExam?.name, href : "/teacher-courses" , icon :""},
-    { label: "الاختبارات", href: "/exams", icon: FileText, current: true },
+    {
+      label: selectedSub?.name,
+      href: "/teachers-courses",
+      icon: "",
+    },
+    { label: "الاختبارات", href: "#", current: true },
   ];
 
-  
-  // منيو النقاط
-  const [openMenuFor, setOpenMenuFor] = useState(null);
-  const menuRef = useRef(null);
+  const filteredExams = useMemo(() => {
+    return exams.filter((exam) => {
+      const matchesSearch =
+        exam.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        exam.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = !selectedStatus || exam.status === selectedStatus;
+      const matchesDifficulty =
+        !selectedDifficulty || exam.difficulty === selectedDifficulty;
 
-  // مودال المعاينة
-  const [previewOpen, setPreviewOpen] = useState(false);
+      return matchesSearch && matchesStatus && matchesDifficulty;
+    });
+  }, [exams, searchTerm, selectedStatus, selectedDifficulty]);
 
-  // بيانات افتراضية — الآن تحتوي على examType وأنواع أسئلة متعددة
-  const [exams, setExams] = useState(exams_data);
+  const getStatusStats = () => {
+    const stats = exams.reduce((acc, exam) => {
+      acc[exam.status] = (acc[exam.status] || 0) + 1;
+      return acc;
+    }, {});
 
-  // فلترة رئيسية (بحث + حالة + نوع اختبار)
-  const filteredExams = exams.filter((exam) => {
-    const q = searchTerm.toLowerCase();
-    const matchesSearch =
-      exam.title.toLowerCase().includes(q) ||
-      exam.description.toLowerCase().includes(q) ||
-      (exam.subject || "").toLowerCase().includes(q);
-    const matchesStatus =
-      selectedFilter === "all" || exam.status === selectedFilter;
-    const matchesType =
-      examTypeFilter === "all" || exam.examType === examTypeFilter;
-    return matchesSearch && matchesStatus && matchesType;
-  });
-
-  /* -------------------- Handlers (View / Edit / Delete) -------------------- */
-  const handleView = (exam) => {
-    setOpenMenuFor(null);
-    setSelectedExam(exam);
-    setPreviewOpen(true);
+    return {
+      total: exams.length,
+      active: stats.active || 0,
+      draft: stats.draft || 0,
+      completed: stats.completed || 0,
+      expired: stats.expired || 0,
+    };
   };
 
-  const handleEdit = (exam) => {
-    setOpenMenuFor(null);
-    const editable = exam._raw
-      ? { ...exam._raw, id: exam.id, examType: exam.examType }
-      : {
-          id: exam.id,
-          title: exam.title,
-          description: exam.description,
-          time: exam.duration,
-          questions: exam.questionsData || [],
-          examType: exam.examType || "training",
-        };
-    setSelectedExam(editable);
-    setEditModal(true);
-  };
-
-  const handleDelete = (exam) => {
-    setSelectedExam(exam);
-    setDeleteModal(true);
-  };
-
-
-
-  const stats = [
-    {
-      label: "إجمالي الاختبارات",
-      value: exams.length,
-      icon: FileText,
-      color: "bg-blue-500",
-    },
-    {
-      label: "الاختبارات النشطة",
-      value: exams.filter((e) => e.status === "نشط").length,
-      icon: Target,
-      color: "bg-green-500",
-    },
-    {
-      label: "المسودات",
-      value: exams.filter((e) => e.status === "مسودة").length,
-      icon: Edit3,
-      color: "bg-yellow-500",
-    },
-    {
-      label: "إجمالي المشاركين",
-      value: exams.reduce((s, e) => s + e.participants, 0),
-      icon: Users,
-      color: "bg-purple-500",
-    },
-  ];
+  const stats = getStatusStats();
 
   return (
-    <PageLayout>
-      <div dir="rtl">
+    <>
+      <PageLayout>
         <BreadcrumbsShowcase items={breadcrumbs} variant="pill" />
 
         <PagesHeader
-          title={"إدارة الاختبارات"}
-          subtitle={"مراجعة وإدارة الاختبارات التعليمية (تدريب / محاكي + أنواع أسئلة متعددة)"}
-         
+          extra={
+            <div className="flex gap-4 items-center">
+              {/* Stats Cards */}
+              {/* <div className="hidden lg:flex items-center gap-4">
+                <div className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl px-4 py-3 border border-blue-100">
+                  <BookOpen className="w-5 h-5 text-blue-600" />
+                  <div className="text-right">
+                    <p className="text-xs text-blue-600 font-medium">إجمالي الاختبارات</p>
+                    <p className="text-lg font-bold text-blue-700">{stats.total}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl px-4 py-3 border border-green-100">
+                  <Play className="w-5 h-5 text-green-600" />
+                  <div className="text-right">
+                    <p className="text-xs text-green-600 font-medium">نشط</p>
+                    <p className="text-lg font-bold text-green-700">{stats.active}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl px-4 py-3 border border-yellow-100">
+                  <Pause className="w-5 h-5 text-yellow-600" />
+                  <div className="text-right">
+                    <p className="text-xs text-yellow-600 font-medium">مسودة</p>
+                    <p className="text-lg font-bold text-yellow-700">{stats.draft}</p>
+                  </div>
+                </div>
+              </div> */}
+            </div>
+          }
+          title="الاختبارات"
+          subtitle="إدارة وتنظيم الاختبارات التعليمية"
         />
 
-        {/* إحصائيات */}
-        <ExamsStats stats={stats} />
+        {/* Filters and Search Section */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8">
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            {/* Search */}
+            <div className="flex-1 max-w-md">
+              <Input
+                size="large"
+                placeholder="البحث في الاختبارات..."
+                prefix={<Search className="w-4 h-4 text-gray-400" />}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="rounded-xl border-gray-200 hover:border-blue-300 focus:border-blue-500"
+              />
+            </div>
 
-        {/* شريط البحث/وضع العرض */}
-        <SearchAndFilters
-          mode={viewMode}
-          searchTerm={searchTerm}
-          setMode={setViewMode}
-          setSearchTerm={setSearchTerm}
-        />
+            {/* Filters Toggle */}
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`${
+                  showFilters
+                    ? "bg-blue-50 text-blue-600 border-blue-200"
+                    : "bg-gray-50 text-gray-600 border-gray-200"
+                } transition-all duration-300`}
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                تصفية
+              </Button>
 
-        {/* فلتر نوع الاختبار (تدريب/محاكي) */}
-        <div className="my-4">
-          <Space>
-            <Text className="text-gray-700">نوع الاختبار:</Text>
-            <Select
-              value={examTypeFilter}
-              onChange={setExamTypeFilter}
-              style={{ minWidth: 180 }}
-              options={[
-                { value: "all", label: "كل الأنواع" },
-                { value: "training", label: "تدريب" },
-                { value: "mock", label: "اختبار محاكي" },
-              ]}
-            />
-          </Space>
+              {/* View Toggle */}
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-2 rounded-md transition-all duration-200 ${
+                    viewMode === "grid"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`p-2 rounded-md transition-all duration-200 ${
+                    viewMode === "list"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Advanced Filters */}
+          {showFilters && (
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Select
+                  size="large"
+                  placeholder="حالة الاختبار"
+                  allowClear
+                  value={selectedStatus}
+                  onChange={setSelectedStatus}
+                  className="w-full"
+                >
+                  <Option value="active">نشط</Option>
+                  <Option value="draft">مسودة</Option>
+                  <Option value="completed">مكتمل</Option>
+                  <Option value="expired">منتهي</Option>
+                </Select>
+
+                <Select
+                  size="large"
+                  placeholder="مستوى الصعوبة"
+                  allowClear
+                  value={selectedDifficulty}
+                  onChange={setSelectedDifficulty}
+                  className="w-full"
+                >
+                  <Option value="Easy">سهل</Option>
+                  <Option value="Medium">متوسط</Option>
+                  <Option value="Hard">صعب</Option>
+                </Select>
+
+                <Select
+                  size="large"
+                  placeholder="ترتيب حسب"
+                  value={sortBy}
+                  onChange={setSortBy}
+                  className="w-full"
+                >
+                  <Option value="createdAt">تاريخ الإنشاء</Option>
+                  <Option value="title">العنوان</Option>
+                  <Option value="participantsCount">عدد المشاركين</Option>
+                  <Option value="averageScore">المعدل</Option>
+                </Select>
+
+                <RangePicker
+                  size="large"
+                  placeholder={["تاريخ البداية", "تاريخ النهاية"]}
+                  value={dateRange}
+                  onChange={setDateRange}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* الكروت / الجدول */}
-        {viewMode === "grid" ? (
-          <ExamsGrid
-            menuRef={menuRef}
-            openMenuFor={openMenuFor}
-            setOpenMenuFor={setOpenMenuFor}
-            setSearchTerm={setSearchTerm}
-            filteredExams={filteredExams}
-            statusColors={statusColors}
-            difficultyColors={difficultyColors}
-            onView={handleView}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        ) : (
-          <ExamsTable
-            filteredExams={filteredExams}
-            statusColors={statusColors}
-            difficultyColors={difficultyColors}
-            setSearchTerm={setSearchTerm}
-            onView={handleView}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
+        {/* Results Summary */}
+        {(searchTerm || selectedStatus || selectedDifficulty) && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between bg-blue-50 rounded-xl p-4 border border-blue-100">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-600" />
+                <span className="text-blue-800 font-medium">
+                  عُثر على {filteredExams.length} اختبار من أصل {exams.length}
+                </span>
+              </div>
+              <Button
+                onClick={() => {
+                  setSearchTerm("");
+                  setSelectedStatus("");
+                  setSelectedDifficulty("");
+                  setDateRange(null);
+                }}
+                className="text-blue-600 hover:bg-blue-100 border-blue-200"
+                size="small"
+              >
+                إعادة تعيين
+              </Button>
+            </div>
+          </div>
         )}
-      </div>
 
-      {/* مودال إضافة امتحان */}
-      {/* <AddNewExamModal
-        open={newModal}
-        setOpen={setAddNewModal}
-        onSubmit={onAddSubmit}
-        palette={{ primary: "#02AAA0" }}
-        // تمرير خيارات النوع وأنواع الأسئلة (اختياري)
-        examTypeOptions={[
-          { value: "training", label: "تدريب" },
-          { value: "mock", label: "اختبار محاكي" },
-        ]}
-        questionTypeOptions={[
-          { value: "mcq", label: "اختيار من متعدد" },
-          { value: "tf", label: "صح / خطأ" },
-          { value: "written", label: "سؤال مقالي" },
-          { value: "fill", label: "أكمل الفراغ" },
-        ]}
-      /> */}
+        {/* Exams Grid/List */}
+        <div
+          className={`${
+            viewMode === "grid"
+              ? "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8"
+              : "space-y-6"
+          } transition-all duration-500`}
+        >
+          {filteredExams.map((exam) => (
+            <ExamCard
+              selectedExam={selectedExam}
+              setSelectedExam={setSelectedExam}
+              prevModal={prevModal}
+              setPrevModal={setPrevModal}
+              deleteModal={deleteModal}
+              setDeleteModal={setDeleteModal}
+              exam={exam}
+              key={exam.id}
+              viewMode={viewMode}
+            />
+          ))}
+        </div>
 
-      {/* مودال تعديل امتحان */}
-      
-      {/* مودال المعاينة */}
-      {/* <ExamPreviewModal
-        open={previewOpen}
-        onClose={() => setPreviewOpen(false)}
-        exam={selectedExam}
-      /> */}
-    </PageLayout>
+        {/* Empty State */}
+        {filteredExams.length === 0 && (
+          <div className="text-center py-16">
+            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <BookOpen className="w-12 h-12 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">
+              لا توجد اختبارات متاحة
+            </h3>
+            <p className="text-gray-500 mb-6">
+              {searchTerm || selectedStatus || selectedDifficulty
+                ? "لم يتم العثور على اختبارات تطابق معايير البحث"
+                : "ابدأ بإنشاء اختبار جديد"}
+            </p>
+            <Link href="exams/new">
+              <Button
+                type="primary"
+                size="large"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 border-0"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                إنشاء اختبار جديد
+              </Button>
+            </Link>
+          </div>
+        )}
+
+        {/* Preview Modal */}
+        <Modal
+          footer={null}
+          open={prevModal}
+          className="!w-[90%] !max-w-4xl"
+          onCancel={() => setPrevModal(false)}
+          title={
+            <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <BookOpen className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  معاينة الاختبار
+                </h3>
+                <p className="text-sm text-gray-500">{selectedExam?.title}</p>
+              </div>
+            </div>
+          }
+        >
+          {selectedExam && (
+            <div className="space-y-6 p-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-blue-50 rounded-xl">
+                  <FileText className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                  <p className="text-sm text-blue-600 font-medium">الأسئلة</p>
+                  <p className="text-xl font-bold text-blue-700">
+                    {selectedExam.questionsCount}
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-xl">
+                  <Clock className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                  <p className="text-sm text-green-600 font-medium">المدة</p>
+                  <p className="text-xl font-bold text-green-700">
+                    {selectedExam.duration} د
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-purple-50 rounded-xl">
+                  <Users className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+                  <p className="text-sm text-purple-600 font-medium">
+                    المشاركون
+                  </p>
+                  <p className="text-xl font-bold text-purple-700">
+                    {selectedExam.participantsCount}
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-orange-50 rounded-xl">
+                  <Trophy className="w-6 h-6 text-orange-600 mx-auto mb-2" />
+                  <p className="text-sm text-orange-600 font-medium">الدرجات</p>
+                  <p className="text-xl font-bold text-orange-700">
+                    {selectedExam.totalMarks}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h4 className="font-semibold text-gray-800 mb-2">
+                  وصف الاختبار
+                </h4>
+                <p className="text-gray-600">{selectedExam.description}</p>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button onClick={() => setPrevModal(false)}>إغلاق</Button>
+                <Button
+                  type="primary"
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 border-0"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  بدء الاختبار
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
+
+        {/* Delete Modal */}
+        <CustomModal
+          isOpen={deleteModal}
+          onClose={() => setDeleteModal(false)}
+          title="حذف الاختبار"
+          size="sm"
+        >
+          <div className="space-y-4" dir="rtl">
+            <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0" />
+              <div>
+                <h4 className="font-medium text-red-900">هل أنت متأكد؟</h4>
+                <p className="text-sm text-red-700">
+                  سيتم حذف الاختبار نهائياً ولا يمكن التراجع عن هذا الإجراء.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600 mb-2">
+                الاختبار المراد حذفه:
+              </p>
+              <p className="font-medium text-[#202938] mb-1">
+                {selectedExam?.title}
+              </p>
+              <p className="text-sm text-gray-500">
+                {selectedExam?.participantsCount} مشارك •{" "}
+                {selectedExam?.questionsCount} سؤال
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+              <button
+                onClick={() => setDeleteModal(false)}
+                className="px-4 py-2 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={() => {
+                  // Handle delete logic here
+                  setDeleteModal(false);
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                حذف الاختبار
+              </button>
+            </div>
+          </div>
+        </CustomModal>
+      </PageLayout>
+    </>
   );
-}
+};
+
+export default TopicExams;
