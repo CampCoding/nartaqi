@@ -30,22 +30,6 @@ import '@ant-design/v5-patch-for-react-19';
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-/**
- * Props:
- * - subject: {
- *     id, code, name, description, imageUrl, price, duration, status,
- *     students?: number, questions: number, lastUpdated: string,
- *     units: any[],
- *     capacity?: number,
- *     genderPolicy?: "male" | "female" | "both",
- *     // جديد:
- *     availableFrom?: string, // "YYYY-MM-DD" أو ISO مع وقت
- *     availableTo?: string,   // "YYYY-MM-DD" أو ISO مع وقت
- *     enrolledStudents?: Array<{ id:string|number, name:string, email?:string, joinedAt?:string, gender?: "male" | "female" }>
- *   }
- * - setSelectedSubject: fn
- * - fetchStudents?: async fn(subject) => Array<{ id, name, email?, joinedAt?, gender? }>
- */
 const TeacherSubjectCard = ({
   subject,
   setSelectedSubject,
@@ -276,6 +260,7 @@ const TeacherSubjectCard = ({
   const moreMenu = (subject) => ({
     items: [
       {key:"Details" , label:"تفاصيل" , icon : <Eye className="w-4 h-4" />},
+      {key :"Students", label:"الطلاب" ,icon : <Users className="w-4 h-4"/>},
       { key: "edit", icon: <Edit className="w-4 h-4" />, label: "تعديل" },
       {
         key: "status",
@@ -300,6 +285,9 @@ const TeacherSubjectCard = ({
       if (key === "status") {
         setActivationModal(true);
         setSelectedSubject(subject);
+      }
+      if (key == "Students") {
+        router.push(`/teachers-courses/students/${subject?.code}`)
       }
     },
   });

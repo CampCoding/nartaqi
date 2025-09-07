@@ -92,7 +92,7 @@ export default function ExamsGrid({
 
         return (
           <div
-            onClick={() => router.push(`/exams/${exam?.id}`)}
+            // onClick={() => router.push(`/exams/${exam?.id}`)}
             key={exam.id}
             className="bg-white relative shadow-sm rounded-2xl border border-gray-100 hover:shadow-lg hover:border-gray-200 transition-all duration-200 overflow-hidden group"
           >
@@ -172,6 +172,12 @@ export default function ExamsGrid({
                     className="w-10 h-10 rounded-xl p-2 flex justify-center items-center bg-red-100/30 text-red-500"
                   >
                     <Trash size={20} />
+                  </button>
+
+                  <button onClick={() => router.push(`/exams/${exam?.id}`)} 
+                    className="w-10 h-10 rounded-xl p-2 flex justify-center items-center bg-blue-100/30 text-blue-500"
+                    >
+                    <Eye size={20}/>
                   </button>
                 </div>
               </div>

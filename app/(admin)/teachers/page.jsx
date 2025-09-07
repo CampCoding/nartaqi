@@ -184,6 +184,85 @@ const TeachersManagement = () => {
     }, 500);
   };
 
+  // ========= تصفية البيانات (تحترم البحث والحالة لو متوصلين) =========
+  const filteredTeachers = teachers.filter((t) => {
+    const matchStatus = selectedStatus === "all" || t.status === selectedStatus;
+    const q = (searchText || "").toLowerCase();
+    const matchSearch =
+      !q ||
+      t.name.toLowerCase().includes(q) ||
+      t.email.toLowerCase().includes(q) ||
+      t.phone.toLowerCase().includes(q) ||
+      (t.subjects || []).some((s) => s.toLowerCase().includes(q));
+    return matchStatus && matchSearch;
+  });
+
+  // ========= تصدير Excel =========
+  const handleExportExcel = async () => {
+    try {
+      setLoading(true);
+      const XLSX = await import("xlsx");
+
+      const columns = [
+        { header: "ID", key: "id" },
+        { header: "الاسم", key: "name" },
+        { header: "البريد الإلكتروني", key: "email" },
+        { header: "الهاتف", key: "phone" },
+        { header: "المواد", key: "subjectsFormatted" },
+        { header: "الحالة", key: "statusLabel" },
+        { header: "تاريخ الانضمام", key: "joinDate" },
+        { header: "الخبرة", key: "experience" },
+        { header: "المؤهل", key: "qualification" },
+      ];
+
+      const rows = filteredTeachers.map((t) => ({
+        id: t.id,
+        name: t.name,
+        email: t.email,
+        phone: String(t.phone ?? ""), // الحفاظ على الأصفار الأولى
+        subjectsFormatted: (t.subjects || []).join(", "),
+        statusLabel: getStatusLabel(t.status),
+        joinDate: new Date(t.joinDate), // Excel يتعرف عليها كتاريخ
+        experience: t.experience,
+        qualification: t.qualification,
+      }));
+
+      const ordered = rows.map((r) => {
+        const o = {};
+        columns.forEach((c) => (o[c.header] = r[c.key]));
+        return o;
+      });
+
+      const ws = XLSX.utils.json_to_sheet(ordered, {
+        cellDates: true,
+        dateNF: "yyyy-mm-dd",
+      });
+
+      // ضبط عرض الأعمدة تلقائيًا
+      ws["!cols"] = columns.map((c) => {
+        const headerLen = c.header.length;
+        const maxCell = Math.max(
+          headerLen,
+          ...rows.map((r) => String(r[c.key] ?? "").length)
+        );
+        return { wch: Math.min(maxCell + 2, 40) };
+      });
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Teachers");
+
+      const today = new Date().toISOString().slice(0, 10); // yyyy-mm-dd
+      XLSX.writeFile(wb, `teachers-${today}.xlsx`);
+
+      message.success("تم تصدير ملف Excel بنجاح");
+    } catch (err) {
+      console.error(err);
+      message.error("حدث خطأ أثناء التصدير");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
     { label: "المعلمين", href: "/teachers", icon: Users, current: true },
@@ -199,10 +278,13 @@ const TeachersManagement = () => {
           subtitle={"مراجعة وإدارة طلبات المعلمين وملفاتهم"}
           extra={
             <div className="flex items-center gap-4 gap-reverse">
-              <Button type="default" icon={<Upload className="w-4 h-4" />}>
-                استيراد
-              </Button>
-              <Button type="secondary" icon={<Download className="w-4 h-4" />}>
+              
+              <Button
+                type="secondary"
+                icon={<Download className="w-4 h-4" />}
+                onClick={handleExportExcel}
+                loading={loading}
+              >
                 تصدير
               </Button>
               <Button
@@ -225,10 +307,13 @@ const TeachersManagement = () => {
 
         {/* عرض الشبكة أو الجدول */}
         {viewMode === "table" ? (
-          <TeachersTable searchText={searchText} selectedStatus={selectedStatus} />
+          <TeachersTable
+            searchText={searchText}
+            selectedStatus={selectedStatus}
+          />
         ) : (
           <TeacherCards
-            data={teachers}
+            data={filteredTeachers}
             onView={(t) => {
               setSelectedTeacher(t);
               setViewModalVisible(true);

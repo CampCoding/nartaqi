@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Users,
   GraduationCap,
@@ -20,10 +21,11 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("نظرة عامة");
   const [notifications, setNotifications] = useState(3);
   const [hoveredCard, setHoveredCard] = useState(null);
+  const router = useRouter();
 
   const menuItems = [
     { name: "نظرة عامة", icon: BarChart3 },
-    { name: "المعلمين", icon: Users },
+    { name: "المدربين", icon: Users },
     { name: "الطلاب", icon: GraduationCap },
     { name: "الأسئلة", icon: HelpCircle },
     { name: "الامتحانات", icon: FileText },
@@ -34,7 +36,7 @@ const Dashboard = () => {
   const stats2 = [
     {
       id: 1,
-      title: "عدد المعلمين",
+      title: "عدد متدربي الرخصة المهنية",
       value: "120",
       icon: Users,
       color: "text-[#0F7490]",
@@ -44,9 +46,9 @@ const Dashboard = () => {
     },
     {
       id: 2,
-      title: "عدد الطلاب",
+      title: "عدد مدربي الدورات العامة",
       value: "340",
-      icon: GraduationCap,
+      icon: Users,
       color: "text-[#C9AE6C]",
       bgGradient: "from-[#C9AE6C]/10 to-[#C9AE6C]/5",
       borderColor: "border-[#C9AE6C]/20",
@@ -54,9 +56,9 @@ const Dashboard = () => {
     },
     {
       id: 3,
-      title: "عدد الأسئلة",
+      title: "عدد متدربي الدورات الأخرى",
       value: "1,230",
-      icon: HelpCircle,
+      icon: Users,
       color: "text-[#8B5CF6]",
       bgGradient: "from-[#8B5CF6]/10 to-[#8B5CF6]/5",
       borderColor: "border-[#8B5CF6]/20",
@@ -64,9 +66,9 @@ const Dashboard = () => {
     },
     {
       id: 4,
-      title: "الامتحانات النشطة",
+      title: "عدد الطلاب في الدورات النشطة",
       value: "24",
-      icon: Award,
+      icon: GraduationCap,
       color: "text-[#0F7490]",
       bgGradient: "from-[#0F7490]/10 to-[#0F7490]/5",
       borderColor: "border-[#0F7490]/20",
@@ -75,7 +77,7 @@ const Dashboard = () => {
   ];
 
   const recentActivities = [
-    { action: "تم تسجيل معلم جديد", time: "منذ ساعتين", type: "user" },
+    { action: "تم تسجيل مدرب جديد", time: "منذ ساعتين", type: "user" },
     { action: 'تم إنشاء امتحان "الرياضيات النهائي"', time: "منذ 4 ساعات", type: "exam" },
     { action: "تمت إضافة 15 سؤال جديد", time: "منذ يوم", type: "question" },
     { action: "تم إنشاء تقرير أداء الطلاب", time: "منذ يومين", type: "report" },
@@ -187,28 +189,28 @@ const Dashboard = () => {
               <h3 className="text-xl font-bold text-[#202938]">الإجراءات السريعة</h3>
             </div>
             <div className="space-y-3">
-              <button className="w-full text-right p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all">
+              <button onClick={() => router.push("/teachers")} className="w-full text-right p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all">
                 <div className="flex items-center justify-start gap-3 gap-reverse">
                   <Users className="w-5 h-5" style={{ color: "#0F7490" }} />
-                  <span className="font-medium" style={{ color: "#202938" }}>إضافة معلم جديد</span>
+                  <span className="font-medium" style={{ color: "#202938" }}>إضافة مدرب جديد</span>
                 </div>
               </button>
 
-              <button className="w-full text-right p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all">
+              <button onClick={() => router.push("/exams")} className="w-full text-right p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all">
                 <div className="flex items-center justify-start gap-3 gap-reverse">
                   <FileText className="w-5 h-5" style={{ color: "#C9AE6C" }} />
                   <span className="font-medium" style={{ color: "#202938" }}>إنشاء امتحان جديد</span>
                 </div>
               </button>
 
-              <button className="w-full text-right p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all">
+              <button onClick={() => router.push("/exams")} className="w-full text-right p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all">
                 <div className="flex items-center justify-start gap-3 gap-reverse">
                   <HelpCircle className="w-5 h-5" style={{ color: "#8B5CF6" }} />
                   <span className="font-medium" style={{ color: "#202938" }}>إضافة أسئلة</span>
                 </div>
               </button>
 
-              <button className="w-full text-right p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-yellow-300 hover:bg-yellow-50 transition-all">
+              <button onClick={() => router.push("/rating")} className="w-full text-right p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-yellow-300 hover:bg-yellow-50 transition-all">
                 <div className="flex items-center justify-start gap-3 gap-reverse">
                   <BarChart3 className="w-5 h-5" style={{ color: "#0F7490" }} />
                   <span className="font-medium" style={{ color: "#202938" }}>عرض التقارير</span>
@@ -226,7 +228,7 @@ const Dashboard = () => {
                 </div>
                 <div className="flex items-center text-sm">
                   <Calendar className="w-4 h-4 ml-2" style={{ color: "#C9AE6C" }} />
-                  <span className="text-gray-600">اجتماع المعلمين - 8 أغسطس</span>
+                  <span className="text-gray-600">اجتماع المدربين - 8 أغسطس</span>
                 </div>
                 <div className="flex items-center text-sm">
                   <Calendar className="w-4 h-4 ml-2" style={{ color: "#0F7490" }} />

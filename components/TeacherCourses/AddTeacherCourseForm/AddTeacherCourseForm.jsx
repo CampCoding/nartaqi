@@ -30,6 +30,7 @@ import dayjs from "dayjs";
 import "react-quill-new/dist/quill.snow.css";
 import dynamic from "next/dynamic";
 import AddTeacherCourseContent from "../AddTeacherCourseContent/AddTeacherCourseContent";
+import { all_categories } from "@/app/(admin)/categories/page";
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 const { Dragger } = Upload;
@@ -248,6 +249,7 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
         terms: raw.terms || "",
         features: features,
         lessons: lessons,
+        courseContent: courseContent,
         overview: raw.overview || "",
       };
 
@@ -409,6 +411,18 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                       <Input placeholder="مثال: الرياضيات، الفيزياء" />
                     </Form.Item>
 
+                    <Form.Item 
+                     label={<span className="font-medium"> الفئة *</span>}
+                     name="category"
+                     placeholder="اختر الفئة"
+                     rules={[
+                       { required: true, message: "أدخل  الفئة" },
+                       
+                     ]}
+                    >
+                      <Select options={all_categories?.map(item => ({label : item?.title , value:item?.id}))}/>
+                    </Form.Item>
+
                     <Form.Item
                       label={<span className="font-medium">السعر (ج.م)</span>}
                       name="price"
@@ -422,21 +436,6 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                         placeholder="499"
                         controls={false}
                       />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={<span className="font-medium">المدة</span>}
-                      name="duration"
-                      rules={[{ required: true, message: "أدخل مدة الدورة" }]}
-                    >
-                      <Input placeholder="مثال: 3 شهور" />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={<span className="font-medium">المرفقات</span>}
-                      name="attachment"
-                    >
-                      <Input placeholder="مثال: شامل كتاب الدورة pdf" />
                     </Form.Item>
 
                     <Form.Item
@@ -473,20 +472,6 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Form.Item
-                      label={<span className="font-medium">الحالة *</span>}
-                      name="status"
-                      rules={[{ required: true }]}
-                    >
-                      <Select
-                        options={[
-                          { label: "🟢 نشط", value: "نشط" },
-                          { label: "⚪ غير نشط", value: "غير نشط" },
-                          { label: "🟡 مسودة", value: "مسودة" },
-                        ]}
-                      />
-                    </Form.Item>
-
-                    <Form.Item
                       label={<span className="font-medium">سياسة النوع *</span>}
                       name="genderPolicy"
                       rules={[{ required: true, message: "اختر السياسة" }]}
@@ -512,7 +497,11 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                     </Form.Item>
 
                     <Form.Item
-                      label={<span className="font-medium">الإتاحة</span>}
+                      label={
+                        <span className="font-medium">
+                          تاريخ البداية - تاريخ النهاية
+                        </span>
+                      }
                       name="availableRange"
                       rules={[
                         {
@@ -522,6 +511,15 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                       ]}
                     >
                       <RangePicker className="w-full" />
+                    </Form.Item>
+
+                    <Form.Item 
+                    label={<span className="font-medium">المدرب*</span>}
+                    name="instructor"
+                    rules={[{ required: true, message: "اختر المدرب" }]}
+                    >
+                      <Select mode="multiple" options={[{label:"أحمد محمد" , value:1} ,{label:"رحمه اسماعيل" , value:2}]} />
+                        
                     </Form.Item>
                   </div>
                 </div>
@@ -535,27 +533,21 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                   <div className="space-y-6">
                     {/* Tab Navigation */}
                     <div className="flex gap-2 items-center mb-4 flex-wrap">
-                      {[
-                        "نبذه مختصرة",
-                        "الشروط والأحكام",
-                        "التقييم",
-                        "مميزات الدورة",
-                        "المحتوى",
-                        "المصادر",
-                        "الدعم",
-                      ].map((tab, index) => (
-                        <button
-                          key={index}
-                          className={`rounded-3xl p-2 border text-primary cursor-pointer mb-2 ${
-                            activeTab === index + 1
-                              ? "bg-primary text-white"
-                              : ""
-                          }`}
-                          onClick={() => setActiveTab(index + 1)}
-                        >
-                          {tab}
-                        </button>
-                      ))}
+                      {["نبذه مختصرة", "المحتوى", "المصادر"].map(
+                        (tab, index) => (
+                          <button
+                            key={index}
+                            className={`rounded-3xl p-2 border text-primary cursor-pointer mb-2 ${
+                              activeTab === index + 1
+                                ? "bg-primary text-white"
+                                : ""
+                            }`}
+                            onClick={() => setActiveTab(index + 1)}
+                          >
+                            {tab}
+                          </button>
+                        )
+                      )}
                     </div>
 
                     {/* نبذه مختصه */}
@@ -570,159 +562,73 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                       </Form.Item>
                     )}
 
-                    {/* الشروط والأحكام */}
-                    {activeTab === 2 && (
-                      <Form.Item
-                        label="الشروط والأحكام"
-                        name="privacy policy"
-                        valuePropName="value"
-                        getValueFromEvent={(v) => v}
-                      >
-                        <RichTextField placeholder="اكتب نبذة مختصرة عن الدورة..." />
-                      </Form.Item>
-                    )}
-
-                    {/* التقييم */}
-                    {activeTab === 3 && (
-                      <div className="flex flex-col gap-2">
-                        <Form.Item label="اسم الشخص">
-                          <Input />
-                        </Form.Item>
-
-                        <Form.Item label="الوصف">
-                          <Input />
-                        </Form.Item>
-
-                        <Form.Item label="التقييم">
-                          <Rate />
-                        </Form.Item>
-                      </div>
-                    )}
-
-                    {/* مميزات الدورة */}
-                    {activeTab === 4 && (
-                      <div>
-                        <Row gutter={16}>
-                          <Col xs={24} md={8}>
-                            <Form.Item label="عنوان الميزة">
-                              <Input
-                                value={newFeature.title}
-                                onChange={(e) =>
-                                  setNewFeature({
-                                    ...newFeature,
-                                    title: e.target.value,
-                                  })
-                                }
-                                placeholder="أدخل عنوان الميزة"
-                              />
-                            </Form.Item>
-                          </Col>
-                          <Col xs={24} md={8}>
-                            <Form.Item label="وصف الميزة">
-                              <Input
-                                value={newFeature.description}
-                                onChange={(e) =>
-                                  setNewFeature({
-                                    ...newFeature,
-                                    description: e.target.value,
-                                  })
-                                }
-                                placeholder="أدخل وصف الميزة"
-                              />
-                            </Form.Item>
-                          </Col>
-                          <Col xs={24} md={8}>
-                            <Form.Item label="أيقونة الميزة">
-                              <Input
-                                value={newFeature.icon}
-                                onChange={(e) =>
-                                  setNewFeature({
-                                    ...newFeature,
-                                    icon: e.target.value,
-                                  })
-                                }
-                                placeholder="أدخل رابط الأيقونة"
-                              />
-                            </Form.Item>
-                          </Col>
-                        </Row>
-
-                        <Button
-                          type="dashed"
-                          onClick={() => {
-                            handleAddFeature();
-                            console.log("clickkeddd");
-                          }}
-                          className="mb-4"
-                          block
-                          icon={<PlusOutlined />}
-                        >
-                          إضافة ميزة
-                        </Button>
-
-                        <Divider />
-
-                        <div className="mt-4">
-                          <h4 className="mb-2">مميزات الدورة المضافة:</h4>
-                          {features.length > 0 ? (
-                            <Row gutter={16}>
-                              {features.map((feature, index) => (
-                                <Col
-                                  xs={24}
-                                  md={12}
-                                  lg={8}
-                                  key={index}
-                                  className="mb-3"
-                                >
-                                  <Card
-                                    size="small"
-                                    title={feature.title}
-                                    extra={
-                                      <Button
-                                        type="text"
-                                        danger
-                                        icon={<DeleteOutlined />}
-                                        onClick={() =>
-                                          handleRemoveFeature(index)
-                                        }
-                                      />
-                                    }
-                                  >
-                                    <p>{feature.description}</p>
-                                    <small>الأيقونة: {feature.icon}</small>
-                                  </Card>
-                                </Col>
-                              ))}
-                            </Row>
-                          ) : (
-                            <p className="text-gray-500">
-                              لم يتم إضافة أي ميزات بعد
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
                     {/* المحتوى */}
-                    {activeTab === 5 && (
-                    <AddTeacherCourseContent 
-                      activeTab={activeTab}
-                      insideTab={insideTab}
-                      setInsideTab={setInsideTab}
-                    />
+                    {activeTab === 2 && (
+                      <AddTeacherCourseContent
+                        activeTab={activeTab}
+                        insideTab={insideTab}
+                        setInsideTab={setInsideTab}
+                      />
                     )}
 
-                    {activeTab === 6 && (
-                      <div>
-                        <Form.Item label="المصادر">
-                          <Input type="file" />
+                    {activeTab === 3 && (
+                      <div className="space-y-6">
+                        {/* 1) ملفات مرفقة: يدعم عدّة ملفات (PDF/صور/عروض/فيديو...) */}
+                        <Form.Item
+                          label="ملفات مرفقة"
+                          name={["resources", "files"]}
+                          valuePropName="fileList"
+                          getValueFromEvent={(e) =>
+                            Array.isArray(e) ? e : e?.fileList
+                          }
+                          tooltip="اسحب وأسقط الملفات أو اضغط للاختيار"
+                        >
+                          <Upload.Dragger
+                            multiple
+                            listType="text"
+                            accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
+                            beforeUpload={() => false} // لا ترفع تلقائيًا، اتركها للفورم عند الحفظ
+                            maxCount={20}
+                          >
+                            <p className="ant-upload-drag-icon">📎</p>
+                            <p className="ant-upload-text">
+                              اسحب الملفات هنا أو اضغط للاختيار
+                            </p>
+                            <p className="ant-upload-hint text-gray-500">PDF</p>
+                          </Upload.Dragger>
                         </Form.Item>
-                      </div>
-                    )}
 
-                    {activeTab === 7 && (
-                      <div>
-                        <Form.Item label=""></Form.Item>
+                        <Form.Item
+                          name={[name, "phone"]}
+                          className="col-span-12 md:col-span-11 mb-0"
+                          rules={[
+                            { required: true, message: "أدخل رقم تليجرام" },
+                            {
+                              pattern: /^\+?[1-9]\d{6,14}$/,
+                              message:
+                                "رقم دولي بصيغة E.164 (مثال: +9665xxxxxxx)",
+                            },
+                          ]}
+                          label="قناة التليجرام"
+                        >
+                          <Input placeholder="+9665xxxxxxx" />
+                        </Form.Item>
+
+                        <Form.Item
+                          name={[name, "whatsapp"]}
+                          className="col-span-12 md:col-span-11 mb-0"
+                          rules={[
+                            { required: true, message: "أدخل رقم واتساب" },
+                            {
+                              pattern: /^\+?[1-9]\d{6,14}$/,
+                              message:
+                                "رقم دولي بصيغة E.164 (مثال: +9665xxxxxxx)",
+                            },
+                          ]}
+                          label="جروب الاستفسارات"
+                        >
+                          <Input placeholder="+9665xxxxxxx" />
+                        </Form.Item>
                       </div>
                     )}
                   </div>
@@ -741,6 +647,7 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                     <Button
                       type="primary"
                       htmlType="submit"
+                      onClick={() => setOpen(false)}
                       loading={loading}
                       className="px-8 py-3 bg-[#0F7490] text-white rounded-lg hover:!bg-[#0d5f75]"
                       icon={!loading ? <PlusOutlined /> : undefined}

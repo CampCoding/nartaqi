@@ -119,18 +119,7 @@ export default function ExamsTable({
                 >
                   المدة (دقيقة) <SortIcon col="duration" />
                 </th>
-                <th
-                  onClick={() => toggleSort("participants")}
-                  className="cursor-pointer select-none whitespace-nowrap text-center"
-                >
-                  المشاركون <SortIcon col="participants" />
-                </th>
-                <th
-                  onClick={() => toggleSort("lastModified")}
-                  className="cursor-pointer select-none whitespace-nowrap"
-                >
-                  آخر تعديل <SortIcon col="lastModified" />
-                </th>
+                
                 <th className="text-center whitespace-nowrap">إجراءات</th>
               </tr>
             </thead>

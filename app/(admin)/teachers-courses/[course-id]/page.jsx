@@ -195,14 +195,14 @@ export default function CourseDetailsPage() {
 
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
-    { label: "دورات المعلمين", href: "/teachers-courses", icon: Book },
+    { label: "دورات المدربين", href: "/teachers-courses", icon: Book },
     { label: courseData.title, href: `#`, icon: BookOpen, current: true },
   ];
 
   const tabs = [
     { id: "overview", title: "نظرة عامة", icon: Eye },
     { id: "curriculum", title: "المنهج", icon: BookOpen },
-    { id: "instructor", title: "المدرس", icon: User },
+    { id: "instructor", title: "المدرب", icon: User },
     { id: "reviews", title: "التقييمات", icon: Star },
   ];
 
@@ -504,7 +504,7 @@ export default function CourseDetailsPage() {
                 <div className="bg-white rounded-xl p-6 border border-gray-100">
                   <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
                     <User className="w-6 h-6 text-blue-600" />
-                    معلومات المدرس
+                    معلومات المدرب
                   </h3>
                   <div className="flex items-start gap-6">
                     <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">

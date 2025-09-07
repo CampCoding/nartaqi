@@ -1,6 +1,7 @@
 
 
-"use client"; import React, { useState } from 'react';
+"use client"; 
+import React, { useState } from 'react';
 import { Settings, Users, Clock, Shield, Check, Edit2, Save, X } from 'lucide-react';
 
 const SystemSettings = () => {

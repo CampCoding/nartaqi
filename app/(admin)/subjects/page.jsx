@@ -241,7 +241,7 @@ const SubjectsManagementPage = () => {
                 size="large"
                 icon={<Plus className="w-5 h-5" />}
               >
-                إضافة مادة جديدة
+                إضافة دورة جديدة
               </Button>
             </div>
           }

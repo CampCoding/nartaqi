@@ -1,6 +1,9 @@
+"use client";
+import { ToastContainer } from "react-toastify";
 import RouteLoader from "../../components/layout/RouteLoader";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
+
 
 export default function AdminLayout({ children }) {
   return (
@@ -12,6 +15,9 @@ export default function AdminLayout({ children }) {
           {children}
         </main>
       </div>
+
+      <ToastContainer />
+
     </div>
   );
 }

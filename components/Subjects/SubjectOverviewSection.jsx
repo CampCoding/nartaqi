@@ -305,7 +305,7 @@ const SubjectDetails = ({ subjectId }) => {
             <Col xs={24} lg={8}>
               <div className="space-y-6">
                 {/* Instructor Info */}
-                <Card title="المدرس" className="shadow-sm">
+                <Card title="المدرب" className="shadow-sm">
                   <div className="flex items-center gap-4 mb-4">
                     <Avatar size={64} src={subject.instructor.avatar} />
                     <div>

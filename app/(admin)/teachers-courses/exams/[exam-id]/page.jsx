@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import PageLayout from "../../../components/layout/PageLayout";
-import BreadcrumbsShowcase from "../../../components/ui/BreadCrumbs";
+// import PageLayout from "../../../components/layout/PageLayout";
+// import BreadcrumbsShowcase from "../../../components/ui/BreadCrumbs";
 import {
   BarChart3,
   Download,
@@ -12,17 +12,27 @@ import {
   Edit3,
   Target,
 } from "lucide-react";
-import PagesHeader from "../../../components/ui/PagesHeader";
-import Button from "../../../components/atoms/Button";
-import SearchAndFilters from "../../../components/ui/SearchAndFilters";
-import ExamsStats from "../../../components/Exams/ExamsStats";
-import ExamsGrid from "../../../components/Exams/ExamsGrid";
-import AddNewExamModal from "../../../components/Exams/AddNewExamModal";
-import EditNewExamModal from "../../../components/Exams/EditNewExamModal";
-import DeleteExamModal from "../../../components/Exams/DeleteExamModal";
-import ExamsTable from "../../../components/Exams/ExamsTable";
+// import PagesHeader from "../../../components/ui/PagesHeader";
+// import Button from "../../../components/atoms/Button";
+// import SearchAndFilters from "../../../components/ui/SearchAndFilters";
+// import ExamsStats from "../../../components/Exams/ExamsStats";
+// import ExamsGrid from "../../../components/Exams/ExamsGrid";
+// import AddNewExamModal from "../../../components/Exams/AddNewExamModal";
+// import EditNewExamModal from "../../../components/Exams/EditNewExamModal";
+// import DeleteExamModal from "../../../components/Exams/DeleteExamModal";
+// import ExamsTable from "../../../components/Exams/ExamsTable";
 
 import { Modal, Tag, Divider, Space, Typography, Select } from "antd";
+import PageLayout from "@/components/layout/PageLayout";
+import BreadcrumbsShowcase from "@/components/ui/BreadCrumbs";
+import PagesHeader from "@/components/ui/PagesHeader";
+import Button from "@/components/atoms/Button";
+import ExamsStats from "@/components/Exams/ExamsStats";
+import SearchAndFilters from "@/components/ui/SearchAndFilters";
+import ExamsGrid from "@/components/Exams/ExamsGrid";
+import ExamsTable from "@/components/Exams/ExamsTable";
+import { useParams } from "next/navigation";
+import { subjects } from "@/data/subjects";
 const { Text, Title } = Typography;
 
 /* -------------------- Helpers -------------------- */
@@ -79,10 +89,6 @@ const normalizeQuestions = (qs) =>
     return base;
   });
 
-const breadcrumbs = [
-  { label: "الرئيسية", href: "/", icon: BarChart3 },
-  { label: "الاختبارات", href: "/exams", icon: FileText, current: true },
-];
 
 // خرائط ألوان للحالة/الصعوبة
 const statusColors = {
@@ -322,13 +328,26 @@ export default function ExamsPage() {
   const [editModal, setEditModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
-
+  const params = useParams();
   // عرض/بحث/فلترة
   const [viewMode, setViewMode] = useState("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all"); // حالة الاختبار (نشط/مسودة/منشور)
   const [examTypeFilter, setExamTypeFilter] = useState("all"); // نوع الاختبار (training/mock)
+  const exam_id = params["exam-id"];
+  const [filteredExam , setFilteredExam] = useState({});
 
+  useEffect(() => {
+    setFilteredExam(subjects?.find(item => item?.code == exam_id))
+  } , [exam_id])
+
+  const breadcrumbs = [
+    { label: "الرئيسية", href: "/", icon: BarChart3 },
+    {label :filteredExam?.name, href : "/teacher-courses" , icon :""},
+    { label: "الاختبارات", href: "/exams", icon: FileText, current: true },
+  ];
+
+  
   // منيو النقاط
   const [openMenuFor, setOpenMenuFor] = useState(null);
   const menuRef = useRef(null);
@@ -381,72 +400,7 @@ export default function ExamsPage() {
     setDeleteModal(true);
   };
 
-  /* -------------------- Add / Edit Submit -------------------- */
-  const onAddSubmit = async (payload) => {
-    // payload المتوقع من المودال:
-    // { title, description, time, examType, questions: [{type, title, ...}] }
-    const nextId =
-      (exams.length ? Math.max(...exams.map((e) => Number(e.id) || 0)) : 0) + 1;
 
-    const questionsData = normalizeQuestions(payload.questions);
-    const examType = (payload.examType || "training").toLowerCase(); // training | mock
-
-    const newExam = {
-      id: nextId,
-      title: payload.title,
-      description: payload.description,
-      duration: Number(payload.time) || 0,
-      questions: questionsData.length,
-      status: "مسودة",
-      participants: 0,
-      rating: 0,
-      lastModified: "الآن",
-      difficulty: "متوسط",
-      subject: "",
-      examType,
-      questionsData,
-      _raw: {
-        id: nextId,
-        title: payload.title,
-        description: payload.description,
-        time: payload.time,
-        questions: questionsData,
-        examType,
-      },
-    };
-
-    setExams((prev) => [newExam, ...prev]);
-  };
-
-  const onEditSubmit = async (payload) => {
-    // { id, title, description, time, examType, questions: [...] }
-    const questionsData = normalizeQuestions(payload.questions);
-    const examType = (payload.examType || "training").toLowerCase();
-
-    setExams((prev) =>
-      prev.map((ex) => {
-        if (String(ex.id) !== String(payload.id)) return ex;
-        return {
-          ...ex,
-          title: payload.title,
-          description: payload.description,
-          duration: Number(payload.time) || 0,
-          questions: questionsData.length,
-          lastModified: "الآن",
-          examType,
-          questionsData,
-          _raw: {
-            id: payload.id,
-            title: payload.title,
-            description: payload.description,
-            time: payload.time,
-            questions: questionsData,
-            examType,
-          },
-        };
-      })
-    );
-  };
 
   const stats = [
     {
@@ -483,25 +437,7 @@ export default function ExamsPage() {
         <PagesHeader
           title={"إدارة الاختبارات"}
           subtitle={"مراجعة وإدارة الاختبارات التعليمية (تدريب / محاكي + أنواع أسئلة متعددة)"}
-          extra={
-            <div className="flex items-center gap-3 flex-row-reverse">
-              <Button
-                onClick={() => setAddNewModal(true)}
-                type="primary"
-                size="large"
-                icon={<Plus className="w-5 h-5" />}
-                className="shadow-lg hover:shadow-xl transition-shadow"
-              >
-                إضافة اختبار جديد
-              </Button>
-              <Button type="secondary" icon={<Download className="w-4 h-4" />}>
-                تصدير
-              </Button>
-              <Button type="default" icon={<Upload className="w-4 h-4" />}>
-                استيراد
-              </Button>
-            </div>
-          }
+         
         />
 
         {/* إحصائيات */}
@@ -560,7 +496,7 @@ export default function ExamsPage() {
       </div>
 
       {/* مودال إضافة امتحان */}
-      <AddNewExamModal
+      {/* <AddNewExamModal
         open={newModal}
         setOpen={setAddNewModal}
         onSubmit={onAddSubmit}
@@ -576,40 +512,16 @@ export default function ExamsPage() {
           { value: "written", label: "سؤال مقالي" },
           { value: "fill", label: "أكمل الفراغ" },
         ]}
-      />
+      /> */}
 
       {/* مودال تعديل امتحان */}
-      <EditNewExamModal
-        open={editModal}
-        setOpen={setEditModal}
-        exam={selectedExam}
-        onSubmit={onEditSubmit}
-        palette={{ primary: "#02AAA0" }}
-        examTypeOptions={[
-          { value: "training", label: "تدريب" },
-          { value: "mock", label: "اختبار محاكي" },
-        ]}
-        questionTypeOptions={[
-          { value: "mcq", label: "اختيار من متعدد" },
-          { value: "tf", label: "صح / خطأ" },
-          { value: "written", label: "سؤال مقالي" },
-          { value: "fill", label: "أكمل الفراغ" },
-        ]}
-      />
-
-      {/* مودال الحذف */}
-      <DeleteExamModal
-        open={deleteModal}
-        setOpen={setDeleteModal}
-        rowData={selectedExam}
-      />
-
+      
       {/* مودال المعاينة */}
-      <ExamPreviewModal
+      {/* <ExamPreviewModal
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
         exam={selectedExam}
-      />
+      /> */}
     </PageLayout>
   );
 }

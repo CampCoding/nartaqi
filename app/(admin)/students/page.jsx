@@ -57,7 +57,8 @@ import StudentsTable from "../../../components/Students/StudentsTable";
 const { Text, Title } = Typography;
 
 const StudentsManagement = () => {
-  const [teachers, setTeachers] = useState([
+  const [teachers, setTeachers] = useState(
+    [
   {
     id: 1,
     name: "Youssef Ibrahim",
@@ -123,6 +124,7 @@ const StudentsManagement = () => {
     qualification: "الصف التاسع - قسم B",
     avatar: null,
   },
+
 ]);
 
 
