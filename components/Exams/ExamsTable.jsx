@@ -98,7 +98,7 @@ export default function ExamsTable({
                   onClick={() => toggleSort("subject")}
                   className="cursor-pointer select-none whitespace-nowrap"
                 >
-                  المادة <SortIcon col="subject" />
+                  الدورة <SortIcon col="subject" />
                 </th>
                 <th className="whitespace-nowrap">الحالة</th>
                 <th

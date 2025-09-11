@@ -127,7 +127,7 @@ function getInitials(name = "") {
     .toUpperCase();
 }
 
-/* Mock: جلب طلاب الدورة حسب كود المادة */
+/* Mock: جلب طلاب الدورة حسب كود الدورة */
 async function fetchCourseStudentsByCode(code) {
   await new Promise((r) => setTimeout(r, 500));
   const seed = String(code || "").slice(0, 3).toUpperCase();
@@ -261,7 +261,7 @@ export default function Page() {
   const [mergeStrategy, setMergeStrategy] = useState("replace"); // replace | merge
   const [matchBy, setMatchBy] = useState("email"); // email | phone | id
 
-  // حمّل اسم/كود المادة من subjects + حمّل الداتا التجريبية كقائمة افتراضية
+  // حمّل اسم/كود الدورة من subjects + حمّل الداتا التجريبية كقائمة افتراضية
   useEffect(() => {
     setSelectedSubject(subjects?.find((item) => String(item?.code) === String(id)) || null);
 

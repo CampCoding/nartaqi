@@ -32,3 +32,14 @@
   background: #0F7490; 
     border-radius: 10px;
 }
+
+
+.PhoneInputInput:focus ,
+.PhoneInputInput {
+  border: 0px !important;
+  outline: none !important;
+}
+
+.PhoneInputInput {
+  padding: 0px 10px ;
+}

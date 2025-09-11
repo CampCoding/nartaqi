@@ -230,7 +230,7 @@ export default function SubjectStudentsSection({
                 label: (
                   <Popconfirm
                     title="إزالة الطالب"
-                    description="سيتم إلغاء تسجيل الطالب من هذه المادة."
+                    description="سيتم إلغاء تسجيل الطالب من هذه الدورة."
                     okText="إزالة"
                     okButtonProps={{ danger: true }}
                     cancelText="إلغاء"
@@ -263,7 +263,7 @@ export default function SubjectStudentsSection({
             <Tooltip title="حذف">
               <Popconfirm
                 title="إزالة الطالب"
-                description="سيتم إلغاء تسجيل الطالب من هذه المادة."
+                description="سيتم إلغاء تسجيل الطالب من هذه الدورة."
                 okText="إزالة"
                 okButtonProps={{ danger: true }}
                 cancelText="إلغاء"

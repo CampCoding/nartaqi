@@ -207,13 +207,11 @@ const StudentsManagement = () => {
         <BreadcrumbsShowcase items={breadcrumbs} variant="pill" />
 
         <PagesHeader
-          title={"إدارة الطلاب"}
-          subtitle={"مراجعة وإدارة طلبات الطلاب وملفاتهم"}
+          title={"إدارة المتدربين"}
+          subtitle={"مراجعة وإدارة طلبات المتدربين وملفاتهم"}
           extra={
             <div className="flex items-center gap-4 gap-reverse">
-              <Button type="default" icon={<Upload className="w-4 h-4" />}>
-                استيراد
-              </Button>
+
               <Button type="secondary" icon={<Download className="w-4 h-4" />}>
                 تصدير
               </Button>
@@ -223,7 +221,7 @@ const StudentsManagement = () => {
                 size="large"
                 icon={<Plus className="w-5 h-5" />}
               >
-                إضافة طالب
+                إضافة متدرب
               </Button>
             </div>
           }

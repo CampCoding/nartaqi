@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   PlusOutlined,
   BookOutlined,
   FileTextOutlined,
   InboxOutlined,
+  DeleteOutlined,
+  PlayCircleOutlined,
 } from "@ant-design/icons";
 import {
   Modal,
@@ -18,27 +20,22 @@ import {
   DatePicker,
   InputNumber,
   Upload,
+  Row,
+  Col,
+  Card,
+  Rate,
+  Divider,
 } from "antd";
 import dayjs from "dayjs";
-
-import dynamic from "next/dynamic";
 import "react-quill-new/dist/quill.snow.css";
+import dynamic from "next/dynamic";
+import AddTeacherCourseContent from "../AddTeacherCourseContent/AddTeacherCourseContent";
+import { all_categories } from "@/app/(admin)/categories/page";
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 const { Dragger } = Upload;
 const { TextArea } = Input;
 const { RangePicker } = DatePicker;
-
-// helper: convert file -> base64 (لمعاينة محلية، أو كحل مؤقت)
-const getBase64 = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-  });
-
-// إعدادات التولبار/الفورمات للمحرر
 const quillModules = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
@@ -68,7 +65,6 @@ const quillFormats = [
   "code-block",
 ];
 
-// غلاف صغير يربط ReactQuill مع antd Form
 const RichTextField = ({ value, onChange, placeholder }) => (
   <div dir="rtl">
     <ReactQuill
@@ -82,14 +78,54 @@ const RichTextField = ({ value, onChange, placeholder }) => (
     />
   </div>
 );
+// Helper: convert file -> base64
+const getBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+  });
 
-const AddSubjectForm = ({ open, setOpen }) => {
+const insideTabs = [
+  {
+    id: 1,
+    title: "فيديوهات شرح مسجلة",
+  },
+  {
+    id: 2,
+    title: "اختبارات",
+  },
+  {
+    id: 3,
+    title: "محاضرات",
+  },
+];
+
+const AddNewCourse = ({ open, setOpen }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-
-  // 🖼️ إدارة رفع الصورة
+  const [activeTab, setActiveTab] = useState(1);
   const [fileList, setFileList] = useState([]);
-  const [imagePreview, setImagePreview] = useState(null); // base64 أو URL من السيرفر لاحقًا
+  const [imagePreview, setImagePreview] = useState(null);
+  const [features, setFeatures] = useState([]);
+  const [lessons, setLessons] = useState([]);
+  const [newFeature, setNewFeature] = useState({
+    title: "",
+    description: "",
+    icon: "",
+  });
+  const [newLesson, setNewLesson] = useState({
+    name: "",
+    videos: [{ link: "", duration: "" }],
+  });
+  const [insideTab, setInsideTab] = useState(1);
+  const [videoUnit, setVideoUnit] = useState(""); // Video unit name
+  const [videoUrl, setVideoUrl] = useState(""); // Video URL
+  const [examUnit, setExamUnit] = useState(""); // Exam unit name
+  const [examUrl, setExamUrl] = useState(""); // Exam URL
+  const [isNewVideo, setIsNewVideo] = useState(true); // State to switch between new/existing video
+  const [selectedVideo, setSelectedVideo] = useState(""); // State for the existing video selection
 
   const beforeUpload = async (file) => {
     const isImage = file.type?.startsWith("image/");
@@ -105,8 +141,80 @@ const AddSubjectForm = ({ open, setOpen }) => {
 
     const preview = await getBase64(file);
     setImagePreview(preview);
-    setFileList([{ uid: file.uid || file.name, name: file.name, status: "done", originFileObj: file }]);
-    return false; // إيقاف الرفع التلقائي
+    setFileList([
+      {
+        uid: file.uid || file.name,
+        name: file.name,
+        status: "done",
+        originFileObj: file,
+      },
+    ]);
+    return false;
+  };
+
+  // Feature Functions
+  const handleAddFeature = () => {
+    if (newFeature.title && newFeature.description && newFeature.icon) {
+      setFeatures([...features, { ...newFeature }]);
+      setNewFeature({ title: "", description: "", icon: "" });
+      message.success("تم إضافة الميزة بنجاح!");
+    } else {
+      message.error("يجب إدخال جميع الحقول.");
+    }
+  };
+
+  const handleRemoveFeature = (index) => {
+    const newFeatures = [...features];
+    newFeatures.splice(index, 1);
+    setFeatures(newFeatures);
+  };
+
+  // Lesson Functions
+  const handleAddVideoToLesson = () => {
+    setNewLesson({
+      ...newLesson,
+      videos: [...newLesson.videos, { link: "", duration: "" }],
+    });
+  };
+
+  const handleRemoveVideoFromLesson = (lessonIndex, videoIndex) => {
+    if (newLesson.videos.length > 1) {
+      const newVideos = [...newLesson.videos];
+      newVideos.splice(videoIndex, 1);
+      setNewLesson({
+        ...newLesson,
+        videos: newVideos,
+      });
+    }
+  };
+
+  const handleUpdateVideoInLesson = (videoIndex, field, value) => {
+    const newVideos = [...newLesson.videos];
+    newVideos[videoIndex][field] = value;
+    setNewLesson({
+      ...newLesson,
+      videos: newVideos,
+    });
+  };
+
+  const handleAddLesson = () => {
+    if (
+      newLesson.name &&
+      newLesson.videos.length > 0 &&
+      newLesson.videos.every((v) => v.link && v.duration)
+    ) {
+      setLessons([...lessons, { ...newLesson }]);
+      setNewLesson({ name: "", videos: [{ link: "", duration: "" }] });
+      message.success("تم إضافة الدرس بنجاح!");
+    } else {
+      message.error("يجب إدخال جميع الحقول لكل فيديو.");
+    }
+  };
+
+  const handleRemoveLesson = (index) => {
+    const newLessons = [...lessons];
+    newLessons.splice(index, 1);
+    setLessons(newLessons);
   };
 
   const handleFinish = async () => {
@@ -114,23 +222,22 @@ const AddSubjectForm = ({ open, setOpen }) => {
     try {
       const raw = form.getFieldsValue(true);
 
-      // تأكيد وجود صورة
       if (!imagePreview) {
-        message.error("من فضلك ارفع صورة الدورة أولاً.");
+        // message.error("من فضلك ارفع صورة الدورة أولاً.");
         setLoading(false);
         return;
       }
 
       const payload = {
         code: raw.code?.toUpperCase(),
-        imageUrl: imagePreview, // 👈 نستخدم المعاينة (base64) مؤقتًا — استبدلها بـ URL من API في الإنتاج
+        imageUrl: imagePreview,
         name: raw.name?.trim(),
         price: Number(raw.price ?? 0),
         duration: raw.duration?.trim(),
         attachment: raw.attachment?.trim(),
         description: raw.description?.trim(),
-        status: raw.status, // "نشط" | "غير نشط" | "مسودة"
-        genderPolicy: raw.genderPolicy, // "male" | "female" | "both"
+        status: raw.status,
+        genderPolicy: raw.genderPolicy,
         capacity: Number(raw.capacity ?? 0),
         availableFrom: raw.availableRange?.[0]
           ? dayjs(raw.availableRange[0]).format("YYYY-MM-DD")
@@ -138,25 +245,21 @@ const AddSubjectForm = ({ open, setOpen }) => {
         availableTo: raw.availableRange?.[1]
           ? dayjs(raw.availableRange[1]).format("YYYY-MM-DD")
           : undefined,
-
-        // الحقول المنسقة (HTML)
         summary: raw.summary || "",
         terms: raw.terms || "",
-        features: raw.features || "",
+        features: features,
+        lessons: lessons,
+        courseContent: courseContent,
         overview: raw.overview || "",
       };
 
-      // Simulate API
       await new Promise((r) => setTimeout(r, 1200));
-
       console.log("Form Data:", payload);
-      message.success("تمت إضافة الدورة بنجاح!");
-      form.resetFields();
-      setFileList([]);
-      setImagePreview(null);
+      // message.success("تمت إضافة الدورة بنجاح!");
+      handleReset();
       setOpen(false);
     } catch (e) {
-      message.error("فشل إضافة الدورة. حاول مرة أخرى.");
+      // message.error("فشل إضافة الدورة. حاول مرة أخرى.");
     } finally {
       setLoading(false);
     }
@@ -166,6 +269,34 @@ const AddSubjectForm = ({ open, setOpen }) => {
     form.resetFields();
     setFileList([]);
     setImagePreview(null);
+    setFeatures([]);
+    setLessons([]);
+    setNewFeature({ title: "", description: "", icon: "" });
+    setNewLesson({ name: "", videos: [{ link: "", duration: "" }] });
+  };
+
+  const handleAddVideo = () => {
+    if (videoUnit && videoUrl) {
+      message.success("تم إضافة الفيديو بنجاح!");
+      setVideoUnit("");
+      setVideoUrl("");
+    } else {
+      message.error("يجب إدخال اسم الوحدة ورابط الفيديو.");
+    }
+  };
+
+  const handleAddExam = () => {
+    if (examUnit && examUrl) {
+      message.success("تم إضافة الاختبار بنجاح!");
+      setExamUnit("");
+      setExamUrl("");
+    } else {
+      message.error("يجب إدخال اسم الوحدة ورابط الاختبار.");
+    }
+  };
+
+  const handleVideoChange = (value) => {
+    setSelectedVideo(value);
   };
 
   return (
@@ -183,7 +314,8 @@ const AddSubjectForm = ({ open, setOpen }) => {
         open={open}
         onCancel={() => setOpen(false)}
         footer={null}
-        className="!w-full max-w-4xl"
+        width="90%"
+        style={{ maxWidth: "1200px" }}
       >
         <div className="bg-[#F9FAFC]" dir="rtl">
           <div className="mx-auto">
@@ -220,8 +352,6 @@ const AddSubjectForm = ({ open, setOpen }) => {
                   summary: "<p>نبذة سريعة عن الدورة.</p>",
                   terms:
                     "<ul><li>سياسة الاسترجاع...</li><li>حقوق الاستخدام...</li></ul>",
-                  features:
-                    "<ul><li>محاضرات مسجلة</li><li>اختبارات تفاعلية</li><li>شهادة اجتياز</li></ul>",
                   overview:
                     "<p>تفاصيل موسعة عن محاور الدورة وأهداف التعلم.</p>",
                 }}
@@ -235,7 +365,6 @@ const AddSubjectForm = ({ open, setOpen }) => {
                   </h3>
 
                   <div className="columns columns-1 md:columns-2 gap-4">
-                     {/* 🆕 رفع صورة بدل الرابط */}
                     <Form.Item
                       label={<span className="font-medium">صورة الدورة *</span>}
                       required
@@ -282,7 +411,17 @@ const AddSubjectForm = ({ open, setOpen }) => {
                       <Input placeholder="مثال: الرياضيات، الفيزياء" />
                     </Form.Item>
 
-                   
+                    <Form.Item 
+                     label={<span className="font-medium"> الفئة *</span>}
+                     name="category"
+                     placeholder="اختر الفئة"
+                     rules={[
+                       { required: true, message: "أدخل  الفئة" },
+                       
+                     ]}
+                    >
+                      <Select options={all_categories?.map(item => ({label : item?.title , value:item?.id}))}/>
+                    </Form.Item>
 
                     <Form.Item
                       label={<span className="font-medium">السعر (ج.م)</span>}
@@ -297,21 +436,6 @@ const AddSubjectForm = ({ open, setOpen }) => {
                         placeholder="499"
                         controls={false}
                       />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={<span className="font-medium">المدة</span>}
-                      name="duration"
-                      rules={[{ required: true, message: "أدخل مدة الدورة" }]}
-                    >
-                      <Input placeholder="مثال: 3 شهور" />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={<span className="font-medium">المرفقات</span>}
-                      name="attachment"
-                    >
-                      <Input placeholder="مثال: شامل كتاب الدورة pdf" />
                     </Form.Item>
 
                     <Form.Item
@@ -348,20 +472,6 @@ const AddSubjectForm = ({ open, setOpen }) => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Form.Item
-                      label={<span className="font-medium">الحالة *</span>}
-                      name="status"
-                      rules={[{ required: true }]}
-                    >
-                      <Select
-                        options={[
-                          { label: "🟢 نشط", value: "نشط" },
-                          { label: "⚪ غير نشط", value: "غير نشط" },
-                          { label: "🟡 مسودة", value: "مسودة" },
-                        ]}
-                      />
-                    </Form.Item>
-
-                    <Form.Item
                       label={<span className="font-medium">سياسة النوع *</span>}
                       name="genderPolicy"
                       rules={[{ required: true, message: "اختر السياسة" }]}
@@ -387,7 +497,11 @@ const AddSubjectForm = ({ open, setOpen }) => {
                     </Form.Item>
 
                     <Form.Item
-                      label={<span className="font-medium">الإتاحة</span>}
+                      label={
+                        <span className="font-medium">
+                          تاريخ البداية - تاريخ النهاية
+                        </span>
+                      }
                       name="availableRange"
                       rules={[
                         {
@@ -398,6 +512,15 @@ const AddSubjectForm = ({ open, setOpen }) => {
                     >
                       <RangePicker className="w-full" />
                     </Form.Item>
+
+                    <Form.Item 
+                    label={<span className="font-medium">المدرب*</span>}
+                    name="instructor"
+                    rules={[{ required: true, message: "اختر المدرب" }]}
+                    >
+                      <Select mode="multiple" options={[{label:"أحمد محمد" , value:1} ,{label:"رحمه اسماعيل" , value:2}]} />
+                        
+                    </Form.Item>
                   </div>
                 </div>
 
@@ -407,41 +530,108 @@ const AddSubjectForm = ({ open, setOpen }) => {
                     المحتوى التفصيلي
                   </h3>
 
-                  <Form.Item
-                    label="نبذة مختصرة"
-                    name="summary"
-                    valuePropName="value"
-                    getValueFromEvent={(v) => v}
-                  >
-                    <RichTextField placeholder="اكتب نبذة مختصرة عن الدورة..." />
-                  </Form.Item>
+                  <div className="space-y-6">
+                    {/* Tab Navigation */}
+                    <div className="flex gap-2 items-center mb-4 flex-wrap">
+                      {["نبذه مختصرة", "المحتوى", "المصادر"].map(
+                        (tab, index) => (
+                          <button
+                            key={index}
+                            className={`rounded-3xl p-2 border text-primary cursor-pointer mb-2 ${
+                              activeTab === index + 1
+                                ? "bg-primary text-white"
+                                : ""
+                            }`}
+                            onClick={() => setActiveTab(index + 1)}
+                          >
+                            {tab}
+                          </button>
+                        )
+                      )}
+                    </div>
 
-                  <Form.Item
-                    label="الشروط والأحكام"
-                    name="terms"
-                    valuePropName="value"
-                    getValueFromEvent={(v) => v}
-                  >
-                    <RichTextField placeholder="أدخل الشروط والأحكام الخاصة بالالتحاق..." />
-                  </Form.Item>
+                    {/* نبذه مختصه */}
+                    {activeTab === 1 && (
+                      <Form.Item
+                        label="نبذة مختصرة"
+                        name="summary"
+                        valuePropName="value"
+                        getValueFromEvent={(v) => v}
+                      >
+                        <RichTextField placeholder="اكتب نبذة مختصرة عن الدورة..." />
+                      </Form.Item>
+                    )}
 
-                  <Form.Item
-                    label="مميزات الدورة"
-                    name="features"
-                    valuePropName="value"
-                    getValueFromEvent={(v) => v}
-                  >
-                    <RichTextField placeholder="اذكر مميزات الدورة بنقاط..." />
-                  </Form.Item>
+                    {/* المحتوى */}
+                    {activeTab === 2 && (
+                      <AddTeacherCourseContent
+                        activeTab={activeTab}
+                        insideTab={insideTab}
+                        setInsideTab={setInsideTab}
+                      />
+                    )}
 
-                  <Form.Item
-                    label="نبذة عن الدورة"
-                    name="overview"
-                    valuePropName="value"
-                    getValueFromEvent={(v) => v}
-                  >
-                    <RichTextField placeholder="تفاصيل موسعة عن محتوى ومحاور الدورة..." />
-                  </Form.Item>
+                    {activeTab === 3 && (
+                      <div className="space-y-6">
+                        {/* 1) ملفات مرفقة: يدعم عدّة ملفات (PDF/صور/عروض/فيديو...) */}
+                        <Form.Item
+                          label="ملفات مرفقة"
+                          name={["resources", "files"]}
+                          valuePropName="fileList"
+                          getValueFromEvent={(e) =>
+                            Array.isArray(e) ? e : e?.fileList
+                          }
+                          tooltip="اسحب وأسقط الملفات أو اضغط للاختيار"
+                        >
+                          <Upload.Dragger
+                            multiple
+                            listType="text"
+                            accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
+                            beforeUpload={() => false} // لا ترفع تلقائيًا، اتركها للفورم عند الحفظ
+                            maxCount={20}
+                          >
+                            <p className="ant-upload-drag-icon">📎</p>
+                            <p className="ant-upload-text">
+                              اسحب الملفات هنا أو اضغط للاختيار
+                            </p>
+                            <p className="ant-upload-hint text-gray-500">PDF</p>
+                          </Upload.Dragger>
+                        </Form.Item>
+
+                        <Form.Item
+                          name={[name, "phone"]}
+                          className="col-span-12 md:col-span-11 mb-0"
+                          rules={[
+                            { required: true, message: "أدخل رقم تليجرام" },
+                            {
+                              pattern: /^\+?[1-9]\d{6,14}$/,
+                              message:
+                                "رقم دولي بصيغة E.164 (مثال: +9665xxxxxxx)",
+                            },
+                          ]}
+                          label="قناة التليجرام"
+                        >
+                          <Input placeholder="+9665xxxxxxx" />
+                        </Form.Item>
+
+                        <Form.Item
+                          name={[name, "whatsapp"]}
+                          className="col-span-12 md:col-span-11 mb-0"
+                          rules={[
+                            { required: true, message: "أدخل رقم واتساب" },
+                            {
+                              pattern: /^\+?[1-9]\d{6,14}$/,
+                              message:
+                                "رقم دولي بصيغة E.164 (مثال: +9665xxxxxxx)",
+                            },
+                          ]}
+                          label="جروب الاستفسارات"
+                        >
+                          <Input placeholder="+9665xxxxxxx" />
+                        </Form.Item>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Actions */}
@@ -457,6 +647,7 @@ const AddSubjectForm = ({ open, setOpen }) => {
                     <Button
                       type="primary"
                       htmlType="submit"
+                      onClick={() => setOpen(false)}
                       loading={loading}
                       className="px-8 py-3 bg-[#0F7490] text-white rounded-lg hover:!bg-[#0d5f75]"
                       icon={!loading ? <PlusOutlined /> : undefined}
@@ -469,22 +660,9 @@ const AddSubjectForm = ({ open, setOpen }) => {
             </div>
           </div>
         </div>
-
-        {/* ✅ RTL لواجهة المحرر والـ placeholder */}
-        <style jsx global>{`
-          .ql-rtl .ql-editor {
-            direction: rtl;
-            text-align: right;
-          }
-          .ql-rtl .ql-editor.ql-blank::before {
-            right: 12px;
-            left: auto;
-            text-align: right;
-          }
-        `}</style>
       </Modal>
     </ConfigProvider>
   );
 };
 
-export default AddSubjectForm;
+export default AddNewCourse;

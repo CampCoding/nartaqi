@@ -66,6 +66,7 @@ const PaymentConfirmationPage = () => {
       bankReference: "REF123456789",
       confirmationDate: "2024-01-15T10:35:00",
       confirmedBy: "أحمد المدير",
+      gatewayReference: "8276352767",
     },
     {
       id: 2,
@@ -82,6 +83,7 @@ const PaymentConfirmationPage = () => {
       transactionId: "TXN-002-2024",
       bankReference: "BNK987654321",
       pendingReason: "صورة الإيصال غير واضحة",
+      gatewayReference: "8276352767",
     },
     {
       id: 3,
@@ -98,23 +100,9 @@ const PaymentConfirmationPage = () => {
       transactionId: "TXN-003-2024",
       failureReason: "INSUFFICIENT_FUNDS",
       retryAttempts: 3,
+      gatewayReference: "8276352767",
     },
-    {
-      id: 4,
-      studentName: "سارة حسن القحطاني",
-      phone: "+966598765432",
-      email: "sarah.alqahtani@email.com",
-      courseName: "دورة الرخصة المهنية للمعلمين",
-      amount: 1500,
-      paymentMethod: "cash",
-      status: "confirmed",
-      paymentDate: "2024-01-12T09:15:00",
-      receiptImage: "/images/receipt4.jpg",
-      notes: "دفع نقدي في المكتب الرئيسي",
-      transactionId: "CASH-004-2024",
-      receivedBy: "سعد الموظف",
-      confirmationDate: "2024-01-12T09:15:00",
-    },
+
     {
       id: 5,
       studentName: "عمر يوسف الغامدي",
@@ -129,6 +117,7 @@ const PaymentConfirmationPage = () => {
       notes: "دفع إلكتروني - يحتاج مراجعة إضافية للتأكد من صحة البيانات",
       transactionId: "TXN-005-2024",
       reviewReason: "مبلغ مختلف عن المطلوب",
+      gatewayReference: "8276352767",
     },
     {
       id: 6,
@@ -146,6 +135,7 @@ const PaymentConfirmationPage = () => {
       rejectionReason: "مستند مكرر",
       rejectedBy: "أحمد المدير",
       rejectionDate: "2024-01-11T08:30:00",
+      gatewayReference: "8276352767",
     },
   ]);
 
@@ -189,8 +179,7 @@ const PaymentConfirmationPage = () => {
         return "دفع إلكتروني";
       case "bank_transfer":
         return "تحويل بنكي";
-      case "cash":
-        return "نقدي";
+
       default:
         return method;
     }
@@ -202,8 +191,6 @@ const PaymentConfirmationPage = () => {
         return <CreditCard className="w-4 h-4" />;
       case "bank_transfer":
         return <FileText className="w-4 h-4" />;
-      case "cash":
-        return <DollarSign className="w-4 h-4" />;
       default:
         return <CreditCard className="w-4 h-4" />;
     }
@@ -427,7 +414,9 @@ const PaymentConfirmationPage = () => {
         statusLabel: getStatusLabel(p.status),
         amount: typeof p.amount === "number" ? p.amount : Number(p.amount) || 0,
         paymentDate: p.paymentDate ? new Date(p.paymentDate) : "",
-        confirmationDate: p.confirmationDate ? new Date(p.confirmationDate) : "",
+        confirmationDate: p.confirmationDate
+          ? new Date(p.confirmationDate)
+          : "",
         confirmedBy: p.confirmedBy || p.receivedBy || "",
         transactionId: p.transactionId || "",
         bankReference: p.bankReference || "",
@@ -549,7 +538,6 @@ const PaymentConfirmationPage = () => {
             <option value="all">الكل</option>
             <option value="online">دفع إلكتروني</option>
             <option value="bank_transfer">تحويل بنكي</option>
-            <option value="cash">نقدي</option>
           </select>
         </div>
 

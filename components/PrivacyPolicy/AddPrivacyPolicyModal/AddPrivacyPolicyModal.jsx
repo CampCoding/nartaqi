@@ -153,7 +153,7 @@ export default function AddPrivacyPolicyModal({ open, setOpen }) {
                       className="px-8 py-3 bg-[#0F7490] text-white rounded-lg hover:!bg-[#0d5f75]"
                       icon={!loading ? <PlusOutlined /> : undefined}
                     >
-                      {loading ? "جارٍ الإضافة..." : "إضافة المادة"}
+                      {loading ? "جارٍ الإضافة..." : "إضافة الدورة"}
                     </Button>
                   </div>
                 </div>

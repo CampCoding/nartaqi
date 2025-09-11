@@ -126,7 +126,7 @@ export default function EditSupportModal({
             <Form.Item
               label="العنوان"
               name="name"
-              rules={[{ required: true, message: "أدخل عنوان المادة" }]}
+              rules={[{ required: true, message: "أدخل عنوان الدورة" }]}
             >
               <Input placeholder="مثال: كيفية إنشاء حساب جديد" />
             </Form.Item>
@@ -146,7 +146,7 @@ export default function EditSupportModal({
             <Form.Item label="الوصف" name="desc">
               <Input.TextArea
                 autoSize={{ minRows: 3, maxRows: 6 }}
-                placeholder="نبذة مختصرة عن المادة…"
+                placeholder="نبذة مختصرة عن الدورة…"
               />
             </Form.Item>
 

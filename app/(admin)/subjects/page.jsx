@@ -75,7 +75,7 @@ const SubjectsManagementPage = () => {
 
   const columns = [
     {
-      title: "المادة",
+      title: "الدورة",
       dataIndex: "name",
       key: "name",
       sorter: true,

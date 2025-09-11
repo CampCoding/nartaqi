@@ -94,7 +94,7 @@ const SubjectDetails = ({ subjectId }) => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         setSubject(mockSubjectData);
       } catch (error) {
-        message.error("فشل في تحميل بيانات المادة");
+        message.error("فشل في تحميل بيانات الدورة");
       } finally {
         setLoading(false);
       }
@@ -148,7 +148,7 @@ const SubjectDetails = ({ subjectId }) => {
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
-    message.success("تم نسخ رابط المادة!");
+    message.success("تم نسخ رابط الدورة!");
   };
 
   const handleFavorite = () => {
@@ -169,7 +169,7 @@ const SubjectDetails = ({ subjectId }) => {
       <div className="text-center py-16">
         <InfoCircleOutlined className="text-6xl text-gray-400 mb-4" />
         <Title level={3} className="text-gray-500">
-          لم يتم العثور على المادة
+          لم يتم العثور على الدورة
         </Title>
       </div>
     );
@@ -390,7 +390,7 @@ const SubjectDetails = ({ subjectId }) => {
                 <Card title="إجراءات إدارية" className="shadow-sm">
                   <Space direction="vertical" className="w-full">
                     <Button icon={<EditOutlined />} block className="text-left">
-                      تعديل المادة
+                      تعديل الدورة
                     </Button>
                     <Button
                       icon={<DeleteOutlined />}
@@ -398,7 +398,7 @@ const SubjectDetails = ({ subjectId }) => {
                       block
                       className="text-left"
                     >
-                      حذف المادة
+                      حذف الدورة
                     </Button>
                   </Space>
                 </Card>

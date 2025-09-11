@@ -200,11 +200,7 @@ export default function Page() {
           subtitle={"نظّم وأدر QR Code "}
           extra={
             <div className="flex items-center gap-4 gap-reverse">
-              <Dropdown overlay={menu} trigger={["click"]}>
-                <Button type="default" icon={<Upload className="w-4 h-4" />}>
-                  استيراد / تصدير
-                </Button>
-              </Dropdown>
+             
               <Button
                 onClick={() => setNewModal(true)}
                 type="primary"

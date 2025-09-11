@@ -223,7 +223,7 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
       const raw = form.getFieldsValue(true);
 
       if (!imagePreview) {
-        // message.error("من فضلك ارفع صورة المادة أولاً.");
+        // message.error("من فضلك ارفع صورة الدورة أولاً.");
         setLoading(false);
         return;
       }
@@ -366,7 +366,7 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
 
                   <div className="columns columns-1 md:columns-2 gap-4">
                     <Form.Item
-                      label={<span className="font-medium">صورة المادة *</span>}
+                      label={<span className="font-medium">صورة الدورة *</span>}
                       required
                     >
                       <Dragger
@@ -394,10 +394,10 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                       </Dragger>
                     </Form.Item>
                     <Form.Item
-                      label={<span className="font-medium">اسم المادة *</span>}
+                      label={<span className="font-medium">اسم الدورة *</span>}
                       name="name"
                       rules={[
-                        { required: true, message: "أدخل اسم المادة" },
+                        { required: true, message: "أدخل اسم الدورة" },
                         {
                           validator: (_, value) =>
                             !value || value.trim().length >= 2
@@ -467,7 +467,7 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                 <div className="bg-gray-50 rounded-xl p-4">
                   <h3 className="text-xl font-semibold text-[#202938] mb-4 flex items-center gap-2">
                     <FileTextOutlined className="text-[#0F7490]" />
-                    إعدادات المادة
+                    إعدادات الدورة
                   </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -652,7 +652,7 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                       className="px-8 py-3 bg-[#0F7490] text-white rounded-lg hover:!bg-[#0d5f75]"
                       icon={!loading ? <PlusOutlined /> : undefined}
                     >
-                      {loading ? "جارٍ الإضافة..." : "إضافة المادة"}
+                      {loading ? "جارٍ الإضافة..." : "إضافة الدورة"}
                     </Button>
                   </div>
                 </div>

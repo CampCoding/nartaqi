@@ -94,8 +94,8 @@ export default function Sidebar() {
   };
 
   const menuItems = [
-    { name: "المعلمين", icon: Users, path: "/teachers" },
-    { name: "الطلاب", icon: GraduationCap, path: "/students" },
+    // { name: "المعلمين", icon: Users, path: "/teachers" },
+    { name: "المتدربين", icon: GraduationCap, path: "/students" },
     // { name: "الأسئلة", icon: HelpCircle, path: "/questions" },
     { name: "الاختبارات", icon: FileText, path: "/exams" },
     {
@@ -109,7 +109,7 @@ export default function Sidebar() {
       path:"/qr-code"
     },
     {
-      name:"فئات الدورات",
+      name:"الفئات",
       icon : BookOpen,
       path:"/categories"
     },
@@ -149,7 +149,7 @@ export default function Sidebar() {
       icon: CreditCard,
       path: "/confirm-payment"
     },
-    // { name: "الإعدادات", icon: Settings, path: "/settings" },
+    { name: "الإعدادات", icon: Settings, path: "/settings" },
   ];
 
   useEffect(() => {

@@ -41,7 +41,7 @@ const QuestionsSearchAndFilters = ({
           </div>
 
           <Select
-            placeholder="تصفية حسب المادة"
+            placeholder="تصفية حسب الدورة"
             options={subjectOptions}
             value={selectedSubject}
             onChange={(e) => setSelectedSubject(e.target.value)}

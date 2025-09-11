@@ -46,7 +46,7 @@ const Dashboard = () => {
     },
     {
       id: 2,
-      title: "عدد مدربي الدورات العامة",
+      title: "عدد متدربي الدورات العامة",
       value: "340",
       icon: Users,
       color: "text-[#C9AE6C]",

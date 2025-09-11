@@ -135,20 +135,7 @@ function StudentsGrid({
 
   const moreMenu = (teacher) => ({
     items: [
-      {
-        key: "edit",
-        icon: <EditOutlined />,
-        label: "تعديل",
-      },
-      {
-        key: "status",
-        icon: <SyncOutlined />,
-        label: "تغيير الحالة",
-        children: STATUS_OPTIONS.map((s) => ({
-          key: `status:${s.value}`,
-          label: s.label,
-        })),
-      },
+     
       { type: "divider" },
       {
         key: "delete",

@@ -327,7 +327,7 @@ const EditTeacherCourseForm = ({ open, setOpen, rowData }) => {
       const raw = form.getFieldsValue(true);
 
       if (!imagePreview) {
-        message.error("من فضلك ارفع صورة المادة أولاً.");
+        message.error("من فضلك ارفع صورة الدورة أولاً.");
         setLoading(false);
         return;
       }
@@ -453,7 +453,7 @@ const EditTeacherCourseForm = ({ open, setOpen, rowData }) => {
                   </h3>
 
                   <div className="columns columns-1 md:columns-2 gap-4">
-                    <Form.Item label={<span className="font-medium">صورة المادة *</span>} required>
+                    <Form.Item label={<span className="font-medium">صورة الدورة *</span>} required>
                       <Dragger
                         accept="image/*"
                         multiple={false}
@@ -476,10 +476,10 @@ const EditTeacherCourseForm = ({ open, setOpen, rowData }) => {
                     </Form.Item>
 
                     <Form.Item
-                      label={<span className="font-medium">اسم المادة *</span>}
+                      label={<span className="font-medium">اسم الدورة *</span>}
                       name="name"
                       rules={[
-                        { required: true, message: "أدخل اسم المادة" },
+                        { required: true, message: "أدخل اسم الدورة" },
                         {
                           validator: (_, value) =>
                             !value || value.trim().length >= 2
@@ -537,7 +537,7 @@ const EditTeacherCourseForm = ({ open, setOpen, rowData }) => {
                 <div className="bg-gray-50 rounded-xl p-4">
                   <h3 className="text-xl font-semibold text-[#202938] mb-4 flex items-center gap-2">
                     <FileTextOutlined className="text-[#0F7490]" />
-                    إعدادات المادة
+                    إعدادات الدورة
                   </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -78,29 +78,18 @@ export default function StudentsPrivacy() {
       description: 'تأكد من احتوائها على أحرف كبيرة وصغيرة وأرقام ورموز',
       color: 'text-blue-600 bg-blue-50'
     },
-    {
-      icon: Smartphone,
-      title: 'فعل المصادقة الثنائية',
-      description: 'إضافة طبقة حماية إضافية لحسابك',
-      color: 'text-green-600 bg-green-50'
-    },
+  
     {
       icon: Mail,
       title: 'تحقق من الإشعارات',
       description: 'راقب جميع أنشطة الدخول والتغييرات المهمة',
       color: 'text-purple-600 bg-purple-50'
     },
-    {
-      icon: Eye,
-      title: 'مراجعة الخصوصية',
-      description: 'تحكم في من يمكنه رؤية معلوماتك وتقدمك',
-      color: 'text-orange-600 bg-orange-50'
-    }
   ]
 
   return (
     <div className="min-h-screen p-6" dir="rtl">
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto">
      
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -1,252 +1,345 @@
-
-
-"use client"; 
-import React, { useState } from 'react';
-import { Settings, Users, Clock, Shield, Check, Edit2, Save, X } from 'lucide-react';
+"use client";
+import FooterContainer from "@/components/Settings/FooterContainer";
+import SettingHome from "@/components/Settings/SettingHome";
+import BreadcrumbsShowcase from "@/components/ui/BreadCrumbs";
+import { Settings, Home, Edit, Trash2, Plus, Save, ChevronUp, ChevronDown, Layout, BarChart3 } from "lucide-react";
+import React, { useState } from "react";
 
 const SystemSettings = () => {
-  const [examDuration, setExamDuration] = useState(60);
-  const [teacherRegistration, setTeacherRegistration] = useState('Yes');
-  const [editingRole, setEditingRole] = useState(null);
-  const [showSaveNotification, setShowSaveNotification] = useState(false);
+  // Tab state
+  const [activeTab, setActiveTab] = useState("home");
+  // Home Page Slider Management
+  const [sliders, setSliders] = useState([
+    {
+      id: 1,
+      title: "ابن مستقبلك مع أفضل الدورات التعليمية",
+      description: "انضم إلينا واكتشف عالم التعليم المتميز",
+      buttonText: "اكتشف المزيد",
+      image: "/api/placeholder/800/400",
+      video: null,
+      order: 1,
+      isActive: true
+    }
+  ]);
 
-  const roles = [
-    { id: 1, name: 'Admin', permissions: 'Full Access', color: 'bg-red-50 border-red-200 text-red-800' },
-    { id: 2, name: 'Teacher', permissions: 'Create Exams, Manage Questions', color: 'bg-blue-50 border-blue-200 text-blue-800' },
-    { id: 3, name: 'Student', permissions: 'Take Exams, View Reports', color: 'bg-green-50 border-green-200 text-green-800' }
+  // Enhanced Footer Content Management
+  const [footerSections, setFooterSections] = useState({
+    about: { 
+      visible: true, 
+      title: "من نحن",
+      type: "about",
+      content: {
+        logo: "/api/placeholder/150/50",
+        description: "تمكين الطلاب والمعلمين من خلال التحضير الشامل للامتحانات وموارد التطوير المهني",
+        links: [
+          { name: "حولنا", url: "#" },
+          { name: "الأسئلة الشائعة", url: "#" },
+          { name: "فريق", url: "#" },
+          { name: "سياسة الخصوصية", url: "#" },
+          { name: "مدونة", url: "#" }
+        ]
+      }
+    },
+    resources: { 
+      visible: true, 
+      title: "الموارد",
+      type: "links",
+      content: {
+        links: [
+          { name: "دعم", url: "#" },
+          { name: "جدول الدراسة", url: "#" },
+          { name: "النقاط المرجحة", url: "#" },
+          { name: "اختبار المستوى", url: "#" }
+        ]
+      }
+    },
+    contact: { 
+      visible: true, 
+      title: "اتصل",
+      type: "contact",
+      content: {
+        phone: "+1 234 567 890",
+        email: "contact@maannartaqi.com",
+        address: "123 Education St, Learning City",
+        workingHours: "الأحد - الخميس: 9:00 - 18:00",
+        socialMedia: [
+          { name: "انستغرام", url: "https://instagram.com", icon: "📷" },
+          { name: "تويتر", url: "https://twitter.com", icon: "🐦" },
+          { name: "يوتيوب", url: "https://youtube.com", icon: "📺" },
+          { name: "تيك توك", url: "https://tiktok.com", icon: "🎵" },
+          { name: "سناب شات", url: "https://snapchat.com", icon: "👻" },
+          { name: "تيليجرام", url: "https://telegram.org", icon: "✈️" }
+        ]
+      }
+    }
+  });
+
+  const [newFooterSection, setNewFooterSection] = useState({
+    title: "",
+    type: "links",
+    content: {
+      description: "",
+      links: [{ name: "", url: "" }]
+    }
+  });
+
+  const [newSlider, setNewSlider] = useState({
+    title: "",
+    description: "",
+    buttonText: "",
+    image: "",
+    video: ""
+  });
+
+  const [imagePreview, setImagePreview] = useState(null);
+
+  const [editingFooterSection, setEditingFooterSection] = useState(null);
+
+  // Course Cards Management
+  const [courseCards, setCourseCards] = useState([
+    {
+      id: 1,
+      title: "منهجيات التدريس",
+      courseCount: 15,
+      image: "/api/placeholder/300/200",
+      isVisible: true,
+      order: 1
+    },
+    {
+      id: 2,
+      title: "إدارة الفصل الدراسي",
+      courseCount: 15,
+      image: "/api/placeholder/300/200",
+      isVisible: true,
+      order: 2
+    },
+    {
+      id: 3,
+      title: "التكنولوجيا التعليمية",
+      courseCount: 15,
+      image: "/api/placeholder/300/200",
+      isVisible: true,
+      order: 3
+    }
+  ]);
+
+  const [newCourseCard, setNewCourseCard] = useState({
+    title: "",
+    courseCount: 0,
+    image: ""
+  });
+
+  const addSlider = () => {
+    const slider = {
+      id: Date.now(),
+      ...newSlider,
+      order: sliders.length + 1,
+      isActive: true
+    };
+    setSliders([...sliders, slider]);
+    setNewSlider({ title: "", description: "", buttonText: "", image: "", video: "" });
+    // Clear image preview
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
+  };
+
+  const toggleSection = (section) => {
+    setFooterSections(prev => ({
+      ...prev,
+      [section]: { ...prev[section], visible: !prev[section].visible }
+    }));
+  };
+
+  const deleteSlider = (id) => {
+    setSliders(prev => prev.filter(slider => slider.id !== id));
+  };
+
+  const moveSlider = (id, direction) => {
+    const currentIndex = sliders.findIndex(slider => slider.id === id);
+    if (
+      (direction === 'up' && currentIndex === 0) ||
+      (direction === 'down' && currentIndex === sliders.length - 1)
+    ) return;
+
+    const newSliders = [...sliders];
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    
+    [newSliders[currentIndex], newSliders[targetIndex]] = [newSliders[targetIndex], newSliders[currentIndex]];
+    
+    // Update order numbers
+    newSliders.forEach((slider, index) => {
+      slider.order = index + 1;
+    });
+    
+    setSliders(newSliders);
+  };
+
+  const updateFooterSection = (sectionKey, newContent) => {
+    setFooterSections(prev => ({
+      ...prev,
+      [sectionKey]: {
+        ...prev[sectionKey],
+        content: newContent
+      }
+    }));
+    setEditingFooterSection(null);
+  };
+
+
+
+  const addFooterSection = () => {
+    const sectionKey = `section_${Date.now()}`;
+    const newSection = {
+      visible: true,
+      ...newFooterSection
+    };
+    setFooterSections(prev => ({
+      ...prev,
+      [sectionKey]: newSection
+    }));
+    setNewFooterSection({
+      title: "",
+      type: "links",
+      content: {
+        description: "",
+        links: [{ name: "", url: "" }]
+      }
+    });
+  };
+
+  const deleteFooterSection = (sectionKey) => {
+    setFooterSections(prev => {
+      const newSections = { ...prev };
+      delete newSections[sectionKey];
+      return newSections;
+    });
+  };
+
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Create object URL for preview
+      const imageUrl = URL.createObjectURL(file);
+      setImagePreview(imageUrl);
+      setNewSlider({...newSlider, image: imageUrl});
+    }
+  };
+
+  const clearImagePreview = () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImagePreview(null);
+    setNewSlider({...newSlider, image: ""});
+  };
+
+ 
+
+  // Tab configuration
+  const tabs = [
+    {
+      id: "home",
+      name: "الصفحة الرئيسية",
+      icon: Home,
+      color: "from-green-500 to-blue-500"
+    },
+    {
+      id: "footer",
+      name: "محتوى الفوتر",
+      icon: Layout,
+      color: "from-purple-500 to-pink-500"
+    },
+ 
   ];
 
-  const handleSavePreferences = () => {
-    setShowSaveNotification(true);
-    setTimeout(() => setShowSaveNotification(false), 3000);
-  };
-
-  const handleEditRole = (roleId) => {
-    setEditingRole(editingRole === roleId ? null : roleId);
-  };
+  const breadcrumbs = [
+    { label: "الرئيسية", href: "/", icon: BarChart3 },
+    { label: "الاعدادات", href: "#", icon: Settings, current: true },
+];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 my-3">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-600 rounded-lg">
-              <Settings className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6 my-3" dir="rtl">
+      <div className="max-w-7xl mx-auto">
+        <BreadcrumbsShowcase variant="pill" items={breadcrumbs}/>
+        {/* Enhanced Header */}
+        <div className="mb-8  rounded-2xl shadow-lg p-6 border border-gray-100">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg">
+              <Settings className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">System Settings</h1>
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                إعدادات النظام
+              </h1>
+              <p className="text-gray-600 mt-1">تكوين تفضيلات النظام وإدارة المحتوى بشكل متقدم</p>
+            </div>
           </div>
-          <p className="text-gray-600">Configure system preferences and manage user permissions</p>
         </div>
 
-        {/* Save Notification */}
-        {showSaveNotification && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
-            <Check className="w-5 h-5 text-green-600" />
-            <span className="text-green-800 font-medium">Settings saved successfully!</span>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* General Preferences */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Clock className="w-5 h-5 text-blue-600" />
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900">General Preferences</h2>
-            </div>
-
-            <div className="space-y-6">
-              {/* Exam Duration */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Default Exam Duration (minutes)
-                </label>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min="30"
-                    max="180"
-                    step="15"
-                    value={examDuration}
-                    onChange={(e) => setExamDuration(parseInt(e.target.value))}
-                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                  />
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 min-w-[80px] text-center">
-                    <span className="text-blue-800 font-semibold">{examDuration}</span>
-                  </div>
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>30 min</span>
-                  <span>180 min</span>
-                </div>
-              </div>
-
-              {/* Teacher Registration */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Allow Teacher Registration
-                </label>
-                <div className="flex gap-3">
-                  {['Yes', 'No', 'Admin Approval Required'].map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => setTeacherRegistration(option)}
-                      className={`px-4 py-2 rounded-lg border transition-all duration-200 ${
-                        teacherRegistration === option
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300 hover:bg-blue-50'
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Save Button */}
-              <div className="pt-4 border-t border-gray-200">
+        {/* Tab Navigation */}
+        <div className="mb-8 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="flex">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
                 <button
-                  onClick={handleSavePreferences}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 transition-all duration-300 ${
+                    isActive
+                      ? `bg-gradient-to-r ${tab.color} text-white shadow-lg`
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
                 >
-                  <Save className="w-4 h-4" />
-                  Save Preferences
+                  <Icon className="w-5 h-5" />
+                  <span className="font-semibold">{tab.name}</span>
                 </button>
-              </div>
-            </div>
-          </div>
-
-          {/* User Roles & Permissions */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Users className="w-5 h-5 text-purple-600" />
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900">User Roles & Permissions</h2>
-            </div>
-
-            <div className="space-y-4">
-              {roles.map((role) => (
-                <div
-                  key={role.id}
-                  className={`border rounded-xl p-4 transition-all duration-200 ${role.color} hover:shadow-md`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Shield className="w-5 h-5" />
-                        <span className="font-semibold text-lg">{role.name}</span>
-                      </div>
-                      <p className="text-sm opacity-80">{role.permissions}</p>
-                      
-                      {editingRole === role.id && (
-                        <div className="mt-3 space-y-3">
-                          <div>
-                            <label className="block text-xs font-medium mb-1">Role Name</label>
-                            <input
-                              type="text"
-                              defaultValue={role.name}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium mb-1">Permissions</label>
-                            <textarea
-                              defaultValue={role.permissions}
-                              rows="2"
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                            />
-                          </div>
-                          <div className="flex gap-2">
-                            <button className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center gap-1">
-                              <Check className="w-3 h-3" />
-                              Save
-                            </button>
-                            <button 
-                              onClick={() => setEditingRole(null)}
-                              className="flex-1 bg-gray-500 hover:bg-gray-600 text-white text-xs py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center gap-1"
-                            >
-                              <X className="w-3 h-3" />
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <button
-                      onClick={() => handleEditRole(role.id)}
-                      className="ml-4 p-2 hover:bg-white hover:bg-opacity-50 rounded-lg transition-colors duration-200"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-              
-              {/* Add New Role Button */}
-              {/* <button className="w-full border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 text-gray-600 hover:text-blue-600 py-4 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2">
-                <Users className="w-5 h-5" />
-                Add New Role
-              </button> */}
-            </div>
-          </div>
-        </div>
-
-        {/* Additional Settings Grid */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition-shadow duration-200">
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-              <Settings className="w-6 h-6 text-orange-600" />
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Security Settings</h3>
-            <p className="text-sm text-gray-600 mb-4">Configure authentication and security policies</p>
-            <button className="text-orange-600 hover:text-orange-700 font-medium text-sm">Configure →</button>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition-shadow duration-200">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-              <Clock className="w-6 h-6 text-green-600" />
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Backup Settings</h3>
-            <p className="text-sm text-gray-600 mb-4">Manage automated backups and data retention</p>
-            <button className="text-green-600 hover:text-green-700 font-medium text-sm">Configure →</button>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition-shadow duration-200">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-              <Shield className="w-6 h-6 text-purple-600" />
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Privacy Settings</h3>
-            <p className="text-sm text-gray-600 mb-4">Control data privacy and user consent options</p>
-            <button className="text-purple-600 hover:text-purple-700 font-medium text-sm">Configure →</button>
-          </div>
+              );
+            })}
         </div>
       </div>
 
-      <style jsx>{`
-        .slider::-webkit-slider-thumb {
-          appearance: none;
-          height: 20px;
-          width: 20px;
-          border-radius: 50%;
-          background: #2563eb;
-          cursor: pointer;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+        {/* Tab Content */}
+        {activeTab === "home" && (
+         <SettingHome 
+         addSlider={addSlider}
+         clearImagePreview={clearImagePreview}
+         deleteSlider={deleteSlider}
+         moveSlider={moveSlider}
+         newSlider={newSlider}
+         setNewSlider={setNewSlider}
+         sliders={sliders}
+         handleImageUpload={handleImageUpload}
+         />
+        )}
+
+        {activeTab === "footer" && (
+          <FooterContainer 
+          addFooterSection={addFooterSection}
+          deleteFooterSection={deleteFooterSection}
+          editingFooterSection={editingFooterSection}
+          footerSections={footerSections}
+          newFooterSection={newFooterSection}
+          setEditingFooterSection={setEditingFooterSection}
+          setNewFooterSection={setNewFooterSection}
+          toggleSection={toggleSection}
+          />
+        )}
+
         
-        .slider::-moz-range-thumb {
-          height: 20px;
-          width: 20px;
-          border-radius: 50%;
-          background: #2563eb;
-          cursor: pointer;
-          border: none;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-      `}</style>
+
+        {/* Enhanced Save Button */}
+        <div className="mt-8 flex justify-end">
+          <button className="bg-gradient-to-r from-green-600 to-blue-600 text-white px-8 py-4 rounded-xl hover:from-green-700 hover:to-blue-700 flex items-center gap-3 transition-all transform hover:scale-105 shadow-lg">
+            <Save className="w-6 h-6" />
+            <span className="text-lg font-semibold">حفظ جميع التغييرات</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

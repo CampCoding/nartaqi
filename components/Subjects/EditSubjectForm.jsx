@@ -280,9 +280,9 @@ const EditSubjectForm = ({ open, setOpen, subject, onUpdate }) => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      {/* صورة المادة */}
+                      {/* صورة الدورة */}
                       <Form.Item
-                        label={<span className="font-medium">صورة المادة</span>}
+                        label={<span className="font-medium">صورة الدورة</span>}
                       >
                         <Dragger
                           accept="image/*"
@@ -307,14 +307,14 @@ const EditSubjectForm = ({ open, setOpen, subject, onUpdate }) => {
                         </Dragger>
                       </Form.Item>
 
-                      {/* اسم المادة */}
+                      {/* اسم الدورة */}
                       <Form.Item
                         label={
-                          <span className="font-medium">اسم المادة *</span>
+                          <span className="font-medium">اسم الدورة *</span>
                         }
                         name="name"
                         rules={[
-                          { required: true, message: "أدخل اسم المادة" },
+                          { required: true, message: "أدخل اسم الدورة" },
                           {
                             validator: (_, value) =>
                               !value || value.trim().length >= 2
@@ -397,7 +397,7 @@ const EditSubjectForm = ({ open, setOpen, subject, onUpdate }) => {
                 <div className="bg-gray-50 rounded-xl p-4">
                   <h3 className="text-xl font-semibold text-[#202938] mb-4 flex items-center gap-2">
                     <FileTextOutlined className="text-[#0F7490]" />
-                    إعدادات المادة
+                    إعدادات الدورة
                   </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

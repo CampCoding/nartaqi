@@ -514,7 +514,7 @@ async function handleExportExcel() {
     const summary = [
       ["العنوان", exam.title || "-"],
       ["النوع", exam.examType === "mock" ? "اختبار محاكي" : "تدريب"],
-      ["المادة", exam.subject || "-"],
+      ["الدورة", exam.subject || "-"],
       ["المدة (دقيقة)", exam.duration || 0],
       ["عدد الأسئلة", exam.questions.length || 0],
       ["المشاركون", exam.participants || 0],
@@ -595,7 +595,7 @@ async function handleExportExcel() {
                     {exam.subject && (
                       <Pill className="bg-gray-100 text-gray-700 border-gray-200">
                         <Target className="w-3.5 h-3.5" />
-                        المادة: {exam.subject}
+                        الدورة: {exam.subject}
                       </Pill>
                     )}
                   </div>

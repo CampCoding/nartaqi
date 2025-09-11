@@ -190,7 +190,7 @@ function SupportTable({ rows, onEdit, onDelete, onPlay }) {
       <table className="min-w-full text-sm">
         <thead className="bg-gray-50 text-gray-600">
           <tr>
-            <th className="text-right p-3">المادة</th>
+            <th className="text-right p-3">الدورة</th>
             <th className="text-right p-3">الوصف</th>
             <th className="text-right p-3">الفيديو</th>
             <th className="text-right p-3">أضيف</th>

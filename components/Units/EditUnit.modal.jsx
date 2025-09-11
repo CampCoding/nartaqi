@@ -242,17 +242,17 @@ function EditUnitForm({ open, onCancel, onSubmit, unit, subjects }) {
                     />
                   </Form.Item>
 
-                  {/* مادة (اختياري) — لو عايز تعرض اختيار المادة */}
+                  {/* مادة (اختياري) — لو عايز تعرض اختيار الدورة */}
                   {subjectOptions.length ? (
                     <Form.Item
-                      label={<span className="text-text font-medium">المادة</span>}
+                      label={<span className="text-text font-medium">الدورة</span>}
                       name="subjectId"
                     >
                       <Select
                         allowClear
                         className="rounded-lg"
                         options={subjectOptions}
-                        placeholder="اختر المادة"
+                        placeholder="اختر الدورة"
                       />
                     </Form.Item>
                   ) : null}
