@@ -1,33 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
-  Table,
-  Input,
-  Select,
-  Space,
   Tag,
   Modal,
   message,
-  Tooltip,
-  Card,
-  Statistic,
   Row,
   Col,
   Avatar,
   Badge,
   Typography,
   Divider,
+  Segmented,
 } from "antd";
-import DataTable from "./../../../components/layout/DataTable";
-import '@ant-design/v5-patch-for-react-19';
+import "@ant-design/v5-patch-for-react-19";
 import {
-  SearchOutlined,
-  PlusOutlined,
-  EyeOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  UserOutlined,
   MailOutlined,
   PhoneOutlined,
   BookOutlined,
@@ -40,93 +27,114 @@ import {
 import PageLayout from "../../../components/layout/PageLayout";
 import PagesHeader from "./../../../components/ui/PagesHeader";
 import BreadcrumbsShowcase from "./../../../components/ui/BreadCrumbs";
-import { BarChart3, Download, Plus, Upload, Users } from "lucide-react";
+import { BarChart3, Download, Plus, Users } from "lucide-react";
 import Button from "./../../../components/atoms/Button";
-import TeacherStats from "../../../components/Teachers/TeachersStats";
-import SearchAndFilters from "./../../../components/ui/SearchAndFilters";
-import TeachersTable from "../../../components/Teachers/TeachersTable";
-import TeacherCards from "../../../components/Teachers/TeachersGrid";
-import { subjects } from "../../../data/subjects";
-import AddTeacherModal from "../../../components/Teachers/AddTeacherModal.modal";
-import EditTeacherModal from "../../../components/Teachers/EditTeacher.modal";
-import StudentsStats from "../../../components/Students/StudentsStats";
 import AddStudentModal from "../../../components/Students/AddStudent.modal";
 import StudentsGrid from "../../../components/Students/StudnetsGrid";
 import StudentsTable from "../../../components/Students/StudentsTable";
+import StudentsStats from "../../../components/Students/StudentsStats";
+import SearchAndFilters from "../../../components/ui/SearchAndFilters";
+import { subjects } from "../../../data/subjects";
 
 const { Text, Title } = Typography;
 
 const StudentsManagement = () => {
-  const [teachers, setTeachers] = useState(
-    [
-  {
-    id: 1,
-    name: "Youssef Ibrahim",
-    email: "youssef.ibr@school.edu",
-    phone: "+20 100 111 2233",
-    // هنستخدم subjects ككورسات/مواد بيدرسها الطالب
-    subjects: ["Math (G9)", "English", "Biology"],
-    // خليه يعبّر عن حالة الطالب: approved=نشط, pending=قيد المراجعة, rejected=محظور
-    status: "approved",
-    // هنا تاريخ الالتحاق
-    joinDate: "2024-09-10",
-    // نستخدمها كمعدل حضور/أداء
-    experience: "معدل حضور: 92%",
-    // نستخدمها كصف/قسم
-    qualification: "الصف التاسع - قسم A",
-    avatar: null,
-  },
-  {
-    id: 2,
-    name: "Mariam Tarek",
-    email: "mariam.tarek@school.edu",
-    phone: "+20 101 222 3344",
-    subjects: ["Physics (G10)", "Chemistry", "English"],
-    status: "pending",
-    joinDate: "2025-02-01",
-    experience: "معدل حضور: 86%",
-    qualification: "الصف العاشر - قسم B",
-    avatar: null,
-  },
-  {
-    id: 3,
-    name: "Omar Salah",
-    email: "omar.salah@school.edu",
-    phone: "+20 102 333 4455",
-    subjects: ["History (G8)", "Arabic"],
-    status: "approved",
-    joinDate: "2023-11-20",
-    experience: "معدل حضور: 95%",
-    qualification: "الصف الثامن - قسم C",
-    avatar: null,
-  },
-  {
-    id: 4,
-    name: "Hana Mohamed",
-    email: "hana.mohamed@school.edu",
-    phone: "+20 103 444 5566",
-    subjects: ["Math (G7)", "Science", "Computer"],
-    status: "rejected", // محظور/موقوف
-    joinDate: "2024-01-05",
-    experience: "معدل حضور: 61%",
-    qualification: "الصف السابع - قسم A",
-    avatar: null,
-  },
-  {
-    id: 5,
-    name: "Karim Ali",
-    email: "karim.ali@school.edu",
-    phone: "+20 104 555 6677",
-    subjects: ["Geography (G9)", "English"],
-    status: "pending",
-    joinDate: "2024-03-12",
-    experience: "معدل حضور: 78%",
-    qualification: "الصف التاسع - قسم B",
-    avatar: null,
-  },
-
-]);
-
+  const [addNewModal , setAddNewModal] = useState(false);
+  // Seed now includes `role` so we can filter by محاضر/طالب
+  const [teachers, setTeachers] = useState([
+    {
+      id: 1,
+      role: "lecturer", // محاضر
+      name: "Youssef Ibrahim",
+      email: "youssef.ibr@school.edu",
+      phone: "+20 100 111 2233",
+      subjects: ["Math (G9)", "English", "Biology"],
+      status: "approved",
+      joinDate: "2024-09-10",
+      experience: "معدل حضور: 92%",
+      qualification: "الصف التاسع - قسم A",
+      avatar: null,
+    },
+    {
+      id: 2,
+      role: "lecturer",
+      name: "Mariam Tarek",
+      email: "mariam.tarek@school.edu",
+      phone: "+20 101 222 3344",
+      subjects: ["Physics (G10)", "Chemistry", "English"],
+      status: "pending",
+      joinDate: "2025-02-01",
+      experience: "معدل حضور: 86%",
+      qualification: "الصف العاشر - قسم B",
+      avatar: null,
+    },
+    {
+      id: 3,
+      role: "lecturer",
+      name: "Omar Salah",
+      email: "omar.salah@school.edu",
+      phone: "+20 102 333 4455",
+      subjects: ["History (G8)", "Arabic"],
+      status: "approved",
+      joinDate: "2023-11-20",
+      experience: "معدل حضور: 95%",
+      qualification: "الصف الثامن - قسم C",
+      avatar: null,
+    },
+    {
+      id: 4,
+      role: "lecturer",
+      name: "Hana Mohamed",
+      email: "hana.mohamed@school.edu",
+      phone: "+20 103 444 5566",
+      subjects: ["Math (G7)", "Science", "Computer"],
+      status: "rejected",
+      joinDate: "2024-01-05",
+      experience: "معدل حضور: 61%",
+      qualification: "الصف السابع - قسم A",
+      avatar: null,
+    },
+    {
+      id: 5,
+      role: "lecturer",
+      name: "Karim Ali",
+      email: "karim.ali@school.edu",
+      phone: "+20 104 555 6677",
+      subjects: ["Geography (G9)", "English"],
+      status: "pending",
+      joinDate: "2024-03-12",
+      experience: "معدل حضور: 78%",
+      qualification: "الصف التاسع - قسم B",
+      avatar: null,
+    },
+    // Optional: add a couple of students to see the filter working
+    {
+      id: 6,
+      role: "student", // طالب
+      name: "Ahmed Adel",
+      email: "ahmed.adel@student.edu",
+      phone: "+20 105 000 1111",
+      subjects: ["English", "Biology"],
+      status: "approved",
+      joinDate: "2024-06-01",
+      experience: "—",
+      qualification: "طالب",
+      avatar: null,
+    },
+    {
+      id: 7,
+      role: "student",
+      name: "Nada Samir",
+      email: "nada.samir@student.edu",
+      phone: "+20 106 000 2222",
+      subjects: ["Math", "Computer"],
+      status: "pending",
+      joinDate: "2024-10-10",
+      experience: "—",
+      qualification: "طالبة",
+      avatar: null,
+    },
+  ]);
 
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchText, setSearchText] = useState("");
@@ -134,9 +142,11 @@ const StudentsManagement = () => {
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
-  const [addNewModal, setAddNewModal] = useState(false);
-  
-  // خريطة الأيقونة لكل حالة
+
+  // NEW: role filter (all | lecturer | student)
+  const [roleFilter, setRoleFilter] = useState("all");
+
+  // Icons per status
   const getStatusIcon = (status) => {
     switch (status) {
       case "pending":
@@ -150,7 +160,6 @@ const StudentsManagement = () => {
     }
   };
 
-  // ترجمة نص الحالة للعرض
   const getStatusLabel = (status) => {
     switch (status) {
       case "pending":
@@ -164,7 +173,6 @@ const StudentsManagement = () => {
     }
   };
 
-  // حالة شارة AntD المسموح بها: success | processing | default | error | warning
   const getBadgeStatus = (status) => {
     switch (status) {
       case "pending":
@@ -178,10 +186,10 @@ const StudentsManagement = () => {
     }
   };
 
-  const getInitials = (name) =>
+  const getInitials = (name = "") =>
     name
       .split(" ")
-      .map((n) => n[0])
+      .map((n) => n?.[0] || "")
       .join("")
       .toUpperCase();
 
@@ -191,10 +199,18 @@ const StudentsManagement = () => {
       setTeachers((prev) =>
         prev.map((t) => (t.id === teacherId ? { ...t, status: newStatus } : t))
       );
-      message.success(`تم تغيير حالة المعلم إلى "${getStatusLabel(newStatus)}" بنجاح`);
+      message.success(`تم تغيير حالة الحساب إلى "${getStatusLabel(newStatus)}" بنجاح`);
       setLoading(false);
     }, 500);
   };
+
+  // Filtered list by role (and optionally you can add search/status if needed)
+  const filteredData = useMemo(() => {
+    return teachers.filter((t) => {
+      const roleOk = roleFilter === "all" ? true : (t.role || "lecturer") === roleFilter;
+      return roleOk;
+    });
+  }, [teachers, roleFilter]);
 
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
@@ -211,7 +227,6 @@ const StudentsManagement = () => {
           subtitle={"مراجعة وإدارة طلبات المتدربين وملفاتهم"}
           extra={
             <div className="flex items-center gap-4 gap-reverse">
-
               <Button type="secondary" icon={<Download className="w-4 h-4" />}>
                 تصدير
               </Button>
@@ -227,18 +242,39 @@ const StudentsManagement = () => {
           }
         />
 
-        {/* بطاقات الإحصائيات (المكوّن الداخلي لديك) */}
+        {/* Stats */}
         <StudentsStats />
 
-        {/* فلاتر البحث وطريقة العرض */}
-        <SearchAndFilters mode={viewMode} setMode={setViewMode} />
+        {/* View mode + NEW role filter row */}
+        <div className="flex flex-col gap-3">
+          <SearchAndFilters mode={viewMode} setMode={setViewMode} />
 
-        {/* عرض الشبكة أو الجدول */}
+          {/* Role filter */}
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="text-sm text-gray-600">
+              تصفية حسب نوع الحساب:
+            </div>
+            <Segmented
+              size="large"
+              value={roleFilter}
+              onChange={(val) => setRoleFilter(val)}
+              options={[
+                { label: "الكل", value: "all" },
+                { label: "محاضر", value: "lecturer" },
+                { label: "طالب", value: "student" },
+              ]}
+            />
+          </div>
+        </div>
+
+        {/* Grid or Table */}
         {viewMode === "table" ? (
+          // If your StudentsTable supports extra filtering prop, pass it here:
+          // <StudentsTable searchText={searchText} selectedStatus={selectedStatus} roleFilter={roleFilter} />
           <StudentsTable searchText={searchText} selectedStatus={selectedStatus} />
         ) : (
           <StudentsGrid
-            data={teachers}
+            data={filteredData}
             onView={(t) => {
               setSelectedTeacher(t);
               setViewModalVisible(true);
@@ -249,9 +285,13 @@ const StudentsManagement = () => {
         )}
       </div>
 
-      {/* نافذة عرض تفاصيل المعلم */}
+      {/* View details modal */}
       <Modal
-        title={<div className="text-xl font-semibold text-gray-800">تفاصيل المعلم</div>}
+        title={
+          <div className="text-xl font-semibold text-gray-800">
+            {selectedTeacher?.role === "student" ? "تفاصيل المتدرب" : "تفاصيل المحاضر"}
+          </div>
+        }
         open={viewModalVisible}
         onCancel={() => setViewModalVisible(false)}
         footer={null}
@@ -260,7 +300,7 @@ const StudentsManagement = () => {
       >
         {selectedTeacher && (
           <div className="py-6">
-            {/* رأس النافذة */}
+            {/* Header */}
             <div className="text-center mb-8">
               <Avatar
                 size={100}
@@ -285,7 +325,7 @@ const StudentsManagement = () => {
 
             <Divider />
 
-            {/* معلومات المعلم */}
+            {/* Details */}
             <Row gutter={[24, 24]} className="mb-8">
               <Col span={12}>
                 <div className="bg-gray-50 p-4 rounded-lg">
@@ -294,7 +334,7 @@ const StudentsManagement = () => {
                     المواد
                   </Text>
                   <div className="flex flex-wrap items-center gap-2">
-                    {selectedTeacher.subjects.map((item, i) => (
+                    {(selectedTeacher.subjects || []).map((item, i) => (
                       <Tag
                         key={i}
                         className="px-3 py-1 text-sm h-fit w-fit"
@@ -307,6 +347,10 @@ const StudentsManagement = () => {
                         {item}
                       </Tag>
                     ))}
+                    {(!selectedTeacher.subjects ||
+                      selectedTeacher.subjects.length === 0) && (
+                      <Text className="text-gray-500">—</Text>
+                    )}
                   </div>
                 </div>
               </Col>
@@ -315,9 +359,11 @@ const StudentsManagement = () => {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <Text strong className="text-gray-700 flex items-center mb-2">
                     <TrophyOutlined className="mr-2 text-yellow-600" />
-                    الخبرة
+                    الخبرة / الحالة
                   </Text>
-                  <Text className="text-lg">{selectedTeacher.experience}</Text>
+                  <Text className="text-lg">
+                    {selectedTeacher.experience || "—"}
+                  </Text>
                 </div>
               </Col>
 
@@ -327,7 +373,9 @@ const StudentsManagement = () => {
                     <MailOutlined className="mr-2 text-blue-600" />
                     البريد الإلكتروني
                   </Text>
-                  <Text className="text-sm text-blue-600">{selectedTeacher.email}</Text>
+                  <Text className="text-sm text-blue-600">
+                    {selectedTeacher.email}
+                  </Text>
                 </div>
               </Col>
 
@@ -359,12 +407,12 @@ const StudentsManagement = () => {
                     <TrophyOutlined className="mr-2 text-indigo-600" />
                     المؤهل
                   </Text>
-                  <Text>{selectedTeacher.qualification}</Text>
+                  <Text>{selectedTeacher.qualification || "—"}</Text>
                 </div>
               </Col>
             </Row>
 
-            {/* الأزرار */}
+            {/* Actions */}
             <div className="text-center flex items-center justify-center gap-3">
               {selectedTeacher.status !== "approved" && (
                 <Button
@@ -378,7 +426,7 @@ const StudentsManagement = () => {
                     setViewModalVisible(false);
                   }}
                 >
-                  قبول المعلم
+                  قبول
                 </Button>
               )}
               {selectedTeacher.status !== "rejected" && (
@@ -393,7 +441,7 @@ const StudentsManagement = () => {
                     setViewModalVisible(false);
                   }}
                 >
-                  رفض المعلم
+                  رفض
                 </Button>
               )}
             </div>
@@ -401,23 +449,29 @@ const StudentsManagement = () => {
         )}
       </Modal>
 
-      {/* إضافة معلم جديد */}
+      {/* Add new (from your existing modal). Keeps role from modal (student/lecturer). */}
       <AddStudentModal
         open={addNewModal}
         onCancel={() => setAddNewModal(false)}
         subjectOptions={subjects}
         onSubmit={(payload) => {
-          // إضافة المعلم للحالة الحالية
           setTeachers((prev) => [
             {
               id: prev.length ? Math.max(...prev.map((t) => t.id)) + 1 : 1,
               status: "pending",
               avatar: null,
-              ...payload,
+              role: payload.role || "student", // keep selected role
+              name: payload.name || "بدون اسم",
+              email: payload.email || "",
+              phone: payload.phone || "",
+              subjects: payload.subjects || [],
+              joinDate: payload.joinDate || new Date().toISOString().slice(0, 10),
+              experience: payload.experience || "—",
+              qualification: payload.qualification || (payload.role === "lecturer" ? "محاضر" : "طالب"),
             },
             ...prev,
           ]);
-          message.success("تمت إضافة المعلم بنجاح");
+          message.success("تمت إضافة الحساب بنجاح");
           setAddNewModal(false);
         }}
       />

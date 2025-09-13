@@ -6,7 +6,6 @@ import {
   Form,
   Input,
   Select,
-  DatePicker,
   Upload,
   Button,
   ConfigProvider,
@@ -14,19 +13,12 @@ import {
   Card,
   Tooltip,
   Divider,
-  Badge,
-  Switch
 } from "antd";
-import '@ant-design/v5-patch-for-react-19';
+import "@ant-design/v5-patch-for-react-19";
 import {
   PlusOutlined,
   InboxOutlined,
   UserOutlined,
-  TeamOutlined,
-  BookOutlined,
-  CalendarOutlined,
-  IdcardOutlined,
-  HomeOutlined,
   PhoneOutlined,
   MailOutlined,
   EyeOutlined,
@@ -37,12 +29,15 @@ import {
   DeleteOutlined,
   InfoCircleOutlined,
   CheckCircleOutlined,
-  SendOutlined,
+  IdcardOutlined,
+  TeamOutlined,
+  InstagramOutlined,
+  FacebookOutlined,
+  LinkedinOutlined,
 } from "@ant-design/icons";
-import PhoneInput from 'react-phone-number-input'
-import 'react-phone-number-input/style.css'
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
-const { TextArea } = Input;
 const { Dragger } = Upload;
 
 const PALETTE = {
@@ -67,22 +62,20 @@ const initials = (name = "") =>
     .map((p) => p[0]?.toUpperCase() || "")
     .join("");
 
-// دالة لتوليد كلمة مرور عشوائية
+// مولّد كلمة مرور قوية
 const generatePassword = () => {
   const length = 12;
-  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  const charset =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
   let password = "";
-  
   password += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[Math.floor(Math.random() * 26)];
   password += "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)];
   password += "0123456789"[Math.floor(Math.random() * 10)];
   password += "!@#$%^&*"[Math.floor(Math.random() * 8)];
-  
   for (let i = 4; i < length; i++) {
     password += charset.charAt(Math.floor(Math.random() * charset.length));
   }
-  
-  return password.split('').sort(() => 0.5 - Math.random()).join('');
+  return password.split("").sort(() => 0.5 - Math.random()).join("");
 };
 
 function AddStudentModal({
@@ -97,9 +90,11 @@ function AddStudentModal({
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
-  const [age, setAge] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState("");
+
+  // راقب نوع الحساب لإظهار روابط السوشيال عند "محاضر"
+  const role = Form.useWatch("role", form);
 
   const normalizedSubjects = useMemo(
     () =>
@@ -110,14 +105,6 @@ function AddStudentModal({
     [subjectOptions]
   );
 
-  const handleDobChange = (d) => {
-    if (!d) return setAge(null);
-    const dt = typeof d.toDate === "function" ? d.toDate() : new Date(d);
-    const diff = Date.now() - dt.getTime();
-    const yrs = Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
-    setAge(yrs);
-  };
-
   const handleGeneratePassword = () => {
     const newPassword = generatePassword();
     form.setFieldsValue({ password: newPassword });
@@ -127,14 +114,21 @@ function AddStudentModal({
   const handleFinish = async (values) => {
     const payload = {
       name: values.fullName?.trim(),
+      secondName: values.secondName?.trim() || "",
+      familyName: values.familyName?.trim() || "",
       email: values.email?.trim() || "",
       phone: phone,
       password: values.password,
+      gender: values.gender, // ذكر / أنثى
+      role: values.role, // student | lecturer
+      // روابط السوشيال تُحفظ فقط إن كان محاضر
+      instagram: values.role === "lecturer" ? values.instagram?.trim() || "" : "",
+      facebook: values.role === "lecturer" ? values.facebook?.trim() || "" : "",
+      linkedin: values.role === "lecturer" ? values.linkedin?.trim() || "" : "",
       grade: values.grade,
       status: values.status,
       joinDate: (toISO(values.enrollmentDate) || "").slice(0, 10),
       studentId: values.studentId,
-      gender: values.gender,
       classSection: values.classSection,
       subjects: values.subjects || [],
       dob: toISO(values.dob),
@@ -154,16 +148,15 @@ function AddStudentModal({
       setLoading(true);
       await (typeof onSubmit === "function" ? onSubmit(payload) : Promise.resolve());
       message.success({
-        content: "تم إضافة الطالب بنجاح!",
+        content: "تم إضافة المتدرب بنجاح!",
         icon: <CheckCircleOutlined style={{ color: PALETTE.success }} />,
       });
       form.resetFields();
       setPhotoPreview(null);
-      setAge(null);
-      setPhone('');
+      setPhone("");
       onCancel?.();
     } catch (e) {
-      message.error("حدث خطأ أثناء إضافة الطالب. حاول مرة أخرى.");
+      message.error("حدث خطأ أثناء الإضافة. حاول مرة أخرى.");
     } finally {
       setLoading(false);
     }
@@ -172,8 +165,7 @@ function AddStudentModal({
   const resetForm = () => {
     form.resetFields();
     setPhotoPreview(null);
-    setAge(null);
-    setPhone('');
+    setPhone("");
     form.setFieldsValue({ password: generatePassword() });
   };
 
@@ -181,6 +173,21 @@ function AddStudentModal({
     resetForm();
     onCancel?.();
   };
+
+  // مُتحقّق URL ديناميكي إذا كان الدور "محاضر"
+  const requiredUrlIfLecturer = (label) => ({
+    validator: (_, value) => {
+      if (role !== "lecturer") return Promise.resolve();
+      if (!value) return Promise.reject(new Error(`رابط ${label} مطلوب`));
+      try {
+        // يتحقق من صحة الرابط
+        new URL(value);
+        return Promise.resolve();
+      } catch {
+        return Promise.reject(new Error(`رابط ${label} غير صالح`));
+      }
+    },
+  });
 
   return (
     <ConfigProvider
@@ -192,25 +199,16 @@ function AddStudentModal({
           colorText: PALETTE.text,
           controlHeight: 48,
           fontSize: 14,
-          colorBgContainer: '#FFFFFF',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          colorBgContainer: "#FFFFFF",
+          boxShadow:
+            "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
         },
         components: {
-          Modal: {
-            contentBg: PALETTE.background,
-          },
-          Card: {
-            borderRadius: 16,
-          },
-          Input: {
-            borderRadius: 10,
-          },
-          Select: {
-            borderRadius: 10,
-          },
-          Button: {
-            borderRadius: 10,
-          },
+          Modal: { contentBg: PALETTE.background },
+          Card: { borderRadius: 16 },
+          Input: { borderRadius: 10 },
+          Select: { borderRadius: 10 },
+          Button: { borderRadius: 10 },
         },
       }}
     >
@@ -220,31 +218,36 @@ function AddStudentModal({
         onCancel={handleCancel}
         footer={null}
         width="95%"
-        style={{ maxWidth: '1400px', top: 20 }}
+        style={{ maxWidth: "1400px", top: 20 }}
         bodyStyle={{ padding: 0 }}
         className="student-modal"
       >
-        <div className="min-h-[600px]" style={{ background: `linear-gradient(135deg, ${PALETTE.background} 0%, #EDF2F7 100%)` }}>
-          {/* Header with Gradient */}
-          <div 
+        <div
+          className="min-h-[600px]"
+          style={{
+            background: `linear-gradient(135deg, ${PALETTE.background} 0%, #EDF2F7 100%)`,
+          }}
+        >
+          {/* Header */}
+          <div
             className="p-8 text-white relative overflow-hidden"
-            style={{ 
+            style={{
               background: `linear-gradient(135deg, ${PALETTE.primary} 0%, ${PALETTE.accent} 100%)`,
-              borderRadius: '12px 12px 0 0'
+              borderRadius: "12px 12px 0 0",
             }}
           >
             <div className="absolute inset-0 opacity-10">
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-white rounded-full"></div>
-              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white rounded-full opacity-50"></div>
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-white rounded-full" />
+              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white rounded-full opacity-50" />
             </div>
-            
+
             <div className="relative flex items-center gap-4">
               <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
                 <PlusOutlined className="text-white text-2xl" />
               </div>
               <div>
                 <h2 className="text-3xl font-bold mb-2">إضافة متدرب جديد</h2>
-                <p className="text-white/80 text-lg">أنشئ ملفًا شخصيًا شاملاً للطالب الجديد</p>
+                <p className="text-white/80 text-lg">أنشئ ملفًا شخصيًا شاملاً</p>
               </div>
             </div>
           </div>
@@ -256,10 +259,13 @@ function AddStudentModal({
               onFinish={handleFinish}
               initialValues={{
                 fullName: "",
+                secondName: "",
+                familyName: "",
                 studentId: "",
                 email: "",
                 password: generatePassword(),
-                gender: "ذكر",
+                gender: "ذكر", // جديد
+                role: "student", // جديد: student | lecturer
                 status: "approved",
                 grade: defaults.gradeValue,
                 classSection: defaults.classValue,
@@ -275,15 +281,15 @@ function AddStudentModal({
                 address: "",
                 notes: "",
                 sendInvite: false,
+                instagram: "",
+                facebook: "",
+                linkedin: "",
               }}
               className="grid grid-cols-1 xl:grid-cols-12 gap-8"
             >
-              {/* المعلومات الأساسية */}
+              {/* اليمين: المعلومات الأساسية */}
               <div className="xl:col-span-8 space-y-6">
-                <Card 
-                  className="shadow-lg border-0"
-                  bodyStyle={{ padding: '32px' }}
-                >
+                <Card className="shadow-lg border-0" bodyStyle={{ padding: "32px" }}>
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
                       <UserOutlined className="text-white text-lg" />
@@ -295,16 +301,17 @@ function AddStudentModal({
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* الاسم الأول */}
                     <Form.Item
                       label={
                         <span className="text-gray-700 font-semibold flex items-center gap-2">
                           <UserOutlined className="text-blue-500" />
-                          الاسم الكامل *
+                          الاسم الأول *
                         </span>
                       }
                       name="fullName"
                       rules={[
-                        { required: true, message: "من فضلك اكتب الاسم الكامل" },
+                        { required: true, message: "من فضلك اكتب الاسم الأول" },
                         {
                           validator: (_, v) =>
                             !v || v.trim().length >= 2
@@ -313,30 +320,84 @@ function AddStudentModal({
                         },
                       ]}
                     >
-                      <Input 
-                        placeholder="مثال: علي محمد الأحمد" 
+                      <Input
+                        placeholder="مثال: علي"
                         className="shadow-sm hover:shadow-md transition-shadow"
-                        style={{ height: '48px' }}
+                        style={{ height: "48px" }}
                       />
                     </Form.Item>
 
-                    <Form.Item 
+                    {/* الاسم الأوسط */}
+                    <Form.Item
+                      label={
+                        <span className="text-gray-700 font-semibold flex items-center gap-2">
+                          <UserOutlined className="text-blue-500" />
+                          الاسم الأوسط *
+                        </span>
+                      }
+                      name="secondName"
+                      rules={[
+                        { required: true, message: "من فضلك اكتب الاسم الأوسط" },
+                        {
+                          validator: (_, v) =>
+                            !v || v.trim().length >= 2
+                              ? Promise.resolve()
+                              : Promise.reject(new Error("الاسم لا يقل عن حرفين")),
+                        },
+                      ]}
+                    >
+                      <Input
+                        placeholder="مثال: محمد"
+                        className="shadow-sm hover:shadow-md transition-shadow"
+                        style={{ height: "48px" }}
+                      />
+                    </Form.Item>
+
+                    {/* اسم العائلة */}
+                    <Form.Item
+                      label={
+                        <span className="text-gray-700 font-semibold flex items-center gap-2">
+                          <UserOutlined className="text-blue-500" />
+                          اسم العائلة *
+                        </span>
+                      }
+                      name="familyName"
+                      rules={[
+                        { required: true, message: "من فضلك اكتب اسم العائلة" },
+                        {
+                          validator: (_, v) =>
+                            !v || v.trim().length >= 2
+                              ? Promise.resolve()
+                              : Promise.reject(new Error("الاسم لا يقل عن حرفين")),
+                        },
+                      ]}
+                    >
+                      <Input
+                        placeholder="مثال: الأحمدي"
+                        className="shadow-sm hover:shadow-md transition-shadow"
+                        style={{ height: "48px" }}
+                      />
+                    </Form.Item>
+
+                    {/* البريد */}
+                    <Form.Item
                       label={
                         <span className="text-gray-700 font-semibold flex items-center gap-2">
                           <MailOutlined className="text-red-500" />
                           البريد الإلكتروني
                         </span>
                       }
-                      name="email" 
+                      name="email"
                       rules={[{ type: "email", message: "البريد الإلكتروني غير صحيح" }]}
                     >
                       <Input
                         placeholder="student@school.edu"
                         className="shadow-sm hover:shadow-md transition-shadow"
-                        style={{ height: '48px' }}
+                        style={{ height: "48px" }}
                       />
                     </Form.Item>
 
+                    {/* الهاتف */}
                     <Form.Item
                       label={
                         <span className="text-gray-700 font-semibold flex items-center gap-2">
@@ -357,6 +418,7 @@ function AddStudentModal({
                       />
                     </Form.Item>
 
+                    {/* كلمة المرور */}
                     <Form.Item
                       label={
                         <span className="text-gray-700 font-semibold flex items-center gap-2">
@@ -370,17 +432,19 @@ function AddStudentModal({
                       name="password"
                       rules={[
                         { required: true, message: "كلمة المرور مطلوبة" },
-                        { min: 8, message: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" }
+                        { min: 8, message: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" },
                       ]}
                     >
                       <Input
                         type={showPassword ? "text" : "password"}
                         placeholder="كلمة مرور قوية"
                         className="shadow-sm hover:shadow-md transition-shadow"
-                        style={{ height: '48px' }}
+                        style={{ height: "48px" }}
                         suffix={
                           <div className="flex items-center gap-1">
-                            <Tooltip title={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}>
+                            <Tooltip
+                              title={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                            >
                               <Button
                                 type="text"
                                 icon={showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
@@ -401,25 +465,109 @@ function AddStudentModal({
                       />
                     </Form.Item>
 
-                  </div>
-                </Card>
+                    {/* الجنس */}
+                    <Form.Item
+                      name="gender"
+                      label={
+                        <span className="text-gray-700 font-semibold flex items-center gap-2">
+                          <IdcardOutlined className="text-teal-600" />
+                          الجنس *
+                        </span>
+                      }
+                      rules={[{ required: true, message: "اختر الجنس" }]}
+                    >
+                      <Select
+                        placeholder="اختر الجنس"
+                        options={[
+                          { label: "ذكر", value: "ذكر" },
+                          { label: "أنثى", value: "أنثى" },
+                        ]}
+                      />
+                    </Form.Item>
 
-               
+                    {/* نوع الحساب */}
+                    <Form.Item
+                      name="role"
+                      label={
+                        <span className="text-gray-700 font-semibold flex items-center gap-2">
+                          <TeamOutlined className="text-indigo-600" />
+                          نوع الحساب *
+                        </span>
+                      }
+                      rules={[{ required: true, message: "اختر نوع الحساب" }]}
+                    >
+                      <Select
+                        placeholder="طالب أو معلم"
+                        options={[
+                          { label: "طالب", value: "student" },
+                          { label: "معلم", value: "lecturer" },
+                        ]}
+                      />
+                    </Form.Item>
+                  </div>
+
+                  {/* روابط السوشيال (تظهر فقط إذا كان محاضر) */}
+                  {role === "lecturer" && (
+                    <>
+                      <Divider className="my-6" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Form.Item
+                          name="instagram"
+                          label={
+                            <span className="text-gray-700 font-semibold flex items-center gap-2">
+                              <InstagramOutlined className="text-pink-500" />
+                              رابط Instagram
+                            </span>
+                          }
+                          rules={[requiredUrlIfLecturer("Instagram")]}
+                          hasFeedback
+                        >
+                          <Input placeholder="https://instagram.com/username" />
+                        </Form.Item>
+
+                        <Form.Item
+                          name="facebook"
+                          label={
+                            <span className="text-gray-700 font-semibold flex items-center gap-2">
+                              <FacebookOutlined className="text-blue-600" />
+                              رابط Facebook
+                            </span>
+                          }
+                          rules={[requiredUrlIfLecturer("Facebook")]}
+                          hasFeedback
+                        >
+                          <Input placeholder="https://facebook.com/username" />
+                        </Form.Item>
+
+                        <Form.Item
+                          name="linkedin"
+                          label={
+                            <span className="text-gray-700 font-semibold flex items-center gap-2">
+                              <LinkedinOutlined className="text-sky-700" />
+                              رابط LinkedIn
+                            </span>
+                          }
+                          rules={[requiredUrlIfLecturer("LinkedIn")]}
+                          hasFeedback
+                        >
+                          <Input placeholder="https://www.linkedin.com/in/username" />
+                        </Form.Item>
+                      </div>
+                    </>
+                  )}
+                </Card>
               </div>
 
-              {/* الصورة والمعاينة */}
+              {/* اليسار: الصورة والمعاينة */}
               <div className="xl:col-span-4 space-y-6">
-                <Card 
-                  className="shadow-lg border-0 sticky top-4"
-                  bodyStyle={{ padding: '32px' }}
-                >
+                <Card className="shadow-lg border-0 sticky top-4" bodyStyle={{ padding: "32px" }}>
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-orange-500 rounded-xl flex items-center justify-center">
                       <CameraOutlined className="text-white text-lg" />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-gray-800">الصورة الشخصية</h3>
-                      <p className="text-gray-500 text-sm">إضافة صورة للطالب</p>
+                      <p className="text-gray-500 text-sm">إضافة صورة</p>
                     </div>
                   </div>
 
@@ -430,26 +578,26 @@ function AddStudentModal({
                       showUploadList={false}
                       beforeUpload={(file) => {
                         if (file.size > 2 * 1024 * 1024) {
-                          message.error('حجم الصورة يجب أن يكون أقل من 2 ميجابايت');
+                          message.error("حجم الصورة يجب أن يكون أقل من 2 ميجابايت");
                           return false;
                         }
                         const reader = new FileReader();
                         reader.onload = (e) => setPhotoPreview(e.target?.result);
                         reader.readAsDataURL(file);
-                        return false;
+                        return false; // منع الرفع الفعلي
                       }}
                       className="border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors rounded-xl"
-                      style={{ background: 'linear-gradient(135deg, #F8FAFC 0%, #EDF2F7 100%)' }}
+                      style={{
+                        background: "linear-gradient(135deg, #F8FAFC 0%, #EDF2F7 100%)",
+                      }}
                     >
                       <p className="ant-upload-drag-icon">
-                        <InboxOutlined style={{ fontSize: '48px', color: PALETTE.primary }} />
+                        <InboxOutlined style={{ fontSize: "48px", color: PALETTE.primary }} />
                       </p>
                       <p className="ant-upload-text text-lg font-medium text-gray-700">
                         انقر أو اسحب صورة هنا للرفع
                       </p>
-                      <p className="ant-upload-hint text-gray-500">
-                        PNG/JPG حتى 2MB
-                      </p>
+                      <p className="ant-upload-hint text-gray-500">PNG/JPG حتى 2MB</p>
                     </Dragger>
                   ) : (
                     <div className="text-center">
@@ -468,10 +616,7 @@ function AddStudentModal({
                         />
                       </div>
                       <p className="mt-4 text-gray-600">تم رفع الصورة بنجاح</p>
-                      <Button 
-                        className="mt-2" 
-                        onClick={() => setPhotoPreview(null)}
-                      >
+                      <Button className="mt-2" onClick={() => setPhotoPreview(null)}>
                         تغيير الصورة
                       </Button>
                     </div>
@@ -495,18 +640,14 @@ function AddStudentModal({
                       )}
                       <div>
                         <p className="font-medium text-gray-800">
-                          {form.getFieldValue("fullName") || "اسم الطالب"}
+                          {form.getFieldValue("fullName") || "اسم المتدرب"}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {form.getFieldValue("studentId") || "رقم الطالب"}
+                          {form.getFieldValue("studentId") || "رقم المتدرب"}
                         </p>
                       </div>
                     </div>
                   </div>
-
-                  <Divider className="my-6" />
-
-                 
                 </Card>
               </div>
 
@@ -516,7 +657,7 @@ function AddStudentModal({
                   <Button
                     onClick={resetForm}
                     className="px-8 py-3 text-gray-700 border border-gray-300 rounded-xl hover:border-gray-400 transition-all"
-                    style={{ height: '48px' }}
+                    style={{ height: "48px" }}
                   >
                     إعادة ضبط
                   </Button>
@@ -525,10 +666,10 @@ function AddStudentModal({
                     htmlType="submit"
                     loading={loading}
                     className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl"
-                    style={{ height: '48px' }}
+                    style={{ height: "48px" }}
                     icon={<PlusOutlined />}
                   >
-                    {loading ? "جاري الإضافة..." : "إضافة الطالب"}
+                    {loading ? "جاري الإضافة..." : "إضافة"}
                   </Button>
                 </div>
               </div>

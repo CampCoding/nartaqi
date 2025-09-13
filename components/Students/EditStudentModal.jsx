@@ -194,9 +194,9 @@ function EditStudentModal({
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-sm">
                 <EditOutlined className="text-white text-lg" />
               </div>
-              <h2 className="text-3xl font-bold text-text">تعديل بيانات الطالب</h2>
+              <h2 className="text-3xl font-bold text-text">تعديل بيانات المتدربين</h2>
             </div>
-            <p className="text-gray-600">حدّث بيانات الطالب واربطه بالصف والمواد.</p>
+            <p className="text-gray-600">حدّث بيانات المتدربين واربطه بالصف والمواد.</p>
           </div>
 
           <div className="bg-white rounded-2xl p-6 shadow-sm">
@@ -212,7 +212,7 @@ function EditStudentModal({
                 <div className="bg-gray-50 p-5 rounded-xl">
                   <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
                     <UserOutlined className="text-primary" />
-                    بيانات الطالب
+                    بيانات المتدرب
                   </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

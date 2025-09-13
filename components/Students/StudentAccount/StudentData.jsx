@@ -1,4 +1,7 @@
-import { Camera, Check, Clock, Edit3, Mail, Phone, Save, X } from 'lucide-react'
+import { 
+  Camera, Check, Clock, Edit3, Mail, Phone, Save, X,
+  Instagram, Facebook, Linkedin
+} from 'lucide-react'
 import React from 'react'
 import { StudentProgressBar } from '../../ui/StudentProgressBar'
 
@@ -50,18 +53,17 @@ export default function StudentData({
           </div>
 
           <h3 className="text-xl font-bold text-gray-800 mb-2">
-            {`${student.firstName} ${student.lastName}`}
+            {`${student.firstName || ''} ${student.familyName || ''}`.trim() || '—'}
           </h3>
 
           <div className="space-y-3 mb-6">
             <div className="flex items-center justify-center gap-2 text-gray-600">
               <Mail size={14} />
-              <span className="text-sm">{student.email}</span>
+              <span className="text-sm">{student.email || '—'}</span>
               {student.emailVerified && (
                 <Check size={14} className="text-green-500" />
               )}
             </div>
-           
           </div>
 
           {/* Overall progress */}
@@ -87,7 +89,7 @@ export default function StudentData({
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              {isEditing ? "تعديل بيانات الطالب" : "بيانات الحساب"}
+              {isEditing ? "تعديل بيانات الحساب" : "بيانات الحساب"}
             </h2>
             <p className="text-gray-600">
               {isEditing ? "قم بتعديل المعلومات الشخصية والبيانات الأساسية" : "إدارة المعلومات الشخصية والبيانات الأساسية"}
@@ -111,16 +113,13 @@ export default function StudentData({
             {/* First name */}
             <div className="bg-gray-50 p-4 rounded-xl">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                الاسم  *
+                الاسم الأول *
               </label>
               <input
                 type="text"
-                value={student.firstName}
+                value={student.firstName || ''}
                 onChange={(e) =>
-                  setStudent((prev) => ({
-                    ...prev,
-                    firstName: e.target.value,
-                  }))
+                  setStudent((prev) => ({ ...prev, firstName: e.target.value }))
                 }
                 disabled={!isEditing}
                 className={`w-full rounded-lg border px-4 py-3 transition-all duration-300 ${
@@ -131,9 +130,45 @@ export default function StudentData({
               />
             </div>
 
-            
+            {/* Middle name */}
+            <div className="bg-gray-50 p-4 rounded-xl">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                الاسم الأوسط *
+              </label>
+              <input
+                type="text"
+                value={student.secondName || ''}
+                onChange={(e) =>
+                  setStudent((prev) => ({ ...prev, secondName: e.target.value }))
+                }
+                disabled={!isEditing}
+                className={`w-full rounded-lg border px-4 py-3 transition-all duration-300 ${
+                  isEditing
+                    ? "border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white"
+                    : "border-gray-200 bg-transparent text-gray-600"
+                }`}
+              />
+            </div>
 
-         
+            {/* Family name */}
+            <div className="bg-gray-50 p-4 rounded-xl">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                اسم العائلة *
+              </label>
+              <input
+                type="text"
+                value={student.familyName || ''}
+                onChange={(e) =>
+                  setStudent((prev) => ({ ...prev, familyName: e.target.value }))
+                }
+                disabled={!isEditing}
+                className={`w-full rounded-lg border px-4 py-3 transition-all duration-300 ${
+                  isEditing
+                    ? "border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white"
+                    : "border-gray-200 bg-transparent text-gray-600"
+                }`}
+              />
+            </div>
 
             {/* Email */}
             <div className="bg-gray-50 p-4 rounded-xl">
@@ -143,12 +178,9 @@ export default function StudentData({
               <div className="relative">
                 <input
                   type="email"
-                  value={student.email}
+                  value={student.email || ''}
                   onChange={(e) =>
-                    setStudent((prev) => ({
-                      ...prev,
-                      email: e.target.value,
-                    }))
+                    setStudent((prev) => ({ ...prev, email: e.target.value }))
                   }
                   disabled={!isEditing}
                   className={`w-full rounded-lg border px-4 py-3 pr-10 transition-all duration-300 ${
@@ -166,8 +198,52 @@ export default function StudentData({
               </div>
             </div>
 
-            {/* Current phone (readonly) */}
+            {/* Gender */}
             <div className="bg-gray-50 p-4 rounded-xl">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                الجنس *
+              </label>
+              <select
+                value={student.gender || 'ذكر'}
+                onChange={(e) =>
+                  setStudent((prev) => ({ ...prev, gender: e.target.value }))
+                }
+                disabled={!isEditing}
+                className={`w-full rounded-lg border px-4 py-3 transition-all duration-300 ${
+                  isEditing
+                    ? "border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white"
+                    : "border-gray-200 bg-transparent text-gray-600"
+                }`}
+              >
+                <option value="ذكر">ذكر</option>
+                <option value="أنثى">أنثى</option>
+              </select>
+            </div>
+
+            {/* Role */}
+            <div className="bg-gray-50 p-4 rounded-xl">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                نوع الحساب *
+              </label>
+              <select
+                value={student.role || 'student'}
+                onChange={(e) =>
+                  setStudent((prev) => ({ ...prev, role: e.target.value }))
+                }
+                disabled={!isEditing}
+                className={`w-full rounded-lg border px-4 py-3 transition-all duration-300 ${
+                  isEditing
+                    ? "border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white"
+                    : "border-gray-200 bg-transparent text-gray-600"
+                }`}
+              >
+                <option value="student">طالب</option>
+                <option value="lecturer">محاضر</option>
+              </select>
+            </div>
+
+            {/* Current phone (readonly) */}
+            <div className="bg-gray-50 p-4 rounded-xl md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 رقم الجوال الحالي *
               </label>
@@ -175,9 +251,9 @@ export default function StudentData({
                 <input
                   type="tel"
                   disabled
-                  value={student.phone}
+                  value={student.phone || ''}
                   readOnly
-                  className="w-full  rounded-lg border border-gray-200 px-9 py-3 pr-10 bg-transparent text-gray-600"
+                  className="w-full rounded-lg border border-gray-200 px-9 py-3 pr-10 bg-transparent text-gray-600"
                 />
                 {student.phoneVerified ? (
                   <Check
@@ -192,41 +268,85 @@ export default function StudentData({
                 )}
               </div>
             </div>
-
-            {/* Alternative phone */}
-            {/* <div className="bg-gray-50 p-4 rounded-xl">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                رقم جوال بديل
-              </label>
-              <input
-                type="tel"
-                value={student.alternativePhone}
-                onChange={(e) =>
-                  setStudent((prev) => ({
-                    ...prev,
-                    alternativePhone: e.target.value,
-                  }))
-                }
-                disabled={!isEditing}
-                className={`w-full rounded-lg border px-4 py-3 transition-all duration-300 ${
-                  isEditing
-                    ? "border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white"
-                    : "border-gray-200 bg-transparent text-gray-600"
-                }`}
-                placeholder="اختياري"
-              />
-            </div> */}
           </div>
 
-          {/* Phone change with OTP */}
-          {/* {isEditing && (
+          {/* Social links for lecturers */}
+          {student.role === 'lecturer' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-gray-50 p-4 rounded-xl">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <Instagram size={16} className="text-pink-500" />
+                  Instagram
+                </label>
+                <input
+                  type="url"
+                  value={student.instagram || ''}
+                  onChange={(e) =>
+                    setStudent((prev) => ({ ...prev, instagram: e.target.value }))
+                  }
+                  disabled={!isEditing}
+                  placeholder="https://instagram.com/username"
+                  className={`w-full rounded-lg border px-4 py-3 transition-all duration-300 ${
+                    isEditing
+                      ? "border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white"
+                      : "border-gray-200 bg-transparent text-gray-600"
+                  }`}
+                />
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-xl">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <Facebook size={16} className="text-blue-600" />
+                  Facebook
+                </label>
+                <input
+                  type="url"
+                  value={student.facebook || ''}
+                  onChange={(e) =>
+                    setStudent((prev) => ({ ...prev, facebook: e.target.value }))
+                  }
+                  disabled={!isEditing}
+                  placeholder="https://facebook.com/username"
+                  className={`w-full rounded-lg border px-4 py-3 transition-all duration-300 ${
+                    isEditing
+                      ? "border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white"
+                      : "border-gray-200 bg-transparent text-gray-600"
+                  }`}
+                />
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-xl">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <Linkedin size={16} className="text-sky-700" />
+                  LinkedIn
+                </label>
+                <input
+                  type="url"
+                  value={student.linkedin || ''}
+                  onChange={(e) =>
+                    setStudent((prev) => ({ ...prev, linkedin: e.target.value }))
+                  }
+                  disabled={!isEditing}
+                  placeholder="https://www.linkedin.com/in/username"
+                  className={`w-full rounded-lg border px-4 py-3 transition-all duration-300 ${
+                    isEditing
+                      ? "border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white"
+                      : "border-gray-200 bg-transparent text-gray-600"
+                  }`}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Phone change with OTP (enabled when editing) */}
+          {isEditing && (
             <div className="p-6 bg-blue-50 rounded-2xl border border-blue-200">
               <h4 className="font-semibold text-blue-800 mb-4 flex items-center gap-2">
                 <Phone size={18} />
                 تغيير رقم الجوال
               </h4>
               <p className="text-sm text-blue-600 mb-4">
-                لإضافة أو تغيير رقم الجوال، يرجى إدخال الرقم الجديد وسيتم إرسال رمز تحقق إليه
+                لإضافة أو تغيير رقم الجوال، أدخل الرقم الجديد ثم أرسل رمز التحقق.
               </p>
               <div className="space-y-4">
                 <div className="flex gap-3 flex-col sm:flex-row">
@@ -235,12 +355,17 @@ export default function StudentData({
                     value={pendingPhone}
                     onChange={(e) => setPendingPhone(e.target.value)}
                     placeholder="أدخل رقم الجوال الجديد"
-                    className="flex-1 rounded-xl border border-blue-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    className="flex-1 rounded-xl border border-blue-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white"
                   />
                   <button
                     type="button"
                     onClick={sendOtpForPhone}
-                    className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors font-medium whitespace-nowrap"
+                    disabled={!pendingPhone}
+                    className={`px-6 py-3 rounded-xl font-medium whitespace-nowrap transition-colors ${
+                      pendingPhone
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
+                        : "bg-blue-200 text-white cursor-not-allowed"
+                    }`}
                   >
                     إرسال رمز التحقق
                   </button>
@@ -252,9 +377,10 @@ export default function StudentData({
                       type="text"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
-                      placeholder="أدخل رمز التحقق المرسل إلى جوالك"
-                      className="flex-1 rounded-xl border border-green-300 px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
-                      maxLength="6"
+                      placeholder="أدخل رمز التحقق المرسل"
+                      className="flex-1 rounded-xl border border-green-300 px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 bg-white"
+                      maxLength={6}
+                      inputMode="numeric"
                     />
                     <button
                       type="button"
@@ -267,7 +393,7 @@ export default function StudentData({
                 )}
               </div>
             </div>
-          )} */}
+          )}
 
           {/* Save Button */}
           {isEditing && (
@@ -291,5 +417,5 @@ export default function StudentData({
         </form>
       </div>
     </div>
-  )
+  )  
 }
