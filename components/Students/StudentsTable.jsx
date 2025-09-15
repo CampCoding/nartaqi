@@ -12,6 +12,7 @@ import {
   Row,
   Col,
   message,
+  Grid,
 } from "antd";
 import DataTable from "../layout/DataTable";
 import { Mail } from "lucide-react";
@@ -24,9 +25,12 @@ import {
   CloseCircleOutlined,
   CalendarOutlined,
   TrophyOutlined,
+  PhoneOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 
 const { Text, Title } = Typography;
+const { useBreakpoint } = Grid;
 
 /* ---------- Helpers ---------- */
 const statusLabelAr = (status) => {
@@ -75,8 +79,6 @@ const getInitials = (name = "") =>
     .map((n) => n[0])
     .join("")
     .toUpperCase();
-
-
 
 const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
   // بيانات طلاب تجريبية (نفس البنية المستخدمة في صفحات الإدارة عندك)
@@ -147,6 +149,7 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
   const [loading, setLoading] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [viewModalVisible, setViewModalVisible] = useState(false);
+  const screens = useBreakpoint();
 
   const handleStatusChange = (studentId, newStatus) => {
     setLoading(true);
@@ -185,148 +188,278 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
     setViewModalVisible(true);
   };
 
- const columns = [
-     {
-       title: "الطالب",
-       dataIndex: "name",
-       key: "name",
-       render: (name, record) => (
-         <div className="flex items-center gap-3" dir="rtl">
-           <Avatar
-             size={48}
-             className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold"
-           >
-             {getInitials(name)}
-           </Avatar>
-           <div>
-             <Text className="text-gray-900">{name}</Text>
-             <div className="text-sm text-gray-500 flex items-center mt-1">
-               <Mail className="ml-1 text-xs" />
-               {record.email}
-             </div>
-           </div>
-         </div>
-       ),
-     },
-     {
-       title: "المواد",
-       dataIndex: "subjects",
-       key: "subjects",
-       render: (subject) => (
-         <div className="flex flex-wrap w-full max-w-[240px] gap-2" dir="rtl">
-           {subject.map((sub, i) => (
-             <Tag
-               key={i}
-               className="px-3 py-1 w-fit text-xs font-medium border-0"
-               style={{
-                 backgroundColor: "#26829B",
-                 color: "white",
-               }}
-             >
-               {sub}
-             </Tag>
-           ))}
-         </div>
-       ),
-     },
-     {
-       title: "الحالة",
-       dataIndex: "status",
-       key: "status",
-       render: (status) => (
-         <Badge
-           status={getStatusColor(status)}
-           text={
-             <span className="capitalize font-medium">
-               {getStatusIcon(status)} {statusLabelAr(status)}
-             </span>
-           }
-         />
-       ),
-     },
-     {
-       title: "الخبرة",
-       dataIndex: "experience",
-       key: "experience",
-       render: (experience) => (
-         <div className="flex items-center text-gray-700" dir="rtl">
-           <TrophyOutlined className="ml-2 text-yellow-500" />
-           {experience}
-         </div>
-       ),
-     },
-     {
-       title: "تاريخ الانضمام",
-       dataIndex: "joinDate",
-       key: "joinDate",
-       render: (date) => (
-         <div className="flex items-center text-gray-700" dir="rtl">
-           <CalendarOutlined className="ml-2 text-blue-500" />
-           {new Date(date).toLocaleDateString("ar-EG")}
-         </div>
-       ),
-     },
-     {
-       title: "إجراءات",
-       key: "actions",
-       render: (_, record) => (
-         <Space size="small" direction="horizontal" style={{ direction: "rtl" }}>
-           <Tooltip title="عرض التفاصيل">
-             <Button
-               type="primary"
-               icon={<EyeOutlined />}
-               size="small"
-               className="bg-purple-600 !w-fit flex items-center justify-center hover:bg-purple-700 border-purple-600"
-               onClick={() => handleViewTeacher(record)}
-             />
-           </Tooltip>
-           {record.status !== "approved" && (
-             <Button
-               type="primary"
-               size="small"
-               className="bg-green-600 hover:bg-green-700 border-green-600"
-               loading={loading}
-               onClick={() => handleStatusChange(record.id, "approved")}
-             >
-               اعتماد
-             </Button>
-           )}
-           {record.status !== "rejected" && (
-             <Button
-               danger
-               size="small"
-               loading={loading}
-               onClick={() => handleStatusChange(record.id, "rejected")}
-             >
-               رفض
-             </Button>
-           )}
-         </Space>
-       ),
-     },
-   ];
+  // Responsive columns configuration
+  const getColumns = () => {
+    const baseColumns = [
+      {
+        title: "الطالب",
+        dataIndex: "name",
+        key: "name",
+        fixed: screens.xs ? "left" : false,
+        render: (name, record) => (
+          <div className="flex items-center gap-3" dir="rtl">
+            <Avatar
+              size={screens.xs ? 40 : 48}
+              className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold"
+            >
+              {getInitials(name)}
+            </Avatar>
+            <div>
+              <Text className="text-gray-900 block text-sm md:text-base">{name}</Text>
+              <div className="text-xs md:text-sm text-gray-500 flex items-center mt-1">
+                <Mail className="ml-1 text-xs" />
+                <span className="hidden md:inline">{record.email}</span>
+                <span className="md:hidden">{record.email.split('@')[0]}</span>
+              </div>
+            </div>
+          </div>
+        ),
+      },
+      {
+        title: "الدورات",
+        dataIndex: "subjects",
+        key: "subjects",
+        responsive: ['md'],
+        render: (subjects) => (
+          <div className="flex flex-wrap w-full max-w-[240px] gap-2" dir="rtl">
+            {subjects.map((sub, i) => (
+              <Tag
+                key={i}
+                className="px-2 py-1 w-fit text-xs font-medium border-0 hidden md:inline-block"
+                style={{
+                  backgroundColor: "#26829B",
+                  color: "white",
+                }}
+              >
+                {sub}
+              </Tag>
+            ))}
+            <Tooltip title={subjects.join(', ')}>
+              <Tag className="md:hidden">
+                {subjects.length} دورات
+              </Tag>
+            </Tooltip>
+          </div>
+        ),
+      },
+      {
+        title: "الحالة",
+        dataIndex: "status",
+        key: "status",
+        responsive: ['sm'],
+        render: (status) => (
+          <Badge
+            status={getStatusColor(status)}
+            text={
+              <span className="capitalize font-medium hidden md:inline">
+                {getStatusIcon(status)} {statusLabelAr(status)}
+              </span>
+            }
+          />
+        ),
+      },
+      {
+        title: "الخبرة",
+        dataIndex: "experience",
+        key: "experience",
+        responsive: ['lg'],
+        render: (experience) => (
+          <div className="flex items-center text-gray-700" dir="rtl">
+            <TrophyOutlined className="ml-2 text-yellow-500" />
+            <span className="hidden md:inline">{experience}</span>
+            <span className="md:hidden">{experience.split(':')[0]}</span>
+          </div>
+        ),
+      },
+      {
+        title: "تاريخ الانضمام",
+        dataIndex: "joinDate",
+        key: "joinDate",
+        responsive: ['md'],
+        render: (date) => (
+          <div className="flex items-center text-gray-700" dir="rtl">
+            <CalendarOutlined className="ml-2 text-blue-500" />
+            <span className="hidden md:inline">
+              {new Date(date).toLocaleDateString("ar-EG")}
+            </span>
+            <span className="md:hidden">
+              {new Date(date).toLocaleDateString("ar-EG", { 
+                month: '2-digit', 
+                day: '2-digit',
+                year: '2-digit'
+              })}
+            </span>
+          </div>
+        ),
+      },
+      {
+        title: "إجراءات",
+        key: "actions",
+        fixed: screens.xs ? "right" : false,
+        width: screens.xs ? 120 : undefined,
+        render: (_, record) => (
+          <Space size="small" direction="horizontal" style={{ direction: "rtl" }}>
+            <Tooltip title="عرض التفاصيل">
+              <Button
+                type="primary"
+                icon={<EyeOutlined />}
+                size="small"
+                className="bg-purple-600 !w-fit flex items-center justify-center hover:bg-purple-700 border-purple-600"
+                onClick={() => handleViewStudent(record)}
+              />
+            </Tooltip>
+            {record.status !== "approved" && (
+              <Button
+                type="primary"
+                size="small"
+                className="bg-green-600 hover:bg-green-700 border-green-600 hidden sm:inline-block"
+                loading={loading}
+                onClick={() => handleStatusChange(record.id, "approved")}
+              >
+                {screens.md ? "اعتماد" : ""}
+              </Button>
+            )}
+            {record.status !== "rejected" && (
+              <Button
+                danger
+                size="small"
+                loading={loading}
+                className="hidden sm:inline-block"
+                onClick={() => handleStatusChange(record.id, "rejected")}
+              >
+                {screens.md ? "رفض" : ""}
+              </Button>
+            )}
+            
+            {/* Mobile dropdown for actions */}
+            {!screens.sm && (
+              <Tooltip title="المزيد من الإجراءات">
+                <Button
+                  size="small"
+                  icon={<UserOutlined />}
+                />
+              </Tooltip>
+            )}
+          </Space>
+        ),
+      },
+    ];
+
+    return baseColumns;
+  };
 
   return (
     <>
       <Card className="shadow-lg border-0" dir="rtl">
         <DataTable
           searchable={false}
-          table={{ header: columns, rows: filteredStudents }}
+          table={{ 
+            header: getColumns(), 
+            rows: filteredStudents 
+          }}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) => (
-              <span className="text-gray-600">
+              <span className="text-gray-600 text-xs md:text-sm">
                 عرض {range[0]}–{range[1]} من {total} طالبًا
               </span>
             ),
           }}
-          scroll={{ x: "max-content" }}
+          scroll={{ x: screens.xs ? 600 : "max-content" }}
         />
       </Card>
 
-      
+      {/* Student Detail Modal */}
+      <Modal
+        title="تفاصيل الطالب"
+        open={viewModalVisible}
+        onCancel={() => setViewModalVisible(false)}
+        footer={[
+          <Button key="back" onClick={() => setViewModalVisible(false)}>
+            إغلاق
+          </Button>,
+        ]}
+        width={screens.xs ? "90%" : "70%"}
+        className="student-detail-modal"
+        dir="rtl"
+      >
+        {selectedStudent && (
+          <div className="p-4">
+            <Row gutter={[16, 16]}>
+              <Col xs={24} md={8} className="text-center">
+                <Avatar
+                  size={100}
+                  className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold mx-auto mb-4"
+                >
+                  {getInitials(selectedStudent.name)}
+                </Avatar>
+                <Title level={4}>{selectedStudent.name}</Title>
+                <Badge
+                  status={getStatusColor(selectedStudent.status)}
+                  text={statusLabelAr(selectedStudent.status)}
+                  className="mb-3"
+                />
+              </Col>
+              <Col xs={24} md={16}>
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} sm={12}>
+                    <div className="flex items-center mb-3">
+                      <Mail className="ml-2" />
+                      <Text strong>البريد الإلكتروني:</Text>
+                      <Text className="mr-2">{selectedStudent.email}</Text>
+                    </div>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <div className="flex items-center mb-3">
+                      <PhoneOutlined className="ml-2" />
+                      <Text strong>الهاتف:</Text>
+                      <Text className="mr-2">{selectedStudent.phone}</Text>
+                    </div>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <div className="flex items-center mb-3">
+                      <TrophyOutlined className="ml-2" />
+                      <Text strong>الخبرة:</Text>
+                      <Text className="mr-2">{selectedStudent.experience}</Text>
+                    </div>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <div className="flex items-center mb-3">
+                      <CalendarOutlined className="ml-2" />
+                      <Text strong>تاريخ الانضمام:</Text>
+                      <Text className="mr-2">
+                        {new Date(selectedStudent.joinDate).toLocaleDateString("ar-EG")}
+                      </Text>
+                    </div>
+                  </Col>
+                  <Col xs={24}>
+                    <Divider />
+                    <Text strong>الدورات المسجلة:</Text>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {selectedStudent.subjects.map((subject, index) => (
+                        <Tag
+                          key={index}
+                          color="blue"
+                          className="px-3 py-1"
+                        >
+                          {subject}
+                        </Tag>
+                      ))}
+                    </div>
+                  </Col>
+                  <Col xs={24}>
+                    <Divider />
+                    <Text strong>التخصص/المؤهل:</Text>
+                    <Text className="block mt-2">{selectedStudent.qualification}</Text>
+                  </Col>
+                </Row>
+              </Col>
+            </Row>
+          </div>
+        )}
+      </Modal>
     </>
   );
 };

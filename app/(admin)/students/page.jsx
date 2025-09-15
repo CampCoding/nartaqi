@@ -11,7 +11,6 @@ import {
   Badge,
   Typography,
   Divider,
-  Segmented,
 } from "antd";
 import "@ant-design/v5-patch-for-react-19";
 import {
@@ -27,7 +26,14 @@ import {
 import PageLayout from "../../../components/layout/PageLayout";
 import PagesHeader from "./../../../components/ui/PagesHeader";
 import BreadcrumbsShowcase from "./../../../components/ui/BreadCrumbs";
-import { BarChart3, Download, Plus, Users } from "lucide-react";
+import {
+  BarChart3,
+  Download,
+  Plus,
+  Users,
+  GraduationCap,
+  User2,
+} from "lucide-react";
 import Button from "./../../../components/atoms/Button";
 import AddStudentModal from "../../../components/Students/AddStudent.modal";
 import StudentsGrid from "../../../components/Students/StudnetsGrid";
@@ -39,7 +45,8 @@ import { subjects } from "../../../data/subjects";
 const { Text, Title } = Typography;
 
 const StudentsManagement = () => {
-  const [addNewModal , setAddNewModal] = useState(false);
+  const [addNewModal, setAddNewModal] = useState(false);
+
   // Seed now includes `role` so we can filter by محاضر/طالب
   const [teachers, setTeachers] = useState([
     {
@@ -107,7 +114,7 @@ const StudentsManagement = () => {
       qualification: "الصف التاسع - قسم B",
       avatar: null,
     },
-    // Optional: add a couple of students to see the filter working
+    // Students
     {
       id: 6,
       role: "student", // طالب
@@ -199,23 +206,63 @@ const StudentsManagement = () => {
       setTeachers((prev) =>
         prev.map((t) => (t.id === teacherId ? { ...t, status: newStatus } : t))
       );
-      message.success(`تم تغيير حالة الحساب إلى "${getStatusLabel(newStatus)}" بنجاح`);
+      message.success(
+        `تم تغيير حالة الحساب إلى "${getStatusLabel(newStatus)}" بنجاح`
+      );
       setLoading(false);
     }, 500);
   };
 
-  // Filtered list by role (and optionally you can add search/status if needed)
+  // Filtered list by role
   const filteredData = useMemo(() => {
     return teachers.filter((t) => {
-      const roleOk = roleFilter === "all" ? true : (t.role || "lecturer") === roleFilter;
+      const roleOk =
+        roleFilter === "all" ? true : (t.role || "lecturer") === roleFilter;
       return roleOk;
     });
   }, [teachers, roleFilter]);
+
+  // Counts for tabs
+  const roleCounts = useMemo(() => {
+    const total = teachers.length;
+    const lecturer = teachers.filter(
+      (t) => (t.role || "lecturer") === "lecturer"
+    ).length;
+    const student = teachers.filter((t) => t.role === "student").length;
+    return { total, lecturer, student };
+  }, [teachers]);
 
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
     { label: "الطلاب", href: "/students", icon: Users, current: true },
   ];
+
+  // Pretty role tab button
+  const RoleTab = ({ active, onClick, icon: Icon, label, count, gradient }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={[
+        "group inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition-all",
+        "border focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#02AAA0]/60",
+        active
+          ? `text-white border-transparent shadow-md scale-[1.02] bg-gradient-to-r from-primary to-secondary`
+          : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:shadow-sm",
+      ].join(" ")}
+    >
+      <Icon className={active ? "opacity-100" : "opacity-80"} size={16} />
+      <span>{label}</span>
+      <span
+        className={[
+          "ml-1 inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-bold transition-colors",
+          active ? "bg-white/20 text-white" : "bg-gray-100 text-gray-700",
+        ].join(" ")}
+      >
+        {count}
+      </span>
+    </button>
+  );
 
   return (
     <PageLayout>
@@ -245,33 +292,49 @@ const StudentsManagement = () => {
         {/* Stats */}
         <StudentsStats />
 
-        {/* View mode + NEW role filter row */}
+        {/* View mode + role filter row */}
         <div className="flex flex-col gap-3">
           <SearchAndFilters mode={viewMode} setMode={setViewMode} />
 
-          {/* Role filter */}
+          {/* Role filter (Pills) */}
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="text-sm text-gray-600">
-              تصفية حسب نوع الحساب:
+            <div className="text-sm text-gray-600">تصفية حسب نوع الحساب:</div>
+
+            <div className="flex items-center my-7 gap-2 flex-wrap">
+              <RoleTab
+                active={roleFilter === "all"}
+                onClick={() => setRoleFilter("all")}
+                icon={Users}
+                label="الكل"
+                count={roleCounts.total}
+                gradient="from-sky-500 to-cyan-600"
+              />
+              <RoleTab
+                active={roleFilter === "lecturer"}
+                onClick={() => setRoleFilter("lecturer")}
+                icon={GraduationCap}
+                label="معلم"
+                count={roleCounts.lecturer}
+                gradient="from-violet-500 to-fuchsia-600"
+              />
+              <RoleTab
+                active={roleFilter === "student"}
+                onClick={() => setRoleFilter("student")}
+                icon={User2}
+                label="طالب"
+                count={roleCounts.student}
+                gradient="from-emerald-500 to-teal-600"
+              />
             </div>
-            <Segmented
-              size="large"
-              value={roleFilter}
-              onChange={(val) => setRoleFilter(val)}
-              options={[
-                { label: "الكل", value: "all" },
-                { label: "محاضر", value: "lecturer" },
-                { label: "طالب", value: "student" },
-              ]}
-            />
           </div>
         </div>
 
         {/* Grid or Table */}
         {viewMode === "table" ? (
-          // If your StudentsTable supports extra filtering prop, pass it here:
-          // <StudentsTable searchText={searchText} selectedStatus={selectedStatus} roleFilter={roleFilter} />
-          <StudentsTable searchText={searchText} selectedStatus={selectedStatus} />
+          <StudentsTable
+            searchText={searchText}
+            selectedStatus={selectedStatus}
+          />
         ) : (
           <StudentsGrid
             data={filteredData}
@@ -289,7 +352,9 @@ const StudentsManagement = () => {
       <Modal
         title={
           <div className="text-xl font-semibold text-gray-800">
-            {selectedTeacher?.role === "student" ? "تفاصيل المتدرب" : "تفاصيل المحاضر"}
+            {selectedTeacher?.role === "student"
+              ? "تفاصيل المتدرب"
+              : "تفاصيل المحاضر"}
           </div>
         }
         open={viewModalVisible}
@@ -331,7 +396,7 @@ const StudentsManagement = () => {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <Text strong className="text-gray-700 flex items-center mb-2">
                     <BookOutlined className="mr-2 text-yellow-600" />
-                    المواد
+                    الدورات
                   </Text>
                   <div className="flex flex-wrap items-center gap-2">
                     {(selectedTeacher.subjects || []).map((item, i) => (
@@ -396,7 +461,9 @@ const StudentsManagement = () => {
                     تاريخ الانضمام
                   </Text>
                   <Text>
-                    {new Date(selectedTeacher.joinDate).toLocaleDateString("ar-EG")}
+                    {new Date(
+                      selectedTeacher.joinDate
+                    ).toLocaleDateString("ar-EG")}
                   </Text>
                 </div>
               </Col>
@@ -449,7 +516,7 @@ const StudentsManagement = () => {
         )}
       </Modal>
 
-      {/* Add new (from your existing modal). Keeps role from modal (student/lecturer). */}
+      {/* Add new */}
       <AddStudentModal
         open={addNewModal}
         onCancel={() => setAddNewModal(false)}
@@ -465,9 +532,12 @@ const StudentsManagement = () => {
               email: payload.email || "",
               phone: payload.phone || "",
               subjects: payload.subjects || [],
-              joinDate: payload.joinDate || new Date().toISOString().slice(0, 10),
+              joinDate:
+                payload.joinDate || new Date().toISOString().slice(0, 10),
               experience: payload.experience || "—",
-              qualification: payload.qualification || (payload.role === "lecturer" ? "محاضر" : "طالب"),
+              qualification:
+                payload.qualification ||
+                (payload.role === "lecturer" ? "محاضر" : "طالب"),
             },
             ...prev,
           ]);

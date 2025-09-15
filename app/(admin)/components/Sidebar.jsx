@@ -26,6 +26,8 @@ import {
   BookOpenIcon,
   CreditCard,
   QrCode,
+  Headset,
+  BookCopy,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -44,11 +46,7 @@ export default function Sidebar() {
   const baseMenuItems = [
     { name: "نظرة عامة", icon: BarChart3, path: "/" },
     { name: "إدارة دورات الطلاب", icon: BookOpen, path: "/subjects" },
-    {
-      name: "إدارة  الدورات ",
-      icon: BookOpen,
-      path: "/teachers-courses",
-    },
+    
     // { name: "إدارة مواد الطلاب", icon: Users, path: "/students-courses" },
   ];
 
@@ -62,7 +60,7 @@ export default function Sidebar() {
         icon: Users,
         path: `/subjects/${subjectPath}/teachers`,
       },
-      { name: "الإدارة", icon: Cog, path: `/subjects/${subjectPath}/units` },
+      { name: "الدورات", icon: Cog, path: `/subjects/${subjectPath}/units` },
     ];
   };
 
@@ -94,25 +92,28 @@ export default function Sidebar() {
   };
 
   const menuItems = [
+      {
+      name:"الفئات",
+      icon : BookOpen,
+      path:"/categories"
+    },
+
+    {
+      name: "  الدورات ",
+      icon: BookOpen,
+      path: "/teachers-courses",
+    },
     // { name: "المعلمين", icon: Users, path: "/teachers" },
     { name: "المتدربين", icon: GraduationCap, path: "/students" },
-    // { name: "الأسئلة", icon: HelpCircle, path: "/questions" },
+    { name: "أقسام الاختبارات", icon: BookCopy , path: "/exam_sections" },
     { name: "الاختبارات", icon: FileText, path: "/exams" },
     {
       name:"المدونة",
       icon : BookOpenIcon,
       path:"/blog"
     },
-    {
-      name:"QR",
-      icon : QrCode,
-      path:"/qr-code"
-    },
-    {
-      name:"الفئات",
-      icon : BookOpen,
-      path:"/categories"
-    },
+   
+  
     {
       name:"متجر الكتب",
       icon : Book ,
@@ -128,12 +129,28 @@ export default function Sidebar() {
       icon :  Star ,
       path:"/rating"
     },
+     {
+      name:"QR",
+      icon : QrCode,
+      path:"/qr-code"
+    },
+    {
+      name:"الدعم الفني",
+      icon : Headset,
+      path:"/technical_support"
+    },
     {
       name:"بوابة الدعم",
       icon : ClockFading,
       path:"/support" 
     },
+   
     {
+      name:"تأكيد الدفع",
+      icon: CreditCard,
+      path: "/confirm-payment"
+    },
+     {
       name:"أسئلة شائعة",
       icon : Text ,
       path:"/faq"
@@ -143,11 +160,6 @@ export default function Sidebar() {
       icon: CircleAlert ,
       badge:"",
       path :"/privacy-policy"
-    },
-    {
-      name:"تأكيد الدفع",
-      icon: CreditCard,
-      path: "/confirm-payment"
     },
     { name: "الإعدادات", icon: Settings, path: "/settings" },
   ];

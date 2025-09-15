@@ -13,6 +13,7 @@ import {
   BarChart3,
   Users,
   User2,
+  Star,
 } from "lucide-react";
 import { StudentProgressBar } from "../../../../components/ui/StudentProgressBar";
 import StudentCourses from "../../../../components/Students/StudentAccount/StudentCourses";
@@ -22,6 +23,8 @@ import BreadcrumbsShowcase from "../../../../components/ui/BreadCrumbs";
 import { useParams } from "next/navigation";
 import StudentsPrivacy from "../../../../components/Students/StudentAccount/StudentsPrivacy";
 import StudentData from "../../../../components/Students/StudentAccount/StudentData";
+import StudentRatings from "../../../../components/Students/StudentAccount/StudentRating/StudentRatings";
+import TabButton from "../../../../components/ui/TabButton";
 
 // Mock PageLayout component (replace with your real layout)
 const PageLayout = ({ children }) => (
@@ -170,6 +173,209 @@ export default function StudentAccountPage() {
     },
   ]);
 
+  const [rating, setRating] = useState([
+  {
+    name:"مايكل",
+    description:
+      "الكورس منظم جدًا وشرح البرمجة للأطفال بسيط وممتع. بنتي بدأت تعمل مشاريع صغيرة!",
+    rating: 4.8,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=سارة+محمود&background=02AAA0&color=fff&rounded=true&size=128",
+    type: "teacher",
+  },
+  {
+    name:"مايكل",
+    description:
+      "طريقة الميس في الإنجليزي حلوة وبتخلّيني أتكلّم بثقة. الواجبات ساعدتني أراجع.",
+    rating: 4.6,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=أحمد+محمد&background=3B82F6&color=fff&rounded=true&size=128",
+    type: "student",
+  },
+  {
+    name:"مايكل",
+    description:
+      "تفاعل المدرس ممتاز، في أسئلة مباشرة وأنشطة أثناء الدرس تخلي الأولاد مركزين.",
+    rating: 4.7,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=محمود+عبدالله&background=10B981&color=fff&rounded=true&size=128",
+    type: "teacher",
+  },
+  {
+    name:"مايكل",
+    description:
+      "لوحة التحكم سهلة والمواد مرتبة، لكن أحيانًا الفيديو يتأخر في التحميل.",
+    rating: 4.1,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=ندى+خالد&background=6366F1&color=fff&rounded=true&size=128",
+    type: "student",
+  },
+  {
+    name:"مايكل",
+    description:
+      "الدعم الفني رد سريع وحل مشكلة تسجيل الدخول في نفس اليوم.",
+    rating: 4.9,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=أمينة+أشرف&background=F59E0B&color=fff&rounded=true&size=128",
+    type: "student",
+  },
+  {
+    name:"مايكل",
+    description:
+      "تمارين كثيرة ومتصاعدة الصعوبة؛ حسّنت مستواي في الحساب بشكل واضح.",
+    rating: 4.5,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=كريم+علي&background=EF4444&color=fff&rounded=true&size=128",
+    type: "student",
+  },
+  {
+    name:"مايكل",
+    description:
+      "المتابعة الفردية ممتازة، في ملاحظات خاصة بعد كل اختبار.",
+    rating: 4.7,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=ميس+إيمان&background=14B8A6&color=fff&rounded=true&size=128",
+    type: "teacher",
+  },
+  {
+    name:"مايكل",
+    description:
+      "السعر مناسب مقارنة بالجودة، خاصة مع الشهادات المعتمدة في النهاية.",
+    rating: 4.4,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=علاء+الدين&background=0EA5E9&color=fff&rounded=true&size=128",
+    type: "teacher",
+  },
+  {
+    name:"مايكل",
+    description:
+      "جدول الحصص منظم بس ساعات يبدأ متأخر 5 دقايق.",
+    rating: 4.0,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=منى+حسن&background=8B5CF6&color=fff&rounded=true&size=128",
+    type: "student",
+  },
+  {
+    name:"مايكل",
+    description:
+      "الدروس المسجّلة بجودة عالية وترجمة واضحة على الشاشة.",
+    rating: 4.6,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=فاطمة+حسين&background=0F766E&color=fff&rounded=true&size=128",
+    type: "teacher",
+  },
+  {
+    name:"مايكل",
+    description:
+      "الاختبارات تقيس الفهم الحقيقي مش الحفظ، والتغذية الراجعة دقيقة.",
+    rating: 4.8,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=مروان+رمزي&background=F97316&color=fff&rounded=true&size=128",
+    type: "student",
+  },
+  {
+    name:"مايكل",
+    description:
+      "أنشطة تفاعلية حلوة جدًا، خصوصًا تحديات الكود الأسبوعية.",
+    rating: 4.7,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=يوسف+سامي&background=22C55E&color=fff&rounded=true&size=128",
+    type: "student",
+  },
+  {
+    name:"مايكل",
+    description:
+      "التواصل مع ولي الأمر محترم وواضح، بيبعتوا تقارير تقدم مفصلة.",
+    rating: 4.9,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=وليد+مصطفى&background=EF4444&color=fff&rounded=true&size=128",
+    type: "teacher",
+  },
+  {
+    name:"مايكل",
+    description:
+      "الخصوصية والأمان ممتازين، حسابتنا محمية بخطوتين وتأكيد للهاتف.",
+    rating: 4.8,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=ميسرة+أمين&background=1D4ED8&color=fff&rounded=true&size=128",
+    type: "teacher",
+  },
+  {
+    name:"مايكل",
+    description:
+      "شهادة الإنجاز شكلها احترافي وتفيد في التقديم للمسابقات.",
+    rating: 4.6,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=مي+إسلام&background=3B82F6&color=fff&rounded=true&size=128",
+    type: "student",
+  },
+  {
+    name:"مايكل",
+    description:
+      "في حصص دعم إضافية قبل الامتحان، فرقت معانا فعلًا.",
+    rating: 4.7,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=ليلى+سيد&background=EA580C&color=fff&rounded=true&size=128",
+    type: "student",
+  },
+  {
+    name:"مايكل",
+    description:
+      "مرة واحدة حصل تأجيل غير مُعلن مبكرًا، أتمنى إشعار أبكر.",
+    rating: 3.6,
+    category:"مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=حازم+جلال&background=64748B&color=fff&rounded=true&size=128",
+    type: "student",
+  },
+  {
+    name:"مايكل",
+    description:
+      "المعلمون معتمدون ويستخدمون أمثلة من الحياة اليومية للأطفال.",
+    rating: 4.9,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=ميس+نور&background=9333EA&color=fff&rounded=true&size=128",
+    type: "teacher",
+  },
+  {
+    name:"مايكل",
+    description:
+      "بدأت من صفر في البرمجة وبقيت أعرف أعمل لعبة بسيطة على Scratch.",
+    rating: 4.8,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=رنا+محمود&background=16A34A&color=fff&rounded=true&size=128",
+    type: "student",
+  },
+  {
+    name:"مايكل",
+    description:
+      "القسم الإداري متعاون جدًا في الاستفسارات وطلبات الإجازات.",
+    rating: 4.5,
+    category: "مهارات التعليم والتدريس",
+    image:
+      "https://ui-avatars.com/api/?name=شيماء+طارق&background=DC2626&color=fff&rounded=true&size=128",
+    type: "teacher",
+  },
+]);
+
   // File input ref for avatar
   const fileInputRef = useRef(null);
 
@@ -263,31 +469,7 @@ export default function StudentAccountPage() {
 
   // UI atoms
 
-  const TabButton = ({ id, icon: Icon, children, count }) => (
-    <button
-      onClick={() => setActiveTab(id)}
-      className={`group relative px-6 py-3 rounded-xl text-sm md:text-base font-medium transition-all duration-300 flex items-center gap-3 min-w-fit
-        ${
-          activeTab === id
-            ? "bg-gradient-to-r from-[#87bac8]  to-[#27829b]   text-white shadow-lg scale-105"
-            : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:shadow-md"
-        }`}
-    >
-      <Icon size={18} />
-      {children}
-      {typeof count === "number" && (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-bold ${
-            activeTab === id
-              ? "bg-white/20 text-white"
-              : "bg-gray-100 text-gray-600"
-          }`}
-        >
-          {count}
-        </span>
-      )}
-    </button>
-  );
+
 
   const StatCard = ({ icon: Icon, title, value, subtitle, color }) => (
     <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-300">
@@ -360,25 +542,27 @@ export default function StudentAccountPage() {
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-3 mb-8 p-2 bg-white rounded-2xl border border-gray-200 shadow-sm">
-          <TabButton id="account" icon={User}>
+          <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="account" icon={User}>
             بيانات الحساب
           </TabButton>
-          <TabButton id="security" icon={Shield}>
+          <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="security" icon={Shield}>
             الأمان والخصوصية
           </TabButton>
-          <TabButton id="courses" icon={BookOpen} count={courses.length}>
+          <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="courses" icon={BookOpen} count={courses.length}>
             دوراتي
           </TabButton>
-          <TabButton id="badges" icon={Award} count={badges.length}>
+          <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="badges" icon={Award} count={badges.length}>
             شاراتي
           </TabButton>
           <TabButton
+          setActiveTab={setActiveTab} activeTab={activeTab}
             id="certificates"
             icon={FileText}
             count={certificates.length}
           >
             شهاداتي
           </TabButton>
+          <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="rating" icon={Star} count={rating?.length}>التقييمات</TabButton>
         </div>
 
         {/* -------- Account Tab -------- */}
@@ -402,6 +586,9 @@ export default function StudentAccountPage() {
 
         {/* -------- Certificates Tab -------- */}
         {activeTab === "certificates" && <StudentsCertificates />}
+
+        {/* ----------Ratings Tab ----------- */}
+        {activeTab === "rating" && <StudentRatings data={rating}  />}
       </div>
     </PageLayout>
   );

@@ -143,7 +143,7 @@ export default function StudentsBadges() {
               onClick={() => setFilterType(type.key)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                 filterType === type.key
-                  ? "bg-gradient-to-r from-[#87bac8] to-[#27829b] text-white shadow-lg scale-105"
+                  ? "bg-gradient-to-r from-primary to-secondary text-white shadow-lg scale-105"
                   : "bg-white text-gray-700 hover:bg-gray-100 hover:scale-102"
               }`}
             >
