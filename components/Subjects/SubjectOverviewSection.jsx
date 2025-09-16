@@ -198,27 +198,8 @@ const SubjectDetails = ({ subjectId }) => {
                 <Card title={""} className="shadow-sm">
                   {/* Statistics Cards */}
                   <Row gutter={[16, 16]} className="">
-                    <Col xs={24} sm={12} lg={12}>
-                      <Card  className="text-center h-full">
-                        <div className="mb-2">
-                          {/* <TeamOutlined className="text-lg text-[#0F7490]" /> */}
-                          <div className="text-2xl font-semibold text-primary">
-                            معدل الإشغال
-                          </div>
-                        </div>
-                        <Progress
-                          type="circle"
-                          percent={Math.round(enrollmentProgress)}
-                          size={80}
-                          strokeColor="#0F7490"
-                          format={(percent) => `${percent}%`}
-                        />
-                        <div className="text-xs text-gray-600 mt-2">
-                          {subject.currentEnrollment} / {subject.capacity}
-                        </div>
-                      </Card>
-                    </Col>
-                    <Col xs={24} sm={12} lg={12}>
+                    
+                    <Col xs={24} sm={12} lg={24}>
                       <Card className="text-center h-full">
                         <Statistic
                           title="التقييم"
@@ -317,9 +298,7 @@ const SubjectDetails = ({ subjectId }) => {
                       </Text>
                     </div>
                   </div>
-                  <Button type="primary" ghost block>
-                    عرض الملف الشخصي
-                  </Button>
+                
                 </Card>
 
                 {/* Course Details */}
@@ -386,8 +365,7 @@ const SubjectDetails = ({ subjectId }) => {
                   </div>
                 </Card>
 
-                {/* Admin Actions (if user is admin) */}
-                <Card title="إجراءات إدارية" className="shadow-sm">
+                {/* <Card title="إجراءات إدارية" className="shadow-sm">
                   <Space direction="vertical" className="w-full">
                     <Button icon={<EditOutlined />} block className="text-left">
                       تعديل الدورة
@@ -401,29 +379,9 @@ const SubjectDetails = ({ subjectId }) => {
                       حذف الدورة
                     </Button>
                   </Space>
-                </Card>
+                </Card> */}
 
-                {/* Quick Stats */}
-                <Card title="إحصائيات سريعة" className="shadow-sm">
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">تاريخ الإنشاء:</span>
-                      <Text>
-                        {dayjs(subject.createdAt).format("DD/MM/YYYY")}
-                      </Text>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">آخر تحديث:</span>
-                      <Text>
-                        {dayjs(subject.updatedAt).format("DD/MM/YYYY")}
-                      </Text>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">المشاهدات:</span>
-                      <Text>1,234</Text>
-                    </div>
-                  </div>
-                </Card>
+              
               </div>
             </Col>
           </Row>

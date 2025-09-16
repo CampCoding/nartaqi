@@ -35,7 +35,6 @@ import { subjects } from "../../../data/subjects";
 
 export default function Sidebar() {
   const [activeTab, setActiveTab] = useState("نظرة عامة");
-  const [notifications, setNotifications] = useState(3);
   const [selectedSubject, setSelectedSubject] = useState(subjects[0].name);
   const [isSubjectDropdownOpen, setIsSubjectDropdownOpen] = useState(false);
 
@@ -45,7 +44,7 @@ export default function Sidebar() {
   // Base items (translated)
   const baseMenuItems = [
     { name: "نظرة عامة", icon: BarChart3, path: "/" },
-    { name: "إدارة دورات الطلاب", icon: BookOpen, path: "/subjects" },
+    // { name: "إدارة دورات الطلاب", icon: BookOpen, path: "/subjects" },
     
     // { name: "إدارة مواد الطلاب", icon: Users, path: "/students-courses" },
   ];
@@ -97,9 +96,18 @@ export default function Sidebar() {
       icon : BookOpen,
       path:"/categories"
     },
-
     {
-      name: "  الدورات ",
+      name:"دورة المصدر السعودي",
+      icon:BookOpen,
+      path:"/saudi_source_course"
+    },
+    {
+      name:"دورات الوجهه المصرية",
+      icon : BookOpen,
+      path:"/egyptian_course"
+    },
+    {
+      name: "دورات الوجهه السعودية",
       icon: BookOpen,
       path: "/teachers-courses",
     },

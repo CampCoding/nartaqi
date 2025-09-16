@@ -1,18 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  Plus,
-  Play,
-  FileText,
-  CalendarClock,
-  Clock3,
-  ListChecks,
-  Target,
-  Eye,
-  EyeOff,
-  Trash2,
-} from "lucide-react";
+import { Clock3, ListChecks, Target, Eye, EyeOff } from "lucide-react";
 import {
   Button,
   Card,
@@ -30,7 +19,6 @@ import {
   Tag,
   TimePicker,
   Tooltip,
-  Upload,
   message,
 } from "antd";
 import dayjs from "dayjs";
@@ -38,8 +26,6 @@ import AddCourseLevelModal from "./AddCourseLevelModal";
 import BasicLevel from "./BasicLevel";
 import AddCourseLessonModal from "./AddCourseLessonModal";
 import LecturesContent from "./LecturesContent";
-
-const { Panel } = Collapse;
 
 /** التبويبات */
 const TABS = [
@@ -78,11 +64,80 @@ const beforeUploadPdf = () => false;
 const ExamTypeTag = ({ t }) =>
   t === "mock" ? <Tag color="purple">اختبار محاكي</Tag> : <Tag color="cyan">تدريب</Tag>;
 
+/* ================== Exam Library (shared) ================== */
+const EXAM_LIBRARY_KEY = "exam_library_v1";
+
+const loadExamLibrary = () => {
+  try {
+    const raw = localStorage.getItem(EXAM_LIBRARY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+/** 🌱 داتا تجريبية للاختبارات (تُحفظ مرة واحدة عند أول تحميل) */
+const seedExamLibraryIfEmpty = () => {
+  const current = loadExamLibrary();
+  if (Array.isArray(current) && current.length > 0) return;
+
+  const dummy = [
+    {
+      id: "ex-lib-1",
+      title: "اختبار الرياضيات الشامل",
+      type: "intern", // ستُعرض كتدريب
+      duration: 90,
+      questionsCount: 40,
+      status: "active",
+    },
+    {
+      id: "ex-lib-2",
+      title: "اختبار العلوم — فيزياء وكيمياء",
+      examType: "mock",
+      duration: 120,
+      questionsCount: 30,
+      status: "draft",
+    },
+    {
+      id: "ex-lib-3",
+      name: "اختبار التاريخ المعاصر", // name بدلاً من title (لاختبار التطبيع)
+      type: "intern",
+      duration: 60,
+      questions: Array.from({ length: 25 }, (_, i) => ({ id: i + 1 })), // أسئلة كمصفوفة
+      status: "completed",
+    },
+    {
+      id: "ex-lib-4",
+      title: "اختبار اللغة العربية",
+      examType: "mock",
+      duration: 75,
+      questionsCount: 20,
+      status: "expired",
+    },
+  ];
+
+  try {
+    localStorage.setItem(EXAM_LIBRARY_KEY, JSON.stringify(dummy));
+  } catch {}
+};
+
+/** تطبيع بيانات الاختبار القادمة من صفحة الإنشاء/الإدارة إلى الشكل المطلوب هنا */
+const normalizeLibraryExam = (e) => ({
+  id: e?.id ?? e?._id ?? `lib-${Date.now()}`,
+  title: e?.title ?? e?.name ?? "بدون عنوان",
+  examType: e?.examType ?? e?.type ?? "training", // "training" | "mock" | "intern"
+  duration: Number(e?.duration ?? e?.time ?? 0) || 0,
+  questions: Array.isArray(e?.questions)
+    ? e.questions.length
+    : Number(e?.questionsCount ?? e?.questions ?? 0) || 0,
+  status: e?.status ?? "مسودة",
+  visible: true,
+});
+
 export default function AddTeacherCourseContent() {
   const [activeTab, setActiveTab] = useState(1);
 
   /** ====== المراحل ← الدروس ====== */
-  // كل مرحلة: {id, title, visible, lessons:[{..درس..}]}
   const [foundationStages, setFoundationStages] = useState([
     {
       id: "stg-1",
@@ -131,7 +186,7 @@ export default function AddTeacherCourseContent() {
     },
   ]);
 
-  /** ====== اختبارات ====== */
+  /** ====== اختبارات داخل هذا المقرر ====== */
   const [exams, setExams] = useState([
     {
       id: 1,
@@ -143,6 +198,16 @@ export default function AddTeacherCourseContent() {
       visible: true,
     },
   ]);
+/** ====== اختبارات داخل هذا المقرر ====== */
+
+
+
+  /** ====== مكتبة الاختبارات (مشتركة) ====== */
+  const [examLibrary, setExamLibrary] = useState([
+   
+  ]);
+  const [openPickExam, setOpenPickExam] = useState(false);
+  const [pickForm] = Form.useForm();
 
   /** ====== التحميل/الحفظ المحلي + ترحيل من v2 (إن وجِد) ====== */
   useEffect(() => {
@@ -151,7 +216,6 @@ export default function AddTeacherCourseContent() {
       if (Array.isArray(saved.foundationStages)) {
         setFoundationStages(saved.foundationStages);
       } else if (Array.isArray(saved.foundationLessons)) {
-        // ترحيل من شكل قديم: نجمع الدروس في مرحلة واحدة
         setFoundationStages([
           {
             id: "stg-migrated",
@@ -170,13 +234,21 @@ export default function AddTeacherCourseContent() {
     saveState({ foundationStages, liveLectures, exams });
   }, [foundationStages, liveLectures, exams]);
 
+  // 🌱 Seed + تحميل مكتبة الاختبارات + الاستماع لتغييراتها من تبويب/صفحة أخرى
+  useEffect(() => {
+    seedExamLibraryIfEmpty();
+    setExamLibrary(loadExamLibrary());
+    const onStorage = (e) => {
+      if (e.key === EXAM_LIBRARY_KEY) setExamLibrary(loadExamLibrary());
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   /** ====== إحصاءات سريعة ====== */
   const stats = useMemo(() => {
     const stageCount = foundationStages.length;
-    const lessonCount = foundationStages.reduce(
-      (s, st) => s + (st.lessons?.length || 0),
-      0
-    );
+    const lessonCount = foundationStages.reduce((s, st) => s + (st.lessons?.length || 0), 0);
     const liveItems = liveLectures.flatMap((s) => s.items || []);
     const liveUpcoming = liveItems.filter((l) => dayjs(l.startAt).isAfter(dayjs())).length;
     return { stageCount, lessonCount, liveUpcoming, examsCount: exams.length };
@@ -200,9 +272,7 @@ export default function AddTeacherCourseContent() {
 
   /** ====== عمليات المرحلة/الدرس ====== */
   const toggleStageVisibility = (stageId) => {
-    setFoundationStages((prev) =>
-      prev.map((st) => (st.id === stageId ? { ...st, visible: !st.visible } : st))
-    );
+    setFoundationStages((prev) => prev.map((st) => (st.id === stageId ? { ...st, visible: !st.visible } : st)));
   };
   const deleteStage = (stageId) => {
     setFoundationStages((prev) => prev.filter((st) => st.id !== stageId));
@@ -222,12 +292,11 @@ export default function AddTeacherCourseContent() {
       )
     );
   };
+
   const deleteLesson = (stageId, lessonId) => {
     setFoundationStages((prev) =>
       prev.map((st) =>
-        st.id === stageId
-          ? { ...st, lessons: (st.lessons || []).filter((l) => l.id !== lessonId) }
-          : st
+        st.id === stageId ? { ...st, lessons: (st.lessons || []).filter((l) => l.id !== lessonId) } : st
       )
     );
   };
@@ -265,7 +334,12 @@ export default function AddTeacherCourseContent() {
       if (v.stageMode === "new") {
         stageId = `stg-${Date.now()}`;
         setFoundationStages((prev) => [
-          { id: stageId, title: v.stageTitle.trim(), visible: true, lessons: [] },
+          {
+            id: stageId,
+            title: v.stageTitle.trim(),
+            visible: true,
+            lessons: [],
+          },
           ...prev,
         ]);
       }
@@ -300,11 +374,7 @@ export default function AddTeacherCourseContent() {
 
       // إدراج الدرس داخل المرحلة المستهدفة
       setFoundationStages((prev) =>
-        prev.map((st) =>
-          st.id === stageId
-            ? { ...st, lessons: [lesson, ...(st.lessons || [])] }
-            : st
-        )
+        prev.map((st) => (st.id === stageId ? { ...st, lessons: [lesson, ...(st.lessons || [])] } : st))
       );
 
       setOpenAddLesson(false);
@@ -322,9 +392,7 @@ export default function AddTeacherCourseContent() {
     dayjs(date).hour(dayjs(time).hour()).minute(dayjs(time).minute()).second(0).toISOString();
 
   const toggleLiveSectionVisibility = (sectionId) => {
-    setLiveLectures((prev) =>
-      prev.map((s) => (s.id === sectionId ? { ...s, visible: !s.visible } : s))
-    );
+    setLiveLectures((prev) => prev.map((s) => (s.id === sectionId ? { ...s, visible: !s.visible } : s)));
   };
   const toggleLiveItemVisibility = (sectionId, itemId) => {
     setLiveLectures((prev) =>
@@ -332,9 +400,7 @@ export default function AddTeacherCourseContent() {
         s.id === sectionId
           ? {
               ...s,
-              items: (s.items || []).map((i) =>
-                i.id === itemId ? { ...i, visible: !i.visible } : i
-              ),
+              items: (s.items || []).map((i) => (i.id === itemId ? { ...i, visible: !i.visible } : i)),
             }
           : s
       )
@@ -342,11 +408,7 @@ export default function AddTeacherCourseContent() {
   };
   const deleteLiveSession = (sectionId, itemId) => {
     setLiveLectures((prev) =>
-      prev.map((s) =>
-        s.id === sectionId
-          ? { ...s, items: (s.items || []).filter((i) => i.id !== itemId) }
-          : s
-      )
+      prev.map((s) => (s.id === sectionId ? { ...s, items: (s.items || []).filter((i) => i.id !== itemId) } : s))
     );
   };
 
@@ -358,10 +420,7 @@ export default function AddTeacherCourseContent() {
       let sectionId = v.sectionId;
       if (v.sectionMode === "new") {
         sectionId = `ls-${Date.now()}`;
-        setLiveLectures((prev) => [
-          { id: sectionId, title: v.sectionTitle, visible: true, items: [] },
-          ...prev,
-        ]);
+        setLiveLectures((prev) => [{ id: sectionId, title: v.sectionTitle, visible: true, items: [] }, ...prev]);
       }
 
       const sessions = (v.sessions || []).map((s, i) => ({
@@ -375,11 +434,7 @@ export default function AddTeacherCourseContent() {
       }));
 
       setLiveLectures((prev) =>
-        prev.map((sec) =>
-          sec.id === sectionId
-            ? { ...sec, items: [...sessions, ...(sec.items || [])] }
-            : sec
-        )
+        prev.map((sec) => (sec.id === sectionId ? { ...sec, items: [...sessions, ...(sec.items || [])] } : sec))
       );
 
       message.success("تم حفظ المحاضرات داخل القسم");
@@ -392,9 +447,63 @@ export default function AddTeacherCourseContent() {
     }
   };
 
-  /** ====== اختبارات ====== */
+  /** ====== ملفات التدريب (PDFs) داخل الدروس ====== */
+  const addTrainingFiles = (stageId, lessonId, files) => {
+    setFoundationStages((prev) =>
+      prev.map((s) =>
+        s.id !== stageId
+          ? s
+          : {
+              ...s,
+              lessons: s.lessons.map((l) => {
+                if (l.id !== lessonId) return l;
+                const nextPdfs = [...(l.training?.pdfs || [])];
+                files.forEach((file) => {
+                  nextPdfs.push({
+                    id: crypto?.randomUUID?.() || Date.now() + Math.random(),
+                    title: file.name.replace(/\.pdf$/i, ""),
+                    source: "upload",
+                    file,
+                  });
+                });
+                return {
+                  ...l,
+                  training: {
+                    ...(l.training || {}),
+                    pdfs: nextPdfs,
+                  },
+                };
+              }),
+            }
+      )
+    );
+  };
+
+  const removeTrainingFile = (stageId, lessonId, fileKey) => {
+    setFoundationStages((prev) =>
+      prev.map((s) =>
+        s.id !== stageId
+          ? s
+          : {
+              ...s,
+              lessons: s.lessons.map((l) => {
+                if (l.id !== lessonId) return l;
+                const list = [...(l.training?.pdfs || [])];
+                const idx = list.findIndex((f) => (f.id ?? -1) === fileKey);
+                const final = idx >= 0 ? list.filter((_, i) => i !== idx) : list.filter((_, i) => i !== fileKey);
+                return {
+                  ...l,
+                  training: { ...(l.training || {}), pdfs: final },
+                };
+              }),
+            }
+      )
+    );
+  };
+
+  /** ====== اختبارات داخل هذا المقرر ====== */
   const toggleExamVisibility = (id) => {
-    setExams((prev) => prev.map((e) => (e.id === id ? { ...e, visible: !e.visible } : e)));
+    setExams((prev) => prev.map((e) => (String(e.id) === String(id) ? { ...e, visible: !e.visible } : e)));
   };
 
   const submitExam = async () => {
@@ -421,6 +530,52 @@ export default function AddTeacherCourseContent() {
     }
   };
 
+  /** ====== ربط اختبارات موجودة من مكتبة الاختبارات ====== */
+  const linkSelectedExams = async () => {
+    try {
+      const v = await pickForm.validateFields();
+      const ids = v.examIds || [];
+      const toLink = ids
+        .map((id) => examLibrary.find((x) => (x.id ?? x._id) === id))
+        .filter(Boolean)
+        .map(normalizeLibraryExam);
+
+      setExams((prev) => {
+        const existing = new Set(prev.map((x) => String(x.id)));
+        return [...toLink.filter((x) => !existing.has(String(x.id))), ...prev];
+      });
+
+      setOpenPickExam(false);
+      pickForm.resetFields();
+      message.success("تم ربط الاختبار/الاختبارات بنجاح");
+    } catch {
+      // antd handles validation
+    }
+  };
+
+  /** ====== مزامنة اختبار مرتبط مع بياناته في المكتبة ====== */
+  const syncExamFromLibrary = (examId) => {
+    const lib = examLibrary.find((x) => (x.id ?? x._id) === examId);
+    if (!lib) return message.warning("الاختبار غير موجود في المكتبة");
+    const fresh = normalizeLibraryExam(lib);
+
+    setExams((prev) =>
+      prev.map((e) =>
+        String(e.id) === String(examId)
+          ? {
+              ...e,
+              title: fresh.title,
+              examType: fresh.examType,
+              duration: fresh.duration,
+              questions: fresh.questions,
+              status: fresh.status,
+            }
+          : e
+      )
+    );
+    message.success("تمت مزامنة بيانات الاختبار");
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6" dir="rtl">
       {/* شريط التبويب */}
@@ -442,28 +597,34 @@ export default function AddTeacherCourseContent() {
 
       {/* ====== تبويب المراحل + الدروس ====== */}
       {activeTab === 1 && (
-        <BasicLevel 
-           deleteLesson={deleteLesson}
-           deleteStage={deleteStage}
-           foundationStages={foundationStages}
-           setOpenAddLesson={setOpenAddLesson}
-           setOpenAddStage={setOpenAddStage}
-           stats={stats} 
-           toggleStageVisibility={toggleStageVisibility}
+        <BasicLevel
+          deleteLesson={deleteLesson}
+          deleteStage={deleteStage}
+          foundationStages={foundationStages}
+          setOpenAddLesson={setOpenAddLesson}
+          setOpenAddStage={setOpenAddStage}
+          stats={stats}
+          toggleStageVisibility={toggleStageVisibility}
+          addTrainingFiles={addTrainingFiles}
+          removeTrainingFile={removeTrainingFile}
+          toggleLessonVisibility={toggleLessonVisibility}
         />
       )}
 
       {/* ====== تبويب المحاضرات المباشرة ====== */}
       {activeTab === 2 && (
-        <LecturesContent 
-        deleteLesson={deleteLesson}
-        deleteStage={deleteStage}
-        foundationStages={foundationStages}
-        setOpenAddLesson={setOpenAddLesson}
-        setOpenAddStage={setOpenAddStage}
-        stats={stats} 
-        toggleStageVisibility={toggleStageVisibility}
-     />
+        <LecturesContent
+          stats={stats}
+          deleteLesson={deleteLesson}
+          deleteStage={deleteStage}
+          toggleStageVisibility={toggleStageVisibility}
+          toggleLessonVisibility={toggleLessonVisibility}
+          foundationStages={foundationStages}
+          setOpenAddLesson={setOpenAddLesson}
+          setOpenAddStage={setOpenAddStage}
+          addTrainingFiles={addTrainingFiles}
+          removeTrainingFile={removeTrainingFile}
+        />
       )}
 
       {/* ====== تبويب الاختبارات ====== */}
@@ -472,13 +633,11 @@ export default function AddTeacherCourseContent() {
           title={
             <div className="flex items-center justify-between">
               <span className="font-bold">الاختبارات</span>
-              <Button
-                type="primary"
-                className="text-white !bg-[#3B82F6]"
-                onClick={() => setOpenAddExam(true)}
-              >
-                إضافة اختبار
-              </Button>
+              <div className="flex gap-2">
+                <Button className="!bg-gray-700 !text-white" onClick={() => setOpenPickExam(true)}>
+                  انشاء اختبار
+                </Button>
+              </div>
             </div>
           }
         >
@@ -522,6 +681,8 @@ export default function AddTeacherCourseContent() {
                         onClick={() => toggleExamVisibility(e.id)}
                       />
                     </Tooltip>
+
+
                     <Button danger onClick={() => setExams((p) => p.filter((x) => x.id !== e.id))}>
                       حذف
                     </Button>
@@ -536,26 +697,26 @@ export default function AddTeacherCourseContent() {
       {/* ================== Modals ================== */}
 
       {/* إضافة مرحلة */}
-      <AddCourseLevelModal 
-      openAddStage={openAddStage}
-      savingStage={savingStage}
-      setOpenAddStage={setOpenAddStage}
-      stageForm={stageForm}
-      submitStage={submitStage}
+      <AddCourseLevelModal
+        openAddStage={openAddStage}
+        savingStage={savingStage}
+        setOpenAddStage={setOpenAddStage}
+        stageForm={stageForm}
+        submitStage={submitStage}
       />
 
       {/* إضافة درس داخل مرحلة (جديدة/موجودة) */}
-      <AddCourseLessonModal 
-      VIDEO_SOURCES={VIDEO_SOURCES}
-      beforeUploadVideo={beforeUploadVideo}
-      beforeUploadPdf={beforeUploadPdf}
-      foundationStages={foundationStages}
-      lessonForm={lessonForm}
-      normFile={normFile}
-      openAddLesson={openAddLesson}
-      savingLesson={savingLesson}
-      setOpenAddLesson={setOpenAddLesson}
-      submitLesson={submitLesson}
+      <AddCourseLessonModal
+        VIDEO_SOURCES={VIDEO_SOURCES}
+        beforeUploadVideo={beforeUploadVideo}
+        beforeUploadPdf={beforeUploadPdf}
+        foundationStages={foundationStages}
+        lessonForm={lessonForm}
+        normFile={normFile}
+        openAddLesson={openAddLesson}
+        savingLesson={savingLesson}
+        setOpenAddLesson={setOpenAddLesson}
+        submitLesson={submitLesson}
       />
 
       {/* إضافة محاضرات مباشرة */}
@@ -572,7 +733,16 @@ export default function AddTeacherCourseContent() {
           layout="vertical"
           initialValues={{
             sectionMode: "new",
-            sessions: [{ title: "", date: null, time: null, duration: 60, meetingUrl: "", locked: false }],
+            sessions: [
+              {
+                title: "",
+                date: null,
+                time: null,
+                duration: 60,
+                meetingUrl: "",
+                locked: false,
+              },
+            ],
           }}
         >
           <Form.Item label="إضافة إلى" name="sectionMode" rules={[{ required: true }]}>
@@ -585,22 +755,17 @@ export default function AddTeacherCourseContent() {
           <Form.Item noStyle shouldUpdate={(p, c) => p.sectionMode !== c.sectionMode}>
             {({ getFieldValue }) =>
               getFieldValue("sectionMode") === "new" ? (
-                <Form.Item
-                  label="عنوان القسم الجديد"
-                  name="sectionTitle"
-                  rules={[{ required: true, message: "أدخل عنوان القسم" }]}
-                >
+                <Form.Item label="عنوان القسم الجديد" name="sectionTitle" rules={[{ required: true, message: "أدخل عنوان القسم" }]}>
                   <Input placeholder="مثال: محاضرات الوحدة 3" />
                 </Form.Item>
               ) : (
-                <Form.Item
-                  label="اختر القسم"
-                  name="sectionId"
-                  rules={[{ required: true, message: "اختر القسم" }]}
-                >
+                <Form.Item label="اختر القسم" name="sectionId" rules={[{ required: true, message: "اختر القسم" }]}>
                   <Select
                     placeholder="اختيار قسم"
-                    options={(liveLectures || []).map((s) => ({ value: s.id, label: s.title }))}
+                    options={(liveLectures || []).map((s) => ({
+                      value: s.id,
+                      label: s.title,
+                    }))}
                   />
                 </Form.Item>
               )
@@ -617,7 +782,14 @@ export default function AddTeacherCourseContent() {
                   <Button
                     type="dashed"
                     onClick={() =>
-                      add({ title: "", date: null, time: null, duration: 60, meetingUrl: "", locked: false })
+                      add({
+                        title: "",
+                        date: null,
+                        time: null,
+                        duration: 60,
+                        meetingUrl: "",
+                        locked: false,
+                      })
                     }
                   >
                     إضافة جلسة
@@ -653,18 +825,10 @@ export default function AddTeacherCourseContent() {
                     </Form.Item>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <Form.Item
-                        label="التاريخ"
-                        name={[name, "date"]}
-                        rules={[{ required: true, message: "اختر التاريخ" }]}
-                      >
+                      <Form.Item label="التاريخ" name={[name, "date"]} rules={[{ required: true, message: "اختر التاريخ" }]}>
                         <DatePicker className="w-full" />
                       </Form.Item>
-                      <Form.Item
-                        label="الوقت"
-                        name={[name, "time"]}
-                        rules={[{ required: true, message: "اختر الوقت" }]}
-                      >
+                      <Form.Item label="الوقت" name={[name, "time"]} rules={[{ required: true, message: "اختر الوقت" }]}>
                         <TimePicker className="w-full" format="HH:mm" />
                       </Form.Item>
                       <Form.Item label="المدة (دقيقة)" name={[name, "duration"]}>
@@ -687,7 +851,7 @@ export default function AddTeacherCourseContent() {
         </Form>
       </Modal>
 
-      {/* إضافة اختبار */}
+      {/* إضافة اختبار (جديد) */}
       <Modal
         title="إضافة اختبار"
         open={openAddExam}
@@ -720,6 +884,40 @@ export default function AddTeacherCourseContent() {
               <Input placeholder="مثال: 20" />
             </Form.Item>
           </div>
+        </Form>
+      </Modal>
+
+      {/* ربط اختبار موجود من المكتبة */}
+      <Modal
+        title="إنشاء اختبار"
+        open={openPickExam}
+        onCancel={() => setOpenPickExam(false)}
+        onOk={linkSelectedExams}
+        okText="حفظ"
+        destroyOnClose
+      >
+        <Form form={pickForm} layout="vertical">
+          <Form.Item
+            label="اختر اختبار"
+            name="examIds"
+            rules={[{ required: true, message: "اختر اختبارًا واحدًا على الأقل" }]}
+          >
+            <Select
+              mode="multiple"
+              placeholder={
+                examLibrary.length ? "اختر من الاختبارات المحفوظة" : "لا توجد اختبارات في المكتبة — أنشئ اختبارًا أولاً"
+              }
+              optionFilterProp="label"
+              options={examLibrary.map((e) => ({
+                value: e.id ?? e._id,
+                label: `${e.title ?? "بدون عنوان"} · ${
+                  (e.examType ?? e.type) === "mock" ? "محاكي" : "تدريب"
+                } · ${
+                  Array.isArray(e.questions) ? e.questions.length : e.questionsCount ?? e.questions ?? 0
+                } سؤال`,
+              }))}
+            />
+          </Form.Item>
         </Form>
       </Modal>
     </div>

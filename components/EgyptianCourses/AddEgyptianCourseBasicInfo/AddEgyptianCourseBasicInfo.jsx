@@ -8,6 +8,7 @@ import {
   Row,
   Select,
   Upload,
+  message,
 } from "antd";
 import React from "react";
 import {
@@ -47,12 +48,15 @@ const props = {
   },
 };
 
-export default function AddCourseBasicInfo({
+export default function AddEgyptianCourseBasicInfo({
   fileList,
   setFileList,
   selectedCategory,
   setSelectedCategory,
+  selectedSection,
+  setSelectedSection,
   availableSections,
+  availableGrades,
   all_categories,
   beforeUpload,
   setImagePreview,
@@ -117,7 +121,7 @@ export default function AddCourseBasicInfo({
                   { min: 3, message: "الاسم لا يقل عن 3 أحرف" },
                 ]}
               >
-                <Input value={rowData?.name}
+                <Input 
                   placeholder="مثال: دورة البرمجة المتقدمة"
                   className="rounded-xl border-gray-300 hover:border-blue-400 focus:border-blue-500"
                 />
@@ -151,7 +155,7 @@ export default function AddCourseBasicInfo({
           </Row>
 
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 label={
                   <span className="font-semibold text-gray-700 flex items-center gap-2">
@@ -181,7 +185,7 @@ export default function AddCourseBasicInfo({
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 label={
                   <span className="font-semibold text-gray-700 flex items-center gap-2">
@@ -196,9 +200,31 @@ export default function AddCourseBasicInfo({
                   placeholder="اختر قسم من الفئة"
                   className="rounded-xl"
                   disabled={!selectedCategory}
+                  onChange={setSelectedSection}
                   options={availableSections.map((section) => ({
                     label: section.name,
                     value: section.id,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <span className="font-semibold text-gray-700 flex items-center gap-2">
+                    <BookOutlined className="text-teal-600" />
+                    المرحلة/الصف
+                  </span>
+                }
+                name="grade"
+              >
+                <Select
+                  placeholder="اختر المرحلة/الصف"
+                  className="rounded-xl"
+                  disabled={!selectedSection || availableGrades.length === 0}
+                  options={availableGrades.map((grade) => ({
+                    label: grade.name,
+                    value: grade.value,
                   }))}
                 />
               </Form.Item>
@@ -207,7 +233,10 @@ export default function AddCourseBasicInfo({
 
           <Form.Item
             label={
-              <span className="font-semibold text-gray-700">وصف الدورة *</span>
+              <span className="font-semibold text-gray-700 flex items-center gap-2">
+                <FileTextOutlined className="text-blue-500" />
+                وصف الدورة *
+              </span>
             }
             name="description"
             rules={[
@@ -217,132 +246,13 @@ export default function AddCourseBasicInfo({
           >
             <TextArea
               rows={4}
-              placeholder="اكتب وصفاً شاملاً للدورة وأهدافها التعليمية..."
+              placeholder="أدخل وصفًا تفصيليًا للدورة التعليمية..."
               className="rounded-xl border-gray-300 hover:border-blue-400 focus:border-blue-500"
+              showCount
+              maxLength={1000}
             />
           </Form.Item>
         </div>
-      </div>
-
-      {/* Configuration Section */}
-      <div className="bg-gradient-to-r from-gray-50 to-blue-50/30 rounded-2xl p-6 border border-gray-200">
-        <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-          <SettingOutlined className="text-blue-600" />
-          إعدادات الدورة
-        </h3>
-
-        <Row gutter={24}>
-          <Col span={8}>
-            <Form.Item
-              label={
-                <span className="font-semibold text-gray-700 flex items-center gap-2">
-                  <UserOutlined className="text-pink-600" />
-                  سياسة النوع
-                </span>
-              }
-              name="genderPolicy"
-              rules={[{ required: true, message: "اختر السياسة" }]}
-            >
-              <Select
-                className="rounded-xl"
-                options={[
-                  { label: "👨 للذكور فقط", value: "male" },
-                  { label: "👩 للإناث فقط", value: "female" },
-                  { label: "👥 للجميع", value: "both" },
-                ]}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label={
-                <span className="font-semibold text-gray-700 flex items-center gap-2">
-                  <TeamOutlined className="text-red-600" />
-                  السعة القصوى
-                </span>
-              }
-              name="capacity"
-              rules={[
-                { required: true, message: "أدخل السعة" },
-                { type: "number", min: 1, message: "لا تقل عن 1" },
-              ]}
-            >
-              <InputNumber
-                className="w-full rounded-xl"
-                placeholder="50"
-                min={1}
-                max={500}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label={
-                <span className="font-semibold text-gray-700 flex items-center gap-2">
-                  <UserOutlined className="text-cyan-600" />
-                  المدربين *
-                </span>
-              }
-              name="instructor"
-              rules={[{ required: true, message: "اختر المدربين" }]}
-            >
-              <Select
-                mode="multiple"
-                className="rounded-xl"
-                placeholder="اختر المدربين"
-                options={[
-                  { label: "أحمد محمد", value: 1 },
-                  { label: "رحمة إسماعيل", value: 2 },
-                  { label: "محمد علي", value: 3 },
-                  { label: "فاطمة أحمد", value: 4 },
-                ]}
-              />
-            </Form.Item>
-          </Col>
-
-       
-        </Row>
-
-        <Form.Item
-          label={
-            <span className="font-semibold text-gray-700 flex items-center gap-2">
-              <CalendarOutlined className="text-green-600" />
-              فترة إتاحة الدورة
-            </span>
-          }
-          name="availableRange"
-          rules={[{ required: true, message: "حدد فترة الإتاحة" }]}
-        >
-          <RangePicker
-            className="w-full rounded-xl"
-            placeholder={["تاريخ البداية", "تاريخ النهاية"]}
-            format="DD/MM/YYYY"
-          />
-        </Form.Item>
-
-            <Form.Item
-              label={
-                <span className="font-semibold text-gray-700 flex items-center gap-2">
-                  <FileTextOutlined className="text-cyan-600" />
-                  كتاب الدوره
-                </span>
-              }
-              name="instructor"
-              rules={[{ required: true, message: "اختر المدربين" }]}
-            >
-              <Dragger {...props}>
-                <p className="ant-upload-drag-icon">
-                  <InboxOutlined />
-                </p>
-                <p className="ant-upload-text">
-                  Click or drag file to this area to upload
-                </p>
-                <p className="ant-upload-hint">
-                  Support for a single or bulk upload. Strictly prohibited from
-                  uploading company data or other banned files.
-                </p>
-              </Dragger>
-            </Form.Item>
       </div>
     </div>
   );

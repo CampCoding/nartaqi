@@ -508,131 +508,6 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
                 schedules={schedules}
                 setNewSchedule={setNewSchedule}
                 />
-                // <div className="space-y-8">
-                //   <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
-                //     <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-                //       <CalendarOutlined className="text-blue-600" />
-                //       إدارة مواعيد الدورة
-                //     </h3>
-
-                //     {/* Add New Schedule Form */}
-                //     <Card 
-                //       title="إضافة موعد جديد" 
-                //       className="mb-6 shadow-sm border-dashed"
-                //       headStyle={{ backgroundColor: '#f8fafc' }}
-                //     >
-                //       <Row gutter={16}>
-                //         <Col span={6}>
-                //           <div className="mb-4">
-                //             <label className="block text-sm font-medium text-gray-700 mb-2">
-                //               اليوم *
-                //             </label>
-                //             <Select
-                //               value={newSchedule.day}
-                //               onChange={(value) => setNewSchedule({ ...newSchedule, day: value })}
-                //               placeholder="اختر اليوم"
-                //               className="w-full rounded-xl"
-                //               options={[
-                //                 { label: "السبت", value: "السبت" },
-                //                 { label: "الأحد", value: "الأحد" },
-                //                 { label: "الاثنين", value: "الاثنين"},
-                //                 { label: "الثلاثاء", value: "الثلاثاء" },
-                //                 { label: "الأربعاء", value: "الأربعاء" },
-                //                 { label: "الخميس", value: "الخميس" },
-                //                 { label: "الجمعة", value: "الجمعة" },
-                //               ]}
-                //             />
-                //           </div>
-                //         </Col>
-                //         <Col span={6}>
-                //           <div className="mb-4">
-                //             <label className="block text-sm font-medium text-gray-700 mb-2">
-                //               وقت البداية *
-                //             </label>
-                //             <TimePicker
-                //               value={newSchedule.startTime}
-                //               onChange={(time) => setNewSchedule({ ...newSchedule, startTime: time })}
-                //               format="HH:mm"
-                //               className="w-full rounded-xl"
-                //               placeholder="وقت البداية"
-                //             />
-                //           </div>
-                //         </Col>
-                //         <Col span={6}>
-                //           <div className="mb-4">
-                //             <label className="block text-sm font-medium text-gray-700 mb-2">
-                //               وقت النهاية *
-                //             </label>
-                //             <TimePicker
-                //               value={newSchedule.endTime}
-                //               onChange={(time) => setNewSchedule({ ...newSchedule, endTime: time })}
-                //               format="HH:mm"
-                //               className="w-full rounded-xl"
-                //               placeholder="وقت النهاية"
-                //             />
-                //           </div>
-                //         </Col>
-                //         <Col span={6}>
-                //           <div className="mb-4">
-                //             <label className="block text-sm font-medium text-gray-700 mb-2">
-                //               التاريخ  
-                //             </label>
-                //             <InputNumber
-                //               value={newSchedule.maxStudents}
-                //               onChange={(value) => setNewSchedule({ ...newSchedule, maxStudents: value })}
-                //               className="w-full rounded-xl"
-                              
-                //               placeholder="30"
-                //             />
-                //           </div>
-                //         </Col>
-                //       </Row>
-                //       <div className="flex items-center justify-between">
-                //         <div className="flex items-center gap-2">
-                //           <Switch
-                //             checked={newSchedule.isActive}
-                //             onChange={(checked) => setNewSchedule({ ...newSchedule, isActive: checked })}
-                //             checkedChildren="نشط"
-                //             unCheckedChildren="متوقف"
-                //           />
-                //           <span className="text-sm text-gray-600">الحالة</span>
-                //         </div>
-                //         <Button
-                //           type="primary"
-                //           onClick={handleAddSchedule}
-                //           disabled={!newSchedule.day || !newSchedule.startTime || !newSchedule.endTime}
-                //           className="rounded-xl"
-                //           icon={<PlusOutlined />}
-                //         >
-                //           إضافة الموعد
-                //         </Button>
-                //       </div>
-                //     </Card>
-
-                //     {/* Schedules List */}
-                //     <div>
-                //       <h4 className="text-lg font-semibold text-gray-800 mb-4">المواعيد المضافة</h4>
-                //       {schedules.length === 0 ? (
-                //         <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl">
-                //           <CalendarOutlined className="text-4xl mb-3 text-gray-300" />
-                //           <p>لم يتم إضافة أي مواعيد بعد</p>
-                //         </div>
-                //       ) : (
-                //         <div className="space-y-3">
-                //           {schedules.map((schedule, index) => (
-                //             <CourseScheduleCard
-                //               key={index}
-                //               schedule={schedule}
-                //               onUpdate={handleUpdateSchedule}
-                //               onRemove={handleRemoveSchedule}
-                //               index={index}
-                //             />
-                //           ))}
-                //         </div>
-                //       )}
-                //     </div>
-                //   </div>
-                // </div>
               )}
 
               {/* Content Tab */}
@@ -659,6 +534,15 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
                     >
                       <RichTextField
                         placeholder="اكتب ملخصاً شاملاً للدورة يتضمن الأهداف التعليمية والمخرجات المتوقعة..."
+                      />
+                    </Form.Item>
+
+                      <Form.Item
+                      label={<span className="font-semibold text-gray-700">مميزات الدورة</span>}
+                      name="benefits"
+                    >
+                      <RichTextField
+                        placeholder={"اكتب مميزات الدورة ...."}
                       />
                     </Form.Item>
 

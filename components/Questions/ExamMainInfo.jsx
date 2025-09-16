@@ -66,12 +66,12 @@ export default function ExamMainInfo({ examData,colorMap, setExamData , exam_typ
                   <div className="flex items-start gap-4">
                     <div
                       className={`p-3 rounded-lg ${
-                        isSelected ? palette.chip : "bg-gray-100"
+                        isSelected ? palette?.chip : "bg-gray-100"
                       }`}
                     >
                       <Icon
                         className={`h-6 w-6 ${
-                          isSelected ? palette.icon : "text-gray-600"
+                          isSelected ? palette?.icon : "text-gray-600"
                         }`}
                       />
                     </div>

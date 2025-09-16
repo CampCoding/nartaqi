@@ -144,6 +144,7 @@ export default function AddCourseSchedule({
   handleAddSchedule,
   handleRemoveSchedule,
   handleUpdateSchedule,
+  rowData , setRowData
 }) {
   return (
     <div className="space-y-8">

@@ -1,13 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import {
-  PlusIcon,
-  Trash2,
-  Edit3,
-  BookOpen,
-  Save,
-  X,
-} from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
+import { PlusIcon, Edit3, BookOpen, Save, X } from "lucide-react";
 import QuestionStats from "./QuestionStats";
 import Card from "./ExamCard";
 import Input from "./ExamInput";
@@ -19,12 +12,18 @@ import CompleteQuestions from "./CompleteQuestions";
 import DisplayQuestions from "./DisplayQuestions";
 import QuestionTypeSelector from "./QuestionTypeSelector";
 import McqSharedPassageEditor from "./McqQuestions";
-import { colorMap, exam_types, mock_exam_section_Data, questionTypes } from "./utils";
+import {
+  colorMap,
+  exam_types,
+  mock_exam_section_Data,
+  questionTypes,
+} from "./utils";
 
+/* ================= Button (robust icon) ================= */
 const Button = ({
   variant = "primary",
   size = "md",
-  icon: Icon,
+  icon,
   loading = false,
   children,
   className = "",
@@ -41,11 +40,22 @@ const Button = ({
       "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-500",
     danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
     success: "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500",
+    ghost: "bg-transparent text-gray-700 hover:bg-gray-50 focus:ring-gray-300",
   };
-  const sizes = {
-    sm: "px-3 py-2 text-sm",
-    md: "px-4 py-3 text-sm",
-    lg: "px-6 py-3 text-base",
+  const sizes = { sm: "px-3 py-2 text-sm", md: "px-4 py-3 text-sm", lg: "px-6 py-3 text-base" };
+
+  const renderIcon = () => {
+    if (loading) {
+      return (
+        <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+      );
+    }
+    if (!icon) return null;
+    if (typeof icon === "function") {
+      const IconComp = icon;
+      return <IconComp className="h-4 w-4" />;
+    }
+    return icon;
   };
 
   return (
@@ -54,15 +64,12 @@ const Button = ({
       disabled={loading}
       {...props}
     >
-      {loading ? (
-        <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-      ) : (
-        Icon && <Icon className="h-4 w-4" />
-      )}
+      {renderIcon()}
       {children}
     </button>
   );
 };
+/* ======================================================== */
 
 export default function ExamMainData() {
   const [examData, setExamData] = useState({
@@ -73,26 +80,38 @@ export default function ExamMainData() {
   });
   const [filteredSection, setFilteredSection] = useState([]);
   const [questionType, setQuestionType] = useState("mcq");
+
+  // Common states
   const [currentQuestion, setCurrentQuestion] = useState("");
-  const [trueFalseAnswer, setTrueFalseAnswer] = useState(null);
-  const [trueFalseExplanation, setTrueFalseExplanation] = useState("");
-  const [modalAnswer, setModalAnswer] = useState("");
-  const [completeText, setCompleteText] = useState("");
-  const [completeAnswers, setCompleteAnswers] = useState([{ answer: "" }]);
-  const [mcqOptions, setMcqOptions] = useState(["", "", "", ""]);
-  const [mcqCorrectAnswer, setMcqCorrectAnswer] = useState(0);
   const [selectedSectionId, setSelectedSectionId] = useState(null);
   const [expandedSections, setExpandedSections] = useState({});
   const [editingQuestion, setEditingQuestion] = useState(null);
-  const [mcqSubType, setMcqSubType] = useState("general");
-  
-  // New state for MCQ passages
+
+  // True/False
+  const [trueFalseAnswer, setTrueFalseAnswer] = useState(null);
+  const [trueFalseExplanation, setTrueFalseExplanation] = useState("");
+
+  // Essay
+  const [modalAnswer, setModalAnswer] = useState("");
+
+  // Complete
+  const [completeText, setCompleteText] = useState("");
+  const [completeAnswers, setCompleteAnswers] = useState([{ answer: "" }]);
+
+  // MCQ (general)
+  const [mcqOptions, setMcqOptions] = useState(["", "", "", ""]);
+  const [mcqCorrectAnswer, setMcqCorrectAnswer] = useState(0);
+
+  // MCQ subtype
+  const [mcqSubType, setMcqSubType] = useState("general"); // "general" | "chemical" | "passage"
+
+  // MCQ passages store per subtype (for the editor)
   const [mcqPassages, setMcqPassages] = useState({
     chemical: [],
-    general: [],
-    passage: []
+    passage: [],
   });
 
+  /* ----------------------------- Effects ----------------------------- */
   // Sync sections list based on type
   useEffect(() => {
     if (examData?.type === "intern") {
@@ -111,20 +130,16 @@ export default function ExamMainData() {
     }
   }, [examData?.sections, selectedSectionId]);
 
-  /** ----------------------------- helpers ----------------------------- */
+  /* ----------------------------- Helpers ----------------------------- */
   const onAddSection = (section) => {
-    const isAdded = examData.sections.some((s) => s.id === section.id);
+    const isAdded = examData?.sections.some((s) => s.id === section.id);
     if (isAdded) return;
     const newSection = { ...section, questions: [] };
-    setExamData((prev) => ({
-      ...prev,
-      sections: [...prev.sections, newSection],
-    }));
+    setExamData((prev) => ({ ...prev, sections: [...prev.sections, newSection] }));
   };
 
-  const toggleSection = (sectionId) => {
+  const toggleSection = (sectionId) =>
     setExpandedSections((prev) => ({ ...prev, [sectionId]: !prev[sectionId] }));
-  };
 
   const handleQuestionTypeChange = (type) => {
     setQuestionType(type);
@@ -142,15 +157,10 @@ export default function ExamMainData() {
     setMcqCorrectAnswer(0);
     setEditingQuestion(null);
     setMcqSubType("general");
-    setMcqPassages({
-      chemical: [],
-      general: [],
-      passage: []
-    });
+    setMcqPassages({ chemical: [], passage: [] });
   };
 
-  const addCompleteAnswer = () =>
-    setCompleteAnswers((a) => [...a, { answer: "" }]);
+  const addCompleteAnswer = () => setCompleteAnswers((a) => [...a, { answer: "" }]);
   const removeCompleteAnswer = (index) =>
     setCompleteAnswers((a) => a.filter((_, i) => i !== index));
   const updateCompleteAnswer = (index, value) => {
@@ -161,28 +171,25 @@ export default function ExamMainData() {
     });
   };
 
-  const updateMcqOption = (index, value) => {
+  const updateMcqOption = (index, value) =>
     setMcqOptions((opts) => {
       const next = [...opts];
       next[index] = value;
       return next;
     });
-  };
-
   const addMcqOption = () => setMcqOptions((opts) => [...opts, ""]);
   const removeMcqOption = (index) => {
     setMcqOptions((opts) => {
       if (opts.length <= 2) return opts;
       const next = opts.filter((_, i) => i !== index);
-      setMcqCorrectAnswer((curr) =>
-        curr >= index ? Math.max(0, curr - 1) : curr
-      );
+      setMcqCorrectAnswer((curr) => (curr >= index ? Math.max(0, curr - 1) : curr));
       return next;
     });
   };
 
   const getQuestionsCount = (sectionId) =>
     examData.sections.find((s) => s.id === sectionId)?.questions?.length || 0;
+
   const getTotalQuestions = () =>
     examData.sections.reduce((acc, s) => acc + (s.questions?.length || 0), 0);
 
@@ -194,117 +201,226 @@ export default function ExamMainData() {
   const canAddMoreQuestions = (sectionId) =>
     examData.type !== "mock" ? true : getQuestionsCount(sectionId) < 24;
 
-  // Handle MCQ passages data from the editor
-  const handleMcqPassagesChange = (passages, subType) => {
-    setMcqPassages(prev => ({
-      ...prev,
-      [subType]: passages
-    }));
-  };
+  // Receive passages from child (stable)
+  const handleMcqPassagesChange = useCallback(
+    (passages) => {
+      setMcqPassages((prev) => ({ ...prev, [mcqSubType]: passages }));
+    },
+    [mcqSubType]
+  );
 
+  /* ---------------------- Add / Update Question ---------------------- */
   const addOrUpdateQuestion = () => {
-  if (!currentQuestion || !selectedSectionId) return;
-  if (examData.type === "mock" && !canAddMoreQuestions(selectedSectionId)) {
-    alert("لا يمكن إضافة أكثر من 24 سؤال في قسم واحد لنوع الاختبار المحاكي");
-    return;
-  }
+    if (!selectedSectionId) return;
 
-  let newQuestion = {
-    id: editingQuestion ? editingQuestion.id : Date.now(),
-    type: questionType,
-    question: currentQuestion,
-    sectionId: selectedSectionId,
-    mcqSubType: questionType === "mcq" ? mcqSubType : undefined,
-  };
+    const currentCount = getQuestionsCount(selectedSectionId);
 
-  switch (questionType) {
-    case "mcq":
-      if (mcqSubType !== "general") {
-        // For passage-based MCQ questions
-        newQuestion = {
-          ...newQuestion,
-          passages: mcqPassages[mcqSubType],
-          mcqSubType,
+    // Non-general MCQ: flatten groups -> individual questions
+    if (questionType === "mcq" && mcqSubType !== "general") {
+      const groups = mcqPassages[mcqSubType] || [];
+      const generated = [];
+
+      groups.forEach((p) => {
+        (p.questions || []).forEach((q) => {
+          generated.push({
+            id: Date.now() + Math.random(),
+            type: "mcq",
+            mcqSubType,
+            question: q.text || "",
+            options: Array.isArray(q.options) ? q.options : [],
+            correctAnswer:
+              typeof q.correctIndex === "number" ? q.correctIndex : 0,
+            passage: { id: p.id, content: p.content || "" },
+            sectionId: selectedSectionId,
+          });
+        });
+      });
+
+      if (generated.length === 0) return;
+
+      // إذا كنا بنحرّر سؤال مسطّح قديم: استبدل السؤال الأول بالمعدل، ثم أضف الباقي (لو فيه) كجُدد
+      if (editingQuestion) {
+        // اجعل أول عنصر يأخذ نفس الـ id كي يُستبدل
+        generated[0] = { ...generated[0], id: editingQuestion.id };
+
+        // تحقق حد الـ mock
+        const extra = generated.slice(1);
+        const available =
+          examData.type === "mock" ? Math.max(0, 24 - currentCount) : Infinity;
+        if (extra.length > available) {
+          alert(
+            `لا يمكن إضافة ${extra.length} سؤال إضافي. المتاح الآن: ${available}`
+          );
+          // سنستبدل فقط (بدون إضافة إضافيين)
+          const updatedSectionsOnlyReplace = examData.sections.map((section) => {
+            if (section.id !== selectedSectionId) return section;
+            return {
+              ...section,
+              questions: (section.questions || []).map((q) =>
+                q.id === editingQuestion.id ? generated[0] : q
+              ),
+            };
+          });
+          setExamData((prev) => ({ ...prev, sections: updatedSectionsOnlyReplace }));
+          resetQuestionForm();
+          return;
+        }
+
+        const updatedSections = examData.sections.map((section) => {
+          if (section.id !== selectedSectionId) return section;
+          return {
+            ...section,
+            questions: [
+              ...(section.questions || []).map((q) =>
+                q.id === editingQuestion.id ? generated[0] : q
+              ),
+              ...extra,
+            ],
+          };
+        });
+
+        setExamData((prev) => ({ ...prev, sections: updatedSections }));
+        resetQuestionForm();
+        return;
+      }
+
+      // إضافة جديدة بالكامل
+      if (examData.type === "mock" && currentCount + generated.length > 24) {
+        alert(
+          `لا يمكن إضافة ${generated.length} سؤال. الحد الأقصى 24 سؤال في القسم. المتاح الآن: ${Math.max(
+            0,
+            24 - currentCount
+          )}`
+        );
+        return;
+      }
+
+      const updatedSections = examData.sections.map((section) => {
+        if (section.id !== selectedSectionId) return section;
+        return {
+          ...section,
+          questions: [...(section.questions || []), ...generated],
         };
-      } else {
-        // Regular MCQ
+      });
+
+      setExamData((prev) => ({ ...prev, sections: updatedSections }));
+      resetQuestionForm();
+      return;
+    }
+
+    // باقي الأنواع + MCQ العام
+    if (!currentQuestion) return;
+
+    if (examData.type === "mock" && !canAddMoreQuestions(selectedSectionId)) {
+      alert("لا يمكن إضافة أكثر من 24 سؤال في قسم واحد لنوع الاختبار المحاكي");
+      return;
+    }
+
+    let newQuestion = {
+      id: editingQuestion ? editingQuestion.id : Date.now(),
+      type: questionType,
+      question: currentQuestion,
+      sectionId: selectedSectionId,
+    };
+
+    switch (questionType) {
+      case "mcq": {
         newQuestion = {
           ...newQuestion,
+          mcqSubType: "general",
           options: mcqOptions,
           correctAnswer: mcqCorrectAnswer,
-          mcqSubType,
+        };
+        break;
+      }
+      case "trueFalse": {
+        newQuestion = {
+          ...newQuestion,
+          correctAnswer: trueFalseAnswer,
+          explanation: trueFalseExplanation,
+        };
+        break;
+      }
+      case "essay": {
+        newQuestion = { ...newQuestion, modelAnswer: modalAnswer };
+        break;
+      }
+      case "complete": {
+        newQuestion = {
+          ...newQuestion,
+          text: completeText,
+          answers: completeAnswers,
+        };
+        break;
+      }
+      default:
+        break;
+    }
+
+    const updatedSections = examData.sections.map((section) => {
+      if (section.id !== selectedSectionId) return section;
+
+      if (editingQuestion) {
+        return {
+          ...section,
+          questions: (section.questions || []).map((q) =>
+            q.id === editingQuestion.id ? newQuestion : q
+          ),
         };
       }
-      break;
-    case "trueFalse":
-      newQuestion = {
-        ...newQuestion,
-        correctAnswer: trueFalseAnswer,
-        explanation: trueFalseExplanation,
-      };
-      break;
-    case "essay":
-      newQuestion = { ...newQuestion, modelAnswer: modalAnswer };
-      break;
-    case "complete":
-      newQuestion = {
-        ...newQuestion,
-        text: completeText,
-        answers: completeAnswers,
-      };
-      break;
-    default:
-      break;
-  }
 
-  const updatedSections = examData.sections.map((section) => {
-    if (section.id !== selectedSectionId) return section;
-    
-    if (editingQuestion) {
       return {
         ...section,
-        questions: section.questions.map((q) =>
-          q.id === editingQuestion.id ? newQuestion : q
-        ),
+        questions: [...(section.questions || []), newQuestion],
       };
-    }
-    
-    return {
-      ...section,
-      questions: [...(section.questions || []), newQuestion],
-    };
-  });
+    });
 
-  setExamData((prev) => ({ ...prev, sections: updatedSections }));
-  resetQuestionForm();
-};
+    setExamData((prev) => ({ ...prev, sections: updatedSections }));
+    resetQuestionForm();
+  };
 
-  // Function to edit MCQ passage question
+  /* ---------------------- Editing passage question ------------------- */
   const editMcqPassageQuestion = (question) => {
-  setQuestionType("mcq");
-  setCurrentQuestion(question.question || "");
-  setMcqSubType(question.mcqSubType || "general");
-  
-  if (question.mcqSubType && question.mcqSubType !== "general") {
-    // Set the passages data for editing
-    setMcqPassages(prev => ({
-      ...prev,
-      [question.mcqSubType]: question.passages || []
-    }));
-  } else {
-    // Regular MCQ question
-    setMcqOptions(question.options || ["", "", "", ""]);
-    setMcqCorrectAnswer(question.correctAnswer || 0);
-  }
-  
-  setEditingQuestion(question);
-};
+    setQuestionType("mcq");
+    setCurrentQuestion(question.question || "");
+    setMcqSubType(question.mcqSubType || "general");
 
+    if (question.mcqSubType && question.mcqSubType !== "general") {
+      // بناء مجموعة واحدة تحتوي سؤال واحد من السؤال المسطّح الحالي
+      setMcqPassages((prev) => ({
+        ...prev,
+        [question.mcqSubType]: [
+          {
+            id: question.passage?.id || `${Date.now()}-p`,
+            content: question.passage?.content || "",
+            questions: [
+              {
+                id: `${Date.now()}-q`,
+                text: question.question || "",
+                options: question.options || ["", ""],
+                correctIndex:
+                  typeof question.correctAnswer === "number"
+                    ? question.correctAnswer
+                    : 0,
+              },
+            ],
+          },
+        ],
+      }));
+    } else {
+      // MCQ عام
+      setMcqOptions(question.options || ["", "", "", ""]);
+      setMcqCorrectAnswer(
+        typeof question.correctAnswer === "number" ? question.correctAnswer : 0
+      );
+    }
+
+    setEditingQuestion(question);
+  };
+
+  /* ------------------------------- UI ------------------------------- */
   return (
-    <div
-      className="max-w-6xl mx-auto space-y-6 p-6 bg-gray-50 min-h-screen"
-      dir="rtl"
-    >
+    <div className="max-w-6xl mx-auto space-y-6 p-6 bg-gray-50 min-h-screen" dir="rtl">
       {/* Header Stats */}
       <QuestionStats
         examData={examData}
@@ -373,7 +489,7 @@ export default function ExamMainData() {
                     </button>
                   ))}
                 </div>
-              </div>              
+              </div>
 
               {/* MCQ Subtype Selection */}
               {questionType === "mcq" && (
@@ -416,6 +532,7 @@ export default function ExamMainData() {
                     </div>
                   </div>
 
+                  {/* General MCQ */}
                   {mcqSubType === "general" ? (
                     <div className="space-y-4">
                       <Input
@@ -439,7 +556,9 @@ export default function ExamMainData() {
                             <input
                               type="text"
                               value={option}
-                              onChange={(e) => updateMcqOption(index, e.target.value)}
+                              onChange={(e) =>
+                                updateMcqOption(index, e.target.value)
+                              }
                               className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                               placeholder={`الخيار ${index + 1}`}
                             />
@@ -458,7 +577,7 @@ export default function ExamMainData() {
                           type="button"
                           onClick={addMcqOption}
                           variant="outline"
-                          icon={PlusIcon}
+                          icon={<PlusIcon />}
                           className="text-sm"
                         >
                           إضافة خيار
@@ -466,15 +585,19 @@ export default function ExamMainData() {
                       </div>
                     </div>
                   ) : (
+                    // Passage / Chemical editor
                     <McqSharedPassageEditor
+                      key={`${mcqSubType}:${editingQuestion?.id ?? "new"}`}
                       mcqSubType={mcqSubType}
-                      onPassagesChange={(passages) => handleMcqPassagesChange(passages, mcqSubType)}
-                      initialData={mcqPassages[mcqSubType]}
+                      initialData={mcqPassages[mcqSubType] || []}
+                      onPassagesChange={handleMcqPassagesChange}
                     />
                   )}
                 </div>
               )}
-               {questionType !== "mcq" && (
+
+              {/* Non-MCQ question's prompt */}
+              {questionType !== "mcq" && (
                 <Input
                   label="السؤال"
                   placeholder="أدخل نص السؤال هنا"
@@ -510,18 +633,16 @@ export default function ExamMainData() {
                 />
               )}
 
-              
-
               <div className="pt-4 border-t">
                 <Button
                   onClick={addOrUpdateQuestion}
                   disabled={
-                    !currentQuestion ||
                     !selectedSectionId ||
+                    (questionType !== "mcq" && !currentQuestion) ||
                     (examData.type === "mock" &&
                       !canAddMoreQuestions(selectedSectionId))
                   }
-                  icon={editingQuestion ? Save : PlusIcon}
+                  icon={editingQuestion ? <Save /> : <PlusIcon />}
                   className="w-full"
                 >
                   {editingQuestion ? "تحديث السؤال" : "إضافة السؤال"}
@@ -561,15 +682,10 @@ export default function ExamMainData() {
           <div className="flex justify-end gap-3 pt-4">
             <Button
               variant="outline"
-              icon={X}
+              icon={<X />}
               onClick={() => {
                 if (confirm("هل أنت متأكد من إلغاء التغييرات؟")) {
-                  setExamData({
-                    name: "",
-                    duration: "",
-                    type: "",
-                    sections: [],
-                  });
+                  setExamData({ name: "", duration: "", type: "", sections: [] });
                   resetQuestionForm();
                   setSelectedSectionId(null);
                   setExpandedSections({});
@@ -581,15 +697,13 @@ export default function ExamMainData() {
 
             <Button
               variant="primary"
-              icon={Save}
+              icon={<Save />}
               onClick={() => {
                 alert("تم حفظ الاختبار بنجاح!");
                 console.log("Exam Data:", examData);
               }}
               disabled={
-                !examData.name ||
-                !examData.type ||
-                examData.sections.length === 0
+                !examData.name || !examData.type || examData.sections.length === 0
               }
             >
               حفظ الاختبار

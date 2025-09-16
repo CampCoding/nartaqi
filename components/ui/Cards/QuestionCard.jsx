@@ -253,6 +253,7 @@ const ExamCard = ({
           
           <div className="flex items-center gap-1">
             <Button
+             onClick={() => router.push(`/exams/edit/${exam?.id}`)}
               className="text-indigo-600 hover:bg-indigo-50 border border-indigo-200 rounded-lg p-2 transition-all duration-300 transform hover:scale-105"
               aria-label="تعديل"
             >

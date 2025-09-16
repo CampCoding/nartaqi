@@ -14,13 +14,15 @@ export default function TrueFalseQuestions({
         الإجابة الصحيحة
       </label>
       <div className="grid grid-cols-2 gap-3">
-        <Button
+        <Button 
+        className={`${trueFalseAnswer ? "!bg-green-600 text-white" : ""}`}
           variant={trueFalseAnswer === true ? "success" : "outline"}
           onClick={() => setTrueFalseAnswer(true)}
         >
           صحيح
         </Button>
         <Button
+         className={`${trueFalseAnswer ? "" : "!bg-red-500 text-white"}`}
           variant={trueFalseAnswer === false ? "danger" : "outline"}
           onClick={() => setTrueFalseAnswer(false)}
         >

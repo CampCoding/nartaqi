@@ -61,7 +61,7 @@ const SubjectsManagementPage = () => {
 
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
-    { label: "المواد", href: "/subjects", icon: Book, current: true },
+    { label: "الدورات", href: "/subjects", icon: Book, current: true },
   ];
 
   const [viewMode, setViewMode] = useState("grid");
@@ -235,9 +235,6 @@ const SubjectsManagementPage = () => {
           subtitle={"نظّم وأدر موادك التعليمية"}
           extra={
             <div className="flex items-center gap-4 gap-reverse">
-              <Button type="secondary" icon={<Download className="w-4 h-4" />}>
-                تصدير
-              </Button>
               <Button onClick={() => router.push(`/teachers-courses/add-course`)} type="primary" size="large" icon={<Plus className="w-5 h-5" />}>
                 إضافة دورة جديدة
               </Button>

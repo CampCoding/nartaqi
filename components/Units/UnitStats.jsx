@@ -12,7 +12,7 @@ const UnitsStats = ({ units }) => {
   const totalComments = units.reduce((sum, unit) => sum + (unit.comments || 0), 0);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6" dir="rtl">
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-6" dir="rtl">
       <StatsCard
         icon={BookOpen}
         value={units.length}
@@ -25,7 +25,6 @@ const UnitsStats = ({ units }) => {
         label={"إجمالي الأسئلة"}
       />
       <StatsCard icon={Star} value={totalRatings} label={"إجمالي التقييمات"} />
-      <StatsCard icon={MessageSquare} value={totalComments} label={"إجمالي التعليقات"} />
     </div>
   );
 };

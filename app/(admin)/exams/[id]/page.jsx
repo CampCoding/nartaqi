@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   BookOpen,
   Clock3,
@@ -7,7 +7,6 @@ import {
   Star,
   Target,
   Award,
-  Download,
   Edit3,
   CheckCircle2,
   XCircle,
@@ -23,9 +22,7 @@ import EditNewExamModal from "../../../../components/Exams/EditNewExamModal";
 
 /* ---------- Small UI helpers ---------- */
 const Pill = ({ children, color = "bg-gray-100 text-gray-700 border-gray-200", className = "" }) => (
-  <span
-    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${color} ${className}`}
-  >
+  <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${color} ${className}`}>
     {children}
   </span>
 );
@@ -47,11 +44,10 @@ const Stat = ({ icon: Icon, label, value }) => (
 const ActionButton = ({ icon: Icon, children, variant = "secondary", className = "", onClick }) => {
   const base = "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all";
   const variants = {
-    primary:
-      "text-white bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 shadow-lg",
+    primary: "text-white bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 shadow-lg",
     secondary: "border border-gray-200 bg-white hover:bg-gray-50 text-gray-700",
     ghost: "text-gray-600 hover:bg-gray-100",
-  } ;
+  };
   return (
     <button className={`${base} ${variants[variant]} ${className}`} onClick={onClick}>
       {Icon && <Icon className="w-4 h-4" />}
@@ -60,12 +56,139 @@ const ActionButton = ({ icon: Icon, children, variant = "secondary", className =
   );
 };
 
-/* ---------- Normalization ---------- */
+/* =============================================================
+   NORMALIZATION
+   This page now accepts either:
+   - An exam in the old/flat (questionsData) or new/flat (questions) shape, OR
+   - The editor payload from <ExamMainData /> with { name, type, duration, sections:[{id,name,questions:[...] }]}.
+   It flattens sections -> questions and maps all types to the viewer schema.
+   ============================================================= */
+
+/** Map an editor MCQ (general/chemical/passage) to viewer MCQ answers[] */
+function mapMcqAnswers(options = [], correctIndex = 0) {
+  return options.map((text, i) => ({
+    id: `a-${i + 1}`,
+    text: String(text ?? ""),
+    isCorrect: i === Number(correctIndex ?? 0),
+    explanation: "",
+  }));
+}
+
+/** Convert ExamMainData editor shape => viewer exam shape */
+function flattenFromEditor(editor) {
+  if (!editor || !Array.isArray(editor.sections)) return null;
+
+  // Build quick map of section names
+  const sectionNameById = Object.fromEntries((editor.sections || []).map((s) => [s.id, s.name]));
+
+  const questions = [];
+  for (const section of editor.sections || []) {
+    for (const q of section.questions || []) {
+      const baseTitle = q?.question || q?.text || "";
+      const sectionName = sectionNameById[q.sectionId] || section.name || "قسم";
+
+      if (q.type === "mcq") {
+        // General MCQ
+        const answers = mapMcqAnswers(q.options || [], q.correctAnswer);
+        questions.push({
+          id: q.id,
+          type: "mcq",
+          title: baseTitle,
+          explanation: "",
+          answers,
+          _meta: {
+            sectionId: q.sectionId,
+            sectionName,
+            mcqSubType: q.mcqSubType || "general",
+            passage: q.passage || null,
+          },
+        });
+        continue;
+      }
+
+      if (q.type === "trueFalse") {
+        questions.push({
+          id: q.id,
+          type: "tf",
+          title: baseTitle,
+          correct: Boolean(q.correctAnswer),
+          explanation: q.explanation || q.trueFalseExplanation || "",
+          _meta: { sectionId: q.sectionId, sectionName },
+        });
+        continue;
+      }
+
+      if (q.type === "essay") {
+        questions.push({
+          id: q.id,
+          type: "written",
+          title: baseTitle,
+          sampleAnswer: q.modelAnswer || "",
+          explanation: "",
+          _meta: { sectionId: q.sectionId, sectionName },
+        });
+        continue;
+      }
+
+      if (q.type === "complete") {
+        // Editor provided: { text, answers:[{answer}] }
+        const gaps = Array.isArray(q.answers) ? q.answers.map((a) => a?.answer).filter(Boolean) : [];
+        questions.push({
+          id: q.id,
+          type: "fill",
+          title: baseTitle,
+          gaps,
+          answerText: "", // keep free text empty; viewer supports both gaps + free text
+          explanation: "",
+          _meta: { sectionId: q.sectionId, sectionName },
+        });
+        continue;
+      }
+    }
+  }
+
+  const duration = editor.type === "mock"
+    ? (editor.sections?.length || 0) * 25
+    : Number(editor.duration || 0) || 0;
+
+  const exam = {
+    id: Date.now(),
+    title: editor?.name || "اختبار بدون عنوان",
+    description: "",
+    subject: "",
+    status: "مسودة",
+    difficulty: "متوسط",
+    participants: 0,
+    rating: 0,
+    lastModified: "",
+    examType: editor?.type === "mock" ? "mock" : "training",
+    duration,
+    questions,
+  };
+
+  // Provide a raw payload for the Edit modal (kept same as viewer so it can be re-used)
+  exam._raw = {
+    id: exam.id,
+    title: exam.title,
+    description: exam.description,
+    time: String(exam.duration),
+    examType: exam.examType,
+    questions: exam.questions,
+  };
+
+  return exam;
+}
+
 /** Normalize any incoming exam object into a single, predictable shape. */
 function normalizeExam(input) {
+  // Editor payload from <ExamMainData />
+  if (input?.sections && Array.isArray(input.sections)) {
+    return flattenFromEditor(input);
+  }
+
   const fallback = {
     id: input?.id ?? Date.now(),
-    title: input?.title ?? "امتحان بدون عنوان",
+    title: input?.title ?? input?.name ?? "امتحان بدون عنوان",
     description: input?.description ?? "",
     subject: input?.subject ?? "",
     status: input?.status ?? "مسودة",
@@ -73,27 +196,24 @@ function normalizeExam(input) {
     participants: input?.participants ?? 0,
     rating: input?.rating ?? 0,
     lastModified: input?.lastModified ?? "",
-    examType: input?.examType ?? "training", // training | mock
-    duration: Number(input?.duration ?? input?.time ?? 0) || 0,
+    examType: input?.examType ?? (input?.type === "mock" ? "mock" : "training"),
+    duration: Number(input?.duration ?? input?.time ?? input?.examDuration ?? 0) || 0,
     questions: [],
     _raw: input?._raw ?? null,
   };
 
-  // Prefer _raw.questions from editor if present
-  const sourceQs =
-    input?._raw?.questions ??
-    input?.questions ??
-    input?.questionsData ??
-    [];
+  // Prefer _raw.questions or questions/questionsData
+  const sourceQs = input?._raw?.questions ?? input?.questions ?? input?.questionsData ?? [];
 
   const normalizedQs = (sourceQs || []).map((q, i) => {
-    const type = q?.type ?? (q?.answers ? "mcq" : "written"); // legacy -> mcq
+    const type = q?.type ?? (q?.answers ? "mcq" : "written");
     const base = {
       id: q?.id ?? `q-${i + 1}`,
       type,
-      title: q?.title ?? "",
+      title: q?.title ?? q?.question ?? "",
       explanation: q?.explanation ?? "",
-    } ;
+      _meta: q?._meta ?? undefined,
+    };
 
     if (type === "mcq") {
       base.answers = (q?.answers || []).map((a, ai) => ({
@@ -114,8 +234,6 @@ function normalizeExam(input) {
   });
 
   fallback.questions = normalizedQs;
-
-  // Ensure _raw mirrors the new schema so Edit modal receives the same shape
   fallback._raw = fallback._raw ?? {
     id: fallback.id,
     title: fallback.title,
@@ -128,7 +246,7 @@ function normalizeExam(input) {
   return fallback;
 }
 
-/* ---------- Demo (in case no prop passed) ---------- */
+/* ---------- Demo (if nothing provided) ---------- */
 const demoExamLegacy = {
   id: 3,
   title: "اختبار العلوم الطبيعية",
@@ -151,6 +269,7 @@ const demoExamLegacy = {
         { id: "a2", text: "موجبة", isCorrect: false },
         { id: "a3", text: "متعادلة", isCorrect: false },
       ],
+      type: "mcq",
     },
     {
       id: "q2",
@@ -160,13 +279,12 @@ const demoExamLegacy = {
         { id: "a2", text: "F ∝ r² / q1q2", isCorrect: false },
         { id: "a3", text: "F ∝ q1 + q2", isCorrect: false },
       ],
+      type: "mcq",
     },
     {
       id: "q3",
-      title: "سؤال صح/خطأ: الضوء موجة كهرومغناطيسية.",
-      // legacy had no types; we’ll treat as MCQ unless explicit:
-      // Show TF example explicitly by adding type
       type: "tf",
+      title: "الضوء موجة كهرومغناطيسية.",
       correct: true,
     },
     {
@@ -186,10 +304,7 @@ const demoExamLegacy = {
 };
 
 /* ---------- Per-question renderers ---------- */
-function MCQView({
-  answers,
-  showCorrectOnly,
-}) {
+function MCQView({ answers, showCorrectOnly }) {
   const list = showCorrectOnly ? answers.filter((a) => a.isCorrect) : answers;
   return (
     <div className="space-y-2">
@@ -197,9 +312,7 @@ function MCQView({
         <div
           key={a.id}
           className={`flex items-start gap-2 rounded-lg border p-2.5 ${
-            a.isCorrect
-              ? "border-emerald-200 bg-emerald-50/50"
-              : "border-gray-200 bg-white"
+            a.isCorrect ? "border-emerald-200 bg-emerald-50/50" : "border-gray-200 bg-white"
           }`}
         >
           {a.isCorrect ? (
@@ -247,10 +360,7 @@ function WrittenView({ sampleAnswer }) {
   );
 }
 
-function FillView({
-  gaps,
-  answerText,
-}) {
+function FillView({ gaps, answerText }) {
   const hasGaps = gaps && gaps.length > 0;
   return (
     <div className="space-y-2">
@@ -258,15 +368,13 @@ function FillView({
         <div className="flex flex-wrap gap-2">
           {gaps.map((g, i) => (
             <Pill key={i} color="bg-indigo-100 text-indigo-800 border-indigo-200">
-              {g}
+              {String(g)}
             </Pill>
           ))}
         </div>
       )}
       {Boolean(answerText) && (
-        <div className="rounded-lg border p-2.5 bg-white text-sm text-gray-800">
-          {answerText}
-        </div>
+        <div className="rounded-lg border p-2.5 bg-white text-sm text-gray-800">{answerText}</div>
       )}
       {!hasGaps && !answerText && (
         <div className="text-sm text-gray-500">لا توجد إجابة نموذجيّة محددة.</div>
@@ -276,13 +384,7 @@ function FillView({
 }
 
 /* ---------- Questions Panel ---------- */
-function QuestionsPanel({
-  questions,
-  query,
-  setQuery,
-  showCorrectOnly,
-  setShowCorrectOnly,
-}) {
+function QuestionsPanel({ questions, query, setQuery, showCorrectOnly, setShowCorrectOnly }) {
   const filtered = useMemo(() => {
     const q = (query || "").toLowerCase().trim();
     if (!q) return questions;
@@ -358,11 +460,27 @@ function QuestionsPanel({
                   ? "سؤال مقالي"
                   : "أكمل الفراغ"}
               </Pill>
+              {q?._meta?.sectionName && (
+                <Pill className="bg-gray-100 text-gray-700 border-gray-200">قسم: {q._meta.sectionName}</Pill>
+              )}
+              {q?._meta?.mcqSubType && q._meta.mcqSubType !== "general" && (
+                <Pill className="bg-purple-100 text-purple-800 border-purple-200">
+                  نوع: {q._meta.mcqSubType === "passage" ? "قطعة" : "معادلات"}
+                </Pill>
+              )}
             </div>
 
             <div className="text-gray-900 font-medium">{q.title}</div>
             {q.explanation && (
               <div className="text-xs text-gray-500 mt-1">{q.explanation}</div>
+            )}
+
+            {/* Show passage content if provided */}
+            {q?._meta?.passage?.content && (
+              <div className="mt-3 rounded-lg border bg-white p-3">
+                <div className="text-xs text-gray-500 mb-1">نص القطعة</div>
+                <div className="text-sm text-gray-800 whitespace-pre-wrap">{q._meta.passage.content}</div>
+              </div>
             )}
 
             <div className="mt-3">
@@ -379,9 +497,7 @@ function QuestionsPanel({
         ))}
 
         {!filtered.length && (
-          <div className="text-center py-10 text-gray-500 text-sm">
-            لا توجد أسئلة مطابقة لبحثك.
-          </div>
+          <div className="text-center py-10 text-gray-500 text-sm">لا توجد أسئلة مطابقة لبحثك.</div>
         )}
       </div>
     </div>
@@ -392,168 +508,22 @@ function QuestionsPanel({
 export default function ExamDetailsPage({ exam: examProp }) {
   const [query, setQuery] = useState("");
   const [showCorrectOnly, setShowCorrectOnly] = useState(false);
-
   const [editModal, setEditModal] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
 
- // ⬇️ put these inside ExamDetailsPage (before return)
-
-// Safe file name
-const fileSafe = (s = "exam") =>
-  String(s).replace(/[<>:"/\\|?*\x00-\x1F]/g, "").slice(0, 60);
-
-// Sheet 2: one row per question (answers merged for quick reading)
-const questionsToRows = (qs = []) =>
-  qs.map((q, i) => {
-    const base = { "#": i + 1, نوع: "", "نص السؤال": q.title || "", "شرح السؤال": q.explanation || "" };
-
-    if (q.type === "mcq") {
-      const answers = (q.answers || []).map((a) => a.text).join(" | ");
-      const correct = (q.answers || []).filter((a) => a.isCorrect).map((a) => a.text).join(" | ");
-      const exps = (q.answers || []).map((a) => a.explanation).filter(Boolean).join(" | ");
-      return { ...base, نوع: "MCQ", الإجابات: answers, "الإجابات الصحيحة": correct, "شروح الإجابات": exps };
+  // Optionally pull last saved editor payload from localStorage if no prop passed
+  const [incoming, setIncoming] = useState(examProp);
+  useEffect(() => {
+    if (!examProp) {
+      try {
+        const raw = localStorage.getItem("latestExam");
+        if (raw) setIncoming(JSON.parse(raw));
+      } catch {}
     }
-    if (q.type === "tf") {
-      return { ...base, نوع: "صح/خطأ", "الإجابة الصحيحة": q.correct ? "صح" : "خطأ" };
-    }
-    if (q.type === "written") {
-      return { ...base, نوع: "مقالي", "إجابة نموذجية": q.sampleAnswer || "" };
-    }
-    // fill
-    return {
-      ...base,
-      نوع: "أكمل",
-      الفراغات: (q.gaps || []).join(" | "),
-      "إجابة نصية": q.answerText || "",
-    };
-  });
-
-// ⭐ NEW: Sheet 3 — one row per *answer*
-const answersToRows = (qs = []) => {
-  const out = [];
-  qs.forEach((q, i) => {
-    const qBase = {
-      "س#": i + 1,
-      "نوع السؤال": q.type === "mcq" ? "MCQ" : q.type === "tf" ? "صح/خطأ" : q.type === "written" ? "مقالي" : "أكمل",
-      "نص السؤال": q.title || "",
-      "شرح السؤال": q.explanation || "",
-    };
-
-    if (q.type === "mcq") {
-      (q.answers || []).forEach((a, ai) => {
-        out.push({
-          ...qBase,
-          "إجابة #": ai + 1,
-          "نص الإجابة": a.text || "",
-          "صحيحة؟": a.isCorrect ? "نعم" : "لا",
-          "شرح الإجابة": a.explanation || "",
-        });
-      });
-      if (!(q.answers || []).length) {
-        out.push({ ...qBase, "إجابة #": "-", "نص الإجابة": "", "صحيحة؟": "", "شرح الإجابة": "" });
-      }
-      return;
-    }
-
-    if (q.type === "tf") {
-      out.push({
-        ...qBase,
-        "إجابة #": 1,
-        "نص الإجابة": q.correct ? "صح" : "خطأ",
-        "صحيحة؟": "نعم",
-        "شرح الإجابة": "",
-      });
-      return;
-    }
-
-    if (q.type === "written") {
-      out.push({
-        ...qBase,
-        "إجابة #": 1,
-        "نص الإجابة": q.sampleAnswer || "",
-        "صحيحة؟": "",
-        "شرح الإجابة": "",
-      });
-      return;
-    }
-
-    // fill
-    const gaps = q.gaps || [];
-    if (gaps.length) {
-      gaps.forEach((g, gi) => {
-        out.push({
-          ...qBase,
-          "إجابة #": gi + 1,
-          "نص الإجابة": String(g || ""),
-          "صحيحة؟": "",
-          "شرح الإجابة": "فراغ",
-        });
-      });
-    }
-    if ((q.answerText || "").trim()) {
-      out.push({
-        ...qBase,
-        "إجابة #": gaps.length ? gaps.length + 1 : 1,
-        "نص الإجابة": q.answerText,
-        "صحيحة؟": "",
-        "شرح الإجابة": "نص كامل",
-      });
-    }
-    if (!gaps.length && !q.answerText) {
-      out.push({ ...qBase, "إجابة #": "-", "نص الإجابة": "", "صحيحة؟": "", "شرح الإجابة": "" });
-    }
-  });
-  return out;
-};
-
-async function handleExportExcel() {
-  try {
-    const XLSX = await import("xlsx");
-
-    // Sheet 1: Summary
-    const summary = [
-      ["العنوان", exam.title || "-"],
-      ["النوع", exam.examType === "mock" ? "اختبار محاكي" : "تدريب"],
-      ["الدورة", exam.subject || "-"],
-      ["المدة (دقيقة)", exam.duration || 0],
-      ["عدد الأسئلة", exam.questions.length || 0],
-      ["المشاركون", exam.participants || 0],
-      ["التقييم", exam.rating || 0],
-      ["آخر تعديل", exam.lastModified || "-"],
-    ];
-    const wsSummary = XLSX.utils.aoa_to_sheet(summary);
-
-    // Sheet 2: Questions (compact)
-    const qRows = questionsToRows(exam.questions);
-    const wsQuestions = XLSX.utils.json_to_sheet(qRows);
-    wsQuestions["!cols"] = Object.keys(qRows[0] || { "نص السؤال": "" }).map((k) => ({
-      wch: Math.min(60, Math.max(k.length + 6, 16)),
-    }));
-
-    // ⭐ Sheet 3: Question + Answers (one row per answer)
-    const qaRows = answersToRows(exam.questions);
-    const wsQA = XLSX.utils.json_to_sheet(qaRows);
-    wsQA["!cols"] = Object.keys(qaRows[0] || { "نص السؤال": "", "نص الإجابة": "" }).map((k) => ({
-      wch: Math.min(60, Math.max(k.length + 8, 18)),
-    }));
-
-    // Workbook
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, wsSummary, "ملخص");
-    XLSX.utils.book_append_sheet(wb, wsQuestions, "الأسئلة");
-    XLSX.utils.book_append_sheet(wb, wsQA, "الأسئلة+الإجابات");
-
-    const name = `${fileSafe(exam.title)}-${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, name);
-  } catch (e) {
-    console.error(e);
-    alert("تعذر التصدير إلى Excel");
-  }
-}
-
+  }, [examProp]);
 
   // Normalize incoming prop or fallback demo
-  const exam = useMemo(() => normalizeExam(examProp ?? demoExamLegacy), [examProp]);
+  const exam = useMemo(() => normalizeExam(incoming ?? demoExamLegacy), [incoming]);
 
   const stats = useMemo(
     () => [
@@ -608,7 +578,6 @@ async function handleExportExcel() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-               
                 <ActionButton
                   icon={Edit3}
                   variant="primary"
@@ -648,7 +617,6 @@ async function handleExportExcel() {
                 ))}
               </div>
 
-              {/* Any performance/insights widget you already have */}
               <ExamOverview />
             </div>
           </div>

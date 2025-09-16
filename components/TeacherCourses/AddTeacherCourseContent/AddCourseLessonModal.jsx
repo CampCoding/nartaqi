@@ -171,7 +171,7 @@ export default function AddCourseLessonModal({openAddLesson,VIDEO_SOURCES,before
           <>
             <div className="flex items-center justify-between mb-2">
               <h4 className="m-0 text-sm">ملفات PDF</h4>
-              <Button type="dashed" onClick={() => add({ title: "", fileList: [] })}>
+              <Button type="dashed" className='text-primary hover:bg-primary hover:text-white transition-all duration-100 border border-primary p-2 rounded-lg ' onClick={() => add({ title: "", fileList: [] })}>
                 إضافة PDF
               </Button>
             </div>

@@ -1,4 +1,5 @@
-// "use client"
+// layout/DataTable.js
+"use client";
 import React, { useState, useMemo, useRef } from "react";
 import { Table, Input, Space, Button, Row, Col, DatePicker } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
@@ -13,6 +14,7 @@ export const handleSearch = (
   confirm();
   // setSearchText(selectedKeys[0]);
 };
+
 export const getColumnSearchProps = (dataIndex, setSearchText) => ({
   filterDropdown: ({ setSelectedKeys, selectedKeys, confirm }) => (
     <div style={{ padding: 8 }}>

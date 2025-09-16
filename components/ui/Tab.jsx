@@ -1,14 +1,4 @@
 import { useState } from "react";
-import {
-  Camera,
-  Settings,
-  User,
-  Bell,
-  Heart,
-  Star,
-  ChevronRight,
-} from "lucide-react";
-
 // Mock framer-motion for this environment - in a real app you'd import from 'framer-motion'
 const motion = {
   div: ({
@@ -50,7 +40,8 @@ const AnimatePresence = ({ children }) => children;
 
 export default function HorizontalTabs({ tabs }) {
   const [activeTab, setActiveTab] = useState(0);
-
+   
+  console.log(activeTab , tabs[activeTab]);
   return (
     <div className="overflow-hidden">
       {/* Tab Navigation */}
@@ -116,7 +107,7 @@ export default function HorizontalTabs({ tabs }) {
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
           >
-            {tabs[activeTab].content}
+            {tabs[activeTab]?.content}
           </motion.div>
         </AnimatePresence>
       </motion.div>

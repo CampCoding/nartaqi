@@ -58,7 +58,7 @@ export default function AddCourseResources({videos , setVideos}) {
 
         <div>
           <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-            <PlayCircleOutlined className="text-blue-600" />
+            <FolderOutlined className="text-blue-600" />
             ملفات إضافية
           </h4>
           <div className="space-y-3">

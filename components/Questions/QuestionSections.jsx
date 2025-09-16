@@ -9,7 +9,7 @@ export default function QuestionSections({
   onAddSection,
 }) {
   return (
-    examData.type && (
+    examData?.type && (
       <Card title="إدارة الأقسام" icon={BookOpen}>
         <div className="space-y-6">
           <div className="flex justify-between items-center">
@@ -17,7 +17,7 @@ export default function QuestionSections({
               الأقسام المتاحة
             </h3>
             <ProgressBar
-              current={examData.sections.length}
+              current={examData?.sections?.length}
               total={filteredSection?.length || 1}
               label="الأقسام المضافة"
             />
@@ -35,7 +35,7 @@ export default function QuestionSections({
 
               return (
                 <div
-                  key={section.id}
+                  key={section?.id}
                   className={`p-4 rounded-xl border-2 transition-all duration-200 ${
                     isAdded
                       ? "border-green-200 bg-green-50"
