@@ -1,11 +1,13 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Menu, X, Phone, Mail, MapPin, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-
+  const router = useRouter();
+  
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);

@@ -24,10 +24,7 @@ import Table from "../../../components/ui/Table";
 import CourseSubjectCard from "../../../components/ui/Cards/CourseSubjectCard";
 import SearchAndFilters from "./../../../components/ui/SearchAndFilters";
 import Badge from "../../../components/atoms/Badge";
-import AddTeacherCourseForm from "../../../components/TeacherCourses/AddTeacherCourseForm/AddTeacherCourseForm";
 import DeleteSubjectModal from "../../../components/Subjects/DeleteSubject.modal.jsx";
-import EditTeacherCourseForm from "../../../components/TeacherCourses/EditTeacherCourseForm/EditTeacherCourseForm";
-import SubjectActivationModal from "../../../components/Subjects/Activation.modal";
 import { useRouter } from "next/navigation";
 
 /* ===== Helpers ===== */
@@ -61,13 +58,12 @@ const SubjectsManagementPage = () => {
 
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
-    { label: "الدورات", href: "/subjects", icon: Book, current: true },
+    { label: "دورات الوجهه السعودية", href: "#", icon: Book, current: true },
   ];
 
   const [viewMode, setViewMode] = useState("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all"); // 👈 تبويب افتراضي (الكل)
-  const [NewModal, setNewModal] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [activationModal, setActivationModal] = useState(false);
@@ -309,22 +305,7 @@ const SubjectsManagementPage = () => {
             )}
           </div>
         )}
-
-        {/* Modals (كما كانت) */}
-        <AddTeacherCourseForm open={NewModal} setOpen={setNewModal} />
-
         <DeleteSubjectModal open={deleteModal} setOpen={setDeleteModal} selectedSubject={selectedSubject} />
-
-        <EditTeacherCourseForm
-          open={editOpen}
-          setOpen={setEditOpen}
-          rowData={selectedSubject}
-          onUpdate={(payload) => {
-            // TODO: استدعاء API للتحديث
-          }}
-        />
-
-        <SubjectActivationModal open={activationModal} setOpen={setActivationModal} selectedSubject={selectedSubject} />
       </div>
     </PageLayout>
   );

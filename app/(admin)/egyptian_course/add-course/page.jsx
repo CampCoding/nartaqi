@@ -48,8 +48,10 @@ import AddTeacherCourseContent from "@/components/TeacherCourses/AddTeacherCours
 import AddCourseResources from "@/components/TeacherCourses/AddCourseResources/AddCourseResources";
 import AddCourseSchedule from "@/components/TeacherCourses/AddCourseSchedule/AddCourseSchedule";
 import AddEgyptianCourseBasicInfo from "../../../../components/EgyptianCourses/AddEgyptianCourseBasicInfo/AddEgyptianCourseBasicInfo";
+import AddEgyptianCourseSchedule from "../../../../components/EgyptianCourses/AddEgyptianCourseSchedule/AddEgyptianCourseSchedule";
+import AddEgyptianCourseContent from "../../../../components/EgyptianCourses/AddEgyptainCourseContent/AddEgyptainCourseContent";
+import AddEgyptianCourseResources from "../../../../components/EgyptianCourses/AddEgyptianCourseResources/AddEgyptianCourseResources";
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
-
 
 // Updated categories with sections based on requirements
 const all_categories = [
@@ -95,7 +97,7 @@ const all_categories = [
 
 // Grade levels for each section
 const gradeLevels = {
-  "ابتدائي": [
+  ابتدائي: [
     { id: 1, name: "أول ابتدائي (عربي)", value: "first_arabic" },
     { id: 2, name: "أول ابتدائي (لغات)", value: "first_languages" },
     { id: 3, name: "ثاني ابتدائي (عربي)", value: "second_arabic" },
@@ -109,7 +111,7 @@ const gradeLevels = {
     { id: 11, name: "سادس ابتدائي (عربي)", value: "sixth_arabic" },
     { id: 12, name: "سادس ابتدائي (لغات)", value: "sixth_languages" },
   ],
-  "اعدادي": [
+  اعدادي: [
     { id: 1, name: "أول إعدادي (عربي)", value: "first_prep_arabic" },
     { id: 2, name: "أول إعدادي (لغات)", value: "first_prep_languages" },
     { id: 3, name: "ثاني إعدادي (عربي)", value: "second_prep_arabic" },
@@ -117,7 +119,7 @@ const gradeLevels = {
     { id: 5, name: "ثالث إعدادي (عربي)", value: "third_prep_arabic" },
     { id: 6, name: "ثالث إعدادي (لغات)", value: "third_prep_languages" },
   ],
-  "ثانوي": [
+  ثانوي: [
     { id: 1, name: "أول ثانوي (عربي)", value: "first_secondary_arabic" },
     { id: 2, name: "أول ثانوي (لغات)", value: "first_secondary_languages" },
     { id: 3, name: "ثاني ثانوي (عربي)", value: "second_secondary_arabic" },
@@ -125,16 +127,16 @@ const gradeLevels = {
     { id: 5, name: "ثالث ثانوي (عربي)", value: "third_secondary_arabic" },
     { id: 6, name: "ثالث ثانوي (لغات)", value: "third_secondary_languages" },
   ],
-  "KG1": [
+  KG1: [
     { id: 1, name: "KG1 (عربي)", value: "kg1_arabic" },
     { id: 2, name: "KG1 (لغات)", value: "kg1_languages" },
   ],
-  "KG2": [
+  KG2: [
     { id: 1, name: "KG2 (عربي)", value: "kg2_arabic" },
     { id: 2, name: "KG2 (لغات)", value: "kg2_languages" },
   ],
   // Default empty array for sections that don't have grade levels
-  "default": []
+  default: [],
 };
 
 const quillModules = {
@@ -151,8 +153,19 @@ const quillModules = {
 };
 
 const quillFormats = [
-  "header", "bold", "italic", "underline", "strike", "list",
-  "align", "direction", "color", "background", "link", "blockquote", "code-block",
+  "header",
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "list",
+  "align",
+  "direction",
+  "color",
+  "background",
+  "link",
+  "blockquote",
+  "code-block",
 ];
 
 const RichTextField = ({ value, onChange, placeholder }) => (
@@ -179,8 +192,6 @@ const getBase64 = (file) =>
     reader.onerror = reject;
   });
 
-
-
 const EnhancedCourseForm = ({ open, setOpen }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -196,7 +207,7 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
   const [schedules, setSchedules] = useState([]);
   const [newSchedule, setNewSchedule] = useState({
     day: "",
-    date:"",
+    date: "",
     startTime: null,
     endTime: null,
     maxStudents: 30,
@@ -206,9 +217,13 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
   // Update sections when category changes
   useEffect(() => {
     if (selectedCategory) {
-      const category = all_categories.find(cat => cat.id === selectedCategory);
+      const category = all_categories.find(
+        (cat) => cat.id === selectedCategory
+      );
       if (category) {
-        setAvailableSections(category.sections.filter(section => section.isVisible));
+        setAvailableSections(
+          category.sections.filter((section) => section.isVisible)
+        );
       }
     } else {
       setAvailableSections([]);
@@ -220,7 +235,9 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
   // Update grades when section changes
   useEffect(() => {
     if (selectedSection) {
-      const section = availableSections.find(sec => sec.id === selectedSection);
+      const section = availableSections.find(
+        (sec) => sec.id === selectedSection
+      );
       if (section && gradeLevels[section.name]) {
         setAvailableGrades(gradeLevels[section.name]);
       } else {
@@ -261,7 +278,8 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
     setFileNames((prev) => {
       const next = { ...prev };
       fileList.forEach((f) => {
-        if (f.uid && !next[f.uid]) next[f.uid] = f.name?.replace(/\.[^.]+$/, "") || "";
+        if (f.uid && !next[f.uid])
+          next[f.uid] = f.name?.replace(/\.[^.]+$/, "") || "";
       });
       // remove stale uids
       Object.keys(next).forEach((uid) => {
@@ -296,10 +314,12 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
     const newSchedules = [...schedules];
     newSchedules[index] = {
       ...updatedSchedule,
-      startTime: updatedSchedule.startTime?.format ? 
-        updatedSchedule.startTime.format("HH:mm") : updatedSchedule.startTime,
-      endTime: updatedSchedule.endTime?.format ? 
-        updatedSchedule.endTime.format("HH:mm") : updatedSchedule.endTime,
+      startTime: updatedSchedule.startTime?.format
+        ? updatedSchedule.startTime.format("HH:mm")
+        : updatedSchedule.startTime,
+      endTime: updatedSchedule.endTime?.format
+        ? updatedSchedule.endTime.format("HH:mm")
+        : updatedSchedule.endTime,
     };
     setSchedules(newSchedules);
     message.success("تم تحديث الجدولة بنجاح!");
@@ -331,10 +351,12 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
         genderPolicy: raw.genderPolicy,
         capacity: Number(raw.capacity ?? 0),
         instructor: raw.instructor,
-        availableFrom: raw.availableRange?.[0] ? 
-          dayjs(raw.availableRange[0]).format("YYYY-MM-DD") : undefined,
-        availableTo: raw.availableRange?.[1] ? 
-          dayjs(raw.availableRange[1]).format("YYYY-MM-DD") : undefined,
+        availableFrom: raw.availableRange?.[0]
+          ? dayjs(raw.availableRange[0]).format("YYYY-MM-DD")
+          : undefined,
+        availableTo: raw.availableRange?.[1]
+          ? dayjs(raw.availableRange[1]).format("YYYY-MM-DD")
+          : undefined,
         summary: raw.summary || "",
         schedules: schedules,
         resources: {
@@ -347,7 +369,9 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
           })),
           telegram: raw.resources?.telegram || "",
           whatsapp: raw.resources?.whatsapp || "",
-          videos: videos.filter((v) => v.url?.trim()).map((v) => ({ name: v.name?.trim() || "", url: v.url.trim() })),
+          videos: videos
+            .filter((v) => v.url?.trim())
+            .map((v) => ({ name: v.name?.trim() || "", url: v.url.trim() })),
         },
       };
 
@@ -389,7 +413,10 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
   ];
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 min-h-[80vh]" dir="rtl">
+    <div
+      className="bg-gradient-to-br from-gray-50 to-blue-50/30 min-h-[80vh]"
+      dir="rtl"
+    >
       {/* Enhanced Header */}
       <div className="relative mb-8 p-6 bg-white rounded-2xl shadow-sm border-b-4 border-b-blue-500">
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full -translate-y-16 translate-x-16"></div>
@@ -401,19 +428,22 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
             <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-blue-800 bg-clip-text text-transparent">
               إضافة دورة جديدة
             </h1>
-            <p className="text-gray-600 mt-1">إنشاء وتكوين دورة تعليمية شاملة مع الجدولة والمحتوى</p>
+            <p className="text-gray-600 mt-1">
+              إنشاء وتكوين دورة تعليمية شاملة مع الجدولة والمحتوى
+            </p>
           </div>
         </div>
-        
+
         {/* Progress Indicator */}
         <div className="flex items-center gap-2 mt-4">
           {tabItems.map((tab, index) => (
             <div
               key={tab.key}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer
-                ${activeTab === tab.key 
-                  ? 'bg-blue-100 text-blue-700 border border-blue-200' 
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                ${
+                  activeTab === tab.key
+                    ? "bg-blue-100 text-blue-700 border border-blue-200"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                 }`}
               onClick={() => setActiveTab(tab.key)}
             >
@@ -430,7 +460,8 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
           layout="vertical"
           onFinish={handleFinish}
           initialValues={{
-            code: "COURSE_" + Math.random().toString(36).substr(2, 6).toUpperCase(),
+            code:
+              "COURSE_" + Math.random().toString(36).substr(2, 6).toUpperCase(),
             name: "",
             category: null,
             section: null,
@@ -442,14 +473,14 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
             genderPolicy: "both",
             capacity: 50,
             instructor: [],
-            availableRange: [dayjs().add(1, 'week'), dayjs().add(3, 'month')],
+            availableRange: [dayjs().add(1, "week"), dayjs().add(3, "month")],
             summary: "",
           }}
           className="p-8"
         >
           {/* Basic Information Tab */}
           {activeTab === 1 && (
-            <AddEgyptianCourseBasicInfo 
+            <AddEgyptianCourseBasicInfo
               all_categories={all_categories}
               availableSections={availableSections}
               availableGrades={availableGrades}
@@ -466,7 +497,7 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
 
           {/* Schedule Tab */}
           {activeTab === 2 && (
-            <AddCourseSchedule 
+            <AddEgyptianCourseSchedule
               handleAddSchedule={handleAddSchedule}
               handleRemoveSchedule={handleRemoveSchedule}
               handleUpdateSchedule={handleUpdateSchedule}
@@ -486,30 +517,36 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
                 </h3>
 
                 <Form.Item
-                  label={<span className="font-semibold text-gray-700">ملخص الدورة</span>}
+                  label={
+                    <span className="font-semibold text-gray-700">
+                      ملخص الدورة
+                    </span>
+                  }
                   name="summary"
                 >
-                  <RichTextField
-                    placeholder="اكتب ملخصاً شاملاً للدورة يتضمن الأهداف التعليمية والمخرجات المتوقعة..."
-                  />
+                  <RichTextField placeholder="اكتب ملخصاً شاملاً للدورة يتضمن الأهداف التعليمية والمخرجات المتوقعة..." />
                 </Form.Item>
 
                 <Form.Item
-                  label={<span className="font-semibold text-gray-700">الشروط والأحكام</span>}
+                  label={
+                    <span className="font-semibold text-gray-700">
+                      الشروط والأحكام
+                    </span>
+                  }
                   name="privacy"
                 >
-                  <RichTextField
-                    placeholder="حدد الشروط والأحكام الخاصة بالدورة..."
-                  />
+                  <RichTextField placeholder="حدد الشروط والأحكام الخاصة بالدورة..." />
                 </Form.Item>
 
                 <Form.Item
-                  label={<span className="font-semibold text-gray-700">مميزات الدورة</span>}
+                  label={
+                    <span className="font-semibold text-gray-700">
+                      مميزات الدورة
+                    </span>
+                  }
                   name="benefits"
                 >
-                  <RichTextField
-                    placeholder={"اكتب مميزات الدورة ...."}
-                  />
+                  <RichTextField placeholder={"اكتب مميزات الدورة ...."} />
                 </Form.Item>
 
                 <Divider />
@@ -520,11 +557,14 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
                     المحتوى التعليمي
                   </h4>
                   <p className="text-gray-600 mb-4">
-                    يمكنك إضافة المحتوى التعليمي التفصيلي (الدروس، الفيديوهات، الاختبارات) بعد إنشاء الدورة
+                    يمكنك إضافة المحتوى التعليمي التفصيلي (الدروس، الفيديوهات،
+                    الاختبارات) بعد إنشاء الدورة
                   </p>
-                  <AddTeacherCourseContent
+                  <AddEgyptianCourseContent
                     courseId={null}
-                    onContentAdded={(content) => console.log('Content added:', content)}
+                    onContentAdded={(content) =>
+                      console.log("Content added:", content)
+                    }
                   />
                 </div>
               </div>
@@ -533,10 +573,7 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
 
           {/* Resources Tab */}
           {activeTab === 4 && (
-            <AddCourseResources 
-              setVideos={setVideos}
-              videos={videos}
-            />
+            <AddEgyptianCourseResources setVideos={setVideos} videos={videos} />
           )}
 
           {/* Navigation and Actions */}
@@ -560,7 +597,7 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
                   type="primary"
                   size="large"
                   onClick={() => setActiveTab(activeTab + 1)}
-                  className="rounded-xl"
+                  className="rounded-xl !bg-blue-500"
                   icon={<span>→</span>}
                 >
                   التالي

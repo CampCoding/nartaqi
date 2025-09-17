@@ -16,10 +16,13 @@ import {
   MoreVertical,
   ChevronRight,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function Topbar() {
   const [notifications, setNotifications] = useState(3);
+  const router = useRouter();
+
 
   return (
     <header className=" shadow-2xl bg-background  border-b-2 border-accent/30 border-dashed px-8 py-4 mr-64">
@@ -39,7 +42,9 @@ export default function Topbar() {
             />
           </div>
 
-          <button className="relative p-2  text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
+          <button 
+          onClick={() => router.push("/notifications")}
+          className="relative p-2  text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
             <Bell className="w-5 h-5" />
             {notifications > 0 && (
               <span

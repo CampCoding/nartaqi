@@ -387,7 +387,7 @@ const TopicExams = () => {
         </div>
 
         {/* Type Tabs */}
-        <div className="flex gap-2 items-center my-3">
+        <div className="flex gap-2 items-center my-3 !mb-5">
           {tabs.map((item) => {
             const active = selectedType === item.id;
             return (
@@ -406,8 +406,7 @@ const TopicExams = () => {
               </button>
             );
           })}
-          {/* Clear type filter */}
-          {selectedType && (
+          {(
             <button
               onClick={() => setSelectedType(null)}
               className="px-3 py-2 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"

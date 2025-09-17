@@ -5,19 +5,13 @@ import Link from "next/link";
 import {
   Users,
   GraduationCap,
-  HelpCircle,
   FileText,
   Bell,
   Settings,
   BarChart3,
-  TrendingUp,
-  Award,
-  Calendar,
-  ChevronDown,
   BookOpen,
   Cog,
   CircleAlert,
-  User,
   Users2,
   Book,
   Star,
@@ -28,6 +22,7 @@ import {
   QrCode,
   Headset,
   BookCopy,
+  Files,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -96,22 +91,22 @@ export default function Sidebar() {
       icon : BookOpen,
       path:"/categories"
     },
+
     {
-      name:"دورة المصدر السعودي",
-      icon:BookOpen,
-      path:"/saudi_source_course"
+      name: "دورات الوجهه السعودية",
+      icon: BookOpen,
+      path: "/teachers-courses",
     },
     {
       name:"دورات الوجهه المصرية",
       icon : BookOpen,
       path:"/egyptian_course"
     },
-    {
-      name: "دورات الوجهه السعودية",
-      icon: BookOpen,
-      path: "/teachers-courses",
+     {
+      name:"دورة المصدر ",
+      icon:Files,
+      path:"/saudi_source_course/add-data"
     },
-    // { name: "المعلمين", icon: Users, path: "/teachers" },
     { name: "المتدربين", icon: GraduationCap, path: "/students" },
     { name: "أقسام الاختبارات", icon: BookCopy , path: "/exam_sections" },
     { name: "الاختبارات", icon: FileText, path: "/exams" },
@@ -120,8 +115,6 @@ export default function Sidebar() {
       icon : BookOpenIcon,
       path:"/blog"
     },
-   
-  
     {
       name:"متجر الكتب",
       icon : Book ,
@@ -136,6 +129,11 @@ export default function Sidebar() {
       name:"التقييم",
       icon :  Star ,
       path:"/rating"
+    },
+    {
+      name:"الإشعارات",
+      icon : Bell ,
+      path: "/notifications"
     },
      {
       name:"QR",

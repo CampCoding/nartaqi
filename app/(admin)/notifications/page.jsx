@@ -10,52 +10,16 @@ import {
   Search,
   Filter,
   Plus,
+  X,
 } from "lucide-react";
-import {
-  Table,
-  Button,
-  Input,
-  Select,
-  Card,
-  Row,
-  Col,
-  Tag,
-  Space,
-  Typography,
-  Statistic,
-  Modal,
-  Form,
-  DatePicker,
-  message,
-  Popconfirm,
-  Badge,
-  Tooltip,
-} from "antd";
-
-import {
-  BellOutlined,
-  DeleteOutlined,
-  SearchOutlined,
-  FilterOutlined,
-  PlusOutlined,
-  TeamOutlined,
-  UserOutlined,
-  CalendarOutlined,
-  ExclamationCircleOutlined,
-  BookOutlined,
-  NotificationOutlined,
-} from "@ant-design/icons";
-
-const { Title, Text } = Typography;
-const { Option } = Select;
 
 const NotificationManager = () => {
   const [notifications, setNotifications] = useState([
     {
       key: "1",
       id: 1,
-      message: "New exam has been published: Algebra Basics",
-      target: "All Students",
+      message: "تم نشر امتحان جديد: أساسيات الجبر",
+      target: "جميع الطلاب",
       date: "2025-07-28",
       type: "exam",
       priority: "high",
@@ -64,8 +28,8 @@ const NotificationManager = () => {
     {
       key: "2",
       id: 2,
-      message: "Physics question bank updated",
-      target: "All Teachers",
+      message: "تم تحديث بنك أسئلة الفيزياء",
+      target: "جميع المعلمين",
       date: "2025-07-26",
       type: "update",
       priority: "medium",
@@ -74,9 +38,29 @@ const NotificationManager = () => {
     {
       key: "3",
       id: 3,
-      message: "Reminder: Final exam next week",
-      target: "Students - Math",
+      message: "تذكير: الامتحان النهائي الأسبوع القادم",
+      target: "طلاب الرياضيات",
       date: "2025-07-25",
+      type: "reminder",
+      priority: "high",
+      status: "draft",
+    },
+    {
+      key: "4",
+      id: 4,
+      message: "تم إضافة محاضرة جديدة: الهندسة الفراغية",
+      target: "طلاب الرياضيات",
+      date: "2025-07-24",
+      type: "update",
+      priority: "low",
+      status: "sent",
+    },
+    {
+      key: "5",
+      id: 5,
+      message: "موعد تسليم المشروع: نهاية الأسبوع",
+      target: "جميع الطلاب",
+      date: "2025-07-23",
       type: "reminder",
       priority: "high",
       status: "draft",
@@ -87,61 +71,90 @@ const NotificationManager = () => {
   const [filterType, setFilterType] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [form] = Form.useForm();
+  const [newNotification, setNewNotification] = useState({
+    message: "",
+    target: "",
+    date: new Date().toISOString().split('T')[0],
+    type: "exam",
+    priority: "medium"
+  });
 
   const deleteNotification = (id) => {
     setNotifications(notifications.filter((notif) => notif.id !== id));
-    message.success("Notification deleted successfully");
   };
 
-  const handleAddNotification = (values) => {
-    const newNotification = {
+  const handleAddNotification = (e) => {
+    e.preventDefault();
+    if (!newNotification.message || !newNotification.target || !newNotification.type || !newNotification.priority) {
+      return;
+    }
+    
+    const notification = {
       key: Date.now().toString(),
       id: Date.now(),
-      message: values.message,
-      target: values.target,
-      date: values.date.format("YYYY-MM-DD"),
-      type: values.type,
-      priority: values.priority,
+      message: newNotification.message,
+      target: newNotification.target,
+      date: newNotification.date || new Date().toISOString().split('T')[0],
+      type: newNotification.type,
+      priority: newNotification.priority,
       status: "draft",
     };
-    setNotifications([newNotification, ...notifications]);
+    
+    setNotifications([notification, ...notifications]);
     setIsModalVisible(false);
-    form.resetFields();
-    message.success("Notification created successfully");
+    setNewNotification({
+      message: "",
+      target: "",
+      date: new Date().toISOString().split('T')[0],
+      type: "exam",
+      priority: "medium"
+    });
   };
 
   const getTargetIcon = (target) => {
-    if (target.includes("Students"))
-      return <UserOutlined style={{ color: "#8B5CF6" }} />;
-    if (target.includes("Teachers"))
-      return <TeamOutlined style={{ color: "#C9AE6C" }} />;
-    return <BellOutlined style={{ color: "#0F7490" }} />;
+    if (target.includes("طلاب"))
+      return <GraduationCap className="w-4 h-4 text-purple-500" />;
+    if (target.includes("معلمين"))
+      return <Users className="w-4 h-4 text-amber-500" />;
+    return <Bell className="w-4 h-4 text-blue-500" />;
   };
 
   const getPriorityColor = (priority) => {
     switch (priority) {
       case "high":
-        return "error";
+        return "bg-red-100 text-red-700 border-red-200";
       case "medium":
-        return "warning";
+        return "bg-yellow-100 text-yellow-700 border-yellow-200";
       case "low":
-        return "success";
+        return "bg-green-100 text-green-700 border-green-200";
       default:
-        return "default";
+        return "bg-gray-100 text-gray-700 border-gray-200";
     }
   };
 
   const getTypeIcon = (type) => {
     switch (type) {
       case "exam":
-        return <BookOutlined />;
+        return <GraduationCap className="w-4 h-4" />;
       case "update":
-        return <NotificationOutlined />;
+        return <Bell className="w-4 h-4" />;
       case "reminder":
-        return <CalendarOutlined />;
+        return <Calendar className="w-4 h-4" />;
       default:
-        return <BellOutlined />;
+        return <Bell className="w-4 h-4" />;
+    }
+  };
+
+  const getTypeColor = (type) => {
+    switch (type) {
+      case "exam":
+        return "bg-blue-100 text-blue-700 border-blue-200";
+      case "update":
+        return "bg-green-100 text-green-700 border-green-200";
+      case "reminder":
+        return "bg-orange-100 text-orange-700 border-orange-200";
+      default:
+        return "bg-gray-100 text-gray-700 border-gray-200";
     }
   };
 
@@ -155,384 +168,324 @@ const NotificationManager = () => {
     return matchesSearch && matchesType && matchesPriority;
   });
 
-  const columns = [
-    {
-      title: "Message",
-      dataIndex: "message",
-      key: "message",
-      width: "40%",
-      render: (text, record) => (
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 mt-1">
-            <Tag
-              className={`type-${record.type}`}
-              icon={getTypeIcon(record.type)}
-            >
-              {record.type.charAt(0).toUpperCase() + record.type.slice(1)}
-            </Tag>
-          </div>
-          <div className="min-w-0 flex-1">
-            <Text strong style={{ color: "#202938" }}>
-              {text}
-            </Text>
-            <div className="mt-1">
-              <Badge
-                status={record.status === "sent" ? "success" : "processing"}
-                text={
-                  record.status.charAt(0).toUpperCase() + record.status.slice(1)
-                }
-              />
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "Target",
-      dataIndex: "target",
-      key: "target",
-      width: "20%",
-      render: (text) => (
-        <div className="flex items-center gap-2">
-          {getTargetIcon(text)}
-          <span style={{ color: "#202938" }}>{text}</span>
-        </div>
-      ),
-    },
-    {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
-      width: "15%",
-      render: (text) => (
-        <div className="flex items-center gap-2">
-          <CalendarOutlined style={{ color: "#9ca3af" }} />
-          <span className="text-gray-600">{text}</span>
-        </div>
-      ),
-    },
-    {
-      title: "Priority",
-      dataIndex: "priority",
-      key: "priority",
-      width: "10%",
-      render: (priority) => (
-        <Tag color={getPriorityColor(priority)} className="font-medium">
-          {priority.charAt(0).toUpperCase() + priority.slice(1)}
-        </Tag>
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      width: "15%",
-      render: (_, record) => (
-        <Space>
-          <Tooltip title="Delete notification">
-            <Popconfirm
-              title="Delete notification"
-              description="Are you sure you want to delete this notification?"
-              icon={<ExclamationCircleOutlined style={{ color: "red" }} />}
-              onConfirm={() => deleteNotification(record.id)}
-              okText="Yes"
-              cancelText="No"
-            >
-              <Button
-                type="text"
-                danger
-                icon={<DeleteOutlined />}
-                size="small"
-              />
-            </Popconfirm>
-          </Tooltip>
-        </Space>
-      ),
-    },
-  ];
-
   const stats = [
     {
-      title: "Total Notifications",
+      title: "إجمالي الإشعارات",
       value: notifications.length,
-      icon: <BellOutlined style={{ fontSize: 24, color: "#0F7490" }} />,
-      color: "#0F7490",
+      icon: <Bell className="w-6 h-6 text-white" />,
+      gradient: "from-blue-500 to-blue-600",
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-600"
     },
     {
-      title: "High Priority",
+      title: "عالية الأولوية",
       value: notifications.filter((n) => n.priority === "high").length,
-      icon: (
-        <ExclamationCircleOutlined style={{ fontSize: 24, color: "#dc2626" }} />
-      ),
-      color: "#dc2626",
+      icon: <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center"><span className="text-red-500 text-xs font-bold">!</span></div>,
+      gradient: "from-red-500 to-red-600",
+      bgColor: "bg-red-50",
+      textColor: "text-red-600"
     },
     {
-      title: "Student Notifications",
-      value: notifications.filter((n) => n.target.includes("Students")).length,
-      icon: <UserOutlined style={{ fontSize: 24, color: "#8B5CF6" }} />,
-      color: "#8B5CF6",
+      title: "إشعارات الطلاب",
+      value: notifications.filter((n) => n.target.includes("طلاب")).length,
+      icon: <GraduationCap className="w-6 h-6 text-white" />,
+      gradient: "from-purple-500 to-purple-600",
+      bgColor: "bg-purple-50",
+      textColor: "text-purple-600"
     },
     {
-      title: "Teacher Notifications",
-      value: notifications.filter((n) => n.target.includes("Teachers")).length,
-      icon: <TeamOutlined style={{ fontSize: 24, color: "#C9AE6C" }} />,
-      color: "#C9AE6C",
+      title: "إشعارات المعلمين",
+      value: notifications.filter((n) => n.target.includes("معلمين")).length,
+      icon: <Users className="w-6 h-6 text-white" />,
+      gradient: "from-amber-500 to-amber-600",
+      bgColor: "bg-amber-50",
+      textColor: "text-amber-600"
     },
   ];
 
   return (
-    <div className="min-h-screen p-6" style={{ backgroundColor: "#F9FAFC" }}>
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50" dir="rtl">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Header with enhanced design */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div
-                className="p-3 rounded-lg"
-                style={{ backgroundColor: "#0F7490" }}
-              >
-                <BellOutlined style={{ fontSize: 24, color: "white" }} />
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+                  <Bell className="w-8 h-8 text-white" />
+                </div>
+                <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">{notifications.filter(n => n.status === 'draft').length}</span>
+                </div>
               </div>
               <div>
-                <Title level={2} style={{ color: "#202938", margin: 0 }}>
-                  Manage Notifications
-                </Title>
-                <Text type="secondary">
-                  Send and manage notifications to students and teachers
-                </Text>
+                <h1 className="text-3xl font-bold text-gray-900 mb-1">إدارة الإشعارات</h1>
+                <p className="text-gray-600 text-lg">إرسال وإدارة الإشعارات للطلاب والمعلمين</p>
               </div>
             </div>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              size="large"
-              className="custom-accent-btn"
+            <button
               onClick={() => setIsModalVisible(true)}
+              className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-blue-300 transform hover:-translate-y-0.5 transition-all duration-200"
             >
-              New Notification
-            </Button>
+              <Plus className="w-5 h-5" />
+              إشعار جديد
+            </button>
           </div>
 
-          {/* Statistics Cards */}
-          <Row gutter={[16, 16]} className="mb-6">
+          {/* Enhanced Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {stats.map((stat, index) => (
-              <Col xs={24} sm={12} lg={6} key={index}>
-                <Card className="stat-card h-full">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Text type="secondary" className="text-sm">
-                        {stat.title}
-                      </Text>
-                      <div
-                        className="text-2xl font-bold mt-1"
-                        style={{ color: stat.color }}
-                      >
-                        {stat.value}
-                      </div>
+              <div key={index} className="group hover:scale-105 transition-all duration-300">
+                <div className={`${stat.bgColor} rounded-2xl p-6 border border-white shadow-sm hover:shadow-lg transition-all duration-300`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`w-12 h-12 bg-gradient-to-r ${stat.gradient} rounded-xl flex items-center justify-center shadow-md`}>
+                      {stat.icon}
                     </div>
-                    <div className="flex-shrink-0">{stat.icon}</div>
+                    <div className={`text-3xl font-bold ${stat.textColor}`}>
+                      {stat.value}
+                    </div>
                   </div>
-                </Card>
-              </Col>
+                  <h3 className="text-gray-700 font-medium">{stat.title}</h3>
+                </div>
+              </div>
             ))}
-          </Row>
+          </div>
 
-          {/* Search and Filters */}
-          <Card className="mb-6">
-            <Row gutter={[16, 16]} align="middle">
-              <Col xs={24} md={12}>
-                <Input
-                  placeholder="Search notifications..."
-                  prefix={<SearchOutlined />}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  size="large"
-                />
-              </Col>
-              <Col xs={12} md={6}>
-                <Select
-                  placeholder="Filter by type"
-                  value={filterType}
-                  onChange={setFilterType}
-                  size="large"
-                  className="w-full"
-                  suffixIcon={<FilterOutlined />}
-                >
-                  <Option value="all">All Types</Option>
-                  <Option value="exam">Exams</Option>
-                  <Option value="update">Updates</Option>
-                  <Option value="reminder">Reminders</Option>
-                </Select>
-              </Col>
-              <Col xs={12} md={6}>
-                <Select
-                  placeholder="Filter by priority"
+          {/* Enhanced Search and Filters */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-6">
+                <div className="relative">
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="البحث في الإشعارات..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pr-12 pl-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <div className="md:col-span-3">
+                <div className="relative">
+                  <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    className="w-full pr-12 pl-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none bg-white transition-all"
+                  >
+                    <option value="all">جميع الأنواع</option>
+                    <option value="exam">امتحانات</option>
+                    <option value="update">تحديثات</option>
+                    <option value="reminder">تذكيرات</option>
+                  </select>
+                </div>
+              </div>
+              <div className="md:col-span-3">
+                <select
                   value={filterPriority}
-                  onChange={setFilterPriority}
-                  size="large"
-                  className="w-full"
+                  onChange={(e) => setFilterPriority(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none bg-white transition-all"
                 >
-                  <Option value="all">All Priorities</Option>
-                  <Option value="high">High</Option>
-                  <Option value="medium">Medium</Option>
-                  <Option value="low">Low</Option>
-                </Select>
-              </Col>
-            </Row>
-          </Card>
+                  <option value="all">جميع الأولويات</option>
+                  <option value="high">عالي</option>
+                  <option value="medium">متوسط</option>
+                  <option value="low">منخفض</option>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Notifications Table */}
-        <Card>
-          <Table
-            columns={columns}
-            dataSource={filteredNotifications}
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} of ${total} notifications`,
-            }}
-            className="notification-table"
-            locale={{
-              emptyText: (
-                <div className="text-center py-8">
-                  <BellOutlined
-                    style={{ fontSize: 48, color: "#d1d5db", marginBottom: 16 }}
-                  />
-                  <div>No notifications found</div>
+        {/* Enhanced Notifications Table */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="text-right py-4 px-6 font-semibold text-gray-700">الرسالة</th>
+                  <th className="text-right py-4 px-6 font-semibold text-gray-700">المستهدف</th>
+                  <th className="text-right py-4 px-6 font-semibold text-gray-700">التاريخ</th>
+                  <th className="text-right py-4 px-6 font-semibold text-gray-700">الأولوية</th>
+                  <th className="text-center py-4 px-6 font-semibold text-gray-700">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredNotifications.map((notification) => (
+                  <tr key={notification.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="flex items-start gap-4">
+                        <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-medium border ${getTypeColor(notification.type)}`}>
+                          {getTypeIcon(notification.type)}
+                          {notification.type === "exam" && "امتحان"}
+                          {notification.type === "update" && "تحديث"}
+                          {notification.type === "reminder" && "تذكير"}
+                        </span>
+                        <div>
+                          <p className="font-medium text-gray-900 mb-1">{notification.message}</p>
+                          <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${
+                            notification.status === "sent" 
+                              ? "bg-green-100 text-green-700" 
+                              : "bg-yellow-100 text-yellow-700"
+                          }`}>
+                            <div className={`w-2 h-2 rounded-full ${
+                              notification.status === "sent" ? "bg-green-500" : "bg-yellow-500"
+                            }`}></div>
+                            {notification.status === "sent" ? "تم الإرسال" : "مسودة"}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        {getTargetIcon(notification.target)}
+                        <span className="text-gray-700">{notification.target}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <span className="text-gray-600">{notification.date}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${getPriorityColor(notification.priority)}`}>
+                        {notification.priority === "high" && "عالي"}
+                        {notification.priority === "medium" && "متوسط"}
+                        {notification.priority === "low" && "منخفض"}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <button
+                        onClick={() => deleteNotification(notification.id)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="حذف الإشعار"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {filteredNotifications.length === 0 && (
+              <div className="text-center py-12">
+                <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg">لم يتم العثور على إشعارات</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Enhanced Modal */}
+        {isModalVisible && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <Plus className="w-5 h-5 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">إنشاء إشعار جديد</h2>
                 </div>
-              ),
-            }}
-          />
-        </Card>
+                <button 
+                  onClick={() => setIsModalVisible(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-        {/* Add Notification Modal */}
-        <Modal
-          title={
-            <div className="flex items-center gap-2">
-              <PlusOutlined style={{ color: "#8B5CF6" }} />
-              Create New Notification
+              <form onSubmit={handleAddNotification} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">نص الإشعار</label>
+                  <textarea
+                    value={newNotification.message}
+                    onChange={(e) => setNewNotification({...newNotification, message: e.target.value})}
+                    className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    rows="3"
+                    placeholder="أدخل نص الإشعار هنا..."
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">المستهدف</label>
+                  <select
+                    value={newNotification.target}
+                    onChange={(e) => setNewNotification({...newNotification, target: e.target.value})}
+                    className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none bg-white transition-all"
+                    required
+                  >
+                    <option value="">اختر المستهدف</option>
+                    <option value="جميع الطلاب">جميع الطلاب</option>
+                    <option value="طلاب الرياضيات">طلاب الرياضيات</option>
+                    <option value="طلاب الفيزياء">طلاب الفيزياء</option>
+                    <option value="جميع المعلمين">جميع المعلمين</option>
+                    <option value="معلمي الرياضيات">معلمي الرياضيات</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">نوع الإشعار</label>
+                    <select
+                      value={newNotification.type}
+                      onChange={(e) => setNewNotification({...newNotification, type: e.target.value})}
+                      className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none bg-white transition-all"
+                      required
+                    >
+                      <option value="exam">امتحان</option>
+                      <option value="update">تحديث</option>
+                      <option value="reminder">تذكير</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">الأولوية</label>
+                    <select
+                      value={newNotification.priority}
+                      onChange={(e) => setNewNotification({...newNotification, priority: e.target.value})}
+                      className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none bg-white transition-all"
+                      required
+                    >
+                      <option value="high">عالي</option>
+                      <option value="medium">متوسط</option>
+                      <option value="low">منخفض</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">التاريخ</label>
+                  <input
+                    type="date"
+                    value={newNotification.date}
+                    onChange={(e) => setNewNotification({...newNotification, date: e.target.value})}
+                    className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    required
+                  />
+                </div>
+
+                <div className="flex justify-end gap-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalVisible(false)}
+                    className="px-6 py-3 text-gray-700 bg-gray-100 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                  >
+                    إلغاء
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-blue-300 transition-all"
+                  >
+                    حفظ الإشعار
+                  </button>
+                </div>
+              </form>
             </div>
-          }
-          open={isModalVisible}
-          onCancel={() => {
-            setIsModalVisible(false);
-            form.resetFields();
-          }}
-          footer={null}
-          width={600}
-        >
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleAddNotification}
-            className="mt-4"
-          >
-            <Form.Item
-              name="message"
-              label="Notification Message"
-              rules={[
-                {
-                  required: true,
-                  message: "Please enter notification message",
-                },
-              ]}
-            >
-              <Input.TextArea
-                rows={3}
-                placeholder="Enter your notification message..."
-              />
-            </Form.Item>
-
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="target"
-                  label="Target Audience"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Please select target audience",
-                    },
-                  ]}
-                >
-                  <Select placeholder="Select target audience">
-                    <Option value="All Students">All Students</Option>
-                    <Option value="All Teachers">All Teachers</Option>
-                    <Option value="Students - Math">Students - Math</Option>
-                    <Option value="Students - Physics">
-                      Students - Physics
-                    </Option>
-                    <Option value="Students - Chemistry">
-                      Students - Chemistry
-                    </Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="date"
-                  label="Date"
-                  rules={[{ required: true, message: "Please select date" }]}
-                >
-                  <DatePicker className="w-full" />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="type"
-                  label="Type"
-                  rules={[{ required: true, message: "Please select type" }]}
-                >
-                  <Select placeholder="Select notification type">
-                    <Option value="exam">Exam</Option>
-                    <Option value="update">Update</Option>
-                    <Option value="reminder">Reminder</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="priority"
-                  label="Priority"
-                  rules={[
-                    { required: true, message: "Please select priority" },
-                  ]}
-                >
-                  <Select placeholder="Select priority">
-                    <Option value="high">High</Option>
-                    <Option value="medium">Medium</Option>
-                    <Option value="low">Low</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Form.Item className="mb-0 text-right">
-              <Space>
-                <Button
-                  onClick={() => {
-                    setIsModalVisible(false);
-                    form.resetFields();
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  className="custom-accent-btn"
-                >
-                  Create Notification
-                </Button>
-              </Space>
-            </Form.Item>
-          </Form>
-        </Modal>
+          </div>
+        )}
       </div>
     </div>
   );

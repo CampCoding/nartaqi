@@ -8,6 +8,8 @@ export default function AddCourseLevelModal({openAddStage , setOpenAddStage , sa
         open={openAddStage}
         onCancel={() => setOpenAddStage(false)}
         onOk={submitStage}
+        cancelText="إلغاء"
+        okText="إضافة"
         confirmLoading={savingStage}
         destroyOnClose
       >
