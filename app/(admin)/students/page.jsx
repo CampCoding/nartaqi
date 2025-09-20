@@ -274,9 +274,6 @@ const StudentsManagement = () => {
           subtitle={"مراجعة وإدارة طلبات المتدربين وملفاتهم"}
           extra={
             <div className="flex items-center gap-4 gap-reverse">
-              <Button type="secondary" icon={<Download className="w-4 h-4" />}>
-                تصدير
-              </Button>
               <Button
                 onClick={() => setAddNewModal(true)}
                 type="primary"

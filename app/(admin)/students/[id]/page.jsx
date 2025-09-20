@@ -417,30 +417,6 @@ export default function StudentAccountPage() {
     alert("تم حفظ بيانات الحساب بنجاح ✅");
   };
 
-  const handlePasswordChange = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const currentPassword = formData.get("currentPassword");
-    const newPassword = formData.get("newPassword");
-    const confirmPassword = formData.get("confirmPassword");
-
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      alert("من فضلك أكمل جميع الحقول");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      alert("كلمتا المرور الجديدتان غير متطابقتين");
-      return;
-    }
-    if (newPassword.length < 8) {
-      alert("كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل");
-      return;
-    }
-
-    alert("تم تغيير كلمة المرور بنجاح ✅");
-    setShowPasswordForm(false);
-    e.target.reset();
-  };
 
   const sendOtpForPhone = () => {
     if (!pendingPhone) {

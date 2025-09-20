@@ -1,13 +1,12 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { BarChart3, SaveIcon, Trash2 } from "lucide-react";
+import React, { use, useEffect, useState } from "react";
+import { BarChart3 } from "lucide-react";
 import { useParams } from "next/navigation";
 import PageLayout from "../../../../../components/layout/PageLayout";
 import BreadcrumbsShowcase from "../../../../../components/ui/BreadCrumbs";
 import PagesHeader from "../../../../../components/ui/PagesHeader";
 import ExamMainData from "../../../../../components/Questions/ExamMainData";
-import Card from "../../../../../components/Questions/ExamCard";
-import Button from "../../../../../components/atoms/Button";
+import exams from "../../../../../data/exams";
 
 const breadcrumbs = [
   { label: "الرئيسية", href: "/", icon: BarChart3 },
@@ -23,22 +22,23 @@ export default function page() {
   });
   const params = useParams();
   const [activeTab, setActiveTab] = useState("info"); // "info" or "questions"
+  const [rowData , setRowData] = useState({});
 
   // Fetch the exam data if editing
   useEffect(() => {
     if (params["exam-id"]) {
-      // Simulate fetching exam data for editing, e.g., from an API or global state
-      const fetchedExamData = {
-        name: "Mock Exam",
-        duration: "60",
-        type: "mock",
-        sections: [
-          /* existing sections data */
-        ],
-      };
-      setExamData(fetchedExamData);
+      console.log(exams?.find(item => item?.id == params["exam-id"]))
+      setRowData(exams?.find(item => item?.id == params["exam-id"]))
     }
   }, [params["exam-id"]]);
+
+  useEffect(() => {
+    setExamData(rowData)
+  } , [rowData])
+
+  useEffect(() => {
+    console.log(examData)
+  } , [examData])
 
   const handleAddExam = () => {
     console.log(examData);

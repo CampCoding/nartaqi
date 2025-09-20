@@ -25,9 +25,9 @@ export default function AddCourseLessonModal({openAddLesson,VIDEO_SOURCES,before
     >
       <Form.Item label="الإضافة إلى" name="stageMode" rules={[{ required: true }]}>
         <Radio.Group>
-          <Radio value="new">مرحلة جديدة</Radio>
+          <Radio value="new">قسم جديد</Radio>
           <Radio value="exist" disabled={foundationStages.length === 0}>
-            مرحلة موجودة
+            قسم موجود 
           </Radio>
         </Radio.Group>
       </Form.Item>
@@ -36,20 +36,20 @@ export default function AddCourseLessonModal({openAddLesson,VIDEO_SOURCES,before
         {({ getFieldValue }) =>
           getFieldValue("stageMode") === "new" ? (
             <Form.Item
-              label="اسم المرحلة الجديدة"
+              label="اسم القسم الجديد"
               name="stageTitle"
-              rules={[{ required: true, message: "أدخل اسم المرحلة" }]}
+              rules={[{ required: true, message: "أدخل اسم القسم" }]}
             >
-              <Input placeholder="مثال: مرحلة المهارات الأساسية" />
+              <Input placeholder="مثال: قسم المهارات الأساسية" />
             </Form.Item>
           ) : (
             <Form.Item
-              label="اختر المرحلة"
+              label="اختر القسم"
               name="stageId"
-              rules={[{ required: true, message: "اختر المرحلة" }]}
+              rules={[{ required: true, message: "اختر القسم" }]}
             >
               <Select
-                placeholder="اختيار مرحلة"
+                placeholder="اختيار قسم"
                 options={(foundationStages || []).map((s) => ({
                   value: s.id,
                   label: s.title,
@@ -60,12 +60,12 @@ export default function AddCourseLessonModal({openAddLesson,VIDEO_SOURCES,before
         }
       </Form.Item>
 
-      <Divider>بيانات القسم</Divider>
+      <Divider>بيانات المحاضرة</Divider>
 
       <Form.Item
-        label="اسم القسم"
+        label="اسم المحاضرة"
         name="title"
-        rules={[{ required: true, message: "أدخل اسم القسم" }]}
+        rules={[{ required: true, message: "أدخل اسم المحاضرة" }]}
       >
         <Input placeholder="مثال: الحروف والأصوات" />
       </Form.Item>

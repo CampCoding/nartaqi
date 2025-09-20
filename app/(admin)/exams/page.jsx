@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Plus,
   BookOpen,
@@ -31,6 +31,7 @@ import { Modal, Select, Input, DatePicker } from "antd";
 import CustomModal from "../../../components/layout/Modal";
 import PageLayout from "../../../components/layout/PageLayout";
 import ExamCard from "../../../components/ui/Cards/QuestionCard";
+import exams from "../../../data/exams";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -52,91 +53,13 @@ const TopicExams = () => {
   const [selectedExam, setSelectedExam] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  const exams = [
-    {
-      id: 1,
-      type: "intern",
-      title: "اختبار الرياضيات الشامل",
-      description: "اختبار شامل يغطي جميع موضوعات الجبر والهندسة للفصل الدراسي الأول",
-      status: "active",
-      difficulty: "Medium",
-      questionsCount: 25,
-      duration: 90,
-      totalMarks: 100,
-      participantsCount: 45,
-      subjects: ["الجبر", "الهندسة"],
-      createdAt: "2024-08-01",
-      lastModified: "2024-08-15",
-      startDate: "2024-09-01",
-      endDate: "2024-09-30",
-      creator: "أحمد محمد",
-      attempts: 128,
-      averageScore: 78.5,
-    },
-    {
-      type: "intern",
-      id: 2,
-      title: "اختبار التاريخ المعاصر",
-      description: "اختبار حول أحداث القرن العشرين والتطورات السياسية الحديثة",
-      status: "draft",
-      difficulty: "Hard",
-      questionsCount: 30,
-      duration: 120,
-      totalMarks: 150,
-      participantsCount: 0,
-      subjects: ["التاريخ المعاصر"],
-      createdAt: "2024-07-28",
-      lastModified: "2024-08-10",
-      startDate: "2024-10-01",
-      endDate: "2024-10-31",
-      creator: "فاطمة أحمد",
-      attempts: 0,
-      averageScore: 0,
-    },
-    {
-      id: 3,
-      title: "اختبار العلوم الطبيعية",
-      description: "اختبار في الفيزياء والكيمياء يركز على المفاهيم الأساسية والتطبيقات العملية",
-      status: "completed",
-      difficulty: "Easy",
-      questionsCount: 20,
-      duration: 60,
-      totalMarks: 80,
-      participantsCount: 67,
-      subjects: ["الفيزياء", "الكيمياء"],
-      createdAt: "2024-07-15",
-      lastModified: "2024-07-20",
-      startDate: "2024-07-20",
-      endDate: "2024-08-20",
-      creator: "خالد عبدالله",
-      attempts: 189,
-      type: "mock",
-      averageScore: 82.3,
-    },
-    {
-      type: "mock",
-      id: 4,
-      title: "اختبار اللغة العربية",
-      description: "اختبار شامل في النحو والصرف والأدب العربي الكلاسيكي والحديث",
-      status: "expired",
-      difficulty: "Hard",
-      questionsCount: 35,
-      duration: 150,
-      totalMarks: 120,
-      participantsCount: 23,
-      subjects: ["النحو", "الأدب"],
-      createdAt: "2024-06-01",
-      lastModified: "2024-06-05",
-      startDate: "2024-06-10",
-      endDate: "2024-07-10",
-      creator: "مريم سالم",
-      attempts: 76,
-      averageScore: 65.8,
-    },
-  ];
 
   const [deleteModal, setDeleteModal] = useState(false);
   const [prevModal, setPrevModal] = useState(false);
+   
+  useEffect(() => {
+    console.log(exams);
+  } , [exams])
 
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },

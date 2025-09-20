@@ -200,32 +200,6 @@ const TopicExams = () => {
         <PagesHeader
           extra={
             <div className="flex gap-4 items-center">
-              {/* Stats Cards */}
-              {/* <div className="hidden lg:flex items-center gap-4">
-                <div className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl px-4 py-3 border border-blue-100">
-                  <BookOpen className="w-5 h-5 text-blue-600" />
-                  <div className="text-right">
-                    <p className="text-xs text-blue-600 font-medium">إجمالي الاختبارات</p>
-                    <p className="text-lg font-bold text-blue-700">{stats.total}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl px-4 py-3 border border-green-100">
-                  <Play className="w-5 h-5 text-green-600" />
-                  <div className="text-right">
-                    <p className="text-xs text-green-600 font-medium">نشط</p>
-                    <p className="text-lg font-bold text-green-700">{stats.active}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl px-4 py-3 border border-yellow-100">
-                  <Pause className="w-5 h-5 text-yellow-600" />
-                  <div className="text-right">
-                    <p className="text-xs text-yellow-600 font-medium">مسودة</p>
-                    <p className="text-lg font-bold text-yellow-700">{stats.draft}</p>
-                  </div>
-                </div>
-              </div> */}
             </div>
           }
           title="الاختبارات"

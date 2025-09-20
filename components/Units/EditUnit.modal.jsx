@@ -300,7 +300,7 @@ function EditUnitForm({ open, onCancel, onSubmit, unit, subjects }) {
                   </Button>
                   <Button
                     type="primary"
-                    htmlType="submit"
+                    htmltype="submit"
                     loading={loading}
                     className="px-8 py-3 bg-primary text-white rounded-lg hover:!bg-[#0d5f75]"
                     icon={!loading ? <SettingOutlined /> : undefined}

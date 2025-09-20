@@ -129,7 +129,7 @@ export default function EditTeamModal({ open, setOpen, rowData, setRowData }) {
                 <Button
                   type="primary"
                   className="!bg-primary  !text-white"
-                  htmlType="submit"
+                  htmltype="submit"
                 >
                   إضافة الفريق
                 </Button>

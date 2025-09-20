@@ -75,7 +75,7 @@ export default function AddCategoryModal({visible,
         <Button type="secondary" onClick={handleCancel}>
           إلغاء
         </Button>
-        <Button type="primary" htmlType="submit" loading={confirmLoading}>
+        <Button type="primary" htmltype="submit" loading={confirmLoading}>
           حفظ
         </Button>
       </div>

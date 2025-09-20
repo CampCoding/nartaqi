@@ -330,7 +330,9 @@ export default function AddCourseBasicInfo({
               name="instructor"
               rules={[{ required: true, message: "اختر المدربين" }]}
             >
-              <Dragger {...props}>
+              <Dragger 
+              multiple
+              {...props}>
                 <p className="ant-upload-drag-icon">
                   <InboxOutlined />
                 </p>

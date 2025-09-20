@@ -801,7 +801,7 @@ export default function page() {
               </Button>
               <Button
                 type="primary"
-                htmlType="submit"
+                htmltype="submit"
                 icon={<Save className="w-4 h-4" />}
               >
                 حفظ
@@ -875,7 +875,7 @@ export default function page() {
               </Button>
               <Button
                 type="primary"
-                htmlType="submit"
+                htmltype="submit"
                 icon={<Save className="w-4 h-4" />}
               >
                 حفظ

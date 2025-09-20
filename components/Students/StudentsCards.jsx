@@ -305,7 +305,7 @@ function AddStudentModal({ open, setOpen }) {
               <Button 
                 type="primary" 
                 className="!bg-primary !text-white" 
-                htmlType="submit"
+                htmltype="submit"
               >
                 إضافة الطالب
               </Button>

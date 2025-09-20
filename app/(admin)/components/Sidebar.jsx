@@ -23,6 +23,8 @@ import {
   Headset,
   BookCopy,
   Files,
+  Award,
+  Trophy,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -121,6 +123,16 @@ export default function Sidebar() {
       path : "/book-store"
     },
     {
+      name:"المسابقات",
+      icon:Award,
+      path:'/competitions'
+    },
+    {
+      name:"المكافآت",
+      icon : Trophy ,
+      path:"/rewards"
+    },
+    {
       name:"فريق العمل",
       icon:Users2  ,
       path:"/teams"
@@ -167,7 +179,7 @@ export default function Sidebar() {
       badge:"",
       path :"/privacy-policy"
     },
-    { name: "الإعدادات", icon: Settings, path: "/settings" },
+    { name: "الموقع", icon: Settings, path: "/settings" },
   ];
 
   useEffect(() => {

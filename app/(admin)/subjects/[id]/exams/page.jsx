@@ -616,7 +616,7 @@ const ExamManager = () => {
               </Button>
               <Button
                 type="primary"
-                htmlType="submit"
+                htmltype="submit"
                 className="h-10 px-6 font-medium"
                 style={{
                   backgroundColor: "#0F7490",

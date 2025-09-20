@@ -646,7 +646,7 @@ const AddTeacherCourseForm = ({ open, setOpen }) => {
                     </Button>
                     <Button
                       type="primary"
-                      htmlType="submit"
+                      htmltype="submit"
                       onClick={() => setOpen(false)}
                       loading={loading}
                       className="px-8 py-3 bg-[#0F7490] text-white rounded-lg hover:!bg-[#0d5f75]"

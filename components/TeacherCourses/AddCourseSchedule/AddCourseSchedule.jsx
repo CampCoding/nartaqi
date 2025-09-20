@@ -126,7 +126,7 @@ const CourseScheduleCard = ({ schedule, onUpdate, onRemove, index }) => {
             <Button size="small" onClick={() => setIsEditing(false)}>
               إلغاء
             </Button>
-            <Button size="small" type="primary" htmlType="submit">
+            <Button size="small" type="primary" htmltype="submit">
               حفظ
             </Button>
           </div>

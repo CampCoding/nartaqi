@@ -454,7 +454,7 @@ function EditTeacherModal({
                     </Button>
                     <Button
                       type="primary"
-                      htmlType="submit"
+                      htmltype="submit"
                       loading={loading}
                       icon={<SaveOutlined />}
                       className="px-8 py-3 bg-primary text-white rounded-lg hover:!bg-[#0d5f75]"

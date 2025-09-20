@@ -114,7 +114,7 @@ export default function AddTeamModal({ open, setOpen }) {
 
 
               <Form.Item>
-                <Button type="primary" className='!bg-primary  !text-white' htmlType="submit" >
+                <Button type="primary" className='!bg-primary  !text-white' htmltype="submit" >
                   إضافة الفريق
                 </Button>
               </Form.Item>

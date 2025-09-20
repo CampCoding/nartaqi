@@ -43,3 +43,7 @@
 .PhoneInputInput {
   padding: 0px 10px ;
 }
+
+.ant-tabs-nav-list {
+  gap:15px !important;
+}

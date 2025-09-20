@@ -622,7 +622,7 @@ const Page = () => {
                     التالي
                   </Button>
                 ) : (
-                  <Button type="primary" size="large" htmlType="submit" loading={loading} className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800" icon={<SaveOutlined />}>
+                  <Button type="primary" size="large" htmltype="submit" loading={loading} className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800" icon={<SaveOutlined />}>
                     حفظ التغييرات
                   </Button>
                 )}
