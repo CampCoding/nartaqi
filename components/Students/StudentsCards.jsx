@@ -307,7 +307,7 @@ function AddStudentModal({ open, setOpen }) {
                 className="!bg-primary !text-white" 
                 htmltype="submit"
               >
-                إضافة الطالب
+                إضافة المتدرب
               </Button>
             </Form.Item>
           </Form>
@@ -400,7 +400,7 @@ export default function StudentManagementDemo() {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">إدارة الطلاب</h1>
+          <h1 className="text-3xl font-bold text-gray-800">إدارة المتدربين</h1>
           <Button 
             type="primary" 
             icon={<PlusOutlined />} 

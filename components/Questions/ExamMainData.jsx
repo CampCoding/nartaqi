@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useState } from "react";
 import { PlusIcon, Edit3, BookOpen, Save, X } from "lucide-react";
 import QuestionStats from "./QuestionStats";
 import Card from "./ExamCard";
-import Input from "./ExamInput";
 import ExamMainInfo from "./ExamMainInfo";
 import QuestionSections from "./QuestionSections";
 import TrueFalseQuestions from "./TrueFalseQuestions";
@@ -13,6 +12,10 @@ import DisplayQuestions from "./DisplayQuestions";
 import QuestionTypeSelector from "./QuestionTypeSelector";
 import McqSharedPassageEditor from "./McqQuestions";
 import { colorMap, exam_types, mock_exam_section_Data, questionTypes } from "./utils";
+import dynamic from "next/dynamic";
+
+// SSR-safe import for Next.js
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 /* ================= Button (robust icon) ================= */
 const Button = ({
@@ -116,7 +119,10 @@ export default function ExamMainData({ examData: editExamData }) {
   const onAddSection = (section) => {
     const isAdded = examData?.sections.some((s) => s.id === section.id);
     if (isAdded) return;
-    const newSection = { ...section, questions: [] };
+
+    // Ensure the section has an empty questions array
+    const newSection = { ...section, questions: section.questions || [] };
+
     setExamData((prev) => ({ ...prev, sections: [...prev.sections, newSection] }));
   };
 
@@ -363,22 +369,26 @@ export default function ExamMainData({ examData: editExamData }) {
               {/* Section Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">اختر القسم لإضافة السؤال</label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {examData.sections.map((section) => (
-                    <button
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {examData.sections.map((section) => {
+                    console.log(section)
+                    return (
+                      <button
                       key={section.id}
                       onClick={() => setSelectedSectionId(section.id)}
                       className={`p-4 rounded-lg border-2 text-right transition-all duration-200 ${selectedSectionId === section.id ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium">{section.name}</h4>
+                          <h4 dangerouslySetInnerHTML={{__html : section?.name}} className="font-medium"></h4>
+                          <p dangerouslySetInnerHTML={{__html : section?.desc}}/>
                           <p className="text-xs text-gray-500 mt-1">{getQuestionsCount(section.id)} / {examData.type === "mock" ? "24" : "∞"}</p>
                         </div>
                         <div className={`w-4 h-4 rounded-full border-2 ${selectedSectionId === section.id ? "border-blue-500 bg-blue-500" : "border-gray-300"}`} />
                       </div>
                     </button>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
 
@@ -397,7 +407,23 @@ export default function ExamMainData({ examData: editExamData }) {
                   {/* General MCQ with explanations */}
                   {mcqSubType === "general" ? (
                     <div className="space-y-4">
-                      <Input label="السؤال" placeholder="أدخل نص السؤال هنا" value={currentQuestion} onChange={(e) => setCurrentQuestion(e.target.value)} />
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">السؤال</label>
+                        <ReactQuill
+                          value={currentQuestion}
+                          onChange={(value) => setCurrentQuestion(value)}
+                          modules={{
+                            toolbar: [
+                              [{ header: [1, 2, false] }],
+                              ["bold", "italic", "underline", "strike"],
+                              [{ list: "ordered" }, { list: "bullet" }],
+                              [{ direction: "rtl" }, { align: [] }],
+                              ["link", "clean"],
+                            ],
+                          }}
+                          formats={["header", "bold", "italic", "underline", "strike", "list", "bullet", "direction", "align", "link"]}
+                        />
+                      </div>
 
                       <div className="space-y-3">
                         <label className="block text-sm font-medium text-gray-700">خيارات الإجابة (مع الشرح)</label>
@@ -405,23 +431,37 @@ export default function ExamMainData({ examData: editExamData }) {
                           <div key={index} className="border rounded-md p-3 bg-white space-y-2">
                             <div className="flex items-center gap-2">
                               <input type="radio" checked={mcqCorrectAnswer === index} onChange={() => setMcqCorrectAnswer(index)} className="h-4 w-4 text-blue-600 focus:ring-blue-500" />
-                              <input
-                                type="text"
+                              <ReactQuill
                                 value={option.text}
-                                onChange={(e) => updateMcqOption(index, "text", e.target.value)}
-                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder={`الخيار ${index + 1}`}
+                                onChange={(value) => updateMcqOption(index, "text", value)}
+                                modules={{
+                                  toolbar: [
+                                    [{ header: [1, 2, false] }],
+                                    ["bold", "italic", "underline", "strike"],
+                                    [{ list: "ordered" }, { list: "bullet" }],
+                                    [{ direction: "rtl" }, { align: [] }],
+                                    ["link", "clean"],
+                                  ],
+                                }}
+                                formats={["header", "bold", "italic", "underline", "strike", "list", "bullet", "direction", "align", "link"]}
                               />
                               {mcqOptions.length > 2 && (
                                 <button type="button" onClick={() => removeMcqOption(index)} className="p-2 text-red-600 hover:text-red-800">✕</button>
                               )}
                             </div>
-                            <textarea
+                            <ReactQuill
                               value={option.explanation}
-                              onChange={(e) => updateMcqOption(index, "explanation", e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              rows={2}
-                              placeholder="اكتب شرح هذا الاختيار (لماذا هو صحيح/خاطئ)"
+                              onChange={(value) => updateMcqOption(index, "explanation", value)}
+                              modules={{
+                                toolbar: [
+                                  [{ header: [1, 2, false] }],
+                                  ["bold", "italic", "underline", "strike"],
+                                  [{ list: "ordered" }, { list: "bullet" }],
+                                  [{ direction: "rtl" }, { align: [] }],
+                                  ["link", "clean"],
+                                ],
+                              }}
+                              formats={["header", "bold", "italic", "underline", "strike", "list", "bullet", "direction", "align", "link"]}
                             />
                           </div>
                         ))}
@@ -442,8 +482,24 @@ export default function ExamMainData({ examData: editExamData }) {
 
               {/* Non-MCQ question's prompt */}
               {questionType !== "mcq" && (
-                <Input label="السؤال" placeholder="أدخل نص السؤال هنا" value={currentQuestion} onChange={(e) => setCurrentQuestion(e.target.value)} />)
-              }
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">السؤال</label>
+                  <ReactQuill
+                    value={currentQuestion}
+                    onChange={(value) => setCurrentQuestion(value)}
+                    modules={{
+                      toolbar: [
+                        [{ header: [1, 2, false] }],
+                        ["bold", "italic", "underline", "strike"],
+                        [{ list: "ordered" }, { list: "bullet" }],
+                        [{ direction: "rtl" }, { align: [] }],
+                        ["link", "clean"],
+                      ],
+                    }}
+                    formats={["header", "bold", "italic", "underline", "strike", "list", "bullet", "direction", "align", "link"]}
+                  />
+                </div>
+              )}
 
               {questionType === "trueFalse" && (
                 <TrueFalseQuestions setTrueFalseAnswer={setTrueFalseAnswer} setTrueFalseExplanation={setTrueFalseExplanation} trueFalseAnswer={trueFalseAnswer} trueFalseExplanation={trueFalseExplanation} />

@@ -19,7 +19,7 @@ const NotificationManager = () => {
       key: "1",
       id: 1,
       message: "تم نشر امتحان جديد: أساسيات الجبر",
-      target: "جميع الطلاب",
+      target: "جميع المتدربين",
       date: "2025-07-28",
       type: "exam",
       priority: "high",
@@ -59,7 +59,7 @@ const NotificationManager = () => {
       key: "5",
       id: 5,
       message: "موعد تسليم المشروع: نهاية الأسبوع",
-      target: "جميع الطلاب",
+      target: "جميع المتدربين",
       date: "2025-07-23",
       type: "reminder",
       priority: "high",
@@ -186,7 +186,7 @@ const NotificationManager = () => {
       textColor: "text-red-600"
     },
     {
-      title: "إشعارات الطلاب",
+      title: "إشعارات المتدربين",
       value: notifications.filter((n) => n.target.includes("طلاب")).length,
       icon: <GraduationCap className="w-6 h-6 text-white" />,
       gradient: "from-purple-500 to-purple-600",
@@ -418,7 +418,7 @@ const NotificationManager = () => {
                     required
                   >
                     <option value="">اختر المستهدف</option>
-                    <option value="جميع الطلاب">جميع الطلاب</option>
+                    <option value="جميع المتدربين">جميع المتدربين</option>
                     <option value="طلاب الرياضيات">طلاب الرياضيات</option>
                     <option value="طلاب الفيزياء">طلاب الفيزياء</option>
                     <option value="جميع المعلمين">جميع المعلمين</option>

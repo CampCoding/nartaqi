@@ -21,7 +21,7 @@ const SubjectsStats = ({ subjects }) => {
         value={subjects.length}
         label={"إجمالي المواد"}
       />
-      <StatsCard icon={Users} value={totalStudents} label={"إجمالي الطلاب"} />
+      <StatsCard icon={Users} value={totalStudents} label={"إجمالي المتدربين"} />
       <StatsCard
         icon={FileText}
         value={totalQuestions}

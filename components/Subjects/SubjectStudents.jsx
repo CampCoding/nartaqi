@@ -111,7 +111,7 @@ export default function SubjectStudentsSection({
       const worksheet = XLSX.utils.json_to_sheet(worksheetData);
       
       // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, "الطلاب");
+      XLSX.utils.book_append_sheet(workbook, worksheet, "المتدربين");
       
       // Generate file name with timestamp
       const fileName = `طلاب_${subjectName}_${new Date().toISOString().split('T')[0]}.xlsx`;
@@ -131,7 +131,7 @@ export default function SubjectStudentsSection({
 
   const columns = [
     {
-      title: "الطالب",
+      title: "المتدرب",
       dataIndex: "name",
       key: "name",
       width: 280,
@@ -192,7 +192,7 @@ export default function SubjectStudentsSection({
     <div className="bg-white rounded-xl w-full border border-gray-200 p-4 md:p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl md:text-2xl font-bold text-[#202938] flex items-center gap-2">
-          <Users /> الطلاب المشتركين في الدورة
+          <Users /> المتدربين المشتركين في الدورة
         </h2>
         
         <Space>
@@ -201,13 +201,13 @@ export default function SubjectStudentsSection({
               items: [
                 {
                   key: 'export-all',
-                  label: 'تصدير جميع الطلاب',
+                  label: 'تصدير جميع المتدربين',
                   icon: <ExportOutlined />,
                   onClick: () => handleExport(true)
                 },
                 {
                   key: 'export-filtered',
-                  label: `تصدير الطلاب المصفى (${filtered.length})`,
+                  label: `تصدير المتدربين المصفى (${filtered.length})`,
                   icon: <FilterOutlined />,
                   onClick: () => handleExport(false),
                   disabled: filtered.length === 0

@@ -1,14 +1,28 @@
-import React from 'react'
-import TextArea from './ExamTextarea'
+import React from "react";
+import dynamic from "next/dynamic";
 
-export default function EssayQuestions({modalAnswer , setModalAnswer}) {
+// SSR-safe import for ReactQuill
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+
+export default function EssayQuestions({ modalAnswer, setModalAnswer }) {
   return (
-     <TextArea
-                      label="الإجابة النموذجية"
-                      placeholder="أدخل الإجابة النموذجية هنا..."
-                      rows={4}
-                      value={modalAnswer}
-                      onChange={(e) => setModalAnswer(e.target.value)}
-                    />
-  )
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">الإجابة النموذجية</label>
+      <ReactQuill
+        value={modalAnswer}
+        onChange={(value) => setModalAnswer(value)}
+        modules={{
+          toolbar: [
+            [{ header: [1, 2, false] }],
+            ["bold", "italic", "underline", "strike"],
+            [{ list: "ordered" }, { list: "bullet" }],
+            [{ direction: "rtl" }, { align: [] }],
+            ["link", "clean"],
+          ],
+        }}
+        formats={["header", "bold", "italic", "underline", "strike", "list", "bullet", "direction", "align", "link"]}
+        placeholder="أدخل الإجابة النموذجية هنا..."
+      />
+    </div>
+  );
 }

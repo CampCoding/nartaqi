@@ -32,7 +32,7 @@ export default function StudentData({
           <div className="relative inline-block mb-6">
             <img
               src={getAvatarUrl()}
-              alt="صورة الطالب"
+              alt="صورة المتدرب"
               className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-xl"
             />
             {isEditing && (
@@ -217,28 +217,6 @@ export default function StudentData({
               >
                 <option value="ذكر">ذكر</option>
                 <option value="أنثى">أنثى</option>
-              </select>
-            </div>
-
-            {/* Role */}
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                نوع الحساب *
-              </label>
-              <select
-                value={student.role || 'student'}
-                onChange={(e) =>
-                  setStudent((prev) => ({ ...prev, role: e.target.value }))
-                }
-                disabled={!isEditing}
-                className={`w-full rounded-lg border px-4 py-3 transition-all duration-300 ${
-                  isEditing
-                    ? "border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white"
-                    : "border-gray-200 bg-transparent text-gray-600"
-                }`}
-              >
-                <option value="student">طالب</option>
-                <option value="lecturer">محاضر</option>
               </select>
             </div>
 

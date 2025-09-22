@@ -157,7 +157,7 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
       setStudents((prev) =>
         prev.map((s) => (s.id === studentId ? { ...s, status: newStatus } : s))
       );
-      message.success(`تم تغيير حالة الطالب إلى: ${statusLabelAr(newStatus)} بنجاح`);
+      message.success(`تم تغيير حالة المتدرب إلى: ${statusLabelAr(newStatus)} بنجاح`);
       setLoading(false);
     }, 400);
   };
@@ -192,7 +192,7 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
   const getColumns = () => {
     const baseColumns = [
       {
-        title: "الطالب",
+        title: "المتدرب",
         dataIndex: "name",
         key: "name",
         fixed: screens.xs ? "left" : false,
@@ -373,7 +373,7 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
 
       {/* Student Detail Modal */}
       <Modal
-        title="تفاصيل الطالب"
+        title="تفاصيل المتدرب"
         open={viewModalVisible}
         onCancel={() => setViewModalVisible(false)}
         footer={[

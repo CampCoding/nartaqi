@@ -485,25 +485,7 @@ function AddStudentModal({
                       />
                     </Form.Item>
 
-                    {/* نوع الحساب */}
-                    <Form.Item
-                      name="role"
-                      label={
-                        <span className="text-gray-700 font-semibold flex items-center gap-2">
-                          <TeamOutlined className="text-indigo-600" />
-                          نوع الحساب *
-                        </span>
-                      }
-                      rules={[{ required: true, message: "اختر نوع الحساب" }]}
-                    >
-                      <Select
-                        placeholder="طالب أو معلم"
-                        options={[
-                          { label: "طالب", value: "student" },
-                          { label: "معلم", value: "lecturer" },
-                        ]}
-                      />
-                    </Form.Item>
+              
                   </div>
 
                   {/* روابط السوشيال (تظهر فقط إذا كان محاضر) */}

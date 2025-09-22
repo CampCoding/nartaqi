@@ -1,6 +1,9 @@
 import React from "react";
-import Input from "./ExamInput";
+import dynamic from "next/dynamic";
 import Button from "../atoms/Button";
+
+// SSR-safe import for ReactQuill
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 export default function TrueFalseQuestions({
   trueFalseExplanation,
@@ -14,26 +17,39 @@ export default function TrueFalseQuestions({
         الإجابة الصحيحة
       </label>
       <div className="grid grid-cols-2 gap-3">
-        <Button 
-        className={`${trueFalseAnswer ? "!bg-green-600 text-white" : ""}`}
+        <Button
+          className={`${trueFalseAnswer ? "!bg-green-600 text-white" : ""}`}
           variant={trueFalseAnswer === true ? "success" : "outline"}
           onClick={() => setTrueFalseAnswer(true)}
         >
           صحيح
         </Button>
         <Button
-         className={`${trueFalseAnswer ? "" : "!bg-red-500 text-white"}`}
+          className={`${trueFalseAnswer ? "" : "!bg-red-500 text-white"}`}
           variant={trueFalseAnswer === false ? "danger" : "outline"}
           onClick={() => setTrueFalseAnswer(false)}
         >
           خطأ
         </Button>
       </div>
-      <Input
-        label="شرح الإجابة (اختياري)"
-        placeholder="أدخل شرح الإجابة"
+
+      <label className="block text-sm font-medium text-gray-700 mt-4">
+        شرح الإجابة (اختياري)
+      </label>
+      <ReactQuill
         value={trueFalseExplanation}
-        onChange={(e) => setTrueFalseExplanation(e.target.value)}
+        onChange={(value) => setTrueFalseExplanation(value)}
+        modules={{
+          toolbar: [
+            [{ header: [1, 2, false] }],
+            ["bold", "italic", "underline", "strike"],
+            [{ list: "ordered" }, { list: "bullet" }],
+            [{ direction: "rtl" }, { align: [] }],
+            ["link", "clean"],
+          ],
+        }}
+        formats={["header", "bold", "italic", "underline", "strike", "list", "bullet", "direction", "align", "link"]}
+        placeholder="أدخل شرح الإجابة"
       />
     </div>
   );

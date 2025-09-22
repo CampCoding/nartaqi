@@ -234,7 +234,7 @@ const StudentsManagement = () => {
 
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
-    { label: "الطلاب", href: "/students", icon: Users, current: true },
+    { label: "المتدربين", href: "/students", icon: Users, current: true },
   ];
 
   // Pretty role tab button

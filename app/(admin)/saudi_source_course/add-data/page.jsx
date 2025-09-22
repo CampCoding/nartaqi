@@ -484,7 +484,7 @@ function CourseContentTab({ regionLabel = "السعودية" }) {
                     name="rName"
                     rules={[{ required: true, message: "أدخل اسم المصدر" }]}
                   >
-                    <Input placeholder="مثال: دليل الطالب" />
+                    <Input placeholder="مثال: دليل المتدرب" />
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
@@ -871,7 +871,7 @@ function CourseContentTab({ regionLabel = "السعودية" }) {
       >
         <Form form={resourceForm} layout="vertical" initialValues={{ visible: true }}>
           <Form.Item label="اسم المصدر" name="name" rules={[{ required: true, message: "أدخل اسم المصدر" }]}>
-            <Input placeholder="مثال: دليل الطالب" />
+            <Input placeholder="مثال: دليل المتدرب" />
           </Form.Item>
 
           <Form.Item

@@ -225,7 +225,7 @@ const SubjectsManagementPage = () => {
 
         {/* Header */}
         <PagesHeader
-          title={"إدارة دورات الطلاب"}
+          title={"إدارة دورات المتدربين"}
           subtitle={"نظّم وأدر موادك التعليمية"}
           extra={
             <div className="flex items-center gap-4 gap-reverse">

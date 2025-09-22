@@ -20,7 +20,7 @@ const DeleteStudentModal = ({ open, setOpen, rowData }) => {
     <CustomModal
       isOpen={!!open}
       onClose={() => setOpen(false)}
-      title="حذف الطالب"
+      title="حذف المتدرب"
       size="sm"
     >
       <div className="space-y-4">
@@ -35,7 +35,7 @@ const DeleteStudentModal = ({ open, setOpen, rowData }) => {
         </div>
 
         <div className="p-4 bg-gray-50 rounded-lg">
-          <p className="text-sm text-gray-600 mb-2">الطالب الذي سيتم حذفه:</p>
+          <p className="text-sm text-gray-600 mb-2">المتدرب الذي سيتم حذفه:</p>
           <p className="font-medium text-[#202938]">{rowData?.title}</p>
         </div>
 
@@ -57,7 +57,7 @@ const DeleteStudentModal = ({ open, setOpen, rowData }) => {
               "جاري الحذف..."
             ) : (
               <>
-                <Trash2 className="w-4 h-4" /> حذف الطالب
+                <Trash2 className="w-4 h-4" /> حذف المتدرب
               </>
             )}
           </button>

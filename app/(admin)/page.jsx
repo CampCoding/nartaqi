@@ -26,7 +26,7 @@ const Dashboard = () => {
   const menuItems = [
     { name: "نظرة عامة", icon: BarChart3 },
     { name: "المدربين", icon: Users },
-    { name: "الطلاب", icon: GraduationCap },
+    { name: "المتدربين", icon: GraduationCap },
     { name: "الأسئلة", icon: HelpCircle },
     { name: "الامتحانات", icon: FileText },
     { name: "الإشعارات", icon: Bell, badge: notifications },
@@ -66,7 +66,7 @@ const Dashboard = () => {
     },
     {
       id: 4,
-      title: "عدد الطلاب في الدورات النشطة",
+      title: "عدد المتدربين في الدورات النشطة",
       value: "24",
       icon: GraduationCap,
       color: "text-[#0F7490]",
@@ -80,7 +80,7 @@ const Dashboard = () => {
     { action: "تم تسجيل مدرب جديد", time: "منذ ساعتين", type: "user" },
     { action: 'تم إنشاء امتحان "الرياضيات النهائي"', time: "منذ 4 ساعات", type: "exam" },
     { action: "تمت إضافة 15 سؤال جديد", time: "منذ يوم", type: "question" },
-    { action: "تم إنشاء تقرير أداء الطلاب", time: "منذ يومين", type: "report" },
+    { action: "تم إنشاء تقرير أداء المتدربين", time: "منذ يومين", type: "report" },
   ];
 
   return (

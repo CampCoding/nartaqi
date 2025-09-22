@@ -145,7 +145,7 @@ export default function page() {
       width: 180,
     },
     {
-      title: "الطلاب",
+      title: "المتدربين",
       dataIndex: "students",
       key: "students",
       width: 100,

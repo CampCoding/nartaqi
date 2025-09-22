@@ -1,6 +1,10 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { PlusIcon, Trash2 } from "lucide-react";
+import dynamic from "next/dynamic";
+
+// SSR-safe import for ReactQuill
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 /* ===================== MathLive Wrapper ===================== */
 function MathFieldInput({
@@ -289,7 +293,7 @@ export default function McqSharedPassageEditor({
             </label>
 
             {isChemical ? (
-              // نُبقي MathLive فقط على مستوى وصف المجموعة (اختياري)
+              // Use MathLive for chemical equations
               <MathFieldInput
                 value={p.content}
                 onChange={(latex) => updatePassageContent(p.id, latex)}
@@ -297,16 +301,20 @@ export default function McqSharedPassageEditor({
                 options={{ virtualKeyboardMode: "manual" }}
               />
             ) : (
-              <textarea
+              <ReactQuill
                 value={p.content}
-                onChange={(e) => updatePassageContent(p.id, e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={isPassage ? 4 : 3}
-                placeholder={
-                  isPassage
-                    ? "أدخل نص القطعة هنا..."
-                    : "اكتب وصفًا عامًا أو معادلات ستتكرر داخل أسئلة هذه المجموعة (اختياري)..."
-                }
+                onChange={(value) => updatePassageContent(p.id, value)}
+                modules={{
+                  toolbar: [
+                    [{ header: [1, 2, false] }],
+                    ["bold", "italic", "underline", "strike"],
+                    [{ list: "ordered" }, { list: "bullet" }],
+                    [{ direction: "rtl" }, { align: [] }],
+                    ["link", "clean"],
+                  ],
+                }}
+                formats={["header", "bold", "italic", "underline", "strike", "list", "bullet", "direction", "align", "link"]}
+                placeholder="أدخل نص القطعة هنا..."
               />
             )}
           </div>
@@ -346,11 +354,19 @@ export default function McqSharedPassageEditor({
                   </div>
 
                   {/* السؤال — نص عادي حتى في "chemical" */}
-                  <input
-                    type="text"
+                  <ReactQuill
                     value={q.text}
-                    onChange={(e) => updateQuestionText(p.id, q.id, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+                    onChange={(value) => updateQuestionText(p.id, q.id, value)}
+                    modules={{
+                      toolbar: [
+                        [{ header: [1, 2, false] }],
+                        ["bold", "italic", "underline", "strike"],
+                        [{ list: "ordered" }, { list: "bullet" }],
+                        [{ direction: "rtl" }, { align: [] }],
+                        ["link", "clean"],
+                      ],
+                    }}
+                    formats={["header", "bold", "italic", "underline", "strike", "list", "bullet", "direction", "align", "link"]}
                     placeholder="نص السؤال"
                   />
 
@@ -369,8 +385,25 @@ export default function McqSharedPassageEditor({
                             className="h-4 w-4 text-blue-600 focus:ring-blue-500"
                             title="الإجابة الصحيحة"
                           />
-
-                          <input
+                           
+                            <ReactQuill
+                          value={opt.explanation}
+                          onChange={(value) =>
+                            updateOptionField(p.id, q.id, optIndex, "explanation", value)
+                          }
+                          modules={{
+                            toolbar: [
+                              [{ header: [1, 2, false] }],
+                              ["bold", "italic", "underline", "strike"],
+                              [{ list: "ordered" }, { list: "bullet" }],
+                              [{ direction: "rtl" }, { align: [] }],
+                              ["link", "clean"],
+                            ],
+                          }}
+                          formats={["header", "bold", "italic", "underline", "strike", "list", "bullet", "direction", "align", "link"]}
+                          placeholder={`الخيار ${optIndex + 1}`}
+                        />
+                          {/* <input
                             type="text"
                             value={opt.text}
                             onChange={(e) =>
@@ -378,7 +411,7 @@ export default function McqSharedPassageEditor({
                             }
                             className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder={`الخيار ${optIndex + 1}`}
-                          />
+                          /> */}
 
                           {q.options.length > 2 && (
                             <button
@@ -392,19 +425,21 @@ export default function McqSharedPassageEditor({
                           )}
                         </div>
 
-                        <textarea
+                        <ReactQuill
                           value={opt.explanation}
-                          onChange={(e) =>
-                            updateOptionField(
-                              p.id,
-                              q.id,
-                              optIndex,
-                              "explanation",
-                              e.target.value
-                            )
+                          onChange={(value) =>
+                            updateOptionField(p.id, q.id, optIndex, "explanation", value)
                           }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          rows={2}
+                          modules={{
+                            toolbar: [
+                              [{ header: [1, 2, false] }],
+                              ["bold", "italic", "underline", "strike"],
+                              [{ list: "ordered" }, { list: "bullet" }],
+                              [{ direction: "rtl" }, { align: [] }],
+                              ["link", "clean"],
+                            ],
+                          }}
+                          formats={["header", "bold", "italic", "underline", "strike", "list", "bullet", "direction", "align", "link"]}
                           placeholder="اكتب شرح هذا الاختيار (لماذا هو صحيح/خاطئ)"
                         />
                       </div>

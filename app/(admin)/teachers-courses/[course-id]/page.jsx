@@ -308,7 +308,7 @@ export default function CourseDetailsPage() {
                     </div>
                     <div className="text-center">
                       <Users className="w-6 h-6 mx-auto mb-2 text-blue-200" />
-                      <p className="text-sm text-blue-200">الطلاب</p>
+                      <p className="text-sm text-blue-200">المتدربين</p>
                       <p className="font-bold">
                         {courseData.courseDetails.enrolledStudents}
                       </p>
@@ -530,7 +530,7 @@ export default function CourseDetailsPage() {
                         />
                         <StatsCard
                           icon={Users}
-                          title="الطلاب"
+                          title="المتدربين"
                           value={courseData.instructor.studentsCount.toLocaleString()}
                           color="green"
                         />
@@ -568,7 +568,7 @@ export default function CourseDetailsPage() {
                   <div className="bg-white rounded-xl p-6 border border-gray-100">
                     <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
                       <Star className="w-6 h-6 text-blue-600" />
-                      تقييمات الطلاب
+                      تقييمات المتدربين
                     </h3>
                     <div className="flex items-center gap-8 mb-6">
                       <div className="text-center">
@@ -671,7 +671,7 @@ export default function CourseDetailsPage() {
                 <h4 className="font-bold mb-4">معلومات التسجيل</h4>
                 <div className="space-y-4">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">عدد الطلاب المسجلين</span>
+                    <span className="text-gray-600">عدد المتدربين المسجلين</span>
                     <span className="font-semibold">
                       {courseData.courseDetails.enrolledStudents}
                     </span>
@@ -697,7 +697,7 @@ export default function CourseDetailsPage() {
                 <h4 className="font-bold mb-4">إحصائيات الدورة</h4>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">الطلاب المسجلين</span>
+                    <span className="text-gray-600">المتدربين المسجلين</span>
                     <span className="font-semibold">
                       {courseData.courseDetails.enrolledStudents}
                     </span>

@@ -18,9 +18,9 @@ import WordArrangementPuzzle from "../drafts/Drag.draft";
 const StudentsStats = ({}) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-      <StatsCard icon={User} value={5} label={"إجمالي الطلاب"} />
-      <StatsCard icon={CheckCheck} value={2} label={"الطلاب النشطين"} />
-      <StatsCard icon={Clock} value={2} label={"الطلاب المحظورين"} />
+      <StatsCard icon={User} value={5} label={"إجمالي المتدربين"} />
+      <StatsCard icon={CheckCheck} value={2} label={"المتدربين النشطين"} />
+      <StatsCard icon={Clock} value={2} label={"المتدربين المحظورين"} />
     </div>
   );
 };

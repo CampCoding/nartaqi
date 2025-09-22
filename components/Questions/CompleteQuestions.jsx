@@ -1,9 +1,11 @@
 "use client";
 import React from "react";
 import Button from "../atoms/Button";
-import Input from "./ExamInput";
-import TextArea from "./ExamTextarea";
 import { Plus, Trash2 } from "lucide-react";
+import dynamic from "next/dynamic";
+
+// Dynamically import ReactQuill with SSR disabled
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 /**
  * CompleteQuestions now supports an explanation for each expected answer.
@@ -27,7 +29,6 @@ export default function CompleteQuestions({
 
   const onChangeAnswer = (index, nextVal) => {
     const curr = normalizeItem(completeAnswers?.[index]);
-    // Pass a merged object to parent; parent should store objects
     updateCompleteAnswer(index, { ...curr, answer: nextVal });
   };
 
@@ -38,12 +39,22 @@ export default function CompleteQuestions({
 
   return (
     <div className="space-y-4">
-      <TextArea
-        label="النص الناقص"
-        placeholder="أدخل النص مع وضع (...) في الأماكن الناقصة"
-        rows={4}
+       <label className="block text-sm font-medium text-gray-700 mb-3">
+         أدخل النص مع وضع (...) في الأماكن الناقصة
+        </label>
+      <ReactQuill
         value={completeText}
-        onChange={(e) => setCompleteText(e.target.value)}
+        onChange={(value) => setCompleteText(value)}
+        placeholder="أدخل النص مع وضع (...) في الأماكن الناقصة"
+        modules={{
+          toolbar: [
+            [{ header: [1, 2, false] }],
+            ["bold", "italic", "underline", "strike"],
+            [{ list: "ordered" }, { list: "bullet" }],
+            [{ direction: "rtl" }, { align: [] }],
+            ["link", "clean"],
+          ],
+        }}
       />
 
       <div>
@@ -56,11 +67,20 @@ export default function CompleteQuestions({
             return (
               <div key={index} className="border rounded-lg p-3 bg-white space-y-2">
                 <div className="flex items-center gap-2">
-                  <Input
-                    placeholder={`الإجابة ${index + 1}`}
+                  <ReactQuill
                     value={item.answer}
-                    onChange={(e) => onChangeAnswer(index, e.target.value)}
+                    onChange={(value) => onChangeAnswer(index, value)}
+                    placeholder={`الإجابة ${index + 1}`}
                     className="flex-1"
+                    modules={{
+                      toolbar: [
+                        [{ header: [1, 2, false] }],
+                        ["bold", "italic", "underline", "strike"],
+                        [{ list: "ordered" }, { list: "bullet" }],
+                        [{ direction: "rtl" }, { align: [] }],
+                        ["link", "clean"],
+                      ],
+                    }}
                   />
                   {completeAnswers?.length > 1 && (
                     <Button
@@ -73,17 +93,27 @@ export default function CompleteQuestions({
                   )}
                 </div>
 
-                <TextArea
-                  placeholder="اكتب شرحًا لهذه الإجابة (لماذا هي صحيحة / كيف تُقيَّم)"
-                  rows={2}
+                <ReactQuill
                   value={item.explanation}
-                  onChange={(e) => onChangeExplanation(index, e.target.value)}
+                  onChange={(value) => onChangeExplanation(index, value)}
+                  placeholder="اكتب شرحًا لهذه الإجابة (لماذا هي صحيحة / كيف تُقيَّم)"
+                  modules={{
+                    toolbar: [
+                      [{ header: [1, 2, false] }],
+                      ["bold", "italic", "underline", "strike"],
+                      [{ list: "ordered" }, { list: "bullet" }],
+                      [{ direction: "rtl" }, { align: [] }],
+                      ["link", "clean"],
+                    ],
+                  }}
                 />
               </div>
             );
           })}
 
-          <Button variant="outline" onClick={addCompleteAnswer} icon={<Plus className="w-5 h-5" />}>إضافة إجابة</Button>
+          <Button variant="outline" onClick={addCompleteAnswer} icon={<Plus className="w-5 h-5" />}>
+            إضافة إجابة
+          </Button>
         </div>
       </div>
     </div>

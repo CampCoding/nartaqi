@@ -329,7 +329,7 @@ const Units = () => {
     },
     {
       id: 3,
-      label: "الطلاب المشتركين في الدورة",
+      label: "المتدربين المشتركين في الدورة",
       icon: Layers,
       gradient: "from-blue-500 to-cyan-500",
       content: (

@@ -387,7 +387,7 @@ const PaymentConfirmationPage = () => {
       // Column config (Arabic headers)
       const columns = [
         { header: "ID", key: "id" },
-        { header: "اسم الطالب", key: "studentName" },
+        { header: "اسم المتدرب", key: "studentName" },
         { header: "الهاتف", key: "phone" },
         { header: "البريد الإلكتروني", key: "email" },
         { header: "الدورة", key: "courseName" },

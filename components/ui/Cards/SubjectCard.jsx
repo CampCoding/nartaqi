@@ -250,7 +250,7 @@ const SubjectCard = ({
         const data = await fetchStudents(subject);
         setStudents(Array.isArray(data) ? data : []);
       } catch (e) {
-        setStudentsError("حدث خطأ أثناء تحميل قائمة الطلاب. حاول مرة أخرى.");
+        setStudentsError("حدث خطأ أثناء تحميل قائمة المتدربين. حاول مرة أخرى.");
       } finally {
         setStudentsLoading(false);
       }
@@ -426,7 +426,7 @@ const SubjectCard = ({
                 <div className="text-[#C9AE6C] text-base font-bold">
                   {isCapped ? `${clampedEnrolled}/${capacity}` : enrolledCount}
                 </div>
-                <div className="text-[11px] text-[#202938]/60 mt-1">الطلاب</div>
+                <div className="text-[11px] text-[#202938]/60 mt-1">المتدربين</div>
               </div>
               <div className="rounded-2xl border border-gray-100 bg-gray-50 p-3 text-center">
                 <div className="text-[#8B5CF6] text-base font-bold">
@@ -484,10 +484,10 @@ const SubjectCard = ({
                         ? "text-gray-400 cursor-not-allowed"
                         : "text-green-600 hover:bg-green-50"
                     }`}
-                    aria-label="عرض الطلاب المسجلين"
+                    aria-label="عرض المتدربين المسجلين"
                   >
                     <Users className="w-4 h-4" />
-                    <span className="hidden sm:inline">الطلاب</span>
+                    <span className="hidden sm:inline">المتدربين</span>
                   </Button>
 
                   <h4 className="text-primary text-xl font-bold ">
@@ -544,7 +544,7 @@ const SubjectCard = ({
             >
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-lg font-bold text-[#202938]">
-                  الطلاب المسجلون — {subject.name}
+                  المتدربين المسجلون — {subject.name}
                 </h4>
                 <button
                   onClick={() => setIsStudentsOpen(false)}

@@ -78,7 +78,7 @@ function EditStudentModal({
     [subjectOptions]
   );
 
-  // عند فتح/تغيّر الطالب: عبّي الفورم بالبيانات الحالية
+  // عند فتح/تغيّر المتدرب: عبّي الفورم بالبيانات الحالية
   useEffect(() => {
     if (!open) return;
     const init = {
@@ -208,7 +208,7 @@ function EditStudentModal({
             >
               {/* العمود الأيسر */}
               <div className="space-y-6 xl:col-span-2">
-                {/* بيانات الطالب */}
+                {/* بيانات المتدرب */}
                 <div className="bg-gray-50 p-5 rounded-xl">
                   <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
                     <UserOutlined className="text-primary" />
@@ -233,10 +233,10 @@ function EditStudentModal({
                     </Form.Item>
 
                     <Form.Item
-                      label="رقم الطالب *"
+                      label="رقم المتدرب *"
                       name="studentId"
                       rules={[
-                        { required: true, message: "من فضلك اكتب رقم الطالب" },
+                        { required: true, message: "من فضلك اكتب رقم المتدرب" },
                         {
                           pattern: /^[A-Za-z0-9\-_.]{3,}$/,
                           message: "3 أحرف/أرقام على الأقل (تُسمح - _ .)",
@@ -491,7 +491,7 @@ function EditStudentModal({
 
                       <div>
                         <h4 className="text-text font-semibold">
-                          {form.getFieldValue("fullName") || "اسم الطالب"}
+                          {form.getFieldValue("fullName") || "اسم المتدرب"}
                         </h4>
                         <p className="text-gray-500 text-sm">
                           {form.getFieldValue("studentId") || "المعرف —"}

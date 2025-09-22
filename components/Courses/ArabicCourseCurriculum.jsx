@@ -167,7 +167,7 @@ const ArabicCourseCurriculum = () => {
       },
       {
         id: 3,
-        title: "القسم الثالث - تقييم الطلاب وأدوات القياس",
+        title: "القسم الثالث - تقييم المتدربين وأدوات القياس",
         isExpanded: false,
         lessonCount: 3,
         duration: "55 دقيقة",

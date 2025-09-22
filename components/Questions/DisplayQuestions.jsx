@@ -869,7 +869,7 @@ export default function DisplayQuestions({
                 <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
                   {section.questions?.length || 0}
                 </span>
-                <h3 className="font-medium text-gray-900">{section.name}</h3>
+                <h3 dangerouslySetInnerHTML={{__html : section?.name}} className="font-medium text-gray-900"></h3>
               </div>
               {expandedSections[section.id] ? (
                 <ChevronUp className="h-5 w-5 text-gray-500" />

@@ -18,7 +18,7 @@ const UnitsStats = ({ units }) => {
         value={units.length}
         label={"مراحل الدورة"}
       />
-      <StatsCard icon={Users} value={totalStudents} label={"إجمالي الطلاب"} />
+      <StatsCard icon={Users} value={totalStudents} label={"إجمالي المتدربين"} />
       <StatsCard
         icon={FileText}
         value={totalQuestions}

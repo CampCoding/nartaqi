@@ -184,7 +184,7 @@ async function fetchCourseStudentsByCode(code) {
   return base;
 }
 
-/* بطاقة الطالب في شبكة العرض */
+/* بطاقة المتدرب في شبكة العرض */
 function StudentCard({ s, onView }) {
   return (
     <Card
@@ -298,7 +298,7 @@ export default function Page() {
   // أعمدة الجدول
   const columns = [
     {
-      title: "الطالب",
+      title: "المتدرب",
       dataIndex: "name",
       key: "name",
       render: (_, r) => (
@@ -398,7 +398,7 @@ export default function Page() {
       href: `/teachers-courses/${selectedSubject?.code || id}`,
       icon: "",
     },
-    { label: "الطلاب", href: "#", current: true },
+    { label: "المتدربين", href: "#", current: true },
   ];
 
   function handleStatusChange(studentId, newStatus) {
@@ -505,7 +505,7 @@ export default function Page() {
         setStudents(merged);
       }
 
-      message.success("تم سحب بيانات الطلاب من داخل الدورة");
+      message.success("تم سحب بيانات المتدربين من داخل الدورة");
       setPullModalOpen(false);
     } catch (e) {
       console.error(e);
@@ -565,9 +565,9 @@ export default function Page() {
           />
         )}
 
-        {/* عرض تفاصيل الطالب */}
+        {/* عرض تفاصيل المتدرب */}
         <Modal
-          title="تفاصيل الطالب"
+          title="تفاصيل المتدرب"
           open={viewModalVisible}
           onCancel={() => setViewModalVisible(false)}
           footer={null}
@@ -650,7 +650,7 @@ export default function Page() {
 
         {/* مودال السحب من داخل الدورة */}
         <Modal
-          title="سحب بيانات الطلاب من داخل الدورة"
+          title="سحب بيانات المتدربين من داخل الدورة"
           open={pullModalOpen}
           onCancel={() => setPullModalOpen(false)}
           onOk={onPullFromCourse}

@@ -779,7 +779,7 @@ export default function page() {
             </Form.Item>
 
             <Form.Item
-              label="الإجابة (Rich Text)"
+              label="الإجابة"
               name="answerHtml"
               rules={[{ required: true, message: "اكتب الإجابة" }]}
               valuePropName="value"
