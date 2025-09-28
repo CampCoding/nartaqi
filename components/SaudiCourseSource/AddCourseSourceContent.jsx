@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Clock3, ListChecks, Target, Eye, EyeOff } from "lucide-react";
+import { Clock3, ListChecks, Target, Eye, EyeOff, Copy } from "lucide-react";
 import {
   Button,
   Card,
@@ -22,10 +22,10 @@ import {
   message,
 } from "antd";
 import dayjs from "dayjs";
-import AddCourseLevelModal from "./AddCourseLevelModal";
-import BasicLevel from "./BasicLevel";
-import AddCourseLessonModal from "./AddCourseLessonModal";
-import LecturesContent from "./LecturesContent";
+import AddSourceCourseLevelModal from "./AddSourceCourseLevelModal";
+import AddSourceCourseLessonModal from "./AddSourceCourseLessonModal";
+import CourseSourceBasicLevel from "./CourseSourceBasicLevel";
+import CourseSourceLecturesContent from "./CourseSourceLecturesContent";
 
 /** التبويبات */
 const TABS = [
@@ -62,7 +62,11 @@ const beforeUploadVideo = () => false;
 const beforeUploadPdf = () => false;
 
 const ExamTypeTag = ({ t }) =>
-  t === "mock" ? <Tag color="purple">اختبار محاكي</Tag> : <Tag color="cyan">تدريب</Tag>;
+  t === "mock" ? (
+    <Tag color="purple">اختبار محاكي</Tag>
+  ) : (
+    <Tag color="cyan">تدريب</Tag>
+  );
 
 /* ================== Exam Library (shared) ================== */
 const EXAM_LIBRARY_KEY = "exam_library_v1";
@@ -85,7 +89,7 @@ const seedExamLibraryIfEmpty = () => {
     {
       id: "ex-lib-1",
       title: "اختبار الرياضيات الشامل",
-      type: "intern", // ستُعرض كتدريب
+      type: "intern",
       duration: 90,
       questionsCount: 40,
       status: "active",
@@ -100,7 +104,7 @@ const seedExamLibraryIfEmpty = () => {
     },
     {
       id: "ex-lib-3",
-      name: "اختبار التاريخ المعاصر", // name بدلاً من title (لاختبار التطبيع)
+      name: "اختبار التاريخ المعاصر",
       type: "intern",
       duration: 60,
       questions: Array.from({ length: 25 }, (_, i) => ({ id: i + 1 })),
@@ -121,11 +125,11 @@ const seedExamLibraryIfEmpty = () => {
   } catch {}
 };
 
-/** تطبيع بيانات الاختبار القادمة من صفحة الإنشاء/الإدارة إلى الشكل المطلوب هنا */
+/** تطبيع بيانات الاختبار القادمة من المكتبة */
 const normalizeLibraryExam = (e) => ({
   id: e?.id ?? e?._id ?? `lib-${Date.now()}`,
   title: e?.title ?? e?.name ?? "بدون عنوان",
-  examType: e?.examType ?? e?.type ?? "training", // "training" | "mock" | "intern"
+  examType: e?.examType ?? e?.type ?? "training",
   duration: Number(e?.duration ?? e?.time ?? 0) || 0,
   questions: Array.isArray(e?.questions)
     ? e.questions.length
@@ -134,13 +138,7 @@ const normalizeLibraryExam = (e) => ({
   visible: true,
 });
 
-/** === Helpers for release logic === */
-const isReleased = (ts) => {
-  if (!ts) return true; // لو ما اتحددش موعد ظهور، يعتبر ظاهر
-  return dayjs().isAfter(dayjs(ts));
-};
-
-export default function AddTeacherCourseContent() {
+export default function AddCourseSourceContent() {
   const [activeTab, setActiveTab] = useState(1);
 
   /** ====== المراحل ← الدروس ====== */
@@ -154,7 +152,6 @@ export default function AddTeacherCourseContent() {
           id: "L-1",
           title: "مقدمة التأسيس",
           visible: true,
-          releaseAt: dayjs().add(1, "day").hour(8).minute(0).second(0).toISOString(),
           lessonVideo: {
             title: "تعريف بالمقرر",
             source: "url",
@@ -183,8 +180,12 @@ export default function AddTeacherCourseContent() {
         {
           id: "lv1",
           title: "مراجعة الوحدة الأولى",
-          startAt: dayjs().add(2, "day").hour(19).minute(0).second(0).toISOString(),
-          releaseAt: dayjs().add(2, "day").hour(19).minute(0).second(0).toISOString(), // افتراضيًا يساوي startAt
+          startAt: dayjs()
+            .add(2, "day")
+            .hour(19)
+            .minute(0)
+            .second(0)
+            .toISOString(),
           duration: 60,
           meetingUrl: "#",
           locked: false,
@@ -204,7 +205,6 @@ export default function AddTeacherCourseContent() {
       questions: 15,
       status: "مسودة",
       visible: true,
-      releaseAt: dayjs().add(3, "day").hour(9).minute(0).second(0).toISOString(),
     },
   ]);
 
@@ -213,7 +213,7 @@ export default function AddTeacherCourseContent() {
   const [openPickExam, setOpenPickExam] = useState(false);
   const [pickForm] = Form.useForm();
 
-  /** ====== التحميل/الحفظ المحلي + ترحيل من v2 (إن وجِد) ====== */
+  /** ====== التحميل/الحفظ المحلي ====== */
   useEffect(() => {
     const saved = loadState();
     if (saved) {
@@ -252,9 +252,14 @@ export default function AddTeacherCourseContent() {
   /** ====== إحصاءات سريعة ====== */
   const stats = useMemo(() => {
     const stageCount = foundationStages.length;
-    const lessonCount = foundationStages.reduce((s, st) => s + (st.lessons?.length || 0), 0);
+    const lessonCount = foundationStages.reduce(
+      (s, st) => s + (st.lessons?.length || 0),
+      0
+    );
     const liveItems = liveLectures.flatMap((s) => s.items || []);
-    const liveUpcoming = liveItems.filter((l) => dayjs(l.startAt).isAfter(dayjs())).length;
+    const liveUpcoming = liveItems.filter((l) =>
+      dayjs(l.startAt).isAfter(dayjs())
+    ).length;
     return { stageCount, lessonCount, liveUpcoming, examsCount: exams.length };
   }, [foundationStages, liveLectures, exams]);
 
@@ -274,9 +279,23 @@ export default function AddTeacherCourseContent() {
   const [savingLive, setSavingLive] = useState(false);
   const [savingExam, setSavingExam] = useState(false);
 
+  /** ====== وجهات النسخ (يمكن استبدالها ببيانات فعلية) ====== */
+  const duplicateTargets = useMemo(
+    () => [
+      { id: 101, title: "دورة الرياضيات" },
+      { id: 102, title: "دورة العلوم" },
+      { id: 103, title: "دورة الفيزياء" },
+    ],
+    []
+  );
+
   /** ====== عمليات المرحلة/الدرس ====== */
   const toggleStageVisibility = (stageId) => {
-    setFoundationStages((prev) => prev.map((st) => (st.id === stageId ? { ...st, visible: !st.visible } : st)));
+    setFoundationStages((prev) =>
+      prev.map((st) =>
+        st.id === stageId ? { ...st, visible: !st.visible } : st
+      )
+    );
   };
   const deleteStage = (stageId) => {
     setFoundationStages((prev) => prev.filter((st) => st.id !== stageId));
@@ -300,7 +319,12 @@ export default function AddTeacherCourseContent() {
   const deleteLesson = (stageId, lessonId) => {
     setFoundationStages((prev) =>
       prev.map((st) =>
-        st.id === stageId ? { ...st, lessons: (st.lessons || []).filter((l) => l.id !== lessonId) } : st
+        st.id === stageId
+          ? {
+              ...st,
+              lessons: (st.lessons || []).filter((l) => l.id !== lessonId),
+            }
+          : st
       )
     );
   };
@@ -353,7 +377,6 @@ export default function AddTeacherCourseContent() {
         id: `L-${Date.now()}`,
         title: v.title.trim(),
         visible: true,
-        releaseAt: v.lessonReleaseAt ? dayjs(v.lessonReleaseAt).toISOString() : undefined, // جديد: موعد ظهور اختياري
         lessonVideo: {
           title: v.lessonVideoTitle.trim(),
           source: v.lessonVideoSource,
@@ -379,7 +402,11 @@ export default function AddTeacherCourseContent() {
 
       // إدراج الدرس داخل المرحلة المستهدفة
       setFoundationStages((prev) =>
-        prev.map((st) => (st.id === stageId ? { ...st, lessons: [lesson, ...(st.lessons || [])] } : st))
+        prev.map((st) =>
+          st.id === stageId
+            ? { ...st, lessons: [lesson, ...(st.lessons || [])] }
+            : st
+        )
       );
 
       setOpenAddLesson(false);
@@ -394,10 +421,16 @@ export default function AddTeacherCourseContent() {
 
   /** ====== محاضرات مباشرة ====== */
   const combineDT = (date, time) =>
-    dayjs(date).hour(dayjs(time).hour()).minute(dayjs(time).minute()).second(0).toISOString();
+    dayjs(date)
+      .hour(dayjs(time).hour())
+      .minute(dayjs(time).minute())
+      .second(0)
+      .toISOString();
 
   const toggleLiveSectionVisibility = (sectionId) => {
-    setLiveLectures((prev) => prev.map((s) => (s.id === sectionId ? { ...s, visible: !s.visible } : s)));
+    setLiveLectures((prev) =>
+      prev.map((s) => (s.id === sectionId ? { ...s, visible: !s.visible } : s))
+    );
   };
   const toggleLiveItemVisibility = (sectionId, itemId) => {
     setLiveLectures((prev) =>
@@ -405,7 +438,9 @@ export default function AddTeacherCourseContent() {
         s.id === sectionId
           ? {
               ...s,
-              items: (s.items || []).map((i) => (i.id === itemId ? { ...i, visible: !i.visible } : i)),
+              items: (s.items || []).map((i) =>
+                i.id === itemId ? { ...i, visible: !i.visible } : i
+              ),
             }
           : s
       )
@@ -413,7 +448,11 @@ export default function AddTeacherCourseContent() {
   };
   const deleteLiveSession = (sectionId, itemId) => {
     setLiveLectures((prev) =>
-      prev.map((s) => (s.id === sectionId ? { ...s, items: (s.items || []).filter((i) => i.id !== itemId) } : s))
+      prev.map((s) =>
+        s.id === sectionId
+          ? { ...s, items: (s.items || []).filter((i) => i.id !== itemId) }
+          : s
+      )
     );
   };
 
@@ -425,25 +464,28 @@ export default function AddTeacherCourseContent() {
       let sectionId = v.sectionId;
       if (v.sectionMode === "new") {
         sectionId = `ls-${Date.now()}`;
-        setLiveLectures((prev) => [{ id: sectionId, title: v.sectionTitle, visible: true, items: [] }, ...prev]);
+        setLiveLectures((prev) => [
+          { id: sectionId, title: v.sectionTitle, visible: true, items: [] },
+          ...prev,
+        ]);
       }
 
-      const sessions = (v.sessions || []).map((s, i) => {
-        const startAt = combineDT(s.date, s.time);
-        return {
-          id: `lv-${Date.now()}-${i}`,
-          title: s.title,
-          startAt,
-          releaseAt: s.releaseAt ? dayjs(s.releaseAt).toISOString() : startAt, // جديد: releaseAt قابل للتعديل
-          duration: s.duration ? Number(s.duration) : undefined,
-          meetingUrl: (s.meetingUrl || "").trim() || "#",
-          locked: !!s.locked,
-          visible: true,
-        };
-      });
+      const sessions = (v.sessions || []).map((s, i) => ({
+        id: `lv-${Date.now()}-${i}`,
+        title: s.title,
+        startAt: combineDT(s.date, s.time),
+        duration: s.duration ? Number(s.duration) : undefined,
+        meetingUrl: (s.meetingUrl || "").trim() || "#",
+        locked: !!s.locked,
+        visible: true,
+      }));
 
       setLiveLectures((prev) =>
-        prev.map((sec) => (sec.id === sectionId ? { ...sec, items: [...sessions, ...(sec.items || [])] } : sec))
+        prev.map((sec) =>
+          sec.id === sectionId
+            ? { ...sec, items: [...sessions, ...(sec.items || [])] }
+            : sec
+        )
       );
 
       message.success("تم حفظ المحاضرات داخل القسم");
@@ -469,7 +511,7 @@ export default function AddTeacherCourseContent() {
                 const nextPdfs = [...(l.training?.pdfs || [])];
                 files.forEach((file) => {
                   nextPdfs.push({
-                    id: crypto?.randomUUID?.() || Date.now() + Math.random(),
+                    id: (crypto)?.randomUUID?.() || Date.now() + Math.random(),
                     title: file.name.replace(/\.pdf$/i, ""),
                     source: "upload",
                     file,
@@ -499,7 +541,10 @@ export default function AddTeacherCourseContent() {
                 if (l.id !== lessonId) return l;
                 const list = [...(l.training?.pdfs || [])];
                 const idx = list.findIndex((f) => (f.id ?? -1) === fileKey);
-                const final = idx >= 0 ? list.filter((_, i) => i !== idx) : list.filter((_, i) => i !== fileKey);
+                const final =
+                  idx >= 0
+                    ? list.filter((_, i) => i !== idx)
+                    : list.filter((_, i) => i !== (fileKey));
                 return {
                   ...l,
                   training: { ...(l.training || {}), pdfs: final },
@@ -512,7 +557,11 @@ export default function AddTeacherCourseContent() {
 
   /** ====== اختبارات داخل هذا المقرر ====== */
   const toggleExamVisibility = (id) => {
-    setExams((prev) => prev.map((e) => (String(e.id) === String(id) ? { ...e, visible: !e.visible } : e)));
+    setExams((prev) =>
+      prev.map((e) =>
+        String(e.id) === String(id) ? { ...e, visible: !e.visible } : e
+      )
+    );
   };
 
   const submitExam = async () => {
@@ -527,7 +576,6 @@ export default function AddTeacherCourseContent() {
         questions: Number(v.questions),
         status: "مسودة",
         visible: true,
-        releaseAt: v.releaseAt ? dayjs(v.releaseAt).toISOString() : undefined, // جديد
       };
       setExams((p) => [entity, ...p]);
       setOpenAddExam(false);
@@ -540,7 +588,7 @@ export default function AddTeacherCourseContent() {
     }
   };
 
-  /** ====== ربط اختبارات موجودة من مكتبة الاختبارات ====== */
+  /** ====== ربط اختبارات من المكتبة ====== */
   const linkSelectedExams = async () => {
     try {
       const v = await pickForm.validateFields();
@@ -552,7 +600,6 @@ export default function AddTeacherCourseContent() {
 
       setExams((prev) => {
         const existing = new Set(prev.map((x) => String(x.id)));
-        // عند الربط من المكتبة، نسمح بتعيين releaseAt لاحقاً عبر المخطط الجماعي
         return [...toLink.filter((x) => !existing.has(String(x.id))), ...prev];
       });
 
@@ -587,59 +634,66 @@ export default function AddTeacherCourseContent() {
     message.success("تمت مزامنة بيانات الاختبار");
   };
 
-  /** ====== مخطط جدولة الظهور (Bulk) ====== */
-  const [openReleasePlanner, setOpenReleasePlanner] = useState(false);
-  const [releaseForm] = Form.useForm();
+  /* ========== نسخ الاختبارات إلى دورات أخرى ========== */
+  const [copyOpenExams, setCopyOpenExams] = useState(false);
+  const [copyLoadingExams, setCopyLoadingExams] = useState(false);
+  const [copyErrorExams, setCopyErrorExams] = useState("");
+  const [targetsSearchExams, setTargetsSearchExams] = useState("");
+  const [selectedTargetsExams, setSelectedTargetsExams] = useState([]);
+  // context: {type:'exams_all'|'exam', examId?, title?}
+  const [copyCtxExams, setCopyCtxExams] = useState({
+    type: "exams_all",
+    title: "كل الاختبارات",
+  });
 
-  const applyReleasePlan = (plan) => {
-    const base = plan.baseDate ? dayjs(plan.baseDate) : dayjs();
+  const filteredTargetsExams = useMemo(() => {
+    const term = (targetsSearchExams || "").toLowerCase();
+    if (!term) return duplicateTargets;
+    return duplicateTargets.filter((t) => (t.title || "").toLowerCase().includes(term));
+  }, [duplicateTargets, targetsSearchExams]);
 
-    // الدروس
-    if (plan.lessonsAbsolute || plan.lessonsOffsetDays !== undefined) {
-      setFoundationStages((prev) =>
-        prev.map((st) => ({
-          ...st,
-          lessons: (st.lessons || []).map((l) => ({
-            ...l,
-            releaseAt: plan.lessonsAbsolute
-              ? plan.lessonsAbsolute
-              : base.add(plan.lessonsOffsetDays || 0, "day").toISOString(),
-          })),
-        }))
-      );
+  const toggleTargetExams = (id) => {
+    setSelectedTargetsExams((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+  const toggleAllTargetsExams = () => {
+    if (selectedTargetsExams.length === filteredTargetsExams.length) {
+      setSelectedTargetsExams([]);
+    } else {
+      setSelectedTargetsExams(filteredTargetsExams.map((t) => t.id));
     }
+  };
 
-    // المحاضرات
-    if (plan.liveAbsolute || plan.liveOffsetDays !== undefined) {
-      setLiveLectures((prev) =>
-        prev.map((sec) => ({
-          ...sec,
-          items: (sec.items || []).map((i) => ({
-            ...i,
-            releaseAt: plan.liveAbsolute
-              ? plan.liveAbsolute
-              : base.add(plan.liveOffsetDays || 0, "day").toISOString(),
-          })),
-        }))
-      );
+  const openCopyExams = (ctx) => {
+    setCopyCtxExams(ctx);
+    setCopyErrorExams("");
+    setSelectedTargetsExams([]);
+    setTargetsSearchExams("");
+    setCopyOpenExams(true);
+  };
+
+  const confirmCopyExams = async () => {
+    if (selectedTargetsExams.length === 0) {
+      setCopyErrorExams("برجاء اختيار دورة/دورات الهدف أولاً.");
+      return;
     }
-
-    // الاختبارات
-    if (plan.examsAbsolute || plan.examsOffsetDays !== undefined) {
-      setExams((prev) =>
-        prev.map((e) => ({
-          ...e,
-          releaseAt: plan.examsAbsolute
-            ? plan.examsAbsolute
-            : base.add(plan.examsOffsetDays || 0, "day").toISOString(),
-        }))
-      );
+    try {
+      setCopyLoadingExams(true);
+      // ⬇️ استبدل بهذا نداء API الفعلي لديك
+      console.log("COPY EXAMS ->", { ctx: copyCtxExams, to: selectedTargetsExams });
+      setCopyOpenExams(false);
+      message.success("تم إرسال طلب النسخ");
+    } catch (e) {
+      setCopyErrorExams(e?.message || "تعذّر النسخ، جرّب مرة أخرى.");
+    } finally {
+      setCopyLoadingExams(false);
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6" dir="rtl">
-      {/* شريط التبويب + زر المخطط */}
+      {/* شريط التبويب */}
       <div className="mb-4 flex items-center gap-2">
         {TABS.map((t) => (
           <button
@@ -654,16 +708,12 @@ export default function AddTeacherCourseContent() {
             {t.title}
           </button>
         ))}
-        <div className="ml-auto">
-          <Button onClick={() => setOpenReleasePlanner(true)} className="!bg-teal-600 !text-white">
-            جدولة ظهور المحتوى
-          </Button>
-        </div>
       </div>
 
       {/* ====== تبويب المراحل + الدروس ====== */}
       {activeTab === 1 && (
-        <BasicLevel
+        <CourseSourceBasicLevel
+          duplicateTargets={duplicateTargets}
           deleteLesson={deleteLesson}
           deleteStage={deleteStage}
           foundationStages={foundationStages}
@@ -674,24 +724,23 @@ export default function AddTeacherCourseContent() {
           addTrainingFiles={addTrainingFiles}
           removeTrainingFile={removeTrainingFile}
           toggleLessonVisibility={toggleLessonVisibility}
-          // ملاحظة: يفضّل داخل BasicLevel إظهار Badge "لم يُفتح بعد" عندما !isReleased(lesson.releaseAt)
         />
       )}
 
-      {/* ====== تبويب المحاضرات المباشرة ====== */}
+      {/* ====== تبويب المحاضرات ====== */}
       {activeTab === 2 && (
-        <LecturesContent
+        <CourseSourceLecturesContent
+          duplicateTargets={duplicateTargets}
           stats={stats}
           deleteLesson={deleteLesson}
           deleteStage={deleteStage}
-          toggleStageVisibility={toggleStageVisibility}
-          toggleLessonVisibility={toggleLessonVisibility}
+          toggleStageVisibility={toggleLiveSectionVisibility}
+          toggleLessonVisibility={toggleLiveItemVisibility}
           foundationStages={foundationStages}
           setOpenAddLesson={setOpenAddLesson}
           setOpenAddStage={setOpenAddStage}
           addTrainingFiles={addTrainingFiles}
           removeTrainingFile={removeTrainingFile}
-          // ملاحظة: يفضّل داخل LecturesContent إظهار Badge "لم يُفتح بعد" عندما !isReleased(item.releaseAt)
         />
       )}
 
@@ -702,7 +751,17 @@ export default function AddTeacherCourseContent() {
             <div className="flex items-center justify-between">
               <span className="font-bold">الاختبارات</span>
               <div className="flex gap-2">
-                <Button className="!bg-gray-700 !text-white" onClick={() => setOpenPickExam(true)}>
+                <Button
+                  className="!bg-emerald-600 !text-white"
+                  onClick={() => openCopyExams({ type: "exams_all", title: "كل الاختبارات" })}
+                  icon={<Copy className="w-4 h-4" />}
+                >
+                  نسخ الكل
+                </Button>
+                <Button
+                  className="!bg-gray-700 !text-white"
+                  onClick={() => setOpenPickExam(true)}
+                >
                   انشاء اختبار
                 </Button>
               </div>
@@ -713,76 +772,78 @@ export default function AddTeacherCourseContent() {
             <Empty description="لا توجد اختبارات" />
           ) : (
             <div className="space-y-3">
-              {exams.map((e) => {
-                const released = isReleased(e.releaseAt);
-                const effectiveVisible = e.visible && released;
-                return (
-                  <div
-                    key={e.id}
-                    className={`flex items-center justify-between rounded-lg border p-3 ${
-                      effectiveVisible ? "bg-gray-50" : "bg-gray-100 opacity-70"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-purple-100 p-2 text-purple-700">
-                        <ListChecks className="w-4 h-4" />
+              {exams.map((e) => (
+                <div
+                  key={e.id}
+                  className={`flex items-center justify-between rounded-lg border p-3 ${
+                    e.visible ? "bg-gray-50" : "bg-gray-100 opacity-70"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-purple-100 p-2 text-purple-700">
+                      <ListChecks className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div
+                        className={`font-medium ${
+                          e.visible ? "text-gray-800" : "text-gray-500"
+                        }`}
+                      >
+                        {e.title}
                       </div>
-                      <div>
-                        <div className={`font-medium ${effectiveVisible ? "text-gray-800" : "text-gray-500"}`}>
-                          {e.title}
-                        </div>
-                        <div className="text-xs text-gray-500 flex flex-col sm:flex-row sm:items-center sm:gap-3">
-                          <span className="inline-flex items-center gap-1">
-                            <ExamTypeTag t={e.examType} />
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <Clock3 className="w-3.5 h-3.5" />
-                            {e.duration} دقيقة
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <Target className="w-3.5 h-3.5" />
-                            {e.questions} سؤال
-                          </span>
-                          {e.releaseAt && (
-                            <span className="inline-flex items-center gap-1">
-                              موعد الظهور: {dayjs(e.releaseAt).format("YYYY/MM/DD HH:mm")}
-                              {!released && <Tag color="red">لم يُفتح بعد</Tag>}
-                            </span>
-                          )}
-                        </div>
+                      <div className="text-xs text-gray-500 flex items-center gap-2">
+                        <ExamTypeTag t={e.examType} />
+                        <span className="inline-flex items-center gap-1">
+                          <Clock3 className="w-3.5 h-3.5" />
+                          {e.duration} دقيقة
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <Target className="w-3.5 h-3.5" />
+                          {e.questions} سؤال
+                        </span>
                       </div>
                     </div>
-                    <Space>
-                      <Tooltip
-                        title={
-                          effectiveVisible
-                            ? "إخفاء الاختبار"
-                            : released
-                            ? "إظهار الاختبار"
-                            : "سيظهر تلقائياً عند موعده"
-                        }
-                      >
-                        <Button
-                          type="text"
-                          disabled={!released}
-                          icon={
-                            effectiveVisible ? (
-                              <Eye className="w-4 h-4 text-green-600" />
-                            ) : (
-                              <EyeOff className="w-4 h-4 text-gray-400" />
-                            )
-                          }
-                          onClick={() => released && toggleExamVisibility(e.id)}
-                        />
-                      </Tooltip>
-
-                      <Button danger onClick={() => setExams((p) => p.filter((x) => x.id !== e.id))}>
-                        حذف
-                      </Button>
-                    </Space>
                   </div>
-                );
-              })}
+                  <Space>
+                    <Tooltip title="نسخ هذا الاختبار إلى دورات أخرى">
+                      <Button
+                        type="text"
+                        icon={<Copy className="w-4 h-4 text-emerald-600" />}
+                        onClick={() =>
+                          openCopyExams({
+                            type: "exam",
+                            examId: e.id,
+                            title: e.title,
+                          })
+                        }
+                      />
+                    </Tooltip>
+
+                    <Tooltip title={e.visible ? "إخفاء الاختبار" : "إظهار الاختبار"}>
+                      <Button
+                        type="text"
+                        icon={
+                          e.visible ? (
+                            <Eye className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <EyeOff className="w-4 h-4 text-gray-400" />
+                          )
+                        }
+                        onClick={() => toggleExamVisibility(e.id)}
+                      />
+                    </Tooltip>
+
+                    <Button
+                      danger
+                      onClick={() =>
+                        setExams((p) => p.filter((x) => x.id !== e.id))
+                      }
+                    >
+                      حذف
+                    </Button>
+                  </Space>
+                </div>
+              ))}
             </div>
           )}
         </Card>
@@ -791,7 +852,7 @@ export default function AddTeacherCourseContent() {
       {/* ================== Modals ================== */}
 
       {/* إضافة مرحلة */}
-      <AddCourseLevelModal
+      <AddSourceCourseLevelModal
         openAddStage={openAddStage}
         savingStage={savingStage}
         setOpenAddStage={setOpenAddStage}
@@ -800,7 +861,7 @@ export default function AddTeacherCourseContent() {
       />
 
       {/* إضافة درس داخل مرحلة (جديدة/موجودة) */}
-      <AddCourseLessonModal
+      <AddSourceCourseLessonModal
         VIDEO_SOURCES={VIDEO_SOURCES}
         beforeUploadVideo={beforeUploadVideo}
         beforeUploadPdf={beforeUploadPdf}
@@ -811,7 +872,6 @@ export default function AddTeacherCourseContent() {
         savingLesson={savingLesson}
         setOpenAddLesson={setOpenAddLesson}
         submitLesson={submitLesson}
-        // ملاحظة: لو تبغى حقلاً لوقت ظهور الدرس داخل هذا المودال، أضف Form.Item name="lessonReleaseAt" (DatePicker showTime)
       />
 
       {/* إضافة محاضرات مباشرة */}
@@ -836,26 +896,40 @@ export default function AddTeacherCourseContent() {
                 duration: 60,
                 meetingUrl: "",
                 locked: false,
-                releaseAt: null,
               },
             ],
           }}
         >
-          <Form.Item label="إضافة إلى" name="sectionMode" rules={[{ required: true }]}>
+          <Form.Item
+            label="إضافة إلى"
+            name="sectionMode"
+            rules={[{ required: true }]}
+          >
             <Radio.Group>
               <Radio value="new">قسم جديد</Radio>
               <Radio value="exist">قسم موجود</Radio>
             </Radio.Group>
           </Form.Item>
 
-          <Form.Item noStyle shouldUpdate={(p, c) => p.sectionMode !== c.sectionMode}>
+          <Form.Item
+            noStyle
+            shouldUpdate={(p, c) => p.sectionMode !== c.sectionMode}
+          >
             {({ getFieldValue }) =>
               getFieldValue("sectionMode") === "new" ? (
-                <Form.Item label="عنوان القسم الجديد" name="sectionTitle" rules={[{ required: true, message: "أدخل عنوان القسم" }]}>
+                <Form.Item
+                  label="عنوان القسم الجديد"
+                  name="sectionTitle"
+                  rules={[{ required: true, message: "أدخل عنوان القسم" }]}
+                >
                   <Input placeholder="مثال: محاضرات الوحدة 3" />
                 </Form.Item>
               ) : (
-                <Form.Item label="اختر القسم" name="sectionId" rules={[{ required: true, message: "اختر القسم" }]}>
+                <Form.Item
+                  label="اختر القسم"
+                  name="sectionId"
+                  rules={[{ required: true, message: "اختر القسم" }]}
+                >
                   <Select
                     placeholder="اختيار قسم"
                     options={(liveLectures || []).map((s) => ({
@@ -885,7 +959,6 @@ export default function AddTeacherCourseContent() {
                         duration: 60,
                         meetingUrl: "",
                         locked: false,
-                        releaseAt: null,
                       })
                     }
                   >
@@ -900,10 +973,18 @@ export default function AddTeacherCourseContent() {
                     title={`جلسة #${name + 1}`}
                     extra={
                       <Space>
-                        <Button size="small" onClick={() => name > 0 && move(name, name - 1)}>
+                        <Button
+                          size="small"
+                          onClick={() => name > 0 && move(name, name - 1)}
+                        >
                           ↑
                         </Button>
-                        <Button size="small" onClick={() => name < fields.length - 1 && move(name, name + 1)}>
+                        <Button
+                          size="small"
+                          onClick={() =>
+                            name < fields.length - 1 && move(name, name + 1)
+                          }
+                        >
                           ↓
                         </Button>
                         <Button danger type="text" onClick={() => remove(name)}>
@@ -922,13 +1003,24 @@ export default function AddTeacherCourseContent() {
                     </Form.Item>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <Form.Item label="التاريخ" name={[name, "date"]} rules={[{ required: true, message: "اختر التاريخ" }]}>
+                      <Form.Item
+                        label="التاريخ"
+                        name={[name, "date"]}
+                        rules={[{ required: true, message: "اختر التاريخ" }]}
+                      >
                         <DatePicker className="w-full" />
                       </Form.Item>
-                      <Form.Item label="الوقت" name={[name, "time"]} rules={[{ required: true, message: "اختر الوقت" }]}>
+                      <Form.Item
+                        label="الوقت"
+                        name={[name, "time"]}
+                        rules={[{ required: true, message: "اختر الوقت" }]}
+                      >
                         <TimePicker className="w-full" format="HH:mm" />
                       </Form.Item>
-                      <Form.Item label="المدة (دقيقة)" name={[name, "duration"]}>
+                      <Form.Item
+                        label="المدة (دقيقة)"
+                        name={[name, "duration"]}
+                      >
                         <Input placeholder="مثال: 60" />
                       </Form.Item>
                     </div>
@@ -937,11 +1029,11 @@ export default function AddTeacherCourseContent() {
                       <Input placeholder="رابط Zoom/Meet…" />
                     </Form.Item>
 
-                    <Form.Item label="تاريخ/وقت الظهور (اختياري)" name={[name, "releaseAt"]}>
-                      <DatePicker showTime className="w-full" placeholder="افتراضيًا يساوي وقت البدء" />
-                    </Form.Item>
-
-                    <Form.Item label="مقفولة؟" name={[name, "locked"]} valuePropName="checked">
+                    <Form.Item
+                      label="مقفولة؟"
+                      name={[name, "locked"]}
+                      valuePropName="checked"
+                    >
                       <Switch />
                     </Form.Item>
                   </Card>
@@ -952,7 +1044,7 @@ export default function AddTeacherCourseContent() {
         </Form>
       </Modal>
 
-      {/* إضافة اختبار (جديد) */}
+      {/* إضافة اختبار (جديد يدويًا) */}
       <Modal
         title="إضافة اختبار"
         open={openAddExam}
@@ -961,8 +1053,16 @@ export default function AddTeacherCourseContent() {
         confirmLoading={savingExam}
         destroyOnClose
       >
-        <Form form={examForm} layout="vertical" initialValues={{ examType: "training" }}>
-          <Form.Item label="نوع الاختبار" name="examType" rules={[{ required: true, message: "اختر نوع الاختبار" }]}>
+        <Form
+          form={examForm}
+          layout="vertical"
+          initialValues={{ examType: "training" }}
+        >
+          <Form.Item
+            label="نوع الاختبار"
+            name="examType"
+            rules={[{ required: true, message: "اختر نوع الاختبار" }]}
+          >
             <Select
               options={[
                 { value: "training", label: "تدريب" },
@@ -972,23 +1072,31 @@ export default function AddTeacherCourseContent() {
             />
           </Form.Item>
 
-          <Form.Item label="عنوان الاختبار" name="title" rules={[{ required: true, message: "أدخل عنوان الاختبار" }]}>
+          <Form.Item
+            label="عنوان الاختبار"
+            name="title"
+            rules={[{ required: true, message: "أدخل عنوان الاختبار" }]}
+          >
             <Input placeholder="مثال: اختبار الوحدة الثالثة" />
           </Form.Item>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Form.Item label="المدة (دقائق)" name="duration" rules={[{ required: true, message: "أدخل مدة الاختبار" }]}>
+            <Form.Item
+              label="المدة (دقائق)"
+              name="duration"
+              rules={[{ required: true, message: "أدخل مدة الاختبار" }]}
+            >
               <Input placeholder="مثال: 45" />
             </Form.Item>
 
-            <Form.Item label="عدد الأسئلة" name="questions" rules={[{ required: true, message: "أدخل عدد الأسئلة" }]}>
+            <Form.Item
+              label="عدد الأسئلة"
+              name="questions"
+              rules={[{ required: true, message: "أدخل عدد الأسئلة" }]}
+            >
               <Input placeholder="مثال: 20" />
             </Form.Item>
           </div>
-
-          <Form.Item label="موعد الظهور (اختياري)" name="releaseAt">
-            <DatePicker showTime className="w-full" />
-          </Form.Item>
         </Form>
       </Modal>
 
@@ -1005,12 +1113,16 @@ export default function AddTeacherCourseContent() {
           <Form.Item
             label="اختر اختبار"
             name="examIds"
-            rules={[{ required: true, message: "اختر اختبارًا واحدًا على الأقل" }]}
+            rules={[
+              { required: true, message: "اختر اختبارًا واحدًا على الأقل" },
+            ]}
           >
             <Select
               mode="multiple"
               placeholder={
-                examLibrary.length ? "اختر من الاختبارات المحفوظة" : "لا توجد اختبارات في المكتبة — أنشئ اختبارًا أولاً"
+                examLibrary.length
+                  ? "اختر من الاختبارات المحفوظة"
+                  : "لا توجد اختبارات في المكتبة — أنشئ اختبارًا أولاً"
               }
               optionFilterProp="label"
               options={examLibrary.map((e) => ({
@@ -1018,7 +1130,9 @@ export default function AddTeacherCourseContent() {
                 label: `${e.title ?? "بدون عنوان"} · ${
                   (e.examType ?? e.type) === "mock" ? "محاكي" : "تدريب"
                 } · ${
-                  Array.isArray(e.questions) ? e.questions.length : e.questionsCount ?? e.questions ?? 0
+                  Array.isArray(e.questions)
+                    ? e.questions.length
+                    : e.questionsCount ?? e.questions ?? 0
                 } سؤال`,
               }))}
             />
@@ -1026,91 +1140,81 @@ export default function AddTeacherCourseContent() {
         </Form>
       </Modal>
 
-      {/* مخطط جدولة الظهور (Bulk) */}
+      {/* ✅ مودال نسخ الاختبارات إلى دورات أخرى */}
       <Modal
-        title="جدولة ظهور المحتوى"
-        open={openReleasePlanner}
-        onCancel={() => setOpenReleasePlanner(false)}
-        onOk={async () => {
-          const v = await releaseForm.validateFields();
-          applyReleasePlan({
-            baseDate: v.baseDate ? dayjs(v.baseDate).startOf("day").toISOString() : undefined,
-            lessonsOffsetDays: v.lessonsMode === "offset" ? Number(v.lessonsOffset ?? 0) : undefined,
-            liveOffsetDays: v.liveMode === "offset" ? Number(v.liveOffset ?? 0) : undefined,
-            examsOffsetDays: v.examsMode === "offset" ? Number(v.examsOffset ?? 0) : undefined,
-            lessonsAbsolute: v.lessonsMode === "absolute" && v.lessonsAbs ? dayjs(v.lessonsAbs).toISOString() : undefined,
-            liveAbsolute: v.liveMode === "absolute" && v.liveAbs ? dayjs(v.liveAbs).toISOString() : undefined,
-            examsAbsolute: v.examsMode === "absolute" && v.examsAbs ? dayjs(v.examsAbs).toISOString() : undefined,
-          });
-          setOpenReleasePlanner(false);
-          message.success("تم تطبيق الجدولة على المحتوى الحالي");
-        }}
-        okText="تطبيق"
-        destroyOnClose
+        open={copyOpenExams}
+        onCancel={() => setCopyOpenExams(false)}
+        onOk={confirmCopyExams}
+        okText={copyLoadingExams ? "جارٍ النسخ..." : "نسخ"}
+        cancelText="إلغاء"
+        confirmLoading={copyLoadingExams}
+        width={560}
+        title="نسخ الاختبار/الاختبارات إلى دورات أخرى"
       >
-        <Form
-          form={releaseForm}
-          layout="vertical"
-          initialValues={{
-            lessonsMode: "offset",
-            liveMode: "offset",
-            examsMode: "offset",
-            lessonsOffset: 1,
-            liveOffset: 2,
-            examsOffset: 3,
-          }}
-        >
-          <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 text-sm">
-            يمكنك ضبط مواعيد الظهور لجميع المحتويات الحالية مرة واحدة. عند النسخ لاحقاً من دورة المصدر، مرّر نفس
-            الخطة لتطبيقها تلقائياً.
+        <div className="space-y-3" dir="rtl">
+          <div className="text-sm text-gray-700">
+            <span className="font-semibold">السياق:</span>{" "}
+            {copyCtxExams.type === "exams_all"
+              ? "كل الاختبارات"
+              : `اختبار: ${copyCtxExams.title ?? copyCtxExams.examId}`}
           </div>
 
-          <Form.Item
-            label="التاريخ الاساسي"
-            name="baseDate"
-            tooltip="مثلاً تاريخ بداية الكورس؛ لو تركتها فارغة، تأخير الأيام تُحسب من الآن"
-          >
-            <DatePicker className="w-full" />
-          </Form.Item>
+          <Input.Search
+            placeholder="ابحث عن دورة هدف..."
+            allowClear
+            onChange={(e) => setTargetsSearchExams(e.target.value)}
+          />
 
-          <Divider>مرحلة التأسيس</Divider>
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              className="text-xs px-2 py-1 rounded border hover:bg-gray-50"
+              onClick={toggleAllTargetsExams}
+            >
+              {selectedTargetsExams.length === filteredTargetsExams.length
+                ? "إلغاء تحديد الكل"
+                : "تحديد الكل"}
+            </button>
+            <div className="text-xs text-gray-500">
+              المختار: {selectedTargetsExams.length}/{filteredTargetsExams.length}
+            </div>
+          </div>
 
-          <Form.Item noStyle shouldUpdate={(p, c) => p.lessonsMode !== c.lessonsMode}>
-            {({ getFieldValue }) =>
-             <Form.Item label="موعد" name="lessonsAbs" rules={[{ required: true }]}>
-                  <DatePicker showTime className="w-full" />
-                </Form.Item>
-            }
-          </Form.Item>
+          {filteredTargetsExams.length > 0 ? (
+            <div className="max-h-64 overflow-auto space-y-2 pr-1">
+              {filteredTargetsExams.map((t) => (
+                <label
+                  key={t.id}
+                  className={`flex items-center justify-between border rounded-lg px-3 py-2 cursor-pointer hover:bg-gray-50 ${
+                    selectedTargetsExams.includes(t.id)
+                      ? "border-emerald-400 bg-emerald-50/50"
+                      : "border-gray-200"
+                  }`}
+                  onClick={() => toggleTargetExams(t.id)}
+                >
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedTargetsExams.includes(t.id)}
+                      onChange={() => toggleTargetExams(t.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <div>
+                      <div className="font-medium text-gray-900 text-sm">{t.title}</div>
+                      <div className="text-xs text-gray-500">ID: {t.id}</div>
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <div className="p-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-sm">
+              لا توجد دورات مطابقة لبحثك.
+            </div>
+          )}
 
-          <Divider>المحاضرات المباشرة</Divider>
-          {/* <Form.Item name="liveMode" label="طريقة التعيين">
-            <Radio.Group>
-              <Radio value="absolute">موعد</Radio>
-            </Radio.Group>
-          </Form.Item> */}
-          <Form.Item noStyle shouldUpdate={(p, c) => p.liveMode !== c.liveMode}>
-            {({ getFieldValue }) =>
-              <Form.Item label="موعد" name="liveAbs" rules={[{ required: true }]}>
-                  <DatePicker showTime className="w-full" />
-                </Form.Item>
-            }
-          </Form.Item>
-
-          <Divider>الاختبارات</Divider>
-          {/* <Form.Item name="examsMode" label="طريقة التعيين">
-            <Radio.Group>
-              <Radio value="absolute">موعد</Radio>
-            </Radio.Group>
-          </Form.Item> */}
-          <Form.Item noStyle shouldUpdate={(p, c) => p.examsMode !== c.examsMode}>
-            {({ getFieldValue }) =>
-               <Form.Item label="موعد" name="examsAbs" rules={[{ required: true }]}>
-                  <DatePicker showTime className="w-full" />
-                </Form.Item>
-            }
-          </Form.Item>
-        </Form>
+          {copyErrorExams && <div className="text-sm text-red-600">{copyErrorExams}</div>}
+        </div>
       </Modal>
     </div>
   );

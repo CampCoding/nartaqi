@@ -12,14 +12,12 @@ import Button from "../../../../components/atoms/Button";
 // Helper function to generate random ID
 const randomId = () => String(Math.random()).slice(2, 8);
 
-
 const breadcrumbs = [
   { label: "الرئيسية", href: "/", icon: BarChart3 },
-  {label : "انشاء ال QR Code" , href:"/qr-code",icon:""},
+  { label: "انشاء ال QR Code", href: "/qr-code", icon: "" },
   { label: "إدارة ال QR Code", href: "#", icon: "", current: true },
 ];
 
-// Main Component
 export default function Page() {
   const searchParams = useSearchParams();
   const params = useParams();
@@ -98,7 +96,12 @@ export default function Page() {
   };
 
   const downloadQRCode = (record) => {
+    // يحوّل SVG المعروض إلى PNG ويحمّله كصورة واحدة
     const svg = document.getElementById(`qr-code-${record.id}`);
+    if (!svg) {
+      message.warning("تعذر إيجاد العنصر في الصفحة. افتح الصف الذي يحتوي على هذا الكود.");
+      return;
+    }
     const svgData = new XMLSerializer().serializeToString(svg);
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -118,57 +121,109 @@ export default function Page() {
       downloadLink.click();
     };
 
-    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+    img.src =
+      "data:image/svg+xml;base64," +
+      btoa(unescape(encodeURIComponent(svgData)));
     message.success("جاري تحميل QR Code");
   };
 
-  const downloadAllQRCodes = async () => {
+  // ---------- Helpers: توليد QR PNG بدون الاعتماد على عناصر الـ DOM ----------
+  const toPngDataUrl = async (value, { scale = 8, margin = 1 } = {}) => {
+    try {
+      const { default: QRCodeLib } = await import("qrcode");
+      return await QRCodeLib.toDataURL(value, {
+        errorCorrectionLevel: "M",
+        margin,
+        scale, // scale*~37px تقريبا، غيّرها حسب ما تحب
+      });
+    } catch (e) {
+      console.error(e);
+      message.error("فشل توليد الصور. تأكد من تثبيت مكتبة qrcode");
+      throw e;
+    }
+  };
+
+  // ---------- 1) تحميل الكل كصور مستقلة ----------
+  const downloadAllAsImages = async () => {
     if (qrList.length === 0) {
       message.warning("لا توجد رموز للتحميل");
       return;
     }
+    message.info(`جاري تجهيز ${qrList.length} صورة...`);
 
-    message.info(`جاري تحميل ${qrList.length} رمز، قد يستغرق بعض الوقت`);
+    try {
+      for (let i = 0; i < qrList.length; i++) {
+        const record = qrList[i];
+        // استخدم الـ payload مباشرة (لا تعتمد على وجود الـ SVG في الصفحة)
+        const dataUrl = await toPngDataUrl(record.payload, { scale: 10, margin: 1 });
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = `${record.name || `qr-${record.id}`}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        // فاصل صغير لتجنّب منع المتصفح للتحميلات المتعددة
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((r) => setTimeout(r, 200));
+      }
+      message.success("تم تحميل جميع الصور بنجاح");
+    } catch {
+      // رسائل الخطأ عرضناها أعلاه
+    }
+  };
 
-    const downloadPromises = qrList.map((record, index) => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const svg = document.getElementById(`qr-code-${record.id}`);
-          if (!svg) {
-            resolve(null);
-            return;
-          }
+  // ---------- 2) تحميل الكل داخل ملف PDF واحد ----------
+  const downloadAllAsPDF = async () => {
+    if (qrList.length === 0) {
+      message.warning("لا توجد رموز للتحميل");
+      return;
+    }
+    message.info("جاري إنشاء ملف PDF...");
 
-          const svgData = new XMLSerializer().serializeToString(svg);
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
-          const img = new Image();
+    try {
+      const { jsPDF } = await import("jspdf");
+      // A4: 210 x 297 mm
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageW = 210;
+      const pageH = 297;
 
-          img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
+      // حجم الصورة داخل الصفحة
+      const imgW = 120; // mm
+      const imgH = 120; // mm
+      const x = (pageW - imgW) / 2;
+      const titleY = 18;
+      const imgY = 35;
+      const metaY = imgY + imgH + 10;
 
-            const pngFile = canvas.toDataURL("image/png");
-            const downloadLink = document.createElement("a");
-            const fileName = `${record.name || "qr-code"}.png`;
+      for (let i = 0; i < qrList.length; i++) {
+        const record = qrList[i];
+        const dataUrl = await toPngDataUrl(record.payload, { scale: 8, margin: 1 });
 
-            downloadLink.download = fileName;
-            downloadLink.href = pngFile;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            resolve(true);
-          };
+        // عنوان (الاسم)
+        pdf.setFontSize(14);
+        pdf.text(record.name || `QR ${record.id}`, pageW / 2, titleY, { align: "center" });
 
-          img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
-        }, index * 300);
-      });
-    });
+        // الصورة
+        pdf.addImage(dataUrl, "PNG", x, imgY, imgW, imgH);
 
-    Promise.all(downloadPromises).then(() => {
-      message.success("تم تحميل جميع الرموز بنجاح");
-    });
+        // بيانات إضافية (ID / URL)
+        pdf.setFontSize(10);
+        pdf.text(`ID: ${record.id}`, pageW / 2, metaY, { align: "center" });
+        if (record.url) {
+          // قص النص لو طويل
+          const urlText = record.url.length > 60 ? record.url.slice(0, 60) + "…" : record.url;
+          pdf.text(urlText, pageW / 2, metaY + 6, { align: "center" });
+        }
+
+        if (i < qrList.length - 1) pdf.addPage();
+      }
+
+      pdf.save("all-qr-codes.pdf");
+      message.success("تم إنشاء وتحميل ملف PDF بنجاح");
+    } catch (e) {
+      console.error(e);
+      message.error("فشل إنشاء PDF. تأكد من تثبيت jspdf و qrcode");
+    }
   };
 
   const columns = [
@@ -203,7 +258,6 @@ export default function Page() {
           >
             <QRCode id={`qr-code-${record.id}`} value={record.payload} size={64} />
           </div>
-         
         </div>
       ),
     },
@@ -227,7 +281,7 @@ export default function Page() {
             <Trash className="w-4 h-4" />
           </button>
           <button
-           onClick={() => downloadQRCode(record)}
+            onClick={() => downloadQRCode(record)}
             className="border rounded-md hover:bg-green-500 hover:text-white transition-all duration-100 border-green-500 text-green-500 flex justify-center items-center p-2"
             title="تحميل"
           >
@@ -249,10 +303,19 @@ export default function Page() {
             عدد الأكواد المُتولَّدة من العنوان: <b>{initialCount || 0}</b>
           </div>
 
-          <Button onClick={downloadAllQRCodes} className="flex items-center gap-2" disabled={qrList.length === 0}>
-            <Download size={16} />
-            تحميل الكل
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* خيار PDF واحد */}
+            <Button onClick={downloadAllAsPDF} className="flex items-center gap-2" disabled={qrList.length === 0}>
+              <Download size={16} />
+              تحميل الكل (PDF واحد)
+            </Button>
+
+            {/* خيار صور مستقلة */}
+            <Button onClick={downloadAllAsImages} className="flex items-center gap-2" disabled={qrList.length === 0}>
+              <Download size={16} />
+              تحميل الكل (صور مستقلة)
+            </Button>
+          </div>
         </div>
 
         <Table
@@ -262,9 +325,7 @@ export default function Page() {
           pagination={pagination}
           className="mt-4"
           rowClassName="hover:bg-gray-50"
-          onChange={(pag) =>
-            setPagination({ current: pag.current, pageSize: pag.pageSize })
-          }
+          onChange={(pag) => setPagination({ current: pag.current, pageSize: pag.pageSize })}
         />
 
         {/* Modal التعديل */}
@@ -284,7 +345,7 @@ export default function Page() {
             <Form.Item
               label="الاسم"
               name="name"
-              rules={[{ required: true, message: 'يرجى إدخال اسم للرمز' }]}
+              rules={[{ required: true, message: "يرجى إدخال اسم للرمز" }]}
             >
               <Input placeholder="مثال: QR للحدث الرئيسي" />
             </Form.Item>
@@ -313,7 +374,7 @@ export default function Page() {
           </div>
         </Modal>
 
-        {/* Modal المعاينة عند الضغط على QR */}
+        {/* Modal المعاينة */}
         <Modal
           open={previewOpen}
           footer={null}
@@ -326,12 +387,8 @@ export default function Page() {
           {preview && (
             <div className="flex flex-col items-center gap-3">
               <QRCode value={preview.payload} size={256} />
-              <div className="text-sm font-medium">
-                الاسم: {preview.name || "غير محدد"}
-              </div>
-              <div className="text-xs text-gray-500 font-mono break-all">
-                الكود: {preview.id}
-              </div>
+              <div className="text-sm font-medium">الاسم: {preview.name || "غير محدد"}</div>
+              <div className="text-xs text-gray-500 font-mono break-all">الكود: {preview.id}</div>
               {preview.url ? (
                 <a
                   href={preview.url}

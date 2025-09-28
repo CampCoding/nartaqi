@@ -205,8 +205,9 @@ export default function CompetitionsPage() {
 
   /* ============== Add ============== */
   const openAdd = () => {
+    router.push("/competitions/add");
     form.resetFields();
-    setAddOpen(true);
+    // setAddOpen(true);
   };
   const submitAdd = async () => {
     try {
@@ -305,7 +306,8 @@ export default function CompetitionsPage() {
           icon: c.visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />,
           onClick: () => toggleVisible(c.id),
         },
-        { key: "edit", label: "تعديل", icon: <Edit2 className="w-4 h-4" />, onClick: () => openEdit(c) },
+        {key : "details" , label :"تفاصيل" , icon :  <Eye  className="w-4 h-4"/> , onClick: () => router.push(`/competitions/${c?.id}`)},
+        { key: "edit", label: "تعديل", icon: <Edit2 className="w-4 h-4" />, onClick: () => router.push(`/competitions/edit/${c?.id}`) },
         { key: "del", label: "حذف", icon: <Trash2 className="w-4 h-4" />, danger: true, onClick: () => del(c.id) },
         {key:"student", label:"المتصدرين" , icon : <User className="w-4 h-4"/> , onClick : () => router.push(`/competitions/students/${c?.id}`)}
       ]}

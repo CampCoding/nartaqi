@@ -99,15 +99,15 @@ export default function Sidebar() {
       icon: BookOpen,
       path: "/teachers-courses",
     },
-    {
-      name:"دورات الوجهه المصرية",
-      icon : BookOpen,
-      path:"/egyptian_course"
-    },
+    // {
+    //   name:"دورات الوجهه المصرية",
+    //   icon : BookOpen,
+    //   path:"/egyptian_course"
+    // },
      {
       name:"دورة المصدر ",
       icon:Files,
-      path:"/saudi_source_course/add-data"
+      path:"/saudi_source_course"
     },
     { name: "المتدربين", icon: GraduationCap, path: "/students" },
     // { name: "أقسام الاختبارات", icon: BookCopy , path: "/exam_sections" },

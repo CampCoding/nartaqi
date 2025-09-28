@@ -1,925 +1,485 @@
 "use client";
-import React, { useState } from "react";
+
+import React, { useEffect, useState } from "react";
 import {
-  BarChart3,
-  Book,
-  Files,
-  Plus,
-  Save,
-  Video as VideoIcon,
-  FileText,
-  Copy,
-  ChevronDown,
-  Eye,
-  EyeOff,
-  Edit,
-  Trash2,
-  Download,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
+  PlusOutlined,
+  BookOutlined,
+  FileTextOutlined,
+  DeleteOutlined,
+  PlayCircleOutlined,
+  CalendarOutlined,
+  FolderOutlined,
+  SettingOutlined,
+} from "@ant-design/icons";
 import {
-  Card,
   Form,
-  Input,
-  Select,
+  Button,
   message,
-  Divider,
-  Row,
-  Col,
-  Button as AntButton,
-  Dropdown,
-  Menu,
-  Modal,
-  Empty,
-  Tag,
-  Tooltip,
-  Space,
-  Switch,
   Upload,
-  Tabs,
+  Divider,
 } from "antd";
-import { PlusOutlined, FolderOutlined, LinkOutlined, InboxOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
+import "react-quill-new/dist/quill.snow.css";
+import dynamic from "next/dynamic";
+import AddCourseSourceContent from "../../../../components/SaudiCourseSource/AddCourseSourceContent";
+import AddCourseSourceBasicInfo from "../../../../components/SaudiCourseSource/AddCourseSourceBasicInfo";
+import AddCourseSourceShedule from "../../../../components/SaudiCourseSource/AddCourseSourceShedule";
+import AddCourseSourceResource from "../../../../components/SaudiCourseSource/AddCourseSourceResource";
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
-// Layout & components
-import PageLayout from "../../../../components/layout/PageLayout";
-import BreadcrumbsShowcase from "../../../../components/ui/BreadCrumbs";
-import PagesHeader from "../../../../components/ui/PagesHeader";
-import Button from "../../../../components/atoms/Button";
-import SaudiCourseSourceBasicLevel from "../../../../components/SaudiCourseSource/SaudiCourseSourceBasicLevel";
-import AddCourseLevelModal from "../../../../components/TeacherCourses/AddTeacherCourseContent/AddCourseLevelModal";
-import AddCourseLessonModal from "../../../../components/TeacherCourses/AddTeacherCourseContent/AddCourseLessonModal";
-import AddSaudiCourseSourceLectures from "../../../../components/SaudiCourseSource/AddSaudiCourseSourceLectures";
-import AddSaudiCourseSourceExams from "../../../../components/SaudiCourseSource/AddSaudiCourseSourceExams";
-
-const { Dragger } = Upload;
-
-const breadcrumbs = [
-  { label: "الرئيسية", href: "/", icon: BarChart3 },
-  { label: "دورة المصدر", href: "#", icon: Plus, current: true },
+// Mock data for categories with sections
+const all_categories = [
+  {
+    id: 1,
+    title: "دورات عامة",
+    sections: [
+      { id: 1, name: "تطوير الويب", isVisible: true },
+      { id: 2, name: "تطوير التطبيقات", isVisible: true },
+      { id: 3, name: "الذكاء الاصطناعي", isVisible: true },
+    ],
+  },
+  {
+    id: 2,
+    title: "الرخصة المهنية",
+    sections: [
+      { id: 4, name: "تصميم UI/UX", isVisible: true },
+      { id: 5, name: "الجرافيك ديزاين", isVisible: true },
+      { id: 6, name: "الرسم الرقمي", isVisible: false },
+    ],
+  },
+  {
+    id: 3,
+    title: "دورات اخري",
+    sections: [
+      { id: 7, name: "الرياضيات المتقدمة", isVisible: true },
+      { id: 8, name: "الفيزياء", isVisible: true },
+      { id: 9, name: "الكيمياء", isVisible: true },
+    ],
+  },
 ];
 
-const CONTENT_TYPES = [
-  { id: 1, title: "مرحلة التأسيس", value: "stage", icon: Files },
-  { id: 2, title: "محاضرات", value: "live", icon: VideoIcon },
-  { id: 3, title: "اختبارات", value: "exam", icon: FileText },
-  { id: 4, title: "المصادر", value: "resources", icon: Book },
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    [{ align: ["", "center", "right", "justify"] }],
+    [{ direction: "rtl" }],
+    [{ color: [] }, { background: [] }],
+    ["link", "blockquote", "code-block"],
+    ["clean"],
+  ],
+};
+
+const quillFormats = [
+  "header", "bold", "italic", "underline", "strike", "list",
+  "align", "direction", "color", "background", "link", "blockquote", "code-block",
 ];
 
-const VIDEO_SOURCES = [
-  { value: "url", label: "رابط (YouTube/Vimeo…)" },
-  { value: "file", label: "رفع ملف من الجهاز" },
-];
+const RichTextField = ({ value, onChange, placeholder }) => (
+  <div dir="rtl" className="rich-text-field">
+    <ReactQuill
+      className="ql-rtl"
+      theme="snow"
+      value={value}
+      onChange={(html) => onChange?.(html)}
+      modules={quillModules}
+      formats={quillFormats}
+      placeholder={placeholder}
+      style={{ minHeight: "120px" }}
+    />
+  </div>
+);
 
-/** ============== تب داخلي مستقل للحالة والمحتوى ============== */
-function CourseContentTab({ regionLabel = "السعودية" }) {
-  const [form] = Form.useForm();
-  const [exams, setExams] = useState([
-    {
-      id: 1,
-      title: `اختبار تأسيس — رقم 1 (${regionLabel})`,
-      examType: "training",
-      duration: 45,
-      questions: 15,
-      status: "مسودة",
-      visible: true,
-    },
-  ]);
-  const [lessonForm] = Form.useForm();
-  const [stageForm] = Form.useForm();
-  const [selectedContentType, setSelectedContentType] = useState("stage");
-  const [foundationStages, setFoundationStages] = useState([]);
-  const [savingStage, setSavingStage] = useState(false);
-  const [savingLesson, setSavingLesson] = useState(false);
-  const [openAddLesson, setOpenAddLesson] = useState(false);
-  const [openAddStage, setOpenAddStage] = useState(false);
-  const [openPickExam, setOpenPickExam] = useState(false);
-  const [examLibrary, setExamLibrary] = useState([]);
-  const [pickForm] = Form.useForm();
-  const [openEditResource, setOpenEditResource] = useState(false);
-  const [editingResource, setEditingResource] = useState(null);
-  const [savingResource, setSavingResource] = useState(false);
-  const [resourceForm] = Form.useForm();
-
-  // resources: { id, name, file, fileName, visible }
-  const [videos, setVideos] = useState([]);
-
-  const router = useRouter();
-
-  // دورات تجريبية للنسخ
-  const availableCourses = [
-    { id: 1, title: "دورة الرياضيات المتقدمة" },
-    { id: 2, title: "دورة اللغة الإنجليزية" },
-    { id: 3, title: "دورة البرمجة للمبتدئين" },
-    { id: 4, title: "دورة التصميم الجرافيكي" },
-  ];
-
-  const normalizeLibraryExam = (e) => ({
-    id: e.id ?? e._id,
-    title: e.title ?? "بدون عنوان",
-    examType: (e.examType ?? e.type) === "mock" ? "mock" : "training",
-    duration: Number(e.duration) || 10,
-    questions: Array.isArray(e.questions)
-      ? e.questions.length
-      : e.questionsCount ?? e.questions ?? 0,
-    status: e.status ?? "مسودة",
-    visible: !!e.visible,
+// Helper: convert file -> base64
+const getBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
   });
 
-  const linkSelectedExams = async () => {
-    try {
-      const v = await pickForm.validateFields();
-      const ids = v.examIds || [];
-      const toLink = ids
-        .map((id) => examLibrary.find((x) => (x.id ?? x._id) === id))
-        .filter(Boolean)
-        .map(normalizeLibraryExam);
 
-      setExams((prev) => {
-        const existing = new Set(prev.map((x) => String(x.id)));
-        return [...toLink.filter((x) => !existing.has(String(x.id))), ...prev];
-      });
+const EnhancedCourseForm = ({ open, setOpen }) => {
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState(1);
+  const [fileList, setFileList] = useState([]);
+  const [fileNames, setFileNames] = useState({}); // uid -> custom name
+  const [videos, setVideos] = useState([{ id: 1, name: "", url: "" }]);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [availableSections, setAvailableSections] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [newSchedule, setNewSchedule] = useState({
+    day: "",
+    date:"",
+    startTime: null,
+    endTime: null,
+    maxStudents: 30,
+    isActive: true,
+  });
 
-      setOpenPickExam(false);
-      pickForm.resetFields();
-      message.success("تم ربط الاختبار/الاختبارات بنجاح");
-    } catch {
-      /* antd validation */
-    }
-  };
-
-  // نسخ محتوى لدورة أخرى
-  const handleCopyToCourse = async (courseId, contentType, contentId = null) => {
-    try {
-      if (contentType === "exam" && contentId) {
-        const contentToCopy = exams.find((exam) => exam.id === contentId);
-        console.log(`[${regionLabel}] Copy exam ${contentId} to course ${courseId}`, contentToCopy);
-        message.success("تم نسخ الاختبار إلى الدورة المحددة");
-      } else if (contentType === "exam") {
-        console.log(`[${regionLabel}] Copy all exams`, exams);
-        message.success("تم نسخ جميع الاختبارات إلى الدورة المحددة");
-      } else if (contentType === "stage" && contentId) {
-        const contentToCopy = foundationStages.find((stage) => stage.id === contentId);
-        console.log(`[${regionLabel}] Copy stage ${contentId} to course ${courseId}`, contentToCopy);
-        message.success("تم نسخ القسم إلى الدورة المحددة");
-      } else if (contentType === "stage") {
-        console.log(`[${regionLabel}] Copy all stages`, foundationStages);
-        message.success("تم نسخ جميع الأقسام إلى الدورة المحددة");
-      } else if (contentType === "resources") {
-        console.log(`[${regionLabel}] Copy resources`, videos);
-        message.success("تم نسخ المصادر إلى الدورة المحددة");
-      } else {
-        const allContent = { stages: foundationStages, exams, resources: videos };
-        console.log(`[${regionLabel}] Copy ALL content`, allContent);
-        message.success("تم نسخ المحتوى إلى الدورة المحددة");
+  // Update sections when category changes
+  useEffect(() => {
+    if (selectedCategory) {
+      const category = all_categories.find(cat => cat.id === selectedCategory);
+      if (category) {
+        setAvailableSections(category.sections.filter(section => section.isVisible));
       }
-    } catch (error) {
-      console.error("Error copying content:", error);
-      message.error("حدث خطأ أثناء نسخ المحتوى");
+    } else {
+      setAvailableSections([]);
     }
-  };
+  }, [selectedCategory]);
 
-  const getCopyMenu = (contentType = "all", contentId = null) => (
-    <Menu>
-      <Menu.ItemGroup title="نسخ إلى دورة">
-        {availableCourses.map((course) => (
-          <Menu.Item
-            key={course.id}
-            onClick={() => handleCopyToCourse(course.id, contentType, contentId)}
-            icon={<Copy className="w-4 h-4" />}
-          >
-            {course.title}
-          </Menu.Item>
-        ))}
-      </Menu.ItemGroup>
-    </Menu>
-  );
-
-  const normFile = (e) => {
-    if (Array.isArray(e)) return e;
-    return e && e.fileList;
-  };
-
-  const submitStage = async () => {
-    try {
-      setSavingStage(true);
-      const v = await stageForm.validateFields();
-      const stage = {
-        id: `stg-${Date.now()}`,
-        title: v.title.trim(),
-        visible: true,
-        lessons: [],
-      };
-      setFoundationStages((prev) => [stage, ...prev]);
-      setOpenAddStage(false);
-      stageForm.resetFields();
-      message.success("تم إضافة المرحلة");
-    } catch {
-    } finally {
-      setSavingStage(false);
+  const beforeUpload = async (file) => {
+    const isImage = file.type?.startsWith("image/");
+    if (!isImage) {
+      message.error("من فضلك ارفع ملف صورة فقط.");
+      return Upload.LIST_IGNORE;
     }
-  };
-
-  const submitLesson = async () => {
-    try {
-      setSavingLesson(true);
-      const v = await lessonForm.validateFields();
-
-      // resolve stage
-      let stageId = v.stageId;
-      if (v.stageMode === "new") {
-        stageId = `stg-${Date.now()}`;
-        setFoundationStages((prev) => [
-          { id: stageId, title: v.stageTitle.trim(), visible: true, lessons: [] },
-          ...prev,
-        ]);
-      }
-
-      const lesson = {
-        id: `L-${Date.now()}`,
-        title: v.title.trim(),
-        visible: true,
-        lessonVideo: {
-          title: v.lessonVideoTitle.trim(),
-          source: v.lessonVideoSource,
-          ...(v.lessonVideoSource === "url"
-            ? { url: v.lessonVideoUrl.trim() }
-            : { fileList: v.lessonVideoFile ?? [] }),
-        },
-        training: {
-          video: {
-            title: v.trainingVideoTitle.trim(),
-            source: v.trainingVideoSource,
-            ...(v.trainingVideoSource === "url"
-              ? { url: v.trainingVideoUrl.trim() }
-              : { fileList: v.trainingVideoFile ?? [] }),
-          },
-          pdfs: (v.pdfs || []).map((p, idx) => ({
-            id: `pdf-${Date.now()}-${idx}`,
-            title: p.title.trim(),
-            fileList: p.fileList || [],
-          })),
-        },
-      };
-
-      setFoundationStages((prev) =>
-        prev.map((st) => (st.id === stageId ? { ...st, lessons: [lesson, ...(st.lessons || [])] } : st))
-      );
-
-      setOpenAddLesson(false);
-      lessonForm.resetFields();
-      message.success("تم إضافة الدرس إلى المرحلة");
-    } catch {
-    } finally {
-      setSavingLesson(false);
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    if (!isLt5M) {
+      message.error("حجم الصورة يجب أن يكون أقل من 5MB.");
+      return Upload.LIST_IGNORE;
     }
-  };
 
-  const beforeUploadVideo = () => false;
-  const beforeUploadPdf = () => false;
-
-  const stats = {
-    stageCount: foundationStages.length,
-    lessonCount: foundationStages.reduce((total, stage) => total + (stage.lessons?.length || 0), 0),
-  };
-
-  const handleContentTypeChange = (value) => setSelectedContentType(value);
-
-  const onFinish = (values) => {
-    console.log(`[${regionLabel}] Form values:`, values);
-    message.success("تم حفظ المحتوى بنجاح");
-  };
-
-  const onFinishFailed = () => {
-    message.error("يرجى مراجعة البيانات المدخلة");
-  };
-
-  const deleteStage = (stageId) => {
-    setFoundationStages((prev) => prev.filter((stage) => stage.id !== stageId));
-    message.success("تم حذف القسم بنجاح");
-  };
-
-  const deleteLesson = (stageId, lessonId) => {
-    setFoundationStages((prev) =>
-      prev.map((stage) =>
-        stage.id === stageId
-          ? { ...stage, lessons: stage.lessons?.filter((lesson) => lesson.id !== lessonId) || [] }
-          : stage
-      )
-    );
-    message.success("تم حذف المحاضرة بنجاح");
-  };
-
-  const toggleStageVisibility = (stageId) => {
-    setFoundationStages((prev) =>
-      prev.map((stage) => (stage.id === stageId ? { ...stage, visible: !stage.visible } : stage))
-    );
-  };
-
-  const toggleLessonVisibility = (stageId, lessonId) => {
-    setFoundationStages((prev) =>
-      prev.map((stage) =>
-        stage.id === stageId
-          ? {
-              ...stage,
-              lessons:
-                stage.lessons?.map((lesson) =>
-                  lesson.id === lessonId ? { ...lesson, visible: !lesson.visible } : lesson
-                ) || [],
-            }
-          : stage
-      )
-    );
-  };
-
-  // exams
-  const toggleExamVisibility = (examId) => {
-    setExams((prev) => prev.map((exam) => (exam.id === examId ? { ...exam, visible: !exam.visible } : exam)));
-  };
-  const deleteExam = (examId) => {
-    setExams((prev) => prev.filter((exam) => exam.id !== examId));
-  };
-
-  // resources helpers
-  const addResourceQuick = (values) => {
-    const name = values.rName?.trim();
-    const fileList = values.rFile || [];
-    if (!name || fileList.length === 0) {
-      message.warning("أدخل اسمًا وارفع ملفًا واحدًا على الأقل");
-      return;
-    }
-    const fileObj = fileList[0]?.originFileObj;
-    setVideos((arr) => [
-      ...arr,
-      { id: Date.now(), name, file: fileObj, fileName: fileObj?.name || "ملف", visible: true },
+    const preview = await getBase64(file);
+    setImagePreview(preview);
+    setFileList([
+      {
+        uid: file.uid || file.name,
+        name: file.name,
+        status: "done",
+        originFileObj: file,
+      },
     ]);
-    message.success("تمت إضافة المصدر");
+    return false;
   };
 
-  const toggleResourceVisibility = (id) => {
-    setVideos((arr) => arr.map((r) => (r.id === id ? { ...r, visible: !r.visible } : r)));
-  };
-
-  const deleteResource = (id) => {
-    setVideos((arr) => arr.filter((r) => r.id !== id));
-    message.success("تم حذف المصدر");
-  };
-
-  const onOpenEditResource = (r) => {
-    setEditingResource(r);
-    resourceForm.setFieldsValue({
-      name: r?.name ?? "",
-      rFile: r?.file
-        ? [
-            {
-              uid: String(r.id),
-              name: r.fileName || r.file?.name || "ملف",
-              status: "done",
-              originFileObj: r.file,
-            },
-          ]
-        : [],
-      visible: !!r?.visible,
+  const onFilesChange = ({ fileList }) => {
+    setFileList(fileList);
+    setFileNames((prev) => {
+      const next = { ...prev };
+      fileList.forEach((f) => {
+        if (f.uid && !next[f.uid]) next[f.uid] = f.name?.replace(/\.[^.]+$/, "") || "";
+      });
+      // remove stale uids
+      Object.keys(next).forEach((uid) => {
+        if (!fileList.find((f) => f.uid === uid)) delete next[uid];
+      });
+      return next;
     });
-    setOpenEditResource(true);
   };
 
-  const onSubmitEditResource = async () => {
+  const handleAddSchedule = () => {
+    if (newSchedule.date && newSchedule.startTime && newSchedule.endTime) {
+      const schedule = {
+        ...newSchedule,
+        startTime: newSchedule.startTime.format("HH:mm"),
+        endTime: newSchedule.endTime.format("HH:mm"),
+      };
+      setSchedules([...schedules, schedule]);
+      setNewSchedule({
+        day: "",
+        startTime: null,
+        endTime: null,
+        maxStudents: 30,
+        isActive: true,
+      });
+      message.success("تم إضافة الجدولة بنجاح!");
+    } else {
+      message.error("يجب إدخال جميع البيانات المطلوبة.");
+    }
+  };
+
+  const handleUpdateSchedule = (index, updatedSchedule) => {
+    const newSchedules = [...schedules];
+    newSchedules[index] = {
+      ...updatedSchedule,
+      startTime: updatedSchedule.startTime?.format ? 
+        updatedSchedule.startTime.format("HH:mm") : updatedSchedule.startTime,
+      endTime: updatedSchedule.endTime?.format ? 
+        updatedSchedule.endTime.format("HH:mm") : updatedSchedule.endTime,
+    };
+    setSchedules(newSchedules);
+    message.success("تم تحديث الجدولة بنجاح!");
+  };
+
+  const handleRemoveSchedule = (index) => {
+    const newSchedules = [...schedules];
+    newSchedules.splice(index, 1);
+    setSchedules(newSchedules);
+    message.success("تم حذف الجدولة بنجاح!");
+  };
+
+  const handleFinish = async () => {
+    setLoading(true);
     try {
-      const v = await resourceForm.validateFields();
-      setSavingResource(true);
-      const nextName = v.name?.trim();
-      const fileList = v.rFile || [];
+      const raw = form.getFieldsValue(true);
 
-      setVideos((arr) =>
-        arr.map((r) => {
-          if (r.id !== editingResource?.id) return r;
-          const newFile = fileList[0]?.originFileObj ?? r.file;
-          const newFileName = fileList[0]?.name ?? r.fileName ?? newFile?.name;
-          return { ...r, name: nextName, file: newFile, fileName: newFileName, visible: v.visible };
-        })
-      );
+      const payload = {
+        code: raw.code?.toUpperCase(),
+        imageUrl: imagePreview,
+        name: raw.name?.trim(),
+        category: raw.category,
+        section: raw.section,
+        price: Number(raw.price ?? 0),
+        duration: raw.duration?.trim(),
+        description: raw.description?.trim(),
+        status: raw.status,
+        genderPolicy: raw.genderPolicy,
+        capacity: Number(raw.capacity ?? 0),
+        instructor: raw.instructor,
+        availableFrom: raw.availableRange?.[0] ? 
+          dayjs(raw.availableRange[0]).format("YYYY-MM-DD") : undefined,
+        availableTo: raw.availableRange?.[1] ? 
+          dayjs(raw.availableRange[1]).format("YYYY-MM-DD") : undefined,
+        summary: raw.summary || "",
+        schedules: schedules,
+        resources: {
+          files: (raw.resources?.files || []).map((f) => ({
+            // preserve original file object where possible
+            uid: f.uid,
+            name: fileNames[f.uid] ?? f.name,
+            originName: f.name,
+            type: f.type,
+          })),
+          telegram: raw.resources?.telegram || "",
+          whatsapp: raw.resources?.whatsapp || "",
+          videos: videos.filter((v) => v.url?.trim()).map((v) => ({ name: v.name?.trim() || "", url: v.url.trim() })),
+        },
+      };
 
-      message.success("تم حفظ تعديلات المصدر");
-      setOpenEditResource(false);
-      setEditingResource(null);
-      resourceForm.resetFields();
-    } catch {
+      await new Promise((r) => setTimeout(r, 1500));
+      console.log("Enhanced Form Data:", payload);
+      message.success("تمت إضافة الدورة بنجاح!");
+      handleReset();
+      setOpen(false);
+    } catch (e) {
+      message.error("فشل إضافة الدورة. حاول مرة أخرى.");
     } finally {
-      setSavingResource(false);
+      setLoading(false);
     }
   };
 
-  const handleDownloadResource = (r) => {
-    if (!r?.file) {
-      message.warning("لا يوجد ملف مرفوع لهذا المصدر");
-      return;
-    }
-    const url = URL.createObjectURL(r.file);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = r.fileName || r.file?.name || "resource";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+  const handleReset = () => {
+    form.resetFields();
+    setFileList([]);
+    setImagePreview(null);
+    setSelectedCategory(null);
+    setAvailableSections([]);
+    setSchedules([]);
+    setNewSchedule({
+      day: "",
+      startTime: null,
+      endTime: null,
+      maxStudents: 30,
+      isActive: true,
+    });
   };
 
-  // Resources UI (within tab)
-  const AddSaudiCourseSourceResource = () => {
-    const [quickForm] = Form.useForm();
-
-    return (
-      <div className="space-y-8">
-        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-200">
-          <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-            <FolderOutlined className="text-purple-600" />
-            المصادر والملفات — {regionLabel}
-          </h3>
-
-          {/* Telegram / WhatsApp */}
-          <Row gutter={24}>
-            <Col span={12}>
-              <Form.Item
-                label={
-                  <span className="font-semibold text-gray-700 flex items-center gap-2">
-                    <LinkOutlined className="text-blue-500" />
-                    رابط مجموعة التليجرام
-                  </span>
-                }
-                name={["resources", "telegram"]}
-              >
-                <Input
-                  placeholder="https://t.me/groupname"
-                  className="rounded-xl"
-                  prefix={<LinkOutlined className="text-gray-400" />}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label={
-                  <span className="font-semibold text-gray-700 flex items-center gap-2">
-                    <LinkOutlined className="text-green-500" />
-                    رابط مجموعة الواتساب
-                  </span>
-                }
-                name={["resources", "whatsapp"]}
-              >
-                <Input
-                  placeholder="https://chat.whatsapp.com/groupid"
-                  className="rounded-xl"
-                  prefix={<LinkOutlined className="text-gray-400" />}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          {/* quick add (name + file) */}
-          <div className="bg-white rounded-xl p-4 border mb-6">
-            <Form form={quickForm} layout="vertical" onFinish={addResourceQuick}>
-              <Row gutter={12}>
-                <Col xs={24} md={8}>
-                  <Form.Item
-                    label="اسم المصدر"
-                    name="rName"
-                    rules={[{ required: true, message: "أدخل اسم المصدر" }]}
-                  >
-                    <Input placeholder="مثال: دليل المتدرب" />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} md={12}>
-                  <Form.Item
-                    label="رفع الملف"
-                    name="rFile"
-                    valuePropName="fileList"
-                    getValueFromEvent={normFile}
-                    rules={[{ required: true, message: "ارفع ملف المصدر" }]}
-                  >
-                    <Dragger beforeUpload={() => false} maxCount={1}>
-                      <p className="ant-upload-drag-icon">
-                        <InboxOutlined />
-                      </p>
-                      <p className="ant-upload-text">اسحب الملف هنا أو اضغط للاختيار</p>
-                      <p className="ant-upload-hint">ملف واحد فقط — لن نرفعه الآن.</p>
-                    </Dragger>
-                  </Form.Item>
-                </Col>
-                <Col xs={24} md={4} className="flex items-end">
-                  <AntButton
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={() => quickForm.submit()}
-                    className="w-full bg-blue-500 text-white"
-                  >
-                    إضافة
-                  </AntButton>
-                </Col>
-              </Row>
-            </Form>
-          </div>
-
-          {/* list */}
-          <div>
-            <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              <FolderOutlined className="text-blue-600" />
-              جميع الموارد المضافة — {regionLabel}
-            </h4>
-
-            {videos.length === 0 ? (
-              <Empty description="لا توجد موارد بعد" />
-            ) : (
-              <div className="space-y-3">
-                {videos.map((r) => (
-                  <div
-                    key={r.id}
-                    className={`flex items-center justify-between rounded-lg border p-3 ${
-                      r.visible ? "bg-gray-50" : "bg-gray-100 opacity-75"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-indigo-100 p-2 text-indigo-700">
-                        <Book className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className={`font-medium ${r.visible ? "text-gray-800" : "text-gray-500"}`}>
-                          {r.name || "بدون اسم"}
-                        </div>
-                        <div className="text-xs text-gray-500 flex items-center gap-2">
-                          <Tag color={r.visible ? "green" : "red"} className="!m-0">
-                            {r.visible ? "ظاهر" : "مخفي"}
-                          </Tag>
-                          {r.file ? (
-                            <AntButton
-                              type="link"
-                              className="!p-0 inline-flex items-center gap-1"
-                              onClick={() => handleDownloadResource(r)}
-                            >
-                              تحميل
-                              <Download className="w-3 h-3" />
-                            </AntButton>
-                          ) : (
-                            <span className="text-gray-400">لا يوجد ملف</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <Space>
-                      <Tooltip title="تعديل">
-                        <AntButton
-                          type="text"
-                          className="!p-2 hover:!bg-purple-50 !text-green-600"
-                          icon={<Edit className="w-4 h-4" />}
-                          onClick={() => onOpenEditResource(r)}
-                        />
-                      </Tooltip>
-
-                      <Tooltip title={r.visible ? "إخفاء" : "إظهار"}>
-                        <AntButton
-                          type="text"
-                          className="!p-2"
-                          icon={
-                            r.visible ? (
-                              <Eye className="w-4 h-4 text-green-600" />
-                            ) : (
-                              <EyeOff className="w-4 h-4 text-gray-400" />
-                            )
-                          }
-                          onClick={() => toggleResourceVisibility(r.id)}
-                        />
-                      </Tooltip>
-
-                      <AntButton
-                        danger
-                        className="!p-2"
-                        icon={<Trash2 className="w-4 h-4" />}
-                        onClick={() => deleteResource(r.id)}
-                      />
-                    </Space>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* copy */}
-          <div className="mt-6 flex justify-end">
-            <Dropdown overlay={getCopyMenu("resources")} trigger={["click"]} placement="bottomRight">
-              <AntButton icon={<Copy className="w-4 h-4" />} className="flex items-center gap-2">
-                نسخ المصادر إلى دورة
-                <ChevronDown className="w-4 h-4" />
-              </AntButton>
-            </Dropdown>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-
-  const addTrainingFiles = (stageId, lessonId, files) => {
-    setFoundationStages((prev) =>
-      prev.map((stage) =>
-        stage.id === stageId
-          ? {
-              ...stage,
-              lessons:
-                stage.lessons?.map((lesson) =>
-                  lesson.id === lessonId
-                    ? {
-                        ...lesson,
-                        training: {
-                          ...lesson.training,
-                          pdfs: [
-                            ...(lesson.training?.pdfs || []),
-                            ...files.map((file, index) => ({
-                              id: Date.now() + index,
-                              name: file.name,
-                              source: "upload",
-                              file,
-                            })),
-                          ],
-                        },
-                      }
-                    : lesson
-                ) || [],
-            }
-          : stage
-      )
-    );
-    message.success(`تم إضافة ${files.length} ملف بنجاح`);
-  };
-
-  const removeTrainingFile = (stageId, lessonId, fileId) => {
-    setFoundationStages((prev) =>
-      prev.map((stage) =>
-        stage.id === stageId
-          ? {
-              ...stage,
-              lessons:
-                stage.lessons?.map((lesson) =>
-                  lesson.id === lessonId
-                    ? {
-                        ...lesson,
-                        training: {
-                          ...lesson.training,
-                          pdfs: (lesson.training?.pdfs || []).filter((f) => f.id !== fileId),
-                        },
-                      }
-                    : lesson
-                ) || [],
-            }
-          : stage
-      )
-    );
-    message.success("تم حذف الملف بنجاح");
-  };
-
-  const renderFormContent = () => {
-    switch (selectedContentType) {
-      case "stage":
-        return (
-          <SaudiCourseSourceBasicLevel
-            stats={stats}
-            deleteLesson={(sid, lid) => deleteLesson(sid, lid)}
-            deleteStage={(sid) => deleteStage(sid)}
-            toggleStageVisibility={(sid) => toggleStageVisibility(sid)}
-            toggleLessonVisibility={(sid, lid) => toggleLessonVisibility(sid, lid)}
-            foundationStages={foundationStages}
-            setOpenAddLesson={setOpenAddLesson}
-            setOpenAddStage={setOpenAddStage}
-            addTrainingFiles={addTrainingFiles}
-            removeTrainingFile={removeTrainingFile}
-            getCopyMenu={getCopyMenu}
-          />
-        );
-      case "live":
-        return (
-          <AddSaudiCourseSourceLectures
-            stats={stats}
-            deleteLesson={deleteLesson}
-            deleteStage={deleteStage}
-            toggleStageVisibility={toggleStageVisibility}
-            toggleLessonVisibility={toggleLessonVisibility}
-            foundationStages={foundationStages}
-            setOpenAddLesson={setOpenAddLesson}
-            setOpenAddStage={setOpenAddStage}
-            addTrainingFiles={addTrainingFiles}
-            removeTrainingFile={removeTrainingFile}
-          />
-        );
-      case "exam":
-        return (
-          <AddSaudiCourseSourceExams
-            exams={exams}
-            setExams={setExams}
-            setOpenPickExam={setOpenPickExam}
-            toggleExamVisibility={toggleExamVisibility}
-            deleteExam={(id) => {
-              deleteExam(id);
-              message.success("تم حذف الاختبار بنجاح");
-            }}
-            getCopyMenu={getCopyMenu}
-          />
-        );
-      case "resources":
-        return <AddSaudiCourseSourceResource />;
-      default:
-        return null;
-    }
-  };
+  const tabItems = [
+    { key: 1, label: "المعلومات الأساسية", icon: <BookOutlined /> },
+    { key: 2, label: "الجدولة والمواعيد", icon: <CalendarOutlined /> },
+    { key: 3, label: "المحتوى التفصيلي", icon: <FileTextOutlined /> },
+    { key: 4, label: "المصادر والملفات", icon: <FolderOutlined /> },
+  ];
 
   return (
-    <>
-      <div style={{ dir: "rtl" }} className="">
-        <BreadcrumbsShowcase items={breadcrumbs} variant="pill" />
-        <PagesHeader
-          title={`إضافة وعرض محتوي الدورة — الواجهة ${regionLabel}`}
-          subtitle={`أضف محتوى جديد لدورة المصدر (${regionLabel})`}
-          extra={
-            <div className="flex gap-2">
-              <Dropdown overlay={getCopyMenu()} trigger={["click"]} placement="bottomRight">
-                <Button className="!bg-purple-600 hover:!bg-purple-700 !text-white !border-0 shadow-md transition-all duration-200 flex items-center gap-2">
-                  <Copy className="w-4 h-4" />
-                  نسخ المحتوى
-                  <ChevronDown className="w-4 h-4" />
-                </Button>
-              </Dropdown>
+    <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 min-h-[80vh]" dir="rtl">
+          {/* Enhanced Header */}
+          <div className="relative mb-8 p-6 bg-white rounded-2xl shadow-sm border-b-4 border-b-blue-500">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full -translate-y-16 translate-x-16"></div>
+            <div className="relative flex items-center gap-4 mb-3">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg">
+                <PlusOutlined className="text-white text-xl" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-blue-800 bg-clip-text text-transparent">
+                  إضافة دورة جديدة
+                </h1>
+                <p className="text-gray-600 mt-1">إنشاء وتكوين دورة تعليمية شاملة مع الجدولة والمحتوى</p>
+              </div>
             </div>
-          }
-        />
+            
+            {/* Progress Indicator */}
+            <div className="flex items-center gap-2 mt-4">
+              {tabItems.map((tab, index) => (
+                <div
+                  key={tab.key}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer
+                    ${activeTab === tab.key 
+                      ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }`}
+                  onClick={() => setActiveTab(tab.key)}
+                >
+                  {tab.icon}
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-        <div className="max-w-6xl mx-auto mt-6">
-          <Card>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
             <Form
               form={form}
               layout="vertical"
-              onFinish={onFinish}
-              onFinishFailed={onFinishFailed}
-              initialValues={{ lectures: [{}] }}
+              onFinish={handleFinish}
+              initialValues={{
+                code: "COURSE_" + Math.random().toString(36).substr(2, 6).toUpperCase(),
+                name: "",
+                category: null,
+                section: null,
+                price: 499,
+                duration: "3 شهور",
+                description: "",
+                status: "نشط",
+                genderPolicy: "both",
+                capacity: 50,
+                instructor: [],
+                availableRange: [dayjs().add(1, 'week'), dayjs().add(3, 'month')],
+                summary: "",
+              }}
+              className="p-8"
             >
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">نوع المحتوى</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {CONTENT_TYPES.map((type) => (
-                    <div
-                      key={type.id}
-                      onClick={() => handleContentTypeChange(type.value)}
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        selectedContentType === type.value
-                          ? "border-teal-500 bg-teal-50 text-teal-700"
-                          : "border-gray-200 hover:border-teal-300"
-                      }`}
+              {/* Basic Information Tab */}
+              {activeTab === 1 && (
+                <AddCourseSourceBasicInfo 
+                all_categories={all_categories}
+                availableSections={availableSections}
+                beforeUpload={beforeUpload}
+                fileList={fileList}
+                selectedCategory={selectedCategory}
+                setFileList={setFileList}
+                setImagePreview={setImagePreview}
+                setSelectedCategory={setSelectedCategory}
+                />
+              )}
+
+              {/* Schedule Tab */}
+              {activeTab === 2 && (
+                <AddCourseSourceShedule 
+                handleAddSchedule={handleAddSchedule}
+                handleRemoveSchedule={handleRemoveSchedule}
+                handleUpdateSchedule={handleUpdateSchedule}
+                newSchedule={newSchedule}
+                schedules={schedules}
+                setNewSchedule={setNewSchedule}
+                />
+              )}
+
+              {/* Content Tab */}
+              {activeTab === 3 && (
+                <div className="space-y-8">
+                  <div className="rounded-2xl p-6">
+                    <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+                      <FileTextOutlined className="text-green-600" />
+                      المحتوى التفصيلي للدورة
+                    </h3>
+
+                    <Form.Item
+                      label={<span className="font-semibold text-gray-700">ملخص الدورة</span>}
+                      name="summary"
                     >
-                      <div className="flex flex-col items-center text-center">
-                        <type.icon className="w-6 h-6 mb-2" />
-                        <span className="text-sm font-medium">{type.title}</span>
-                      </div>
+                      <RichTextField
+                        placeholder="اكتب ملخصاً شاملاً للدورة يتضمن الأهداف التعليمية والمخرجات المتوقعة..."
+                      />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={<span className="font-semibold text-gray-700">الشروط والأحكام</span>}
+                      name="privacy"
+                    >
+                      <RichTextField
+                        placeholder="اكتب ملخصاً شاملاً للدورة يتضمن الأهداف التعليمية والمخرجات المتوقعة..."
+                      />
+                    </Form.Item>
+
+                      <Form.Item
+                      label={<span className="font-semibold text-gray-700">مميزات الدورة</span>}
+                      name="benefits"
+                    >
+                      <RichTextField
+                        placeholder={"اكتب مميزات الدورة ...."}
+                      />
+                    </Form.Item>
+
+                    <Divider />
+
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <PlayCircleOutlined className="text-blue-600" />
+                        المحتوى التعليمي
+                      </h4>
+                      <p className="text-gray-600 mb-4">
+                        يمكنك إضافة المحتوى التعليمي التفصيلي (الدروس، الفيديوهات، الاختبارات) بعد إنشاء الدورة
+                      </p>
+                      <AddCourseSourceContent
+                        courseId={null}
+                        onContentAdded={(content) => console.log('Content added:', content)}
+                      />
                     </div>
-                  ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Resources Tab */}
+              {activeTab === 4 && (
+                <AddCourseSourceResource 
+                setVideos={setVideos}
+                videos={videos}
+                />
+              )}
+
+              {/* Navigation and Actions */}
+              <div className="flex items-center justify-between pt-8 border-t border-gray-200">
+                <div className="flex items-center gap-3">
+                  {activeTab > 1 && (
+                    <Button
+                      size="large"
+                      onClick={() => setActiveTab(activeTab - 1)}
+                      className="rounded-xl"
+                      icon={<span>←</span>}
+                    >
+                      السابق
+                    </Button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {activeTab < 4 ? (
+                    <Button
+                      type="primary"
+                      size="large"
+                      onClick={() => setActiveTab(activeTab + 1)}
+                      className="rounded-xl"
+                      icon={<span>→</span>}
+                    >
+                      التالي
+                    </Button>
+                  ) : (
+                    <Button
+                      type="primary"
+                      size="large"
+                      htmltype="submit"
+                      loading={loading}
+                      className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                      icon={<PlusOutlined />}
+                    >
+                      إنشاء الدورة
+                    </Button>
+                  )}
                 </div>
               </div>
-
-              {renderFormContent()}
-
-              <Divider />
-
-              <div className="flex justify-end gap-3">
-                <Button type="primary" htmltype="submit" icon={<Save className="w-4 h-4" />}>
-                  حفظ المحتوى
-                </Button>
-              </div>
             </Form>
-          </Card>
+          </div>
         </div>
-      </div>
-
-      {/* Modals for this tab only */}
-      <AddCourseLevelModal
-        openAddStage={openAddStage}
-        savingStage={savingStage}
-        setOpenAddStage={setOpenAddStage}
-        stageForm={stageForm}
-        submitStage={submitStage}
-      />
-
-      <AddCourseLessonModal
-        VIDEO_SOURCES={VIDEO_SOURCES}
-        beforeUploadVideo={beforeUploadVideo}
-        beforeUploadPdf={beforeUploadPdf}
-        foundationStages={foundationStages}
-        lessonForm={lessonForm}
-        normFile={normFile}
-        openAddLesson={openAddLesson}
-        savingLesson={savingLesson}
-        setOpenAddLesson={setOpenAddLesson}
-        submitLesson={submitLesson}
-      />
-
-      {/* Pick Exams Modal */}
-      <Modal
-        title={`إنشاء اختبار — ${regionLabel}`}
-        open={openPickExam}
-        onCancel={() => setOpenPickExam(false)}
-        onOk={linkSelectedExams}
-        okText="حفظ"
-        destroyOnClose
-      >
-        <Form form={pickForm} layout="vertical">
-          <Form.Item
-            label="اختر اختبار"
-            name="examIds"
-            rules={[{ required: true, message: "اختر اختبارًا واحدًا على الأقل" }]}
-          >
-            <Select
-              mode="multiple"
-              placeholder={
-                examLibrary.length
-                  ? "اختر من الاختبارات المحفوظة"
-                  : "لا توجد اختبارات في المكتبة — أنشئ اختبارًا أولاً"
-              }
-              optionFilterProp="label"
-              options={examLibrary.map((e) => ({
-                value: e.id ?? e._id,
-                label: `${e.title ?? "بدون عنوان"} · ${
-                  (e.examType ?? e.type) === "mock" ? "محاكي" : "تدريب"
-                } · ${
-                  Array.isArray(e.questions)
-                    ? e.questions.length
-                    : e.questionsCount ?? e.questions ?? 0
-                } سؤال`,
-              }))}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* Edit Resource Modal */}
-      <Modal
-        title={`تعديل المصدر — ${regionLabel}`}
-        open={openEditResource}
-        onCancel={() => {
-          setOpenEditResource(false);
-          setEditingResource(null);
-          resourceForm.resetFields();
-        }}
-        onOk={onSubmitEditResource}
-        okText="حفظ"
-        confirmLoading={savingResource}
-        destroyOnClose
-        width={520}
-      >
-        <Form form={resourceForm} layout="vertical" initialValues={{ visible: true }}>
-          <Form.Item label="اسم المصدر" name="name" rules={[{ required: true, message: "أدخل اسم المصدر" }]}>
-            <Input placeholder="مثال: دليل المتدرب" />
-          </Form.Item>
-
-          <Form.Item
-            label="استبدال الملف (اختياري)"
-            name="rFile"
-            valuePropName="fileList"
-            getValueFromEvent={normFile}
-          >
-            <Dragger beforeUpload={() => false} maxCount={1}>
-              <p className="ant-upload-drag-icon">
-                <InboxOutlined />
-              </p>
-              <p className="ant-upload-text">اسحب ملفًا هنا أو اضغط للاختيار</p>
-              <p className="ant-upload-hint">اتركه فارغًا إذا كنت لا تريد تغيير الملف الحالي.</p>
-            </Dragger>
-          </Form.Item>
-
-          <Form.Item label="إظهار" name="visible" valuePropName="checked">
-            <Switch />
-          </Form.Item>
-        </Form>
-      </Modal>
-    </>
+    
   );
-}
+};
 
-/** ============== الصفحة الرئيسية: تبويب مصري/سعودي ============== */
-export default function AddCourseContentPage() {
-  return (
-    <PageLayout>
-      <Tabs
-        defaultActiveKey="sa"
-        centered 
-          
-        className=""
-        items={[
-          {
-            key: "sa",
-            label: "الواجهة السعودية",
-            children: <CourseContentTab regionLabel="السعودية" />,
-          },
-          {
-            key: "eg",
-            label: "الواجهة المصرية",
-            children: <CourseContentTab regionLabel="المصرية" />,
-          },
-        ]}
-      />
-    </PageLayout>
-  );
-}
+export default EnhancedCourseForm;
+                                    

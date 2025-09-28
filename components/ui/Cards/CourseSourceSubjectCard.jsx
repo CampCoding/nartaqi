@@ -11,24 +11,20 @@ const CourseSourceSubjectCard = ({
   // من الأب
   onEdit,
   onDelete,
-  onDuplicate, // (اختياري) لو عندك تدفق نسخ إلى دورات موجودة
-  onRequestDuplicate, // ✅ يفتح مودال النسخ في الأب (نمرّر له الـ mode)
+  onDuplicate,               // (اختياري) لو عندك تدفق نسخ إلى دورات موجودة
+  onRequestDuplicate,        // ✅ يفتح مودال النسخ في الأب (نمرّر له الـ mode)
 }) => {
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
 
   const goToCourse = () => {
-    if (course_type === "egyptian") {
-      router.push(`/egyptian_course/${subject?.code}`);
-    } else {
       router.push(`/subjects/${subject?.code}/units`);
-    }
   };
 
   const handleEdit = (e) => {
     e?.stopPropagation?.();
     setShowDropdown(false);
-    router.push(`/teachers-courses/edit/${subject?.code}`);
+      router.push(`/saudi_source_course/edit/${subject?.code}`);
     onEdit?.(subject);
   };
 
@@ -78,6 +74,15 @@ const CourseSourceSubjectCard = ({
                   className="absolute top-10 right-0 bg-white rounded-lg shadow-lg border py-1 min-w-[220px] z-20"
                   onClick={(e) => e.stopPropagation()}
                 >
+                  {/* ✅ يفتح المودال على وضع "دورة كاملة جديدة" */}
+                  <button
+                    onClick={handleDuplicateNewCourse}
+                    className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Copy size={14} className="text-emerald-600" />
+                    <span>نسخ إلى دورة جديدة</span>
+                  </button>
+                  
                   <button
                     onClick={handleEdit}
                     className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
@@ -107,7 +112,7 @@ const CourseSourceSubjectCard = ({
               >
                 <Copy size={14} className="text-emerald-600" />
               </button>
-
+              
               <button
                 onClick={handleEdit}
                 className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-lg shadow-md flex items-center justify-center hover:bg-white transition-colors"
@@ -142,12 +147,8 @@ const CourseSourceSubjectCard = ({
           }}
         >
           <div className="px-4 py-2 absolute top-4 right-4 bg-blue-500 rounded-[10px] inline-flex items-center gap-[7px]">
-            <div className="text-white text-[10px] font-medium">
-              يبدأ: {subject?.date}
-            </div>
-            <div className="text-white text-[10px] font-medium">
-              ينتهي: {subject?.lastUpdated}
-            </div>
+            <div className="text-white text-[10px] font-medium">يبدأ: {subject?.date}</div>
+            <div className="text-white text-[10px] font-medium">ينتهي: {subject?.lastUpdated}</div>
           </div>
         </div>
 
@@ -163,9 +164,7 @@ const CourseSourceSubjectCard = ({
         <div className="text-black self-stretch p-3 flex flex-col justify-start items-start gap-3">
           <div className="self-stretch inline-flex justify-between items-center">
             <div className="px-2.5 py-3 bg-blue-200 rounded-[10px]">
-              <div className="text-text text-xs font-medium">
-                {subject?.category || "غير مصنف"}
-              </div>
+              <div className="text-text text-xs font-medium">{subject?.category || "غير مصنف"}</div>
             </div>
             <div className="px-9 py-2 bg-blue-500/25 rounded-[10px] outline outline-1 outline-offset-[-1px] outline-zinc-500">
               <div className="text-zinc-600 text-xs font-medium">
@@ -176,19 +175,11 @@ const CourseSourceSubjectCard = ({
 
           <div className="self-stretch inline-flex justify-between items-center">
             <div className="flex items-center gap-[5px]">
-              <span className="text-text text-xs font-medium">
-                المقاعد : {subject?.capacity ?? "-"}
-              </span>
+              <span className="text-text text-xs font-medium">المقاعد : {subject?.capacity ?? "-"}</span>
             </div>
             <div className="flex items-center gap-[5px]">
-              <img
-                className="w-6 h-6 rounded-xl"
-                src={"/images/Image-24.png"}
-                alt="instructor"
-              />
-              <div className="text-text text-[10px] font-medium">
-                المدرس: {subject?.instructor || "—"}
-              </div>
+              <img className="w-6 h-6 rounded-xl" src={"/images/Image-24.png"} alt="instructor" />
+              <div className="text-text text-[10px] font-medium">المدرس: {subject?.instructor || "—"}</div>
             </div>
           </div>
 
