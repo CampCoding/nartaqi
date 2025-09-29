@@ -166,6 +166,7 @@ const LabeledQuill = ({
         <Button
           variant="outline"
           size="xs"
+          className="!p-2"
           onClick={openPicker}
           icon={<ImageIcon className="w-4 h-4" />}
           aria-label="أدرج صورة"

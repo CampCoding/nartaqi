@@ -1,13 +1,14 @@
 "use client";
 import React from "react";
-import { Edit3, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Edit3, Trash2 } from "lucide-react";
+import { Collapse, Tag, Empty } from "antd";
 import Card from "./ExamCard";
 import Button from "../atoms/Button";
 
+const { Panel } = Collapse;
+
 export default function DisplayQuestions({
-  toggleSection,
   examData,
-  expandedSections,
   questionTypes,
   setCompleteAnswers,
   setCompleteText,
@@ -30,23 +31,31 @@ export default function DisplayQuestions({
     setSelectedSectionId(sectionId);
     setEditingQuestion(question);
 
-    // Set question type specific data
     switch (question.type) {
       case "mcq":
         if (question.mcqSubType && question.mcqSubType !== "general") {
-          // Handle passage-based MCQ questions
           editMcqPassageQuestion(question);
         } else {
-          // Handle general MCQ questions
-          setMcqOptions(question.options || [{ text: "", explanation: "" }, { text: "", explanation: "" }, { text: "", explanation: "" }, { text: "", explanation: "" }]);
+          setMcqOptions(
+            (question.options || [
+              { text: "", explanation: "" },
+              { text: "", explanation: "" },
+              { text: "", explanation: "" },
+              { text: "", explanation: "" },
+            ]).map((o) =>
+              typeof o === "string" ? { text: o, explanation: "" } : o
+            )
+          );
           setMcqCorrectAnswer(
-            typeof question.correctAnswer === "number" ? question.correctAnswer : 0
+            typeof question.correctAnswer === "number"
+              ? question.correctAnswer
+              : 0
           );
           setMcqSubType("general");
         }
         break;
       case "trueFalse":
-        setTrueFalseAnswer(question.correctAnswer);
+        setTrueFalseAnswer(!!question.correctAnswer);
         setTrueFalseExplanation(question.explanation || "");
         break;
       case "essay":
@@ -54,14 +63,15 @@ export default function DisplayQuestions({
         break;
       case "complete":
         setCompleteText(question.text || "");
-        setCompleteAnswers(question.answers || [{ answer: "" }]);
+        setCompleteAnswers(
+          Array.isArray(question.answers) && question.answers.length
+            ? question.answers
+            : [{ answer: "" }]
+        );
         break;
       default:
         break;
     }
-
-    // Scroll to the question form
-    document.getElementById("question-form")?.scrollIntoView({ behavior: "smooth" });
   };
 
   const handleDeleteQuestion = (questionId, sectionId) => {
@@ -70,12 +80,13 @@ export default function DisplayQuestions({
         if (section.id === sectionId) {
           return {
             ...section,
-            questions: section.questions.filter((q) => q.id !== questionId),
+            questions: (section.questions || []).filter(
+              (q) => q.id !== questionId
+            ),
           };
         }
         return section;
       });
-
       setExamData({ ...examData, sections: updatedSections });
     }
   };
@@ -85,13 +96,16 @@ export default function DisplayQuestions({
       case "mcq":
         return (
           <div className="space-y-2">
-            <p className="text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: question.question }}></p>
+            <p
+              className="text-sm text-gray-700"
+              dangerouslySetInnerHTML={{ __html: question.question }}
+            />
             <div className="space-y-1">
-              {question.options?.map((option, idx) => {
-                // Handle both string and object format options
-                const optionText = typeof option === 'string' ? option : option.text;
-                const optionExplanation = typeof option === 'object' ? option.explanation : '';
-                
+              {(question.options || []).map((option, idx) => {
+                const optObj =
+                  typeof option === "string"
+                    ? { text: option, explanation: "" }
+                    : option || { text: "", explanation: "" };
                 return (
                   <div
                     key={idx}
@@ -102,11 +116,19 @@ export default function DisplayQuestions({
                     }`}
                   >
                     <div className="font-medium">
-                      {String.fromCharCode(1632 + idx + 1)}. <span dangerouslySetInnerHTML={{ __html: optionText }}></span>
+                      {String.fromCharCode(1632 + idx + 1)}.{" "}
+                      <span
+                        dangerouslySetInnerHTML={{ __html: optObj.text }}
+                      />
                     </div>
-                    {optionExplanation && (
+                    {optObj.explanation && (
                       <div className="mt-1 text-xs text-gray-600 italic">
-                        الشرح: <span dangerouslySetInnerHTML={{ __html: optionExplanation }}></span>
+                        الشرح:{" "}
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: optObj.explanation,
+                          }}
+                        />
                       </div>
                     )}
                   </div>
@@ -116,7 +138,10 @@ export default function DisplayQuestions({
             {question.passage && (
               <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
                 <p className="text-xs text-blue-800 font-medium">القطعة:</p>
-                <p className="text-xs text-blue-700" dangerouslySetInnerHTML={{ __html: question.passage.content }}></p>
+                <p
+                  className="text-xs text-blue-700"
+                  dangerouslySetInnerHTML={{ __html: question.passage.content }}
+                />
               </div>
             )}
           </div>
@@ -124,7 +149,10 @@ export default function DisplayQuestions({
       case "trueFalse":
         return (
           <div className="space-y-2">
-            <p className="text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: question.question }}></p>
+            <p
+              className="text-sm text-gray-700"
+              dangerouslySetInnerHTML={{ __html: question.question }}
+            />
             <div
               className={`text-xs p-2 rounded ${
                 question.correctAnswer
@@ -137,7 +165,10 @@ export default function DisplayQuestions({
             {question.explanation && (
               <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-200">
                 <p className="text-xs text-gray-800 font-medium">الشرح:</p>
-                <p className="text-xs text-gray-700" dangerouslySetInnerHTML={{ __html: question.explanation }}></p>
+                <p
+                  className="text-xs text-gray-700"
+                  dangerouslySetInnerHTML={{ __html: question.explanation }}
+                />
               </div>
             )}
           </div>
@@ -145,11 +176,19 @@ export default function DisplayQuestions({
       case "essay":
         return (
           <div className="space-y-2">
-            <p className="text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: question.question }}></p>
+            <p
+              className="text-sm text-gray-700"
+              dangerouslySetInnerHTML={{ __html: question.question }}
+            />
             {question.modelAnswer && (
               <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
-                <p className="text-xs text-blue-800 font-medium">الإجابة النموذجية:</p>
-                <p className="text-xs text-blue-700" dangerouslySetInnerHTML={{ __html: question.modelAnswer }}></p>
+                <p className="text-xs text-blue-800 font-medium">
+                  الإجابة النموذجية:
+                </p>
+                <p
+                  className="text-xs text-blue-700"
+                  dangerouslySetInnerHTML={{ __html: question.modelAnswer }}
+                />
               </div>
             )}
           </div>
@@ -157,16 +196,23 @@ export default function DisplayQuestions({
       case "complete":
         return (
           <div className="space-y-2">
-            <p className="text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: question.text }}></p>
+            <p
+              className="text-sm text-gray-700"
+              dangerouslySetInnerHTML={{ __html: question.text }}
+            />
             <div className="space-y-1">
-              {question.answers?.map((answer, idx) => {
-                const answerText = typeof answer === 'object' ? answer.answer : answer;
+              {(question.answers || []).map((answer, idx) => {
+                const answerText =
+                  typeof answer === "object" ? answer.answer : answer;
                 return (
                   <div
                     key={idx}
                     className="text-xs p-2 bg-green-100 text-green-800 rounded border border-green-200"
                   >
-                    الإجابة {idx + 1}: <span dangerouslySetInnerHTML={{ __html: answerText }}></span>
+                    الإجابة {idx + 1}:{" "}
+                    <span
+                      dangerouslySetInnerHTML={{ __html: answerText || "" }}
+                    />
                   </div>
                 );
               })}
@@ -174,84 +220,118 @@ export default function DisplayQuestions({
           </div>
         );
       default:
-        return <p className="text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: question.question }}></p>;
+        return (
+          <p
+            className="text-sm text-gray-700"
+            dangerouslySetInnerHTML={{ __html: question.question }}
+          />
+        );
     }
   };
 
   return (
     <Card title="الأسئلة المضافة" icon={Edit3}>
-      <div className="space-y-4">
-        {examData.sections.map((section) => (
-          <div key={section.id} className="border rounded-lg overflow-hidden">
-            <button
-              onClick={() => toggleSection(section.id)}
-              className="w-full p-4 bg-gray-50 flex items-center justify-between text-right"
-            >
-              <div className="flex items-center gap-3">
-                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                  {section.questions?.length || 0}
-                </span>
-                <h3 dangerouslySetInnerHTML={{__html : section?.name}} className="font-medium text-gray-900"></h3>
-              </div>
-              {expandedSections[section.id] ? (
-                <ChevronUp className="h-5 w-5 text-gray-500" />
-              ) : (
-                <ChevronDown className="h-5 w-5 text-gray-500" />
-              )}
-            </button>
+      {examData.sections.length === 0 ? (
+        <Empty description="لا توجد أقسام بعد" />
+      ) : (
+        <Collapse accordion expandIconPosition="end" className="rounded-xl bg-white">
+          {examData.sections.map((section) => {
+            const count = section.questions?.length || 0;
 
-            {expandedSections[section.id] && (
-              <div className="p-4 space-y-4">
-                {section.questions?.length === 0 ? (
-                  <p className="text-center text-gray-500 py-4">لا توجد أسئلة في هذا القسم بعد</p>
+            return (
+              <Panel
+                key={section.id}
+                className="!border !border-gray-200 !rounded-xl overflow-hidden"
+                header={
+                  <div className="flex items-center gap-3">
+                    <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                      {count}
+                    </span>
+                    <h3
+                      className="font-medium text-gray-900"
+                      dangerouslySetInnerHTML={{ __html: section?.name }}
+                    />
+                  </div>
+                }
+              >
+                {count === 0 ? (
+                  <div className="py-6">
+                    <Empty description="لا توجد أسئلة في هذا القسم بعد" />
+                  </div>
                 ) : (
-                  section.questions?.map((question, index) => (
-                    <div
-                      key={question.id}
-                      className="border rounded-lg p-4 bg-white shadow-sm"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                            {index + 1}
-                          </span>
-                          <span className="text-xs font-medium px-2.5 py-0.5 rounded text-white bg-blue-600">
-                            {questionTypes.find((t) => t.value === question.type)?.label}
-                          </span>
-                          {question.mcqSubType && question.mcqSubType !== "general" && (
-                            <span className="text-xs font-medium px-2.5 py-0.5 rounded text-white bg-purple-600">
-                              {question.mcqSubType === "chemical" ? "معادلات" : "قطعة"}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
+                  <Collapse
+                    accordion
+                    bordered={false}
+                    expandIconPosition="end"
+                    className="bg-transparent"
+                  >
+                    {section.questions.map((question, index) => {
+                      const typeLabel =
+                        questionTypes.find((t) => t.value === question.type)
+                          ?.label || "سؤال";
+                      const subTag =
+                        question.mcqSubType && question.mcqSubType !== "general"
+                          ? question.mcqSubType === "chemical"
+                            ? "معادلات"
+                            : "قطعة"
+                          : null;
+
+                      const extra = (
+                        <div
+                          className="flex items-center gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <Button
                             variant="outline"
                             size="sm"
                             className="p-2"
                             icon={<Edit3 className="h-4 w-4" />}
                             onClick={() => handleEditQuestion(question, section.id)}
-                          >
-                          </Button>
+                          />
                           <Button
                             variant="outline"
                             size="sm"
                             className="p-2"
                             icon={<Trash2 className="h-4 w-4" />}
-                            onClick={() => handleDeleteQuestion(question.id, section.id)}
-                          >
-                          </Button>
+                            onClick={() =>
+                              handleDeleteQuestion(question.id, section.id)
+                            }
+                          />
                         </div>
-                      </div>
-                      {renderQuestionContent(question)}
-                    </div>
-                  ))
+                      );
+
+                      return (
+                        <Panel
+                          key={question.id}
+                          className="!mb-3 !rounded-xl bg-gray-50"
+                          extra={extra}
+                          header={
+                            <div className="flex items-center gap-2">
+                              <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                                {index + 1}
+                              </span>
+                              <span className="text-xs font-medium px-2.5 py-0.5 rounded text-white bg-blue-600">
+                                {typeLabel}
+                              </span>
+                              {subTag && (
+                                <span className="text-xs font-medium px-2.5 py-0.5 rounded text-white bg-purple-600">
+                                  {subTag}
+                                </span>
+                              )}
+                            </div>
+                          }
+                        >
+                          {renderQuestionContent(question)}
+                        </Panel>
+                      );
+                    })}
+                  </Collapse>
                 )}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+              </Panel>
+            );
+          })}
+        </Collapse>
+      )}
     </Card>
   );
 }

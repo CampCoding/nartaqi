@@ -1,62 +1,187 @@
 "use client";
-import React, { useMemo } from "react";
+import React, { useMemo, useRef, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
+import Button from "../atoms/Button";
+import { Image as ImageIcon } from "lucide-react";
 
 // SSR-safe import for ReactQuill
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
-/* =============== Shared Quill config =============== */
-const useQuillConfig = () =>
-  useMemo(
-    () => ({
-      modules: {
-        toolbar: [
-          [{ header: [1, 2, false] }],
-          ["bold", "italic", "underline", "strike"],
-          [{ list: "ordered" }, { list: "bullet" }],
-          [{ direction: "rtl" }, { align: [] }],
-          ["link", "clean"],
-        ],
-        clipboard: { matchVisual: false },
-      },
-      formats: [
-        "header",
-        "bold",
-        "italic",
-        "underline",
-        "strike",
-        "list",
-        "bullet",
-        "direction",
-        "align",
-        "link",
-      ],
-    }),
-    []
-  );
+/* =============== tiny helper: file -> data URL =============== */
+const fileToDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result || ""));
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
 
-/* =============== Labeled Editor wrapper =============== */
+/* =============== Shared Quill config (factory) =============== */
+const useQuillConfig = (withImages, onImageRequest) =>
+  useMemo(() => {
+    const toolbarBase = [
+      [{ header: [1, 2, false] }],
+      ["bold", "italic", "underline", "strike"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      [{ direction: "rtl" }, { align: [] }],
+      ["link", "clean"],
+    ];
+
+    const modules = {
+      toolbar: withImages
+        ? {
+            container: [...toolbarBase, ["image"]],
+            handlers: {
+              image: () => {
+                if (typeof onImageRequest === "function") onImageRequest();
+              },
+            },
+          }
+        : toolbarBase,
+      clipboard: { matchVisual: false },
+    };
+
+    const formats = [
+      "header",
+      "bold",
+      "italic",
+      "underline",
+      "strike",
+      "list",
+      "bullet",
+      "direction",
+      "align",
+      "link",
+      ...(withImages ? ["image"] : []),
+    ];
+
+    return { modules, formats };
+  }, [withImages, onImageRequest]);
+
+/* =============== Labeled Editor wrapper (with optional images) =============== */
 function LabeledEditor({
   label,
   hint,
   value,
   onChange,
   placeholder = "اكتب هنا…",
-  editorMinH = 160,
+  editorMinH = 200,
+  allowImages = true,               // ✅ لتفعيل زر "أدرج صورة"
+  uploadImage,                      // اختياري: async (file) => URL
+  imageSize = { width: 320, height: 200, objectFit: "contain" }, // تحجيم ثابت
 }) {
-  const { modules, formats } = useQuillConfig();
+  const quillRef = useRef(null);
+  const inputRef = useRef(null);
+
+  const openPicker = useCallback(() => inputRef.current?.click(), []);
+  const { modules, formats } = useQuillConfig(allowImages, openPicker);
+
+  const applyFixedSizeToAllImages = useCallback(() => {
+    const quill = quillRef.current?.getEditor?.();
+    const root = quill?.root;
+    if (!root) return;
+    const imgs = root.querySelectorAll("img");
+    imgs.forEach((img) => {
+      img.style.width = `${imageSize.width}px`;
+      img.style.height = `${imageSize.height}px`;
+      img.style.objectFit = imageSize.objectFit || "contain";
+      img.style.display = "inline-block";
+    });
+  }, [imageSize.height, imageSize.objectFit, imageSize.width]);
+
+  const handleFiles = useCallback(
+    async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const url = (await (uploadImage ? uploadImage(file) : fileToDataUrl(file))) || "";
+        const editor = quillRef.current?.getEditor?.();
+        if (!editor || !url) return;
+
+        // أدخل الصورة عند المؤشر الحالي
+        const range = editor.getSelection(true) || { index: editor.getLength(), length: 0 };
+        editor.insertEmbed(range.index, "image", url, "user");
+        editor.setSelection(range.index + 1, 0);
+
+        // ثبّت حجم الصورة المُضافة فورًا
+        requestAnimationFrame(() => {
+          const root = editor.root;
+          try {
+            const img = root.querySelector(`img[src="${CSS.escape(url)}"]`);
+            if (img) {
+              img.style.width = `${imageSize.width}px`;
+              img.style.height = `${imageSize.height}px`;
+              img.style.objectFit = imageSize.objectFit || "contain";
+              img.style.display = "inline-block";
+            } else {
+              applyFixedSizeToAllImages();
+            }
+          } catch {
+            applyFixedSizeToAllImages();
+          }
+        });
+      } finally {
+        e.target.value = ""; // للسماح برفع نفس الملف مرة أخرى
+      }
+    },
+    [uploadImage, imageSize.height, imageSize.objectFit, imageSize.width, applyFixedSizeToAllImages]
+  );
+
+  useEffect(() => {
+    const quill = quillRef.current?.getEditor?.();
+    if (!quill) return;
+    const handler = () => requestAnimationFrame(applyFixedSizeToAllImages);
+    quill.on("text-change", handler);
+    requestAnimationFrame(applyFixedSizeToAllImages);
+    return () => quill.off("text-change", handler);
+  }, [applyFixedSizeToAllImages]);
+
+  const onPaste = useCallback(() => {
+    requestAnimationFrame(applyFixedSizeToAllImages);
+  }, [applyFixedSizeToAllImages]);
+
+  const onDrop = useCallback(() => {
+    requestAnimationFrame(applyFixedSizeToAllImages);
+  }, [applyFixedSizeToAllImages]);
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="block text-xs font-semibold text-gray-700">
-          {label}
-        </label>
-        {hint ? <span className="text-[11px] text-gray-400">{hint}</span> : null}
+        <label className="block text-xs font-semibold text-gray-700">{label}</label>
+        <div className="flex items-center gap-2">
+          {hint ? <span className="text-[11px] text-gray-400">{hint}</span> : null}
+          {allowImages && (
+            <>
+              <Button
+                variant="outline"
+                size="xs"
+                className="!p-2"
+                onClick={openPicker}
+                icon={<ImageIcon className="w-4 h-4" />}
+                aria-label="أدرج صورة"
+              >
+                أدرج صورة
+              </Button>
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFiles}
+              />
+            </>
+          )}
+        </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20">
+      <div
+        className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20"
+        onPaste={onPaste}
+        onDrop={onDrop}
+        onDragOver={(e) => e.preventDefault()}
+      >
         <ReactQuill
+          ref={quillRef}
           value={value}
           onChange={onChange}
           modules={modules}
@@ -65,7 +190,7 @@ function LabeledEditor({
         />
       </div>
 
-      {/* Editor height & RTL */}
+      {/* Editor height & RTL + fixed image CSS fallback */}
       <style jsx global>{`
         [dir="rtl"] .ql-editor {
           direction: rtl;
@@ -80,6 +205,13 @@ function LabeledEditor({
         .ql-container.ql-snow {
           border: 0;
         }
+        /* شبكة أمان: فرض حجم ثابت لأي صورة داخل Quill */
+        .ql-editor img {
+          width: ${imageSize.width}px !important;
+          height: ${imageSize.height}px !important;
+          object-fit: ${imageSize.objectFit};
+          display: inline-block;
+        }
       `}</style>
     </div>
   );
@@ -90,10 +222,10 @@ export default function EssayQuestions({
   modalAnswer,
   setModalAnswer,
   label = "الإجابة النموذجية",
-  hint = "يمكنك استخدام التنسيق، القوائم والروابط",
+  hint = "يمكنك استخدام التنسيق، القوائم، الروابط، وإدراج الصور",
   showCounters = true,
+  uploadImage, // اختياري: نفس التوقيع المذكور أعلاه
 }) {
-  // basic counters from HTML
   const plainText = useMemo(
     () => (modalAnswer || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
     [modalAnswer]
@@ -110,6 +242,8 @@ export default function EssayQuestions({
         onChange={setModalAnswer}
         placeholder="أدخل الإجابة النموذجية هنا…"
         editorMinH={200}
+        allowImages={true}
+        uploadImage={uploadImage}
       />
 
       <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
@@ -118,7 +252,9 @@ export default function EssayQuestions({
             <span>عدد الكلمات: {words}</span>
             <span>عدد الحروف: {chars}</span>
           </div>
-        ) : <span />}
+        ) : (
+          <span />
+        )}
 
         <button
           type="button"

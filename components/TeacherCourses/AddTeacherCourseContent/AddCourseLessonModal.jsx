@@ -10,6 +10,7 @@ export default function AddCourseLessonModal({openAddLesson,VIDEO_SOURCES,before
     onCancel={() => setOpenAddLesson(false)}
     onOk={submitLesson}
     confirmLoading={savingLesson}
+    okButtonProps={{className:"!bg-blue-500 !text-white"}}
     width={800}
     destroyOnClose
   >
@@ -70,12 +71,12 @@ export default function AddCourseLessonModal({openAddLesson,VIDEO_SOURCES,before
         <Input placeholder="مثال: الحروف والأصوات" />
       </Form.Item>
 
-      <Divider>فيديو القسم</Divider>
+      <Divider>فيديو المحاضره</Divider>
 
       <Form.Item
         label="اسم الفيديو"
         name="lessonVideoTitle"
-        rules={[{ required: true, message: "أدخل اسم فيديو القسم" }]}
+        rules={[{ required: true, message: "أدخل اسم فيديو المحاضرة" }]}
       >
         <Input placeholder="مثال: شرح تمهيدي" />
       </Form.Item>
@@ -117,7 +118,7 @@ export default function AddCourseLessonModal({openAddLesson,VIDEO_SOURCES,before
         }
       </Form.Item>
 
-      <Divider>تدريب القسم</Divider>
+      <Divider>تدريب المحاضرة</Divider>
 
       <Form.Item
         label="اسم فيديو التدريب"

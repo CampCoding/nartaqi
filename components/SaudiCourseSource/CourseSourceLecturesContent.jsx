@@ -173,7 +173,7 @@ export default function CourseSourceLecturesContent({
               description={
                 <div className="text-center">
                   <p className="text-gray-500 text-lg mb-2">لا توجد مراحل بعد</p>
-                  <p className="text-gray-400 text-sm">ابدأ بإضافة مرحلة جديدة لتنظيم المحتوى</p>
+                  <p className="text-gray-400 text-sm">ابدأ بإضافة قسم جديدة لتنظيم المحتوى</p>
                 </div>
               }
               className="my-8"

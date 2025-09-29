@@ -1,8 +1,10 @@
 "use client";
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Segmented, Select, Tag, Tooltip } from "antd";
+import dynamic from "next/dynamic";
+import { Segmented, Select, Tag } from "antd";
 import {
-  PlusIcon,
+  Plus as PlusIcon,
   Edit3,
   BookOpen,
   Save,
@@ -10,8 +12,14 @@ import {
   ListChecks,
   FlaskConical,
   FileText,
+  Image as ImageIcon,
 } from "lucide-react";
 
+// ✅ If you don't already import Quill CSS globally, keep these:
+import "quill/dist/quill.snow.css";
+// (react-quill-new also works with Quill's snow theme CSS)
+
+// External components you already have:
 import QuestionStats from "./QuestionStats";
 import Card from "./ExamCard";
 import ExamMainInfo from "./ExamMainInfo";
@@ -22,21 +30,16 @@ import CompleteQuestions from "./CompleteQuestions";
 import DisplayQuestions from "./DisplayQuestions";
 import QuestionTypeSelector from "./QuestionTypeSelector";
 import McqSharedPassageEditor from "./McqQuestions";
-import {
-  colorMap,
-  exam_types,
-  mock_exam_section_Data,
-  questionTypes,
-} from "./utils";
+import { colorMap, exam_types, mock_exam_section_Data, questionTypes } from "./utils";
 
-import dynamic from "next/dynamic";
+// SSR-safe import for the editor
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 /* ================= Helpers ================= */
 const readFileAsDataURL = (file) =>
-  new Promise((resolve, reject) => {
+  new Promise<string>((resolve, reject) => {
     const r = new FileReader();
-    r.onload = () => resolve(r.result);
+    r.onload = () => resolve(String(r.result || ""));
     r.onerror = reject;
     r.readAsDataURL(file);
   });
@@ -44,7 +47,6 @@ const readFileAsDataURL = (file) =>
 /* =============== Quill config factory =============== */
 const useQuillConfig = (allowImages, imageHandler) =>
   useMemo(() => {
-    // Base toolbar
     const toolbar = [
       [{ header: [1, 2, false] }],
       ["bold", "italic", "underline", "strike"],
@@ -52,6 +54,7 @@ const useQuillConfig = (allowImages, imageHandler) =>
       [{ direction: "rtl" }, { align: [] }],
       ["link", "clean"],
     ];
+
     if (allowImages) toolbar.push(["image"]);
 
     return {
@@ -59,9 +62,7 @@ const useQuillConfig = (allowImages, imageHandler) =>
         toolbar: allowImages
           ? {
               container: toolbar,
-              handlers: {
-                image: imageHandler,
-              },
+              handlers: { image: imageHandler },
             }
           : toolbar,
         clipboard: { matchVisual: false },
@@ -82,7 +83,7 @@ const useQuillConfig = (allowImages, imageHandler) =>
     };
   }, [allowImages, imageHandler]);
 
-/* =============== LabeledEditor with image support (fixed size) =============== */
+/* =============== LabeledEditor (with “أدرج صورة” button) =============== */
 const LabeledEditor = ({
   label,
   hint,
@@ -91,16 +92,14 @@ const LabeledEditor = ({
   placeholder = "اكتب هنا…",
   className = "",
   editorMinH = 140,
-  allowImages = true, // ⬅️ enable image button/paste/drag-drop
-  maxImageSizeMB = 3, // size guard (Data URL)
+  allowImages = true,
+  maxImageSizeMB = 3,
   acceptedImageTypes = "image/png,image/jpeg,image/webp,image/gif",
-  // Fixed image size controls (you can tweak these numbers)
   imageSize = { width: 320, height: 200, objectFit: "contain" },
 }) => {
   const quillRef = useRef(null);
   const hiddenInputRef = useRef(null);
 
-  // apply fixed size for all <img> inside this editor
   const applyFixedSizeToAllImages = useCallback(() => {
     const quill = quillRef.current?.getEditor?.();
     const root = quill?.root;
@@ -114,17 +113,13 @@ const LabeledEditor = ({
     });
   }, [imageSize.height, imageSize.objectFit, imageSize.width]);
 
-  // Handler used by toolbar button
-  const openFileDialog = useCallback(() => {
-    hiddenInputRef.current?.click();
-  }, []);
+  const openFileDialog = useCallback(() => hiddenInputRef.current?.click(), []);
 
-  // Core insertion + force-size on the inserted image
   const insertImage = useCallback(
     async (file) => {
       if (!file || !file.type?.startsWith("image/")) return;
       const sizeMB = file.size / (1024 * 1024);
-      if (sizeMB > maxImageSizeMB) {
+      if (sizeMB > (maxImageSizeMB || 3)) {
         alert(`حجم الصورة ${sizeMB.toFixed(1)}MB — الحد الأقصى ${maxImageSizeMB}MB`);
         return;
       }
@@ -135,22 +130,27 @@ const LabeledEditor = ({
       quill.insertEmbed(range.index, "image", dataUrl, "user");
       quill.setSelection(range.index + 1, 0, "user");
 
-      // ensure the newly-inserted image gets fixed dimensions
+      // enforce size on the inserted image
       requestAnimationFrame(() => {
         const root = quill.root;
-        const img = root.querySelector(`img[src="${CSS.escape(dataUrl)}"]`);
-        if (img) {
-          img.style.width = `${imageSize.width}px`;
-          img.style.height = `${imageSize.height}px`;
-          img.style.objectFit = imageSize.objectFit || "contain";
-          img.style.display = "inline-block";
+        try {
+          const img = root.querySelector(`img[src="${CSS.escape(dataUrl)}"]`);
+          if (img) {
+            img.style.width = `${imageSize.width}px`;
+            img.style.height = `${imageSize.height}px`;
+            img.style.objectFit = imageSize.objectFit || "contain";
+            img.style.display = "inline-block";
+          } else {
+            applyFixedSizeToAllImages();
+          }
+        } catch {
+          applyFixedSizeToAllImages();
         }
       });
     },
-    [imageSize.height, imageSize.objectFit, imageSize.width, maxImageSizeMB]
+    [applyFixedSizeToAllImages, imageSize.height, imageSize.objectFit, imageSize.width, maxImageSizeMB]
   );
 
-  // File input change
   const onPickFile = useCallback(
     async (e) => {
       const f = e.target.files?.[0];
@@ -160,26 +160,22 @@ const LabeledEditor = ({
     [insertImage]
   );
 
-  // Paste image from clipboard
   const onPaste = useCallback(
-    async (e) => {
+    async (editMcqPassageQuestion) => {
       if (!allowImages) return;
-      const items = e.clipboardData?.items;
-      if (!items) return;
+      const items = (e.clipboardData?.items || []);
       for (const it of items) {
         if (it.type?.startsWith("image/")) {
           e.preventDefault();
           const file = it.getAsFile();
-          await insertImage(file);
+          if (file) await insertImage(file);
         }
       }
-      // ensure pasted HTML images also get fixed sizes
       requestAnimationFrame(applyFixedSizeToAllImages);
     },
     [allowImages, insertImage, applyFixedSizeToAllImages]
   );
 
-  // Drag & drop image
   const onDrop = useCallback(
     async (e) => {
       if (!allowImages) return;
@@ -194,10 +190,8 @@ const LabeledEditor = ({
     [allowImages, insertImage, applyFixedSizeToAllImages]
   );
 
-  // Quill config with image handler
   const { modules, formats } = useQuillConfig(allowImages, openFileDialog);
 
-  // Re-apply fixed size when content changes or on mount
   useEffect(() => {
     const quill = quillRef.current?.getEditor?.();
     if (!quill) return;
@@ -210,10 +204,30 @@ const LabeledEditor = ({
   return (
     <div className={`space-y-2 ${className}`}>
       <div className="flex items-center justify-between">
-        <label className="block text-xs font-semibold text-gray-700">
-          {label}
-        </label>
-        {hint ? <span className="text-[11px] text-gray-400">{hint}</span> : null}
+        <label className="block text-xs font-semibold text-gray-700">{label}</label>
+        <div className="flex items-center gap-2">
+          {hint ? <span className="text-[11px] text-gray-400">{hint}</span> : null}
+          {allowImages && (
+            <>
+              <button
+                type="button"
+                onClick={openFileDialog}
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-lg border border-gray-200 hover:bg-gray-50"
+                title="أدرج صورة"
+              >
+                <ImageIcon className="w-4 h-4" />
+                أدرج صورة
+              </button>
+              <input
+                ref={hiddenInputRef}
+                type="file"
+                accept={acceptedImageTypes}
+                onChange={onPickFile}
+                className="hidden"
+              />
+            </>
+          )}
+        </div>
       </div>
 
       <div
@@ -230,15 +244,6 @@ const LabeledEditor = ({
           formats={formats}
           placeholder={placeholder}
         />
-        {allowImages && (
-          <input
-            ref={hiddenInputRef}
-            type="file"
-            accept={acceptedImageTypes}
-            onChange={onPickFile}
-            className="hidden"
-          />
-        )}
       </div>
 
       {/* Editor height & RTL + enforce fixed image size (CSS fallback) */}
@@ -256,7 +261,6 @@ const LabeledEditor = ({
         .ql-container.ql-snow {
           border: 0;
         }
-        /* 🔒 Force all images inside Quill to a fixed size */
         .ql-editor img {
           width: ${imageSize.width}px !important;
           height: ${imageSize.height}px !important;
@@ -267,8 +271,8 @@ const LabeledEditor = ({
     </div>
   );
 };
-/* ============================================================ */
 
+/* ===================== Main: ExamMainData ===================== */
 export default function ExamMainData({ examData: editExamData }) {
   const [examData, setExamData] = useState({
     name: "",
@@ -296,34 +300,24 @@ export default function ExamMainData({ examData: editExamData }) {
   const [completeText, setCompleteText] = useState("");
   const [completeAnswers, setCompleteAnswers] = useState([{ answer: "" }]);
 
-  // MCQ (general) with explanation
+  // MCQ (general)
   const emptyOption = () => ({ text: "", explanation: "" });
   const normalizeOption = (opt) => {
     if (typeof opt === "string") return { text: opt, explanation: "" };
-    if (opt && typeof opt === "object")
-      return { text: opt.text || "", explanation: opt.explanation || "" };
+    if (opt && typeof opt === "object") return { text: opt.text || "", explanation: opt.explanation || "" };
     return emptyOption();
   };
-  const [mcqOptions, setMcqOptions] = useState([
-    emptyOption(),
-    emptyOption(),
-    emptyOption(),
-    emptyOption(),
-  ]);
+  const [mcqOptions, setMcqOptions] = useState([{ ...emptyOption() }, { ...emptyOption() }, { ...emptyOption() }, { ...emptyOption() }]);
   const [mcqCorrectAnswer, setMcqCorrectAnswer] = useState(0);
 
   // MCQ subtype
-  const [mcqSubType, setMcqSubType] = useState("general"); // "general" | "chemical" | "passage"
-
-  // MCQ passages store per subtype (for the editor)
+  const [mcqSubType, setMcqSubType] = useState("general");
   const [mcqPassages, setMcqPassages] = useState({ chemical: [], passage: [] });
 
   /* ----------------------------- Effects ----------------------------- */
   useEffect(() => {
-    if (examData?.type === "intern")
-      setFilteredSection(mock_exam_section_Data[1]);
-    else if (examData?.type === "mock")
-      setFilteredSection(mock_exam_section_Data[2]);
+    if (examData?.type === "intern") setFilteredSection(mock_exam_section_Data[1]);
+    else if (examData?.type === "mock") setFilteredSection(mock_exam_section_Data[2]);
     else setFilteredSection([]);
   }, [examData?.type]);
 
@@ -332,8 +326,7 @@ export default function ExamMainData({ examData: editExamData }) {
   }, []); // eslint-disable-line
 
   useEffect(() => {
-    if (examData?.sections?.length > 0 && !selectedSectionId)
-      setSelectedSectionId(examData.sections[0].id);
+    if (examData?.sections?.length > 0 && !selectedSectionId) setSelectedSectionId(examData.sections[0].id);
   }, [examData?.sections, selectedSectionId]);
 
   /* ----------------------------- Helpers ----------------------------- */
@@ -346,17 +339,11 @@ export default function ExamMainData({ examData: editExamData }) {
     const isAdded = examData?.sections.some((s) => s.id === section.id);
     if (isAdded) return;
     const newSection = { ...section, questions: section.questions || [] };
-    setExamData((prev) => ({
-      ...prev,
-      sections: [...prev.sections, newSection],
-    }));
+    setExamData((prev) => ({ ...prev, sections: [...prev.sections, newSection] }));
   };
 
   const toggleSection = (sectionId) =>
-    setExpandedSections((prev) => ({
-      ...prev,
-      [sectionId]: !prev[sectionId],
-    }));
+    setExpandedSections((prev) => ({ ...prev, [sectionId]: !prev[sectionId] }));
 
   const handleQuestionTypeChange = (type) => {
     setQuestionType(type);
@@ -377,53 +364,45 @@ export default function ExamMainData({ examData: editExamData }) {
     setMcqPassages({ chemical: [], passage: [] });
   };
 
-  const addCompleteAnswer = () =>
-    setCompleteAnswers((a) => [...a, { answer: "" }]);
-  const removeCompleteAnswer = (index) =>
-    setCompleteAnswers((a) => a.filter((_, i) => i !== index));
-  const updateCompleteAnswer = (index, value) => {
+  const addCompleteAnswer = () => setCompleteAnswers((a) => [...a, { answer: "" }]);
+  const removeCompleteAnswer = (correctIndex) => setCompleteAnswers((a) => a.filter((_, i) => i !== index));
+  const updateCompleteAnswer = (correctIndex, value) => {
     setCompleteAnswers((a) => {
       const next = [...a];
-      next[index].answer = value;
+      next[correctIndex] = typeof value === "object" ? value : { answer: value };
       return next;
     });
   };
 
-  const updateMcqOption = (index, field, value) =>
+  const updateMcqOption = (index, field, v) =>
     setMcqOptions((opts) => {
       const next = [...opts];
-      next[index] = { ...normalizeOption(next[index]), [field]: value };
+      next[index] = { ...normalizeOption(next[index]), [field]: v };
       return next;
     });
 
   const addMcqOption = () => setMcqOptions((opts) => [...opts, emptyOption()]);
-
   const removeMcqOption = (index) => {
     setMcqOptions((opts) => {
       if (opts.length <= 2) return opts;
       const next = opts.filter((_, i) => i !== index);
-      setMcqCorrectAnswer((curr) =>
-        curr >= index ? Math.max(0, curr - 1) : curr
-      );
+      setMcqCorrectAnswer((curr) => (curr >= index ? Math.max(0, curr - 1) : curr));
       return next;
     });
   };
 
   const getQuestionsCount = (sectionId) =>
-    examData.sections.find((s) => s.id === sectionId)?.questions?.length || 0;
-  const getTotalQuestions = () =>
-    examData.sections.reduce((acc, s) => acc + (s.questions?.length || 0), 0);
-  const getEstimatedDuration = () =>
-    examData.type === "mock"
-      ? examData.sections.length * 25
-      : parseInt(examData.duration || 0);
-  const canAddMoreQuestions = (sectionId) =>
-    examData.type !== "mock" ? true : getQuestionsCount(sectionId) < 24;
+    sectionId ? examData.sections.find((s) => s.id === sectionId)?.questions?.length || 0 : 0;
 
-  const handleMcqPassagesChange = React.useCallback(
-    (passages) => {
-      setMcqPassages((prev) => ({ ...prev, [mcqSubType]: passages }));
-    },
+  const getTotalQuestions = () => examData.sections.reduce((acc, s) => acc + (s.questions?.length || 0), 0);
+
+  const getEstimatedDuration = () => (examData.type === "mock" ? examData.sections.length * 25 : parseInt(examData.duration || "0"));
+
+  const canAddMoreQuestions = (sectionId) =>
+    !sectionId ? false : examData.type !== "mock" ? true : getQuestionsCount(sectionId) < 24;
+
+  const handleMcqPassagesChange = useCallback(
+    (passages) => setMcqPassages((prev) => ({ ...prev, [mcqSubType]: passages })),
     [mcqSubType]
   );
 
@@ -436,7 +415,7 @@ export default function ExamMainData({ examData: editExamData }) {
     // Non-general MCQ groups
     if (questionType === "mcq" && mcqSubType !== "general") {
       const groups = mcqPassages[mcqSubType] || [];
-      const generated = [];
+      const generated= [];
 
       groups.forEach((p) => {
         (p.questions || []).forEach((q) => {
@@ -445,62 +424,47 @@ export default function ExamMainData({ examData: editExamData }) {
             type: "mcq",
             mcqSubType,
             question: q.text || "",
-            options: Array.isArray(q.options)
-              ? q.options.map(normalizeOption)
-              : [],
-            correctAnswer:
-              typeof q.correctIndex === "number" ? q.correctIndex : 0,
+            options: Array.isArray(q.options) ? q.options.map(normalizeOption) : [],
+            correctAnswer: typeof q.correctIndex === "number" ? q.correctIndex : 0,
             passage: { id: p.id, content: p.content || "" },
             sectionId: selectedSectionId,
           });
         });
       });
 
-      if (generated.length === 0) return;
+      if (!generated.length) return;
 
       if (editingQuestion) {
         generated[0] = { ...generated[0], id: editingQuestion.id };
 
         const extra = generated.slice(1);
-        const available =
-          examData.type === "mock"
-            ? Math.max(0, 24 - currentCount)
-            : Infinity;
+        const available = examData.type === "mock" ? Math.max(0, 24 - currentCount) : Infinity;
         if (extra.length > available) {
-          alert(
-            `لا يمكن إضافة ${extra.length} سؤال إضافي. المتاح الآن: ${available}`
+          alert(`لا يمكن إضافة ${extra.length} سؤال إضافي. المتاح الآن: ${available}`);
+          const updatedSectionsOnlyReplace = examData.sections.map((section) =>
+            section.id !== selectedSectionId
+              ? section
+              : {
+                  ...section,
+                  questions: (section.questions || []).map((q) => (q.id === editingQuestion.id ? generated[0] : q)),
+                }
           );
-          const updatedSectionsOnlyReplace = examData.sections.map(
-            (section) => {
-              if (section.id !== selectedSectionId) return section;
-              return {
-                ...section,
-                questions: (section.questions || []).map((q) =>
-                  q.id === editingQuestion.id ? generated[0] : q
-                ),
-              };
-            }
-          );
-          setExamData((prev) => ({
-            ...prev,
-            sections: updatedSectionsOnlyReplace,
-          }));
+          setExamData((prev) => ({ ...prev, sections: updatedSectionsOnlyReplace }));
           resetQuestionForm();
           return;
         }
 
-        const updatedSections = examData.sections.map((section) => {
-          if (section.id !== selectedSectionId) return section;
-          return {
-            ...section,
-            questions: [
-              ...(section.questions || []).map((q) =>
-                q.id === editingQuestion.id ? generated[0] : q
-              ),
-              ...extra,
-            ],
-          };
-        });
+        const updatedSections = examData.sections.map((section) =>
+          section.id !== selectedSectionId
+            ? section
+            : {
+                ...section,
+                questions: [
+                  ...(section.questions || []).map((q) => (q.id === editingQuestion.id ? generated[0] : q)),
+                  ...extra,
+                ],
+              }
+        );
 
         setExamData((prev) => ({ ...prev, sections: updatedSections }));
         resetQuestionForm();
@@ -508,35 +472,26 @@ export default function ExamMainData({ examData: editExamData }) {
       }
 
       if (examData.type === "mock" && currentCount + generated.length > 24) {
-        alert(
-          `لا يمكن إضافة ${generated.length} سؤال. الحد الأقصى 24 سؤال في القسم. المتاح الآن: ${Math.max(
-            0,
-            24 - currentCount
-          )}`
-        );
+        alert(`لا يمكن إضافة ${generated.length} سؤال. الحد الأقصى 24 سؤال في القسم. المتاح الآن: ${Math.max(0, 24 - currentCount)}`);
         return;
       }
 
-      const updatedSections = examData.sections.map((section) => {
-        if (section.id !== selectedSectionId) return section;
-        return {
-          ...section,
-          questions: [...(section.questions || []), ...generated],
-        };
-      });
+      const updatedSections = examData.sections.map((section) =>
+        section.id !== selectedSectionId
+          ? section
+          : { ...section, questions: [...(section.questions || []), ...generated] }
+      );
 
       setExamData((prev) => ({ ...prev, sections: updatedSections }));
       resetQuestionForm();
       return;
     }
 
-    // General MCQ & other types
+    // General MCQ & other types (single)
     if (!currentQuestion) return;
 
     if (examData.type === "mock" && !canAddMoreQuestions(selectedSectionId)) {
-      alert(
-        "لا يمكن إضافة أكثر من 24 سؤال في قسم واحد لنوع الاختبار المحاكي"
-      );
+      alert("لا يمكن إضافة أكثر من 24 سؤال في قسم واحد لنوع الاختبار المحاكي");
       return;
     }
 
@@ -548,7 +503,7 @@ export default function ExamMainData({ examData: editExamData }) {
     };
 
     switch (questionType) {
-      case "mcq": {
+      case "mcq":
         newQuestion = {
           ...newQuestion,
           mcqSubType: "general",
@@ -556,47 +511,30 @@ export default function ExamMainData({ examData: editExamData }) {
           correctAnswer: mcqCorrectAnswer,
         };
         break;
-      }
-      case "trueFalse": {
+      case "trueFalse":
         newQuestion = {
           ...newQuestion,
           correctAnswer: trueFalseAnswer,
           explanation: trueFalseExplanation,
         };
         break;
-      }
-      case "essay": {
+      case "essay":
         newQuestion = { ...newQuestion, modelAnswer: modalAnswer };
         break;
-      }
-      case "complete": {
-        newQuestion = {
-          ...newQuestion,
-          text: completeText,
-          answers: completeAnswers,
-        };
-        break;
-      }
-      default:
+      case "complete":
+        newQuestion = { ...newQuestion, text: completeText, answers: completeAnswers };
         break;
     }
 
     const updatedSections = examData.sections.map((section) => {
       if (section.id !== selectedSectionId) return section;
-
       if (editingQuestion) {
         return {
           ...section,
-          questions: (section.questions || []).map((q) =>
-            q.id === editingQuestion.id ? newQuestion : q
-          ),
+          questions: (section.questions || []).map((q) => (q.id === editingQuestion.id ? newQuestion : q)),
         };
       }
-
-      return {
-        ...section,
-        questions: [...(section.questions || []), newQuestion],
-      };
+      return { ...section, questions: [...(section.questions || []), newQuestion] };
     });
 
     setExamData((prev) => ({ ...prev, sections: updatedSections }));
@@ -621,10 +559,7 @@ export default function ExamMainData({ examData: editExamData }) {
                 id: `${Date.now()}-q`,
                 text: question.question || "",
                 options: (question.options || []).map(normalizeOption),
-                correctIndex:
-                  typeof question.correctAnswer === "number"
-                    ? question.correctAnswer
-                    : 0,
+                correctIndex: typeof question.correctAnswer === "number" ? question.correctAnswer : 0,
               },
             ],
           },
@@ -632,18 +567,9 @@ export default function ExamMainData({ examData: editExamData }) {
       }));
     } else {
       setMcqOptions(
-        (question.options || [
-          emptyOption(),
-          emptyOption(),
-          emptyOption(),
-          emptyOption(),
-        ]).map(normalizeOption)
+        (question.options || [emptyOption(), emptyOption(), emptyOption(), emptyOption()]).map(normalizeOption)
       );
-      setMcqCorrectAnswer(
-        typeof question.correctAnswer === "number"
-          ? question.correctAnswer
-          : 0
-      );
+      setMcqCorrectAnswer(typeof question.correctAnswer === "number" ? question.correctAnswer : 0);
     }
 
     setEditingQuestion(question);
@@ -651,55 +577,28 @@ export default function ExamMainData({ examData: editExamData }) {
 
   /* ------------------------------- UI ------------------------------- */
   return (
-    <div
-      className="max-w-6xl mx-auto space-y-6 p-6 bg-gray-50 min-h-screen"
-      dir="rtl"
-    >
+    <div className="max-w-6xl mx-auto space-y-6 p-6 bg-gray-50 min-h-screen" dir="rtl">
       {/* Header Stats */}
-      <QuestionStats
-        examData={examData}
-        getEstimatedDuration={getEstimatedDuration}
-        getTotalQuestions={getTotalQuestions}
-      />
+      <QuestionStats examData={examData} getEstimatedDuration={getEstimatedDuration} getTotalQuestions={getTotalQuestions} />
 
       {/* Main Exam Info */}
-      <ExamMainInfo
-        colorMap={colorMap}
-        examData={examData}
-        exam_types={exam_types}
-        getEstimatedDuration={getEstimatedDuration}
-        setExamData={setExamData}
-      />
+      <ExamMainInfo colorMap={colorMap} examData={examData} exam_types={exam_types} getEstimatedDuration={getEstimatedDuration} setExamData={setExamData} />
 
       {/* Sections Picker */}
-      <QuestionSections
-        examData={examData}
-        filteredSection={filteredSection}
-        onAddSection={onAddSection}
-      />
+      <QuestionSections examData={examData} filteredSection={filteredSection} onAddSection={onAddSection} />
 
-      {examData?.name && examData?.sections?.length > 0 && (
+      {examData?.name && examData?.sections?.length > 0 ? (
         <>
           <Card title="إنشاء الأسئلة" icon={Edit3}>
             <div className="space-y-6">
               {/* Type selector */}
-              <QuestionTypeSelector
-                colorMap={colorMap}
-                questionType={questionType}
-                onTypeChange={handleQuestionTypeChange}
-              />
+              <QuestionTypeSelector colorMap={colorMap} questionType={questionType} onTypeChange={handleQuestionTypeChange} />
 
               {/* Section dropdown + selected card */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-gray-700">
-                    اختر القسم لإضافة السؤال
-                  </label>
-                  {selectedSection && (
-                    <Tag color="blue">
-                      إجمالي أسئلة القسم: {getQuestionsCount(selectedSection.id)}
-                    </Tag>
-                  )}
+                  <label className="block text-sm font-medium text-gray-700">اختر القسم لإضافة السؤال</label>
+                  {selectedSection && <Tag color="blue">إجمالي أسئلة القسم: {getQuestionsCount(selectedSection.id)}</Tag>}
                 </div>
 
                 <Select
@@ -715,15 +614,9 @@ export default function ExamMainData({ examData: editExamData }) {
                     label: (
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <div
-                            className="font-medium text-gray-800"
-                            dangerouslySetInnerHTML={{ __html: section?.name }}
-                          />
+                          <div className="font-medium text-gray-800" dangerouslySetInnerHTML={{ __html: section?.name }} />
                           {section?.desc ? (
-                            <div
-                              className="text-xs text-gray-500"
-                              dangerouslySetInnerHTML={{ __html: section?.desc }}
-                            />
+                            <div className="text-xs text-gray-500" dangerouslySetInnerHTML={{ __html: section?.desc }} />
                           ) : null}
                         </div>
                       </div>
@@ -731,9 +624,7 @@ export default function ExamMainData({ examData: editExamData }) {
                   }))}
                   dropdownRender={(menu) => (
                     <div className="p-2">
-                      <div className="px-2 pb-2 text-xs text-gray-500">
-                        اختر من الأقسام المضافة بالأسفل
-                      </div>
+                      <div className="px-2 pb-2 text-xs text-gray-500">اختر من الأقسام المضافة بالأسفل</div>
                       <div className="rounded-xl border">{menu}</div>
                     </div>
                   )}
@@ -743,49 +634,29 @@ export default function ExamMainData({ examData: editExamData }) {
                   <div className="p-4 rounded-2xl border bg-white shadow-sm ring-1 ring-transparent hover:ring-blue-100 transition">
                     <div className="flex items-start justify-between gap-4">
                       <div className="space-y-1">
-                        <h4
-                          className="font-semibold text-gray-800"
-                          dangerouslySetInnerHTML={{ __html: selectedSection.name }}
-                        />
+                        <h4 className="font-semibold text-gray-800" dangerouslySetInnerHTML={{ __html: selectedSection.name }} />
                         {selectedSection?.desc ? (
-                          <p
-                            className="text-sm text-gray-600"
-                            dangerouslySetInnerHTML={{ __html: selectedSection.desc }}
-                          />
+                          <p className="text-sm text-gray-600" dangerouslySetInnerHTML={{ __html: selectedSection.desc }} />
                         ) : null}
                         <div className="flex items-center gap-2 text-xs text-gray-500">
                           <span>
                             عدد الأسئلة:
-                            <b className="mx-1">
-                              {getQuestionsCount(selectedSection.id)}
-                            </b>
-                            / {examData.type === "mock" ? "24" : "∞"}
+                            <b className="mx-1">{getQuestionsCount(selectedSection.id)}</b>/{examData.type === "mock" ? "24" : "∞"}
                           </span>
-                          {examData.type === "mock" && (
-                            <Tag color="volcano">اختبار محاكي</Tag>
-                          )}
+                          {examData.type === "mock" && <Tag color="volcano">اختبار محاكي</Tag>}
                         </div>
                       </div>
-                      <div
-                        className={`mt-1 w-4 h-4 rounded-full border-2 ${
-                          selectedSectionId
-                            ? "border-blue-500 bg-blue-500"
-                            : "border-gray-300"
-                        }`}
-                        title="القسم الحالي"
-                      />
+                      <div className={`mt-1 w-4 h-4 rounded-full border-2 ${selectedSectionId ? "border-blue-500 bg-blue-500" : "border-gray-300"}`} title="القسم الحالي" />
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* MCQ Subtype Selection (Segmented) */}
+              {/* MCQ Subtype Selection */}
               {questionType === "mcq" && (
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-sm font-medium text-gray-700">
-                      نوع الأسئلة المتعددة
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700">نوع الأسئلة المتعددة</label>
                   </div>
 
                   <div className="rounded-2xl border bg-white p-3 shadow-sm">
@@ -828,29 +699,19 @@ export default function ExamMainData({ examData: editExamData }) {
                   {/* General MCQ */}
                   {mcqSubType === "general" ? (
                     <div className="space-y-5">
-                      <LabeledEditor
-                        label="نص السؤال"
-                        value={currentQuestion}
-                        onChange={setCurrentQuestion}
-                        editorMinH={160}
-                        allowImages
-                      />
+                      <LabeledEditor label="نص السؤال" value={currentQuestion} onChange={setCurrentQuestion} editorMinH={160} allowImages />
 
                       <div className="space-y-3">
-                        <label className="block text-sm font-medium text-gray-700">
-                          خيارات الإجابة (لكل خيار نص + شرح)
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700">خيارات الإجابة (لكل خيار نص + شرح)</label>
 
                         {mcqOptions.map((option, index) => {
-                          const letter = String.fromCharCode(65 + index); // A, B, C...
+                          const letter = String.fromCharCode(65 + index);
                           const isCorrect = mcqCorrectAnswer === index;
 
                           return (
                             <div
                               key={index}
-                              className={`border rounded-2xl p-4 bg-white space-y-3 shadow-sm transition ${
-                                isCorrect ? "ring-1 ring-green-200" : "ring-1 ring-transparent"
-                              }`}
+                              className={`border rounded-2xl p-4 bg-white space-y-3 shadow-sm transition ${isCorrect ? "ring-1 ring-green-200" : "ring-1 ring-transparent"}`}
                             >
                               <div className="flex items-center gap-3">
                                 <span
@@ -861,14 +722,8 @@ export default function ExamMainData({ examData: editExamData }) {
                                   {letter}
                                 </span>
 
-                                <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
-                                  <input
-                                    type="radio"
-                                    checked={isCorrect}
-                                    onChange={() => setMcqCorrectAnswer(index)}
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                                    title="الإجابة الصحيحة"
-                                  />
+                                <label className="flex items-center gap-2 text-xs font-medium text-gray-600" title="الإجابة الصحيحة">
+                                  <input type="radio" checked={isCorrect} onChange={() => setMcqCorrectAnswer(index)} className="h-4 w-4 text-blue-600" />
                                   إجابة صحيحة
                                 </label>
 
@@ -884,7 +739,7 @@ export default function ExamMainData({ examData: editExamData }) {
                                 )}
                               </div>
 
-                              {/* Option text with images (fixed size enforced) */}
+                              {/* Option text */}
                               <LabeledEditor
                                 label={`نص الخيار #${index + 1}`}
                                 value={option.text}
@@ -893,13 +748,11 @@ export default function ExamMainData({ examData: editExamData }) {
                                 allowImages
                               />
 
-                              {/* Explanation with images (fixed size enforced) */}
+                              {/* Option explanation */}
                               <LabeledEditor
                                 label={`شرح الخيار #${index + 1} (لماذا هو صحيح/خاطئ)`}
                                 value={option.explanation}
-                                onChange={(v) =>
-                                  updateMcqOption(index, "explanation", v)
-                                }
+                                onChange={(v) => updateMcqOption(index, "explanation", v)}
                                 editorMinH={90}
                                 allowImages
                               />
@@ -928,36 +781,23 @@ export default function ExamMainData({ examData: editExamData }) {
                 </div>
               )}
 
-              {/* Non-MCQ question prompt (allow images too) */}
-              {questionType !== "mcq" && (
-                <LabeledEditor
-                  label="نص السؤال"
-                  value={currentQuestion}
-                  onChange={setCurrentQuestion}
-                  editorMinH={160}
-                  allowImages
-                />
+              {/* Non-MCQ prompts */}
+              {/* Essay: we keep question prompt here, model answer in EssayQuestions */}
+              {questionType === "essay" && (
+                <LabeledEditor label="نص السؤال" value={currentQuestion} onChange={setCurrentQuestion} editorMinH={160} allowImages />
               )}
 
               {questionType === "trueFalse" && (
-                <>
-                  <TrueFalseQuestions
-                    setTrueFalseAnswer={setTrueFalseAnswer}
-                    setTrueFalseExplanation={setTrueFalseExplanation}
-                    trueFalseAnswer={trueFalseAnswer}
-                    trueFalseExplanation={trueFalseExplanation}
-                  />
-                </>
+                <TrueFalseQuestions
+                  trueFalseAnswer={trueFalseAnswer}
+                  setTrueFalseAnswer={setTrueFalseAnswer}
+                  trueFalseExplanation={trueFalseExplanation}
+                  setTrueFalseExplanation={setTrueFalseExplanation}
+                />
               )}
 
               {questionType === "essay" && (
-                <LabeledEditor
-                  label="الإجابة النموذجية"
-                  value={modalAnswer}
-                  onChange={setModalAnswer}
-                  editorMinH={160}
-                  allowImages
-                />
+                <EssayQuestions modalAnswer={modalAnswer} setModalAnswer={setModalAnswer} />
               )}
 
               {questionType === "complete" && (
@@ -975,27 +815,20 @@ export default function ExamMainData({ examData: editExamData }) {
               <div className="pt-4 border-t sticky bottom-0 bg-gray-50/75 backdrop-blur z-10">
                 <button
                   onClick={addOrUpdateQuestion}
-                  disabled={
-                    !selectedSectionId ||
-                    (questionType !== "mcq" && !currentQuestion) ||
-                    (examData.type === "mock" &&
-                      !canAddMoreQuestions(selectedSectionId))
-                  }
+                  disabled={!selectedSectionId || (questionType !== "mcq" && !currentQuestion) || (examData.type === "mock" && !canAddMoreQuestions(selectedSectionId))}
                   className="w-full inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 px-4 py-3"
                 >
                   {editingQuestion ? <Save className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
                   {editingQuestion ? "تحديث السؤال" : "إضافة السؤال"}
                 </button>
                 {examData.type === "mock" && selectedSectionId && (
-                  <p className="text-sm text-gray-500 mt-2 text-center">
-                    {getQuestionsCount(selectedSectionId)}/24 سؤال في هذا القسم
-                  </p>
+                  <p className="text-sm text-gray-500 mt-2 text-center">{getQuestionsCount(selectedSectionId)}/24 سؤال في هذا القسم</p>
                 )}
               </div>
             </div>
           </Card>
 
-          {/* Questions Display */}
+          {/* Questions list */}
           <DisplayQuestions
             toggleSection={toggleSection}
             examData={examData}
@@ -1023,12 +856,7 @@ export default function ExamMainData({ examData: editExamData }) {
               className="inline-flex items-center gap-2 px-4 py-3 text-sm rounded-xl border border-gray-200 bg-white hover:bg-gray-50"
               onClick={() => {
                 if (confirm("هل أنت متأكد من إلغاء التغييرات؟")) {
-                  setExamData({
-                    name: "",
-                    duration: "",
-                    type: "",
-                    sections: [],
-                  });
+                  setExamData({ name: "", duration: "", type: "", sections: [] });
                   resetQuestionForm();
                   setSelectedSectionId(null);
                   setExpandedSections({});
@@ -1045,29 +873,20 @@ export default function ExamMainData({ examData: editExamData }) {
                 alert("تم حفظ الاختبار بنجاح!");
                 console.log("Exam Data:", examData);
               }}
-              disabled={
-                !examData.name || !examData.type || examData.sections.length === 0
-              }
+              disabled={!examData.name || !examData.type || examData.sections.length === 0}
             >
               <Save className="h-4 w-4" />
               حفظ الاختبار
             </button>
           </div>
         </>
-      )}
-
-      {/* Empty State */}
-      {(!examData.name || examData.sections.length === 0) && (
+      ) : (
         <div className="text-center py-12">
           <div className="bg-blue-50 p-6 rounded-full w-20 h-20 mx-auto flex items-center justify-center mb-4">
             <BookOpen className="h-10 w-10 text-blue-600" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            ابدأ بإنشاء اختبار جديد
-          </h3>
-          <p className="text-gray-600 mb-6">
-            املأ معلومات الاختبار الأساسية وأضف الأقسام لبدء إنشاء الأسئلة
-          </p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">ابدأ بإنشاء اختبار جديد</h3>
+          <p className="text-gray-600 mb-6">املأ معلومات الاختبار الأساسية وأضف الأقسام لبدء إنشاء الأسئلة</p>
         </div>
       )}
     </div>

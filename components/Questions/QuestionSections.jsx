@@ -171,7 +171,7 @@ export default function QuestionSections({ examData, filteredSection, onAddSecti
         </div>
 
         {/* ---------- Current added sections overview ---------- */}
-        {Array.isArray(examData?.sections) && examData.sections.length > 0 && (
+        {/* {Array.isArray(examData?.sections) && examData.sections.length > 0 && (
           <div className="space-y-3">
             <h4 className="text-sm font-medium text-gray-700">الأقسام المضافة حاليًا</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -206,7 +206,7 @@ export default function QuestionSections({ examData, filteredSection, onAddSecti
               ))}
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </Card>
   );

@@ -1,21 +1,39 @@
+"use client";
+
 import Button from "@/components/atoms/Button";
-import { Card, Collapse, Empty, Space, Tag, Tooltip, Badge, Divider } from "antd";
 import {
+  Badge,
+  Card,
+  Collapse,
+  DatePicker,
+  Divider,
+  Empty,
+  Tag,
+  Tooltip,
+} from "antd";
+import {
+  BookOpen,
+  ExternalLink,
   Eye,
   EyeOff,
   FileText,
-  Play,
+  Plus,
   Target,
   Trash2,
-  Plus,
-  Video,
-  ExternalLink,
   Upload as UploadIcon,
-  BookOpen
+  Video,
 } from "lucide-react";
+import dayjs from "dayjs";
 import React from "react";
 
 const { Panel } = Collapse;
+
+/** شارة حالة الظهور (مشترك للأقسام والمحاضرات) */
+const AvailabilityTag = ({ releaseAt, isReleased }) => {
+  if (!releaseAt) return <Tag color="green">متاح الآن</Tag>;
+  const opened = isReleased?.(releaseAt);
+  return opened ? <Tag color="green">متاح</Tag> : <Tag color="red">لم يُفتح بعد</Tag>;
+};
 
 export default function LecturesContent({
   stats,
@@ -28,386 +46,538 @@ export default function LecturesContent({
   setOpenAddStage,
   addTrainingFiles,
   removeTrainingFile,
+  /** موجود سابقًا */
+  isReleased,
+  setLessonReleaseAt,
+  /** جديد: جدولة الأقسام */
+  setStageReleaseAt,
 }) {
-  // open hidden file picker for a specific lesson
+  // فتح مُلتقط الـ PDF لمحاضرة معينة
   const openPicker = (stageId, lessonId) => {
     const input = document.getElementById(`pdf-picker-${stageId}-${lessonId}`);
-    if (input) input.click();
+    input?.click();
   };
 
-  // handle file selection for a lesson
+  // عند اختيار ملفات PDF
   const onFilesPicked = (stageId, lessonId, e) => {
     const files = Array.from(e.target.files || []);
     if (files.length && typeof addTrainingFiles === "function") {
       addTrainingFiles(stageId, lessonId, files);
-    } else {
-      console.warn("addTrainingFiles(stageId, lessonId, files[]) not provided.");
     }
-    // allow picking the same files again later
     e.target.value = "";
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full" dir="rtl">
       {/* Header */}
-      <Card className="mb-6 shadow-lg border-0 bg-gradient-to-r from-blue-50 to-indigo-50">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-4">
+      <Card className="mb-6 border-0 shadow-lg">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <BookOpen className="w-6 h-6 text-blue-600" />
-              <h2 className="text-xl font-bold text-gray-800 m-0">مرحلة التأسيس</h2>
+              <h2 className="m-0 text-xl font-bold text-gray-800">مرحلة التأسيس</h2>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <Badge
                 count={stats.stageCount}
                 showZero
-                color="blue"
-                className="[&_.ant-badge-count]:bg-blue-500"
+                className="[&_.ant-badge-count]:bg-blue-600 [&_.ant-badge-count]:text-white"
               >
-                <span className="text-sm text-gray-600 font-medium px-3 py-1 bg-white rounded-full">
+                <span className="rounded-full bg-gray-50 px-3 py-1 text-sm font-medium text-gray-600">
                   الأقسام
                 </span>
               </Badge>
               <Badge
                 count={stats.lessonCount}
                 showZero
-                color="green"
-                className="[&_.ant-badge-count]:bg-green-500"
+                className="[&_.ant-badge-count]:bg-emerald-600 [&_.ant-badge-count]:text-white"
               >
-                <span className="text-sm text-gray-600 font-medium px-3 py-1 bg-white rounded-full">
+                <span className="rounded-full bg-gray-50 px-3 py-1 text-sm font-medium text-gray-600">
                   المحاضرات
                 </span>
               </Badge>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-2">
             <Button
-              className="!bg-gray-700 hover:!bg-gray-800 !text-white !border-0 shadow-md transition-all duration-200 flex items-center gap-2"
+              className="!border-0 !bg-gray-700 !text-white hover:!bg-gray-800 shadow-md flex items-center gap-2"
               onClick={() => setOpenAddStage(true)}
             >
-              <Plus className="w-4 h-4" />
-              إضافة  قسم
+              <Plus className="h-4 w-4" />
+              إضافة قسم
             </Button>
             <Button
               type="primary"
-              className="!bg-blue-600 hover:!bg-blue-700 !text-white !border-0 shadow-md transition-all duration-200 flex items-center gap-2"
+              className="!border-0 !bg-blue-600 !text-white hover:!bg-blue-700 shadow-md flex items-center gap-2"
               onClick={() => setOpenAddLesson(true)}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="h-4 w-4" />
               إضافة محاضرة
             </Button>
           </div>
         </div>
       </Card>
 
-      {/* Content Area */}
-      <Card className="shadow-lg !h-fit border-0" bodyStyle={{ padding: "0" }}>
+      {/* Content */}
+      <Card className="border-0 shadow-lg !h-fit" bodyStyle={{ padding: 0 }}>
         {foundationStages.length === 0 ? (
           <div className="p-12">
             <Empty
+              className="my-8"
               description={
                 <div className="text-center">
-                  <p className="text-gray-500 text-lg mb-2">لا توجد مراحل بعد</p>
-                  <p className="text-gray-400 text-sm">ابدأ بإضافة مرحلة جديدة لتنظيم المحتوى</p>
+                  <p className="mb-2 text-lg text-gray-500">لا توجد مراحل بعد</p>
+                  <p className="text-sm text-gray-400">
+                    ابدأ بإضافة قسم جديدة لتنظيم المحتوى
+                  </p>
                 </div>
               }
-              className="my-8"
             />
           </div>
         ) : (
           <Collapse accordion className="border-0 !h-full" expandIconPosition="end">
-            {foundationStages.map((st, stageIndex) => (
-              <Panel
-                key={st.id}
-                header={
-                  <div className="flex items-center justify-between w-full pr-4">
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                          st.visible ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-400"
-                        }`}
-                      >
-                        {stageIndex + 1}
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Tooltip title={st.visible ? "إخفاء المحاضرة" : "إظهار المحاضرة"}>
-                          <Button
-                            type="text"
-                            size="small"
-                            className={`!p-1 hover:!bg-gray-100 ${
-                              st.visible ? "!text-green-600" : "!text-gray-400"
-                            }`}
-                            icon={st.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleStageVisibility(st.id);
-                            }}
-                          />
-                        </Tooltip>
-                        <h3 className={`font-semibold text-lg m-0 ${st.visible ? "text-gray-800" : "text-gray-400"}`}>
-                         القسم :   {st.title}
-                        </h3>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge
-                        count={st.lessons?.length || 0}
-                        showZero
-                        size="small"
-                        className="[&_.ant-badge-count]:bg-indigo-500 [&_.ant-badge-count]:text-xs"
-                      >
-                        <span className="text-xs text-gray-500 font-medium">قسم</span>
-                      </Badge>
-                      <Tooltip title="حذف المحاضرة">
-                        <Button
-                          danger
-                          type="text"
-                          size="small"
-                          className="!p-1 hover:!bg-red-50"
-                          icon={<Trash2 className="w-4 h-4" />}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteStage(st.id);
-                          }}
-                        />
-                      </Tooltip>
-                    </div>
-                  </div>
-                }
-                className="!border-0 !mb-2"
-                style={{
-                  backgroundColor: st.visible ? "#fafafa" : "#f5f5f5",
-                  borderRadius: "12px",
-                  marginBottom: "8px",
-                }}
-              >
-                <div className="px-6 pb-4">
-                  {(st.lessons || []).length === 0 ? (
-                    <div className="text-center py-8">
-                      <Empty
-                        description="لا توجد محاضرات في هذه القسم"
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        className="!text-gray-400"
-                      />
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {st.lessons.map((l, lessonIndex) => {
-                        const pdfs = l?.training?.pdfs || [];
-                        return (
-                          <div
-                            key={l.id}
-                            className={`relative rounded-xl border-2 p-6 transition-all duration-300 hover:shadow-md ${
-                              l.visible
-                                ? "bg-white border-blue-100 hover:border-blue-200"
-                                : "bg-gray-50 border-gray-200 opacity-75"
+            {foundationStages.map((st, stageIndex) => {
+              const stageOpened = isReleased?.(st.releaseAt);
+              const effectiveStageVisible = st.visible && stageOpened;
+
+              return (
+                <Panel
+                  key={st.id}
+                  className="!mb-2 !rounded-2xl"
+                  style={{
+                    backgroundColor: effectiveStageVisible ? "#fafafa" : "#f5f5f5",
+                    border: 0,
+                    marginBottom: 8,
+                    opacity: effectiveStageVisible ? 1 : 0.85,
+                  }}
+                  header={
+                    <div className="flex w-full items-center justify-between pr-4">
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                            effectiveStageVisible
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-gray-100 text-gray-400"
+                          }`}
+                        >
+                          {stageIndex + 1}
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          {/* Toggle visibility (disabled before release) */}
+                          <Tooltip
+                            title={
+                              effectiveStageVisible
+                                ? "إخفاء القسم"
+                                : stageOpened
+                                ? "إظهار القسم"
+                                : "سيظهر تلقائياً عند موعده"
+                            }
+                          >
+                            <Button
+                              type="text"
+                              size="small"
+                              disabled={!stageOpened}
+                              className={`!p-1 hover:!bg-gray-100 ${
+                                effectiveStageVisible
+                                  ? "!text-green-600"
+                                  : "!text-gray-400"
+                              }`}
+                              icon={
+                                effectiveStageVisible ? (
+                                  <Eye className="h-4 w-4" />
+                                ) : (
+                                  <EyeOff className="h-4 w-4" />
+                                )
+                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (stageOpened) toggleStageVisibility(st.id);
+                              }}
+                            />
+                          </Tooltip>
+
+                          <h3
+                            className={`m-0 text-lg font-semibold ${
+                              effectiveStageVisible
+                                ? "text-gray-800"
+                                : "text-gray-400"
                             }`}
                           >
-                            {/* Lesson Number */}
-                            <div className="absolute -top-3 -right-3 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-md">
-                              {lessonIndex + 1}
-                            </div>
+                            القسم : {st.title}
+                          </h3>
 
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                {/* Header */}
-                                <div className="flex items-start gap-4 mb-4">
-                                  <div className="rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 p-3 text-blue-700">
-                                    <Play className="w-5 h-5" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <h4 className={`font-bold text-lg mb-2 ${l.visible ? "text-gray-800" : "text-gray-500"}`}>
-                                    المحاضرة :   {l.title} 
-                                    </h4>
+                          {/* حالة القسم + توقيت */}
+                          <AvailabilityTag
+                            releaseAt={st.releaseAt}
+                            isReleased={isReleased}
+                          />
+                          {st.releaseAt && (
+                            <Tooltip title="موعد الظهور">
+                              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                                {dayjs(st.releaseAt).format("YYYY/MM/DD HH:mm")}
+                              </span>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </div>
 
-                                    {/* Main Video */}
-                                    <div className="bg-blue-50 rounded-lg p-4 mb-4">
-                                      <div className="flex items-center gap-2 mb-3">
-                                        <Video className="w-4 h-4 text-blue-600" />
-                                        <Tag color="blue" className="!mb-0 font-medium">
-                                          فيديو : {l?.lessonVideo?.title}
-                                        </Tag>
-                                      </div>
-                                      <div className="flex items-center gap-3 text-sm text-gray-700">
-                                        <span className="font-medium">{l.lessonVideo?.title || "غير محدد"}</span>
-                                        {l.lessonVideo?.source === "url" && l.lessonVideo?.url ? (
-                                          <a
-                                            href={l.lessonVideo.url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium"
-                                          >
-                                            مشاهدة
-                                            <ExternalLink className="w-3 h-3" />
-                                          </a>
-                                        ) : (
-                                          <span className="text-gray-500">ملف مرفوع</span>
-                                        )}
-                                      </div>
-                                    </div>
+                      {/* أدوات القسم: جدولة + مسح + حذف */}
+                      <div
+                        className="flex items-center gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <DatePicker
+                          showTime
+                          size="small"
+                          placeholder="موعد ظهور القسم"
+                          className="min-w-[190px]"
+                          value={
+                            st.releaseAt && dayjs(st.releaseAt).isValid()
+                              ? dayjs(st.releaseAt)
+                              : null
+                          }
+                          onChange={(v) => setStageReleaseAt?.(st.id, v || null)}
+                        />
+                        {st.releaseAt && (
+                          <Button
+                            size="small"
+                            type="text"
+                            onClick={() => setStageReleaseAt?.(st.id, null)}
+                          >
+                            مسح
+                          </Button>
+                        )}
 
-                                    {/* Training */}
-                                    <div className="bg-amber-50 rounded-lg p-4">
-                                      <div className="flex items-center gap-2 mb-3">
-                                        <Target className="w-4 h-4 text-amber-600" />
-                                        <Tag color="gold" className="!mb-0 font-medium">
-                                          تدريب
-                                        </Tag>
-                                      </div>
+                        <Tooltip title="حذف القسم">
+                          <Button
+                            danger
+                            type="text"
+                            size="small"
+                            className="!p-1 hover:!bg-red-50"
+                            icon={<Trash2 className="h-4 w-4" />}
+                            onClick={() => deleteStage(st.id)}
+                          />
+                        </Tooltip>
+                      </div>
+                    </div>
+                  }
+                >
+                  <div className="px-3 pb-4 sm:px-5">
+                    {(st.lessons || []).length === 0 ? (
+                      <div className="py-8 text-center">
+                        <Empty
+                          description="لا توجد محاضرات في هذه القسم"
+                          image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        />
+                      </div>
+                    ) : (
+                      <Collapse
+                        accordion
+                        bordered={false}
+                        expandIconPosition="end"
+                        className="bg-transparent"
+                      >
+                        {st.lessons.map((l, lessonIndex) => {
+                          const pdfs = l?.training?.pdfs || [];
+                          const opened = isReleased?.(l.releaseAt);
 
-                                      {/* Training Video */}
-                                      <div className="flex items-center gap-3 text-sm text-gray-700 mb-4">
-                                        <span className="font-medium">فيديو: {l.training?.video?.title || "غير محدد"}</span>
-                                        {l.training?.video?.source === "url" && l.training?.video?.url ? (
-                                          <a
-                                            href={l.training.video.url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium"
-                                          >
-                                            مشاهدة
-                                            <ExternalLink className="w-3 h-3" />
-                                          </a>
-                                        ) : l.training?.video ? (
-                                          <span className="text-gray-500">ملف مرفوع</span>
-                                        ) : null}
-                                      </div>
+                          const header = (
+                            <div className="flex w-full items-center justify-between">
+                              {/* عنوان المحاضرة + شارات */}
+                              <div className="flex items-center gap-3">
+                                <div className="shadow-sm flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-sm font-bold text-white">
+                                  {lessonIndex + 1}
+                                </div>
 
-                                      <Divider className="!my-4" />
+                                <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
+                                  <span
+                                    className={`font-semibold ${
+                                      l.visible
+                                        ? "text-gray-800"
+                                        : "text-gray-500"
+                                    }`}
+                                  >
+                                    المحاضرة : {l.title}
+                                  </span>
 
-                                      {/* PDFs */}
-                                      <div>
-                                        <div className="flex items-center justify-between mb-3">
-                                          <div className="flex items-center gap-2">
-                                            <FileText className="w-4 h-4 text-indigo-600" />
-                                            <Tag color="geekblue" className="!mb-0 font-medium">
-                                              ملفات PDF
-                                            </Tag>
-                                            <Badge count={pdfs.length} showZero size="small" />
-                                          </div>
-                                          <Button
-                                            type="dashed"
-                                            size="small"
-                                            className="!border-indigo-300 !text-indigo-600 hover:!border-indigo-400 hover:!text-indigo-700 flex items-center gap-1"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              openPicker(st.id, l.id);
-                                            }}
-                                          >
-                                            <UploadIcon className="w-3 h-3" />
-                                            إضافة ملفات
-                                          </Button>
-
-                                          {/* 🔐 Hidden input per lesson (multi) */}
-                                          <input
-                                            id={`pdf-picker-${st.id}-${l.id}`}
-                                            type="file"
-                                            accept="application/pdf"
-                                            multiple
-                                            className="hidden"
-                                            onChange={(e) => onFilesPicked(st.id, l.id, e)}
-                                            onClick={(e) => e.stopPropagation()}
-                                          />
-                                        </div>
-
-                                        {pdfs.length > 0 && (
-                                          <div className="space-y-2">
-                                            {pdfs.map((f, idx) => {
-                                              const key = f?.id ?? idx;
-                                              const label = f?.title || f?.name || `ملف ${idx + 1}`;
-                                              const isUrl = f?.source === "url" && f?.url;
-
-                                              return (
-                                                <div
-                                                  key={key}
-                                                  className="flex items-center justify-between rounded-lg border bg-white p-3 hover:shadow-sm transition-shadow"
-                                                >
-                                                  <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                                                      <FileText className="w-4 h-4 text-red-600" />
-                                                    </div>
-                                                    <span className="text-gray-800 font-medium">{label}</span>
-                                                  </div>
-                                                  <div className="flex items-center gap-2">
-                                                    {isUrl ? (
-                                                      <a
-                                                        href={f.url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                      >
-                                                        عرض
-                                                        <ExternalLink className="w-3 h-3" />
-                                                      </a>
-                                                    ) : (
-                                                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                                        ملف مرفوع
-                                                      </span>
-                                                    )}
-                                                    <Tooltip title="حذف الملف">
-                                                      <Button
-                                                        danger
-                                                        type="text"
-                                                        size="small"
-                                                        icon={<Trash2 className="w-4 h-4" />}
-                                                        className="!p-1 hover:!bg-red-50"
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          if (typeof removeTrainingFile === "function") {
-                                                            removeTrainingFile(st.id, l.id, f?.id ?? idx);
-                                                          } else {
-                                                            console.warn(
-                                                              "removeTrainingFile(stageId, lessonId, fileKey) not provided."
-                                                            );
-                                                          }
-                                                        }}
-                                                      />
-                                                    </Tooltip>
-                                                  </div>
-                                                </div>
-                                              );
-                                            })}
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
+                                  <div className="flex items-center gap-2">
+                                    <AvailabilityTag
+                                      releaseAt={l.releaseAt}
+                                      isReleased={isReleased}
+                                    />
+                                    <Badge count={pdfs.length} showZero size="small" />
+                                    {l.releaseAt && (
+                                      <Tooltip title="موعد الظهور">
+                                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                                          {dayjs(l.releaseAt).format(
+                                            "YYYY/MM/DD HH:mm"
+                                          )}
+                                        </span>
+                                      </Tooltip>
+                                    )}
                                   </div>
                                 </div>
                               </div>
 
-                              {/* Actions */}
-                              <div className="flex items-start gap-2 ml-4">
-                                <Tooltip title={l.visible ? "إخفاء المحاضرة" : "إظهار المحاضرة"}>
+                              {/* أدوات المحاضرة */}
+                              <div
+                                className="flex items-center gap-1 sm:gap-2"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <DatePicker
+                                  showTime
+                                  size="small"
+                                  placeholder="موعد الظهور"
+                                  className="min-w-[190px]"
+                                  value={
+                                    l.releaseAt && dayjs(l.releaseAt).isValid()
+                                      ? dayjs(l.releaseAt)
+                                      : null
+                                  }
+                                  onChange={(v) =>
+                                    setLessonReleaseAt(st.id, l.id, v || null)
+                                  }
+                                />
+                                {l.releaseAt && (
+                                  <Button
+                                    size="small"
+                                    type="text"
+                                    onClick={() =>
+                                      setLessonReleaseAt(st.id, l.id, null)
+                                    }
+                                  >
+                                    مسح
+                                  </Button>
+                                )}
+
+                                <Tooltip
+                                  title={
+                                    l.visible ? "إخفاء المحاضرة" : "إظهار المحاضرة"
+                                  }
+                                >
                                   <Button
                                     type="text"
                                     size="small"
-                                    className={`!p-2 hover:!bg-gray-100 ${
-                                      l.visible ? "!text-green-600" : "!text-gray-400"
+                                    className={`!p-1 hover:!bg-gray-100 ${
+                                      l.visible
+                                        ? "!text-green-600"
+                                        : "!text-gray-400"
                                     }`}
-                                    icon={l.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                                    onClick={() => toggleLessonVisibility(st.id, l.id)}
+                                    icon={
+                                      l.visible ? (
+                                        <Eye className="h-4 w-4" />
+                                      ) : (
+                                        <EyeOff className="h-4 w-4" />
+                                      )
+                                    }
+                                    onClick={() =>
+                                      toggleLessonVisibility(st.id, l.id)
+                                    }
                                   />
                                 </Tooltip>
+
                                 <Tooltip title="حذف المحاضرة">
                                   <Button
                                     danger
                                     size="small"
-                                    className="!p-2 hover:!bg-red-50"
+                                    className="!p-1 hover:!bg-red-50"
+                                    icon={<Trash2 className="h-4 w-4" />}
                                     onClick={() => deleteLesson(st.id, l.id)}
-                                    icon={<Trash2 className="w-4 h-4" />}
                                   />
                                 </Tooltip>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </Panel>
-            ))}
+                          );
+
+                          return (
+                            <Panel
+                              key={l.id}
+                              header={header}
+                              className={`!mb-3 !rounded-2xl transition ${
+                                l.visible
+                                  ? "bg-white !border !border-blue-100 hover:!border-blue-200"
+                                  : "bg-gray-50 !border !border-gray-200 opacity-80"
+                              }`}
+                            >
+                              {/* مُلتقط PDF مخفي لكل محاضرة */}
+                              <input
+                                id={`pdf-picker-${st.id}-${l.id}`}
+                                type="file"
+                                accept="application/pdf"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => onFilesPicked(st.id, l.id, e)}
+                              />
+
+                              <div className="space-y-4">
+                                {/* فيديو الدرس */}
+                                <Card size="small" className="border-blue-100 bg-blue-50">
+                                  <div className="mb-2 flex items-center gap-2">
+                                    <Video className="h-4 w-4 text-blue-600" />
+                                    <Tag color="blue" className="!mb-0 font-medium">
+                                      فيديو الدرس
+                                    </Tag>
+                                  </div>
+                                  <div className="flex items-center gap-3 text-sm text-gray-700">
+                                    <span className="font-medium">
+                                      {l.lessonVideo?.title || "غير محدد"}
+                                    </span>
+                                    {l.lessonVideo?.source === "url" &&
+                                    l.lessonVideo?.url ? (
+                                      <a
+                                        href={l.lessonVideo.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-700"
+                                      >
+                                        مشاهدة <ExternalLink className="h-3 w-3" />
+                                      </a>
+                                    ) : l.lessonVideo ? (
+                                      <span className="text-gray-500">ملف مرفوع</span>
+                                    ) : null}
+                                  </div>
+                                </Card>
+
+                                {/* تدريب */}
+                                <Card size="small" className="border-amber-200 bg-amber-50">
+                                  <div className="mb-2 flex items-center gap-2">
+                                    <Target className="h-4 w-4 text-amber-600" />
+                                    <Tag color="gold" className="!mb-0 font-medium">
+                                      تدريب
+                                    </Tag>
+                                  </div>
+
+                                  <div className="mb-3 flex items-center gap-3 text-sm text-gray-700">
+                                    <span className="font-medium">
+                                      فيديو: {l.training?.video?.title || "غير محدد"}
+                                    </span>
+                                    {l.training?.video?.source === "url" &&
+                                    l.training?.video?.url ? (
+                                      <a
+                                        href={l.training.video.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-700"
+                                      >
+                                        مشاهدة <ExternalLink className="h-3 w-3" />
+                                      </a>
+                                    ) : l.training?.video ? (
+                                      <span className="text-gray-500">ملف مرفوع</span>
+                                    ) : null}
+                                  </div>
+
+                                  <Divider className="!my-3" />
+
+                                  {/* ملفات PDF */}
+                                  <div>
+                                    <div className="mb-2 flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <FileText className="h-4 w-4 text-indigo-600" />
+                                        <Tag
+                                          color="geekblue"
+                                          className="!mb-0 font-medium"
+                                        >
+                                          ملفات PDF
+                                        </Tag>
+                                        <Badge
+                                          count={l?.training?.pdfs?.length || 0}
+                                          showZero
+                                          size="small"
+                                        />
+                                      </div>
+
+                                      <div onClick={(e) => e.stopPropagation()}>
+                                        <Button
+                                          type="dashed"
+                                          size="small"
+                                          className="flex items-center gap-1 !border-indigo-300 !text-indigo-600 hover:!border-indigo-400 hover:!text-indigo-700"
+                                          onClick={() => openPicker(st.id, l.id)}
+                                        >
+                                          <UploadIcon className="h-3 w-3" />
+                                          إضافة ملفات
+                                        </Button>
+                                      </div>
+                                    </div>
+
+                                    {(l?.training?.pdfs || []).length > 0 && (
+                                      <div className="space-y-2">
+                                        {l.training.pdfs.map((f, idx) => {
+                                          const key = f?.id ?? idx;
+                                          const label =
+                                            f?.title || f?.name || `ملف ${idx + 1}`;
+                                          const isUrl =
+                                            f?.source === "url" && f?.url;
+
+                                          return (
+                                            <div
+                                              key={key}
+                                              className="flex items-center justify-between rounded-lg border bg-white p-3 transition-shadow hover:shadow-sm"
+                                            >
+                                              <div className="flex items-center gap-3">
+                                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100">
+                                                  <FileText className="h-4 w-4 text-red-600" />
+                                                </div>
+                                                <span className="font-medium text-gray-800">
+                                                  {label}
+                                                </span>
+                                              </div>
+
+                                              <div
+                                                className="flex items-center gap-2"
+                                                onClick={(e) => e.stopPropagation()}
+                                              >
+                                                {isUrl ? (
+                                                  <a
+                                                    href={f.url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+                                                  >
+                                                    عرض{" "}
+                                                    <ExternalLink className="h-3 w-3" />
+                                                  </a>
+                                                ) : (
+                                                  <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-500">
+                                                    ملف مرفوع
+                                                  </span>
+                                                )}
+
+                                                <Tooltip title="حذف الملف">
+                                                  <Button
+                                                    danger
+                                                    type="text"
+                                                    size="small"
+                                                    icon={<Trash2 className="h-4 w-4" />}
+                                                    className="!p-1 hover:!bg-red-50"
+                                                    onClick={() =>
+                                                      removeTrainingFile?.(
+                                                        st.id,
+                                                        l.id,
+                                                        f?.id ?? idx
+                                                      )
+                                                    }
+                                                  />
+                                                </Tooltip>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                  </div>
+                                </Card>
+                              </div>
+                            </Panel>
+                          );
+                        })}
+                      </Collapse>
+                    )}
+                  </div>
+                </Panel>
+              );
+            })}
           </Collapse>
         )}
       </Card>

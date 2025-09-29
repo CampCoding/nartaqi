@@ -17,22 +17,6 @@ export default function ExamMainInfo({ examData,colorMap, setExamData , exam_typ
             }
           />
 
-          <Input
-            label={`مدة الاختبار (دقيقة) ${
-              examData?.type === "mock" ? "(تلقائي)" : ""
-            }`}
-            type="number"
-            placeholder="أدخل مدة الاختبار"
-            value={
-              examData?.type === "mock"
-                ? getEstimatedDuration()
-                : examData?.duration
-            }
-            onChange={(e) =>
-              setExamData((p) => ({ ...p, duration: e.target.value }))
-            }
-            disabled={examData?.type === "mock"}
-          />
         </div>
 
         {/* Exam Type Selection */}

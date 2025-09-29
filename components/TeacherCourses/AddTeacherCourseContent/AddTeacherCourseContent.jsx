@@ -208,6 +208,45 @@ export default function AddTeacherCourseContent() {
     },
   ]);
 
+  const setLessonReleaseAt = (stageId, lessonId, dtOrNull) => {
+    setFoundationStages((prev) =>
+      prev.map((st) =>
+        st.id !== stageId
+          ? st
+          : {
+              ...st,
+              lessons: (st.lessons || []).map((l) =>
+                l.id !== lessonId
+                  ? l
+                  : {
+                      ...l,
+                      releaseAt: dtOrNull ? dayjs(dtOrNull).toISOString() : undefined,
+                    }
+              ),
+            }
+      )
+    );
+  };
+
+  const setStageReleaseAt = (stageId, v) => {
+    setFoundationStages((prev) =>
+      prev.map((st) =>
+        st.id === stageId ? { ...st, releaseAt: v ? dayjs(v).toISOString() : undefined } : st
+      )
+    );
+  };
+
+  /** ✅ جديد: جدولة لكل اختبار على حدة */
+  const setExamReleaseAt = (examId, dtOrNull) => {
+    setExams((prev) =>
+      prev.map((e) =>
+        String(e.id) === String(examId)
+          ? { ...e, releaseAt: dtOrNull ? dayjs(dtOrNull).toISOString() : undefined }
+          : e
+      )
+    );
+  };
+
   /** ====== مكتبة الاختبارات (مشتركة) ====== */
   const [examLibrary, setExamLibrary] = useState([]);
   const [openPickExam, setOpenPickExam] = useState(false);
@@ -288,9 +327,7 @@ export default function AddTeacherCourseContent() {
         st.id === stageId
           ? {
               ...st,
-              lessons: (st.lessons || []).map((l) =>
-                l.id === lessonId ? { ...l, visible: !l.visible } : l
-              ),
+              lessons: (st.lessons || []).map((l) => (l.id === lessonId ? { ...l, visible: !l.visible } : l)),
             }
           : st
       )
@@ -552,7 +589,7 @@ export default function AddTeacherCourseContent() {
 
       setExams((prev) => {
         const existing = new Set(prev.map((x) => String(x.id)));
-        // عند الربط من المكتبة، نسمح بتعيين releaseAt لاحقاً عبر المخطط الجماعي
+        // عند الربط من المكتبة، نسمح بتعيين releaseAt لاحقاً
         return [...toLink.filter((x) => !existing.has(String(x.id))), ...prev];
       });
 
@@ -674,7 +711,10 @@ export default function AddTeacherCourseContent() {
           addTrainingFiles={addTrainingFiles}
           removeTrainingFile={removeTrainingFile}
           toggleLessonVisibility={toggleLessonVisibility}
-          // ملاحظة: يفضّل داخل BasicLevel إظهار Badge "لم يُفتح بعد" عندما !isReleased(lesson.releaseAt)
+          /** جديد: تمرير أدوات الجدولة داخل المحتوى */
+          isReleased={isReleased}
+          setLessonReleaseAt={setLessonReleaseAt}
+          setStageReleaseAt={setStageReleaseAt}
         />
       )}
 
@@ -691,7 +731,9 @@ export default function AddTeacherCourseContent() {
           setOpenAddStage={setOpenAddStage}
           addTrainingFiles={addTrainingFiles}
           removeTrainingFile={removeTrainingFile}
-          // ملاحظة: يفضّل داخل LecturesContent إظهار Badge "لم يُفتح بعد" عندما !isReleased(item.releaseAt)
+          isReleased={isReleased}
+          setLessonReleaseAt={setLessonReleaseAt}
+          setStageReleaseAt={setStageReleaseAt}
         />
       )}
 
@@ -719,11 +761,11 @@ export default function AddTeacherCourseContent() {
                 return (
                   <div
                     key={e.id}
-                    className={`flex items-center justify-between rounded-lg border p-3 ${
+                    className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border p-3 ${
                       effectiveVisible ? "bg-gray-50" : "bg-gray-100 opacity-70"
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-start sm:items-center gap-3">
                       <div className="rounded-lg bg-purple-100 p-2 text-purple-700">
                         <ListChecks className="w-4 h-4" />
                       </div>
@@ -731,7 +773,7 @@ export default function AddTeacherCourseContent() {
                         <div className={`font-medium ${effectiveVisible ? "text-gray-800" : "text-gray-500"}`}>
                           {e.title}
                         </div>
-                        <div className="text-xs text-gray-500 flex flex-col sm:flex-row sm:items-center sm:gap-3">
+                        <div className="mt-1 text-xs text-gray-500 flex flex-col sm:flex-row sm:items-center sm:gap-3">
                           <span className="inline-flex items-center gap-1">
                             <ExamTypeTag t={e.examType} />
                           </span>
@@ -752,7 +794,25 @@ export default function AddTeacherCourseContent() {
                         </div>
                       </div>
                     </div>
-                    <Space>
+
+                    {/* أدوات الاختبار: جدولة/مسح/إظهار/حذف */}
+                    <Space wrap align="center">
+                      {/* ✅ DatePicker فردي لكل اختبار */}
+                      <Tooltip title="موعد ظهور الاختبار">
+                        <DatePicker
+                          showTime
+                          size="small"
+                          className="min-w-[200px]"
+                          value={e.releaseAt && dayjs(e.releaseAt).isValid() ? dayjs(e.releaseAt) : null}
+                          onChange={(v) => setExamReleaseAt(e.id, v || null)}
+                        />
+                      </Tooltip>
+                      {e.releaseAt && (
+                        <Button size="small" type="text" onClick={() => setExamReleaseAt(e.id, null)}>
+                          مسح
+                        </Button>
+                      )}
+
                       <Tooltip
                         title={
                           effectiveVisible
@@ -811,7 +871,7 @@ export default function AddTeacherCourseContent() {
         savingLesson={savingLesson}
         setOpenAddLesson={setOpenAddLesson}
         submitLesson={submitLesson}
-        // ملاحظة: لو تبغى حقلاً لوقت ظهور الدرس داخل هذا المودال، أضف Form.Item name="lessonReleaseAt" (DatePicker showTime)
+        // أضف داخل المودال حقل DatePicker باسم lessonReleaseAt لو أردت جدولة من شاشة الإضافة
       />
 
       {/* إضافة محاضرات مباشرة */}
@@ -999,6 +1059,8 @@ export default function AddTeacherCourseContent() {
         onCancel={() => setOpenPickExam(false)}
         onOk={linkSelectedExams}
         okText="حفظ"
+        cancelText="إلغاء"
+        okButtonProps={{className:"!bg-blue-500 !text-white"}}
         destroyOnClose
       >
         <Form form={pickForm} layout="vertical">
@@ -1017,9 +1079,7 @@ export default function AddTeacherCourseContent() {
                 value: e.id ?? e._id,
                 label: `${e.title ?? "بدون عنوان"} · ${
                   (e.examType ?? e.type) === "mock" ? "محاكي" : "تدريب"
-                } · ${
-                  Array.isArray(e.questions) ? e.questions.length : e.questionsCount ?? e.questions ?? 0
-                } سؤال`,
+                } · ${Array.isArray(e.questions) ? e.questions.length : e.questionsCount ?? e.questions ?? 0} سؤال`,
               }))}
             />
           </Form.Item>
@@ -1074,40 +1134,65 @@ export default function AddTeacherCourseContent() {
           </Form.Item>
 
           <Divider>مرحلة التأسيس</Divider>
-
+          <Form.Item name="lessonsMode" label="طريقة التعيين">
+            <Radio.Group>
+              <Radio value="offset">تأخير أيام عن التاريخ الأساسي</Radio>
+              <Radio value="absolute">موعد محدد</Radio>
+            </Radio.Group>
+          </Form.Item>
           <Form.Item noStyle shouldUpdate={(p, c) => p.lessonsMode !== c.lessonsMode}>
             {({ getFieldValue }) =>
-             <Form.Item label="موعد" name="lessonsAbs" rules={[{ required: true }]}>
+              getFieldValue("lessonsMode") === "offset" ? (
+                <Form.Item label="تأخير (أيام)" name="lessonsOffset" rules={[{ required: true }]}>
+                  <Input placeholder="مثال: 1" />
+                </Form.Item>
+              ) : (
+                <Form.Item label="موعد" name="lessonsAbs" rules={[{ required: true }]}>
                   <DatePicker showTime className="w-full" />
                 </Form.Item>
+              )
             }
           </Form.Item>
 
           <Divider>المحاضرات المباشرة</Divider>
-          {/* <Form.Item name="liveMode" label="طريقة التعيين">
+          <Form.Item name="liveMode" label="طريقة التعيين">
             <Radio.Group>
-              <Radio value="absolute">موعد</Radio>
+              <Radio value="offset">تأخير أيام عن التاريخ الأساسي</Radio>
+              <Radio value="absolute">موعد محدد</Radio>
             </Radio.Group>
-          </Form.Item> */}
+          </Form.Item>
           <Form.Item noStyle shouldUpdate={(p, c) => p.liveMode !== c.liveMode}>
             {({ getFieldValue }) =>
-              <Form.Item label="موعد" name="liveAbs" rules={[{ required: true }]}>
+              getFieldValue("liveMode") === "offset" ? (
+                <Form.Item label="تأخير (أيام)" name="liveOffset" rules={[{ required: true }]}>
+                  <Input placeholder="مثال: 2" />
+                </Form.Item>
+              ) : (
+                <Form.Item label="موعد" name="liveAbs" rules={[{ required: true }]}>
                   <DatePicker showTime className="w-full" />
                 </Form.Item>
+              )
             }
           </Form.Item>
 
           <Divider>الاختبارات</Divider>
-          {/* <Form.Item name="examsMode" label="طريقة التعيين">
+          <Form.Item name="examsMode" label="طريقة التعيين">
             <Radio.Group>
-              <Radio value="absolute">موعد</Radio>
+              <Radio value="offset">تأخير أيام عن التاريخ الأساسي</Radio>
+              <Radio value="absolute">موعد محدد</Radio>
             </Radio.Group>
-          </Form.Item> */}
+          </Form.Item>
           <Form.Item noStyle shouldUpdate={(p, c) => p.examsMode !== c.examsMode}>
             {({ getFieldValue }) =>
-               <Form.Item label="موعد" name="examsAbs" rules={[{ required: true }]}>
+              getFieldValue("examsMode") === "offset" ? (
+                <Form.Item label="تأخير (أيام)" name="examsOffset" rules={[{ required: true }]}>
+                  <Input placeholder="مثال: 3" />
+                </Form.Item>
+              ) : (
+                <Form.Item label="موعد" name="examsAbs" rules={[{ required: true }]}>
                   <DatePicker showTime className="w-full" />
                 </Form.Item>
+              )
             }
           </Form.Item>
         </Form>
