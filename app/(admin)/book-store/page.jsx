@@ -1,5 +1,6 @@
 "use client";
 import React, { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { message } from "antd";
 import PageLayout from "../../../components/layout/PageLayout";
 import BreadcrumbsShowcase from "../../../components/ui/BreadCrumbs";
@@ -219,6 +220,60 @@ export const PRODUCTS = [
 ];
 
 /* ========================
+   Sample Courses (new)
+======================== */
+const COURSES = [
+  {
+    code: "crs-101",
+    name: "دورة الخط العربي للمبتدئين",
+    description: "أساسيات النسخ والرقعة + تمارين عملية أسبوعية",
+    imageUrl:
+      "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=1200&auto=format&fit=crop",
+    date: "2025-10-20",
+    lastUpdated: "2025-12-01",
+    capacity: 50,
+    instructor: "مروان حجازي",
+    price: 199,
+    category: "كتابة",
+    course_type: "students",
+    tags: ["خط", "كتابة", "مبتدئ"],
+    inStock: true,
+  },
+  {
+    code: "crs-202",
+    name: "القراءة السريعة والفهم العميق",
+    description: "تقنيات القراءة السريعة مع قياس السرعة قبل/بعد",
+    imageUrl:
+      "https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1200&auto=format&fit=crop",
+    date: "2025-11-01",
+    lastUpdated: "2025-12-15",
+    capacity: 80,
+    instructor: "آيات صبحي",
+    price: 249,
+    category: "مهارات",
+    course_type: "students",
+    tags: ["قراءة", "مهارات"],
+    inStock: true,
+  },
+  {
+    code: "crs-303",
+    name: "أساسيات JavaScript من الصفر",
+    description: "مدخل عملي لبناء واجهات تفاعلية وتمارين أسبوعية",
+    imageUrl:
+      "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop",
+    date: "2025-10-25",
+    lastUpdated: "2025-12-20",
+    capacity: 60,
+    instructor: "أحمد متولي",
+    price: 299,
+    category: "برمجة",
+    course_type: "students",
+    tags: ["برمجة", "JavaScript"],
+    inStock: false,
+  },
+];
+
+/* ========================
    Breadcrumbs & Tabs
 ======================== */
 const breadcrumbs = [
@@ -230,6 +285,7 @@ const TABS = [
   { id: 1, key: "all", title: "الكل" },
   { id: 2, key: "books", title: "الكتب" },
   { id: 3, key: "bags", title: "الحقائب" },
+  { id: 4, key: "courses", title: "الدورات للشراء" },
 ];
 
 /* ========================
@@ -279,7 +335,116 @@ function Badge({ label }) {
 }
 
 /* ========================
-   Cards & Table
+   Course Card (shop)
+======================== */
+function CourseShopCard({ subject, onBuy }) {
+  const router = useRouter();
+  const goToCourse = () => router.push(`/courses/${subject.code}`);
+
+  return (
+    <div
+      dir="rtl"
+      className="w-full rounded-[30px] p-[2px] bg-gradient-to-b from-[#3B82F6] to-[#F97316] relative"
+    >
+      <div
+        onClick={goToCourse}
+        className="bg-white cursor-pointer pb-4 h-full rounded-[28px] shadow-[0px_4px_20px_0px_rgba(0,0,0,0.12)] flex flex-col justify-start items-start gap-2"
+      >
+        <div
+          className="self-stretch h-48 pt-[24px] px-[16px] relative bg-black/25 rounded-tl-[20px] rounded-tr-[20px] overflow-hidden"
+          style={{
+            backgroundImage: `url('${subject?.imageUrl || ""}')`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          <div className="px-4 py-2 absolute top-4 right-4 bg-blue-500 rounded-[10px] inline-flex items-center gap-[7px]">
+            <div className="text-white text-[10px] font-medium">
+              يبدأ: {subject?.date}
+            </div>
+            <div className="text-white text-[10px] font-medium">
+              ينتهي: {subject?.lastUpdated}
+            </div>
+          </div>
+          {!subject.inStock && (
+            <div className="px-3 py-1 absolute bottom-4 left-4 bg-rose-600/90 text-white text-xs rounded-lg">
+              المقاعد ممتلئة
+            </div>
+          )}
+        </div>
+
+        <div className="self-stretch px-4 flex flex-col gap-1">
+          <div className="text-right text-text text-base font-bold">
+            {subject?.name}
+          </div>
+          <div className="w-full line-clamp-2 text-right text-zinc-600 text-sm">
+            {subject?.description}
+          </div>
+        </div>
+
+        <div className="text-black self-stretch p-4 pt-2 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="px-2.5 py-2 bg-blue-200 rounded-[10px]">
+              <div className="text-text text-xs font-medium">
+                {subject?.category || "غير مصنف"}
+              </div>
+            </div>
+            <div className="px-4 py-2 bg-blue-500/25 rounded-[10px] outline outline-1 outline-zinc-500">
+              <div className="text-zinc-700 text-xs font-medium">
+                {subject?.course_type === "teachers" ? "معلمين" : "طلاب"}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-text text-xs">
+              المقاعد: {subject?.capacity ?? "-"}
+            </span>
+            <div className="flex items-center gap-2">
+              <img
+                className="w-6 h-6 rounded-xl"
+                src={"/images/Image-24.png"}
+                alt="instructor"
+              />
+              <div className="text-text text-[12px] font-medium">
+                المدرس: {subject?.instructor || "—"}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex gap-2 items-center">
+              <p className="text-primary text-lg font-bold">السعر :</p>
+              <h4 className="text-primary text-lg font-bold">
+                <span className="font-mono">{subject?.price ?? "-"}</span> ر.س
+              </h4>
+            </div>
+
+            <button
+              disabled={!subject.inStock}
+              onClick={(e) => {
+                e.stopPropagation();
+                onBuy?.(subject);
+              }}
+              className={`px-4 py-2 rounded-xl text-white text-sm ${
+                subject.inStock
+                  ? "bg-primary hover:opacity-90"
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
+              title={subject.inStock ? "شراء الدورة" : "غير متاح"}
+            >
+              {subject.inStock ? "اشترِ الآن" : "غير متاح"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ========================
+   Product Cards & Table
 ======================== */
 function ProductCard({ p, onDelete, onEdit }) {
   return (
@@ -468,13 +633,14 @@ function ProductTable({ rows, onDelete, onEdit }) {
 ======================== */
 export default function BookStorePage() {
   const [activeTab, setActiveTab] = useState(1);
-  const [viewMode, setViewMode] = useState("grid");
+  const [viewMode, setViewMode] = useState("grid"); // "grid" | "table"
   const [searchTerm, setSearchTerm] = useState("");
   const [newModal, setNewModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [rowData, setRowData] = useState({});
   const [products, setProducts] = useState(PRODUCTS);
+  const [courses, setCourses] = useState(COURSES);
 
   const activeKey = useMemo(
     () => TABS.find((t) => t.id === activeTab)?.key ?? "all",
@@ -482,29 +648,45 @@ export default function BookStorePage() {
   );
 
   const filterByTab = (key) => {
-    if (key === "all") return products;
+    if (key === "all") return [...products, ...courses];
     if (key === "books") return products.filter((p) => p.category === "كتب");
     if (key === "bags") return products.filter((p) => p.category === "حقائب");
+    if (key === "courses") return courses;
     return products;
   };
 
   const filteredByTab = useMemo(
     () => filterByTab(activeKey),
-    [activeKey, products]
+    [activeKey, products, courses]
   );
 
-  const filteredProducts = useMemo(() => {
-    const term = searchTerm.trim();
+  const filteredProductsOrCourses = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
     if (!term) return filteredByTab;
-    return filteredByTab.filter((p) => {
-      const hay = `${p.title} ${p.subtitle ?? ""} ${
-        p.tags?.join(" ") ?? ""
-      }`.toLowerCase();
-      return hay.includes(term.toLowerCase());
-    });
-  }, [filteredByTab, searchTerm]);
 
-  const countForKey = (key) => filterByTab(key).length;
+    if (activeKey === "courses") {
+      return filteredByTab.filter((c) => {
+        const hay = `${c.name} ${c.description ?? ""} ${c.tags?.join(" ") ?? ""}`.toLowerCase();
+        return hay.includes(term);
+      });
+    }
+
+    // products/bags/all
+    return filteredByTab.filter((p) => {
+      const title = p.title ?? p.name ?? "";
+      const sub = p.subtitle ?? p.description ?? "";
+      const hay = `${title} ${sub} ${p.tags?.join(" ") ?? ""}`.toLowerCase();
+      return hay.includes(term);
+    });
+  }, [filteredByTab, searchTerm, activeKey]);
+
+  const countForKey = (key) => {
+    if (key === "all") return products.length + courses.length;
+    if (key === "books") return products.filter((p) => p.category === "كتب").length;
+    if (key === "bags") return products.filter((p) => p.category === "حقائب").length;
+    if (key === "courses") return courses.length;
+    return 0;
+  };
 
   // ADD
   const handleAddProduct = async (payload) => {
@@ -542,6 +724,14 @@ export default function BookStorePage() {
     setDeleteModal(false);
   };
 
+  // BUY COURSE (placeholder)
+  const handleBuyCourse = (course) => {
+    message.success(`تم إضافة "${course.name}" إلى السلة`);
+    // اربطها بمنطق السلة/الدفع عندك
+  };
+
+  const isCoursesTab = activeKey === "courses";
+
   return (
     <PageLayout>
       <div dir="rtl" className="min-h-screen p-6 bg-gray-50">
@@ -549,7 +739,7 @@ export default function BookStorePage() {
 
         <PagesHeader
           title="إدارة متجر الكتب"
-          subtitle="أضف، حرّر، واحذف المنتجات والحقائب"
+          subtitle="أضف، حرّر، واحذف المنتجات والحقائب والدورات"
           extra={
             <div className="flex items-center gap-4 gap-reverse">
               <Button type="default" icon={<Upload className="w-4 h-4" />}>
@@ -571,8 +761,8 @@ export default function BookStorePage() {
         />
 
         <SearchAndFilters
-          mode={viewMode}
-          setMode={setViewMode}
+          mode={isCoursesTab ? "grid" : viewMode}
+          setMode={isCoursesTab ? () => {} : setViewMode}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
         />
@@ -610,27 +800,35 @@ export default function BookStorePage() {
 
         {/* Results */}
         <div className="mt-6">
-          {viewMode === "grid" ? (
+          {isCoursesTab ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredProducts.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  p={p}
-                  onEdit={handleEditOpen}
-                  onDelete={handleDeleteOpen}
-                />
+              {filteredProductsOrCourses.map((c) => (
+                <CourseShopCard key={c.code} subject={c} onBuy={handleBuyCourse} />
               ))}
+            </div>
+          ) : viewMode === "grid" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredProductsOrCourses.map((p) =>
+                p.id ? (
+                  <ProductCard
+                    key={p.id}
+                    p={p}
+                    onEdit={handleEditOpen}
+                    onDelete={handleDeleteOpen}
+                  />
+                ) : null
+              )}
             </div>
           ) : (
             <ProductTable
-              rows={filteredProducts}
+              rows={filteredProductsOrCourses.filter((x) => x.id)}
               onEdit={handleEditOpen}
               onDelete={handleDeleteOpen}
             />
           )}
 
           {/* Empty state */}
-          {filteredProducts.length === 0 && (
+          {filteredProductsOrCourses.length === 0 && (
             <div className="mt-10 bg-white rounded-2xl border border-dashed border-gray-300 p-12 text-center">
               <Text className="w-12 h-12 mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">

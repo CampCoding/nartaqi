@@ -2,32 +2,33 @@
 
 import React, { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { BookOpen, CheckCircle, AlertCircle, PlusIcon } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import Card from "./ExamCard";
-import ProgressBar from "./ExamProgressBar";
 import "react-quill-new/dist/quill.snow.css";
 
-// SSR-safe import for Next.js
+// SSR-safe import
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
+/** Toolbar with color/background + sub/sup already supported in ExamMainData editors.
+ * For section name/desc, we also enable them here. */
 const quillModules = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
     ["bold", "italic", "underline", "strike"],
+    [{ script: "sub" }, { script: "super" }],
     [{ list: "ordered" }, { list: "bullet" }],
     [{ align: ["", "center", "right", "justify"] }],
     [{ color: [] }, { background: [] }],
-    ["link", "blockquote", "code-block"],
-    ["clean"],
+    ["link", "clean"],
   ],
 };
-
 const quillFormats = [
   "header",
   "bold",
   "italic",
   "underline",
   "strike",
+  "script",
   "list",
   "bullet",
   "align",
@@ -35,27 +36,13 @@ const quillFormats = [
   "color",
   "background",
   "link",
-  "blockquote",
-  "code-block",
 ];
 
 export default function QuestionSections({ examData, filteredSection, onAddSection }) {
-  // Rich-text state for custom section
   const [nameHtml, setNameHtml] = useState("");
   const [descHtml, setDescHtml] = useState("");
 
-  // Dropdown state
-  const [selectedId, setSelectedId] = useState("");
-
-  const selectedItem = useMemo(
-    () => (filteredSection || []).find((s) => String(s.id) === String(selectedId)),
-    [filteredSection, selectedId]
-  );
-
-  const isAlreadyAdded = useMemo(() => {
-    if (!selectedItem) return false;
-    return (examData?.sections || []).some((s) => String(s.id) === String(selectedItem.id));
-  }, [examData?.sections, selectedItem]);
+  const selectedItem = null; // (dropdown was removed in your provided version)
 
   const resetEditors = () => {
     setNameHtml("");
@@ -68,8 +55,8 @@ export default function QuestionSections({ examData, filteredSection, onAddSecti
 
     const newSection = {
       id: `custom-${Date.now()}`,
-      name: nameHtml, // rich HTML
-      desc: descHtml, // rich HTML
+      name: nameHtml,
+      desc: descHtml,
       questions: [],
     };
 
@@ -77,43 +64,22 @@ export default function QuestionSections({ examData, filteredSection, onAddSecti
     resetEditors();
   };
 
-  const handleAddFromDropdown = () => {
-    if (!selectedItem) return;
-    // Ensure the section carries its own questions array
-    onAddSection({ ...selectedItem, questions: selectedItem.questions || [] });
-  };
-
   if (!examData?.type) return null;
 
   return (
     <Card title="إدارة الأقسام" icon={BookOpen}>
       <div className="space-y-6" dir="rtl">
-        {/* Header row */}
-        {/* <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h3 className="text-sm font-medium text-gray-700">الأقسام المتاحة</h3>
-          <ProgressBar
-            current={examData?.sections?.length}
-            total={filteredSection?.length || 1}
-            label="الأقسام المضافة"
-          />
-        </div> */}
-
-        {/* ---------- Create custom section (Rich Text) ---------- */}
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <p className="font-semibold text-gray-900">إنشاء قسم مخصص</p>
             {examData?.type === "mock" && (
-              <span className="text-xs text-gray-500">
-                للمحاكاة: أضِف أسئلة لاحقًا للوصول إلى 24 سؤالًا كحد أدنى
-              </span>
+              <span className="text-xs text-gray-500">للمحاكاة: أضِف أسئلة لاحقًا للوصول إلى 24 سؤالًا كحد أدنى</span>
             )}
           </div>
 
           <div className="mt-3 space-y-4">
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-gray-600">
-                اسم القسم
-              </label>
+              <label className="block text-xs font-semibold text-gray-600">اسم القسم</label>
               <div className="bg-white rounded-xl border border-gray-200">
                 <ReactQuill
                   theme="snow"
@@ -127,9 +93,7 @@ export default function QuestionSections({ examData, filteredSection, onAddSecti
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-gray-600">
-                وصف القسم
-              </label>
+              <label className="block text-xs font-semibold text-gray-600">وصف القسم</label>
               <div className="bg-white rounded-xl border border-gray-200">
                 <ReactQuill
                   theme="snow"
@@ -158,55 +122,13 @@ export default function QuestionSections({ examData, filteredSection, onAddSecti
                 className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
                 type="button"
                 disabled={!nameHtml.replace(/<p>|<\/p>/g, "").trim()}
-                title={
-                  !nameHtml.replace(/<p>|<\/p>/g, "").trim()
-                    ? "اسم القسم مطلوب"
-                    : undefined
-                }
+                title={!nameHtml.replace(/<p>|<\/p>/g, "").trim() ? "اسم القسم مطلوب" : undefined}
               >
                 إضافة قسم جديد
               </button>
             </div>
           </div>
         </div>
-
-        {/* ---------- Current added sections overview ---------- */}
-        {/* {Array.isArray(examData?.sections) && examData.sections.length > 0 && (
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-gray-700">الأقسام المضافة حاليًا</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {examData.sections.map((s) => (
-                <div
-                  key={s.id}
-                  className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="shrink-0 rounded-lg bg-blue-50 p-2">
-                      <BookOpen className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div className="space-y-1">
-                      <h5
-                        className="font-semibold text-gray-900"
-                        dangerouslySetInnerHTML={{ __html: s?.name || `قسم ${s.id}` }}
-                      />
-                      {s?.desc ? (
-                        <p
-                          className="text-sm text-gray-600"
-                          dangerouslySetInnerHTML={{ __html: s.desc }}
-                        />
-                      ) : (
-                        <p className="text-sm text-gray-500">—</p>
-                      )}
-                      <div className="text-xs text-gray-500">
-                        أسئلة: {s.questions?.length ?? 0}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )} */}
       </div>
     </Card>
   );

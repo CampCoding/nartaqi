@@ -8,6 +8,8 @@ import {
   Row,
   Select,
   Upload,
+  Switch,
+  message,
 } from "antd";
 import React from "react";
 import {
@@ -20,6 +22,7 @@ import {
   TeamOutlined,
   FolderOutlined,
   SettingOutlined,
+  ShopOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
@@ -57,7 +60,7 @@ export default function AddCourseBasicInfo({
   beforeUpload,
   setImagePreview,
   rowData,
-  setRowData
+  setRowData,
 }) {
   return (
     <div className="space-y-8">
@@ -117,40 +120,79 @@ export default function AddCourseBasicInfo({
                   { min: 3, message: "الاسم لا يقل عن 3 أحرف" },
                 ]}
               >
-                <Input value={rowData?.name}
+                <Input
+                  value={rowData?.name}
                   placeholder="مثال: دورة البرمجة المتقدمة"
                   className="rounded-xl border-gray-300 hover:border-blue-400 focus:border-blue-500"
                 />
               </Form.Item>
             </Col>
+
+            {/* Add to Store switch */}
             <Col span={12}>
               <Form.Item
+                name="addToStore"
+                valuePropName="checked"
+                initialValue={rowData?.addToStore ?? false}
                 label={
                   <span className="font-semibold text-gray-700 flex items-center gap-2">
-                    <DollarOutlined className="text-orange-600" />
-                    السعر (ج.م) *
+                    <ShopOutlined className="text-blue-600" />
+                    إضافة إلى المتجر؟
                   </span>
                 }
-                name="price"
-                rules={[
-                  { required: true, message: "أدخل السعر" },
-                  { type: "number", min: 0, message: "السعر لا يقل عن 0" },
-                ]}
               >
-                <InputNumber
-                  className="w-full rounded-xl"
-                  placeholder="499"
-                  controls={true}
-                  formatter={(value) =>
-                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                <Switch
+                  onChange={(checked) =>
+                    setRowData?.({ ...(rowData || {}), addToStore: checked })
                   }
-                  parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+                  checkedChildren="نعم"
+                  unCheckedChildren="لا"
                 />
               </Form.Item>
             </Col>
           </Row>
 
           <Row gutter={16}>
+            {/* Price is required ONLY if addToStore = true */}
+            <Col span={12}>
+              <Form.Item noStyle shouldUpdate>
+                {({ getFieldValue }) => {
+                  const required = !!getFieldValue("addToStore");
+                  return (
+                    <Form.Item
+                      label={
+                        <span className="font-semibold text-gray-700 flex items-center gap-2">
+                          <DollarOutlined className="text-orange-600" />
+                          السعر (ج.م) {required ? "*" : "(اختياري)"}
+                        </span>
+                      }
+                      name="price"
+                      rules={[
+                        ...(required
+                          ? [{ required: true, message: "أدخل السعر" }]
+                          : []),
+                        { type: "number", min: 0, message: "السعر لا يقل عن 0" },
+                      ]}
+                    >
+                      <InputNumber
+                        className="w-full rounded-xl"
+                        placeholder="499"
+                        disabled={!required}
+                        controls={true}
+                        formatter={(value) =>
+                          `${value ?? ""}`.replace(
+                            /\B(?=(\d{3})+(?!\d))/g,
+                            ","
+                          )
+                        }
+                        parser={(value = "") => value.replace(/\$\s?|(,*)/g, "")}
+                      />
+                    </Form.Item>
+                  );
+                }}
+              </Form.Item>
+            </Col>
+
             <Col span={12}>
               <Form.Item
                 label={
@@ -169,10 +211,7 @@ export default function AddCourseBasicInfo({
                   options={all_categories?.map((item) => ({
                     label: (
                       <div className="flex items-center gap-2">
-                        <Badge
-                          count={item.sections?.length || 0}
-                          size="small"
-                        />
+                        <Badge count={item.sections?.length || 0} size="small" />
                         <span>{item.title}</span>
                       </div>
                     ),
@@ -181,6 +220,9 @@ export default function AddCourseBasicInfo({
                 />
               </Form.Item>
             </Col>
+          </Row>
+
+          <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 label={
@@ -253,6 +295,7 @@ export default function AddCourseBasicInfo({
               />
             </Form.Item>
           </Col>
+
           <Col span={8}>
             <Form.Item
               label={
@@ -275,6 +318,7 @@ export default function AddCourseBasicInfo({
               />
             </Form.Item>
           </Col>
+
           <Col span={8}>
             <Form.Item
               label={
@@ -299,8 +343,6 @@ export default function AddCourseBasicInfo({
               />
             </Form.Item>
           </Col>
-
-       
         </Row>
 
         <Form.Item
@@ -320,31 +362,28 @@ export default function AddCourseBasicInfo({
           />
         </Form.Item>
 
-            <Form.Item
-              label={
-                <span className="font-semibold text-gray-700 flex items-center gap-2">
-                  <FileTextOutlined className="text-cyan-600" />
-                  كتاب الدوره
-                </span>
-              }
-              name="instructor"
-              rules={[{ required: true, message: "اختر المدربين" }]}
-            >
-              <Dragger 
-              multiple
-              {...props}>
-                <p className="ant-upload-drag-icon">
-                  <InboxOutlined />
-                </p>
-                <p className="ant-upload-text">
-                  Click or drag file to this area to upload
-                </p>
-                <p className="ant-upload-hint">
-                  Support for a single or bulk upload. Strictly prohibited from
-                  uploading company data or other banned files.
-                </p>
-              </Dragger>
-            </Form.Item>
+        <Form.Item
+          label={
+            <span className="font-semibold text-gray-700 flex items-center gap-2">
+              <FileTextOutlined className="text-cyan-600" />
+              كتاب الدوره
+            </span>
+          }
+          name="courseBook"
+        >
+          <Dragger multiple {...props}>
+            <p className="ant-upload-drag-icon">
+              <InboxOutlined />
+            </p>
+            <p className="ant-upload-text">
+              Click or drag file to this area to upload
+            </p>
+            <p className="ant-upload-hint">
+              Support for a single or bulk upload. Strictly prohibited from
+              uploading company data or other banned files.
+            </p>
+          </Dragger>
+        </Form.Item>
       </div>
     </div>
   );

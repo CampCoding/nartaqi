@@ -257,14 +257,14 @@ export default function AddBookModal({ open, setOpen, onSubmit, palette }) {
               </Form.Item>
 
               <Form.Item
-                label="السعر"
+                label="سعر المنتج"
                 name="price"
                 rules={[{ required: true, message: "ادخل السعر" }]}
               >
                 <InputNumber className="w-full" min={0} step={0.5} placeholder="0.00" />
               </Form.Item>
 
-              <Form.Item label="السعر قبل الخصم" name="oldPrice">
+              <Form.Item label="السعر بعد الخصم" name="oldPrice">
                 <InputNumber className="w-full" min={0} step={0.5} />
               </Form.Item>
 

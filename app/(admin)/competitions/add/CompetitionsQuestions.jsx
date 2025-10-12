@@ -32,6 +32,7 @@ import {
   BulbOutlined,
   EditOutlined,
 } from "@ant-design/icons";
+import { useQuillConfig } from "@/utils/quillConfig"; // ← uses your shared config
 import "react-quill-new/dist/quill.snow.css";
 // import "mathlive/core.css";
 // import "mathlive/static.css";
@@ -56,26 +57,13 @@ const fileToDataUrl = (file) =>
     r.readAsDataURL(file);
   });
 
-const quillFormats = [
-  "header",
-  "bold",
-  "italic",
-  "underline",
-  "strike",
-  "list",
-  "bullet",
-  "align",
-  "link",
-  "blockquote",
-  "code-block",
-  "image",
-];
-
 /* ================= Enhanced Quill Editor =================
+   - Uses shared config from utils/quillConfig.js (color/bg, sub/sup, RTL, align)
    - “أدرج صورة” button + hidden <input type="file">
    - Overrides toolbar image handler to open file picker
    - Handles paste/drag-drop images
    - Forces all images to FIXED_IMG size (inline + CSS fallback)
+   - Supports `uploadImage(file) => url` for custom uploads
 =========================================================== */
 const EnhancedQuillEditor = ({
   value,
@@ -84,26 +72,32 @@ const EnhancedQuillEditor = ({
   className = "",
   imageSize = FIXED_IMG,
   maxImageSizeMB = 5,
+  uploadImage, // custom uploader (optional)
 }) => {
   const quillRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  const openPicker = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  // ← use your central Quill configuration
+  const { modules, formats } = useQuillConfig({
+    allowImages: true,
+    onImageRequest: openPicker,
+  });
 
   const applyFixedSizeToAllImages = useCallback(() => {
     const q = quillRef.current?.getEditor?.();
     const root = q?.root;
     if (!root) return;
-    const imgs = root.querySelectorAll("img");
-    imgs.forEach((img) => {
+    root.querySelectorAll("img").forEach((img) => {
       img.style.width = `${imageSize.width}px`;
       img.style.height = `${imageSize.height}px`;
       img.style.objectFit = imageSize.objectFit || "contain";
       img.style.display = "inline-block";
     });
   }, [imageSize.height, imageSize.objectFit, imageSize.width]);
-
-  const openPicker = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
 
   const insertImage = useCallback(
     async (file) => {
@@ -115,7 +109,16 @@ const EnhancedQuillEditor = ({
         );
         return;
       }
-      const url = await fileToDataUrl(file);
+
+      let url = "";
+      try {
+        url =
+          (await (uploadImage ? uploadImage(file) : fileToDataUrl(file))) || "";
+      } catch {
+        url = "";
+      }
+      if (!url) return;
+
       const q = quillRef.current?.getEditor?.();
       if (!q) return;
       const range = q.getSelection(true) || { index: q.getLength(), length: 0 };
@@ -135,11 +138,18 @@ const EnhancedQuillEditor = ({
             applyFixedSizeToAllImages();
           }
         } catch {
-          applyFixedSizeToAllImages();
         }
+        applyFixedSizeToAllImages();
       });
     },
-    [applyFixedSizeToAllImages, imageSize.height, imageSize.objectFit, imageSize.width, maxImageSizeMB]
+    [
+      applyFixedSizeToAllImages,
+      imageSize.height,
+      imageSize.objectFit,
+      imageSize.width,
+      maxImageSizeMB,
+      uploadImage,
+    ]
   );
 
   const onPickFile = useCallback(
@@ -180,26 +190,6 @@ const EnhancedQuillEditor = ({
     [insertImage, applyFixedSizeToAllImages]
   );
 
-  const modules = useMemo(
-    () => ({
-      toolbar: {
-        container: [
-          [{ header: [1, 2, 3, false] }],
-          ["bold", "italic", "underline", "strike"],
-          [{ list: "ordered" }, { list: "bullet" }],
-          [{ align: [] }],
-          ["link", "blockquote", "code-block", "image"],
-          ["clean"],
-        ],
-        handlers: {
-          image: openPicker, // override default prompt -> open file picker
-        },
-      },
-      clipboard: { matchVisual: false },
-    }),
-    [openPicker]
-  );
-
   useEffect(() => {
     const q = quillRef.current?.getEditor?.();
     if (!q) return;
@@ -237,7 +227,7 @@ const EnhancedQuillEditor = ({
           ref={quillRef}
           theme="snow"
           modules={modules}
-          formats={quillFormats}
+          formats={formats}
           placeholder={placeholder}
           value={value}
           onChange={onChange}
@@ -245,8 +235,21 @@ const EnhancedQuillEditor = ({
         />
       </div>
 
-      {/* Safety-net CSS to enforce fixed image size */}
+      {/* Safety-net CSS to enforce fixed image size + RTL/editor polish */}
       <style jsx global>{`
+        [dir="rtl"] .ql-editor {
+          direction: rtl;
+          text-align: right;
+          min-height: 120px;
+        }
+        .ql-toolbar.ql-snow {
+          border: 0;
+          border-bottom: 1px solid #e5e7eb;
+          background: #fafafa;
+        }
+        .ql-container.ql-snow {
+          border: 0;
+        }
         .ql-editor img {
           width: ${imageSize.width}px !important;
           height: ${imageSize.height}px !important;
@@ -438,6 +441,7 @@ const OptionCard = ({
   onDelete,
   canDelete,
   type = "single",
+  uploadImage,
 }) => (
   <div
     className={`group relative bg-white border-2 rounded-2xl p-4 transition-all duration-200 ${
@@ -501,6 +505,7 @@ const OptionCard = ({
           onChange={(value) => onUpdateText(value, "textHtml")}
           placeholder={`نص الخيار ${String.fromCharCode(65 + index)}...`}
           className="min-h-[100px]"
+          uploadImage={uploadImage}
         />
 
         <div>
@@ -512,6 +517,7 @@ const OptionCard = ({
             onChange={(value) => onUpdateText(value, "explainHtml")}
             placeholder="لماذا هذا الخيار صحيح أو خاطئ؟"
             className="min-h-[80px]"
+            uploadImage={uploadImage}
           />
         </div>
       </div>
@@ -528,7 +534,7 @@ const OptionCard = ({
 );
 
 /* ================= Main ================= */
-export default function CompetitionsQuestions({ value = [], onChange }) {
+export default function CompetitionsQuestions({ value = [], onChange, uploadImage }) {
   const [sections, setSections] = useState(() =>
     value?.length
       ? value
@@ -642,6 +648,7 @@ export default function CompetitionsQuestions({ value = [], onChange }) {
             onChange={(v) => (section.descHtml = v)}
             placeholder="وصف مختصر للقسم..."
             className="min-h-[100px]"
+            uploadImage={uploadImage}
           />
         </div>
       ),
@@ -732,8 +739,8 @@ export default function CompetitionsQuestions({ value = [], onChange }) {
           mcqSubType: "chemical",
           equationLatex: chemEquationLatex,
           answers, // [{ latex, explanationHtml, correct }]
-          answersLatex: correctLatex, // للقديم
-          answerLatex: correctLatex[0], // للقديم
+          answersLatex: correctLatex, // legacy compat
+          answerLatex: correctLatex[0], // legacy compat
         };
       }
     } else if (qType === "trueFalse") {
@@ -1023,6 +1030,7 @@ export default function CompetitionsQuestions({ value = [], onChange }) {
                       onChange={setPromptHtml}
                       placeholder="اكتب نص السؤال..."
                       className="min-h-[120px]"
+                      uploadImage={uploadImage}
                     />
                   </div>
 
@@ -1063,6 +1071,7 @@ export default function CompetitionsQuestions({ value = [], onChange }) {
                           }}
                           canDelete={options.length > 2}
                           type="single"
+                          uploadImage={uploadImage}
                         />
                       ))}
                     </div>
@@ -1082,6 +1091,7 @@ export default function CompetitionsQuestions({ value = [], onChange }) {
                       onChange={setPassageHtml}
                       placeholder="اكتب نص القطعة..."
                       className="min-h-[150px]"
+                      uploadImage={uploadImage}
                     />
                   </div>
 
@@ -1136,6 +1146,7 @@ export default function CompetitionsQuestions({ value = [], onChange }) {
                               }}
                               placeholder="اكتب نص السؤال..."
                               className="min-h-[100px]"
+                              uploadImage={uploadImage}
                             />
 
                             <div className="space-y-4">
@@ -1179,6 +1190,7 @@ export default function CompetitionsQuestions({ value = [], onChange }) {
                                   }}
                                   canDelete={row.opts.length > 2}
                                   type="single"
+                                  uploadImage={uploadImage}
                                 />
                               ))}
                               <Button
@@ -1294,6 +1306,7 @@ export default function CompetitionsQuestions({ value = [], onChange }) {
                               onChange={(v) => updateChemAnswerExplain(idx, v)}
                               placeholder="اكتب شرح الإجابة لهذه الصيغة..."
                               className="min-h-[90px]"
+                              uploadImage={uploadImage}
                             />
                           </div>
                         </div>
@@ -1317,6 +1330,7 @@ export default function CompetitionsQuestions({ value = [], onChange }) {
                   onChange={setPromptHtml}
                   placeholder="اكتب نص السؤال..."
                   className="min-h-[120px]"
+                  uploadImage={uploadImage}
                 />
               </div>
 
@@ -1367,6 +1381,7 @@ export default function CompetitionsQuestions({ value = [], onChange }) {
                   onChange={setTfExplainHtml}
                   placeholder="اشرح لماذا هذه الإجابة صحيحة أو خاطئة..."
                   className="min-h-[100px]"
+                  uploadImage={uploadImage}
                 />
               </div>
             </div>
@@ -1384,6 +1399,7 @@ export default function CompetitionsQuestions({ value = [], onChange }) {
                   onChange={setPromptHtml}
                   placeholder="اكتب نص السؤال المقالي..."
                   className="min-h-[120px]"
+                  uploadImage={uploadImage}
                 />
               </div>
 
@@ -1396,6 +1412,7 @@ export default function CompetitionsQuestions({ value = [], onChange }) {
                   onChange={setEssayAnswerHtml}
                   placeholder="اكتب إجابة نموذجية مختصرة..."
                   className="min-h-[100px]"
+                  uploadImage={uploadImage}
                 />
               </div>
             </div>
@@ -1413,6 +1430,7 @@ export default function CompetitionsQuestions({ value = [], onChange }) {
                   onChange={setPromptHtml}
                   placeholder="اكتب نص السؤال (اختياري إذا استخدمت نص الإكمال)..."
                   className="min-h-[120px]"
+                  uploadImage={uploadImage}
                 />
               </div>
 
@@ -1425,6 +1443,7 @@ export default function CompetitionsQuestions({ value = [], onChange }) {
                   onChange={setCompleteTextHtml}
                   placeholder="أدخل النص المراد إكماله..."
                   className="min-h-[100px]"
+                  uploadImage={uploadImage}
                 />
               </div>
 

@@ -1,7 +1,8 @@
 "use client";
 import React from "react";
-import { Edit3, Trash2 } from "lucide-react";
-import { Collapse, Tag, Empty } from "antd";
+import { Edit3, Trash2, GripVertical } from "lucide-react";
+import { Collapse, Empty, Tag } from "antd";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import Card from "./ExamCard";
 import Button from "../atoms/Button";
 
@@ -25,49 +26,40 @@ export default function DisplayQuestions({
   setMcqSubType,
   editMcqPassageQuestion,
 }) {
-  const handleEditQuestion = (question, sectionId) => {
-    setQuestionType(question.type);
-    setCurrentQuestion(question.question || "");
+  /* ---------- Edit / Delete ---------- */
+  const handleEditQuestion = (q, sectionId) => {
+    setQuestionType(q.type);
+    setCurrentQuestion(q.question || "");
     setSelectedSectionId(sectionId);
-    setEditingQuestion(question);
+    setEditingQuestion(q);
 
-    switch (question.type) {
+    switch (q.type) {
       case "mcq":
-        if (question.mcqSubType && question.mcqSubType !== "general") {
-          editMcqPassageQuestion(question);
+        if (q.mcqSubType && q.mcqSubType !== "general") {
+          editMcqPassageQuestion(q);
         } else {
           setMcqOptions(
-            (question.options || [
+            (q.options || [
               { text: "", explanation: "" },
               { text: "", explanation: "" },
               { text: "", explanation: "" },
               { text: "", explanation: "" },
-            ]).map((o) =>
-              typeof o === "string" ? { text: o, explanation: "" } : o
-            )
+            ]).map((o) => (typeof o === "string" ? { text: o, explanation: "" } : o))
           );
-          setMcqCorrectAnswer(
-            typeof question.correctAnswer === "number"
-              ? question.correctAnswer
-              : 0
-          );
+          setMcqCorrectAnswer(typeof q.correctAnswer === "number" ? q.correctAnswer : 0);
           setMcqSubType("general");
         }
         break;
       case "trueFalse":
-        setTrueFalseAnswer(!!question.correctAnswer);
-        setTrueFalseExplanation(question.explanation || "");
+        setTrueFalseAnswer(!!q.correctAnswer);
+        setTrueFalseExplanation(q.explanation || "");
         break;
       case "essay":
-        setModalAnswer(question.modelAnswer || "");
+        setModalAnswer(q.modelAnswer || "");
         break;
       case "complete":
-        setCompleteText(question.text || "");
-        setCompleteAnswers(
-          Array.isArray(question.answers) && question.answers.length
-            ? question.answers
-            : [{ answer: "" }]
-        );
+        setCompleteText(q.text || "");
+        setCompleteAnswers(Array.isArray(q.answers) && q.answers.length ? q.answers : [{ answer: "" }]);
         break;
       default:
         break;
@@ -75,159 +67,182 @@ export default function DisplayQuestions({
   };
 
   const handleDeleteQuestion = (questionId, sectionId) => {
-    if (confirm("هل أنت متأكد من حذف هذا السؤال؟")) {
-      const updatedSections = examData.sections.map((section) => {
-        if (section.id === sectionId) {
-          return {
-            ...section,
-            questions: (section.questions || []).filter(
-              (q) => q.id !== questionId
-            ),
-          };
-        }
-        return section;
-      });
-      setExamData({ ...examData, sections: updatedSections });
-    }
+    if (!confirm("هل أنت متأكد من حذف هذا السؤال؟")) return;
+    const updatedSections = (examData.sections || []).map((s) =>
+      s.id === sectionId
+        ? { ...s, questions: (s.questions || []).filter((q) => q.id !== questionId) }
+        : s
+    );
+    setExamData({ ...examData, sections: updatedSections });
   };
 
-  const renderQuestionContent = (question) => {
-    switch (question.type) {
-      case "mcq":
-        return (
-          <div className="space-y-2">
-            <p
-              className="text-sm text-gray-700"
-              dangerouslySetInnerHTML={{ __html: question.question }}
-            />
-            <div className="space-y-1">
-              {(question.options || []).map((option, idx) => {
-                const optObj =
-                  typeof option === "string"
-                    ? { text: option, explanation: "" }
-                    : option || { text: "", explanation: "" };
-                return (
-                  <div
-                    key={idx}
-                    className={`text-xs p-2 rounded ${
-                      idx === question.correctAnswer
-                        ? "bg-green-100 text-green-800 border border-green-200"
-                        : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    <div className="font-medium">
-                      {String.fromCharCode(1632 + idx + 1)}.{" "}
-                      <span
-                        dangerouslySetInnerHTML={{ __html: optObj.text }}
-                      />
+  /* ---------- Render Question Body ---------- */
+  const renderQuestionContent = (q) => {
+    if (q.type === "mcq") {
+      return (
+        <div className="space-y-3">
+          <p className="text-[13px] text-gray-800 leading-6" dangerouslySetInnerHTML={{ __html: q.question }} />
+          <div className="grid gap-2">
+            {(q.options || []).map((option, idx) => {
+              const opt = typeof option === "string" ? { text: option, explanation: "" } : option || { text: "", explanation: "" };
+              const isCorrect = idx === q.correctAnswer;
+              return (
+                <div
+                  key={idx}
+                  className={`rounded-lg border px-3 py-2 text-[12px] ${
+                    isCorrect
+                      ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                      : "bg-gray-50 border-gray-200 text-gray-700"
+                  }`}
+                >
+                  <div className="font-medium">
+                    {String.fromCharCode(1632 + (idx + 1))}.{" "}
+                    <span dangerouslySetInnerHTML={{ __html: opt.text }} />
+                  </div>
+                  {opt.explanation && (
+                    <div className="mt-1 text-[12px] text-gray-600">
+                      الشرح: <span dangerouslySetInnerHTML={{ __html: opt.explanation }} />
                     </div>
-                    {optObj.explanation && (
-                      <div className="mt-1 text-xs text-gray-600 italic">
-                        الشرح:{" "}
-                        <span
-                          dangerouslySetInnerHTML={{
-                            __html: optObj.explanation,
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {q.passage && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+              <div className="text-[12px] font-semibold text-blue-800 mb-1">القطعة</div>
+              <div className="text-[12px] text-blue-700 leading-6" dangerouslySetInnerHTML={{ __html: q.passage.content }} />
             </div>
-            {question.passage && (
-              <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
-                <p className="text-xs text-blue-800 font-medium">القطعة:</p>
-                <p
-                  className="text-xs text-blue-700"
-                  dangerouslySetInnerHTML={{ __html: question.passage.content }}
-                />
-              </div>
-            )}
-          </div>
-        );
-      case "trueFalse":
-        return (
-          <div className="space-y-2">
-            <p
-              className="text-sm text-gray-700"
-              dangerouslySetInnerHTML={{ __html: question.question }}
-            />
-            <div
-              className={`text-xs p-2 rounded ${
-                question.correctAnswer
-                  ? "bg-green-100 text-green-800 border border-green-200"
-                  : "bg-red-100 text-red-800 border border-red-200"
-              }`}
-            >
-              الإجابة: {question.correctAnswer ? "صحيح" : "خطأ"}
-            </div>
-            {question.explanation && (
-              <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                <p className="text-xs text-gray-800 font-medium">الشرح:</p>
-                <p
-                  className="text-xs text-gray-700"
-                  dangerouslySetInnerHTML={{ __html: question.explanation }}
-                />
-              </div>
-            )}
-          </div>
-        );
-      case "essay":
-        return (
-          <div className="space-y-2">
-            <p
-              className="text-sm text-gray-700"
-              dangerouslySetInnerHTML={{ __html: question.question }}
-            />
-            {question.modelAnswer && (
-              <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
-                <p className="text-xs text-blue-800 font-medium">
-                  الإجابة النموذجية:
-                </p>
-                <p
-                  className="text-xs text-blue-700"
-                  dangerouslySetInnerHTML={{ __html: question.modelAnswer }}
-                />
-              </div>
-            )}
-          </div>
-        );
-      case "complete":
-        return (
-          <div className="space-y-2">
-            <p
-              className="text-sm text-gray-700"
-              dangerouslySetInnerHTML={{ __html: question.text }}
-            />
-            <div className="space-y-1">
-              {(question.answers || []).map((answer, idx) => {
-                const answerText =
-                  typeof answer === "object" ? answer.answer : answer;
-                return (
-                  <div
-                    key={idx}
-                    className="text-xs p-2 bg-green-100 text-green-800 rounded border border-green-200"
-                  >
-                    الإجابة {idx + 1}:{" "}
-                    <span
-                      dangerouslySetInnerHTML={{ __html: answerText || "" }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      default:
-        return (
-          <p
-            className="text-sm text-gray-700"
-            dangerouslySetInnerHTML={{ __html: question.question }}
-          />
-        );
+          )}
+        </div>
+      );
     }
+
+    if (q.type === "trueFalse") {
+      return (
+        <div className="space-y-3">
+          <p className="text-[13px] text-gray-800 leading-6" dangerouslySetInnerHTML={{ __html: q.question }} />
+          <div
+            className={`rounded-lg border px-3 py-2 text-[12px] ${
+              q.correctAnswer
+                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                : "bg-rose-50 border-rose-200 text-rose-800"
+            }`}
+          >
+            الإجابة: {q.correctAnswer ? "صحيح" : "خطأ"}
+          </div>
+          {q.explanation && (
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+              <div className="text-[12px] font-semibold text-gray-800 mb-1">الشرح</div>
+              <div className="text-[12px] text-gray-700 leading-6" dangerouslySetInnerHTML={{ __html: q.explanation }} />
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (q.type === "essay") {
+      return (
+        <div className="space-y-3">
+          <p className="text-[13px] text-gray-800 leading-6" dangerouslySetInnerHTML={{ __html: q.question }} />
+          {q.modelAnswer && (
+            <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3">
+              <div className="text-[12px] font-semibold text-indigo-800 mb-1">الإجابة النموذجية</div>
+              <div className="text-[12px] text-indigo-700 leading-6" dangerouslySetInnerHTML={{ __html: q.modelAnswer }} />
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (q.type === "complete") {
+      return (
+        <div className="space-y-3">
+          <p className="text-[13px] text-gray-800 leading-6" dangerouslySetInnerHTML={{ __html: q.text }} />
+          <div className="grid gap-2">
+            {(q.answers || []).map((ans, idx) => {
+              const a = typeof ans === "object" ? ans.answer : ans;
+              return (
+                <div key={idx} className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[12px] text-emerald-800">
+                  الإجابة {idx + 1}: <span dangerouslySetInnerHTML={{ __html: a || "" }} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    return <p className="text-[13px] text-gray-800" dangerouslySetInnerHTML={{ __html: q.question }} />;
   };
+
+  /* ---------- DnD helpers ---------- */
+  const reorder = (list, start, end) => {
+    const result = Array.from(list || []);
+    const [removed] = result.splice(start, 1);
+    result.splice(end, 0, removed);
+    return result;
+  };
+
+  const move = ({ sections, source, destination }) => {
+    const fromIdx = sections.findIndex((s) => String(s.id) === String(source.droppableId));
+    const toIdx = sections.findIndex((s) => String(s.id) === String(destination.droppableId));
+    if (fromIdx < 0 || toIdx < 0) return sections;
+
+    const from = sections[fromIdx];
+    const to = sections[toIdx];
+
+    const fromQs = Array.from(from.questions || []);
+    const toQs = Array.from(to.questions || []);
+
+    const [moved] = fromQs.splice(source.index, 1);
+    toQs.splice(destination.index, 0, moved);
+
+    const next = Array.from(sections);
+    next[fromIdx] = { ...from, questions: fromQs };
+    next[toIdx] = { ...to, questions: toQs };
+    return next;
+  };
+
+  const onDragEnd = ({ source, destination }) => {
+    if (!destination) return;
+    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+
+    setExamData((prev) => {
+      const sections = Array.from(prev.sections || []);
+      if (source.droppableId === destination.droppableId) {
+        const secIdx = sections.findIndex((s) => String(s.id) === String(source.droppableId));
+        if (secIdx < 0) return prev;
+        const sec = sections[secIdx];
+        const nextQs = reorder(sec.questions || [], source.index, destination.index);
+        const nextSections = Array.from(sections);
+        nextSections[secIdx] = { ...sec, questions: nextQs };
+        return { ...prev, sections: nextSections };
+      }
+      const moved = move({ sections, source, destination });
+      return { ...prev, sections: moved };
+    });
+  };
+
+  /* ---------- Question row header ---------- */
+  const QuestionHeader = ({ index, typeLabel, subTag, dragHandleProps }) => (
+    <div className="flex items-center gap-2">
+      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold">
+        {index + 1}
+      </span>
+      <Tag color="blue" className="!m-0 !text-[11px]">{typeLabel}</Tag>
+      {subTag && <Tag color="purple" className="!m-0 !text-[11px]">{subTag}</Tag>}
+      <span
+        className="ms-auto flex items-center gap-1 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 transition"
+        {...dragHandleProps}
+        title="سحب لتحريك السؤال"
+      >
+        <GripVertical className="w-4 h-4" />
+        <span className="text-[11px]">سحب</span>
+      </span>
+    </div>
+  );
 
   return (
     <Card title="الأسئلة المضافة" icon={Edit3}>
@@ -244,13 +259,17 @@ export default function DisplayQuestions({
                 className="!border !border-gray-200 !rounded-xl overflow-hidden"
                 header={
                   <div className="flex items-center gap-3">
-                    <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                      {count}
+                    <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-l from-cyan-50 to-teal-50 border border-teal-100 px-3 py-1">
+                      <span className="h-2 w-2 rounded-full bg-teal-400" />
+                      <span className="text-[12px] text-teal-800">القسم</span>
                     </span>
                     <h3
-                      className="font-medium text-gray-900"
+                      className="font-semibold text-gray-900 leading-6"
                       dangerouslySetInnerHTML={{ __html: section?.name }}
                     />
+                    <span className="ms-auto inline-flex items-center rounded-full bg-gray-100 text-gray-700 text-[11px] px-2.5 py-1">
+                      عدد الأسئلة: {count}
+                    </span>
                   </div>
                 }
               >
@@ -259,73 +278,77 @@ export default function DisplayQuestions({
                     <Empty description="لا توجد أسئلة في هذا القسم بعد" />
                   </div>
                 ) : (
-                  <Collapse
-                    accordion
-                    bordered={false}
-                    expandIconPosition="end"
-                    className="bg-transparent"
-                  >
-                    {section.questions.map((question, index) => {
-                      const typeLabel =
-                        questionTypes.find((t) => t.value === question.type)
-                          ?.label || "سؤال";
-                      const subTag =
-                        question.mcqSubType && question.mcqSubType !== "general"
-                          ? question.mcqSubType === "chemical"
-                            ? "معادلات"
-                            : "قطعة"
-                          : null;
-
-                      const extra = (
+                  <DragDropContext onDragEnd={onDragEnd}>
+                    <Droppable droppableId={String(section.id)}>
+                      {(dropProvided, dropSnapshot) => (
                         <div
-                          className="flex items-center gap-1"
-                          onClick={(e) => e.stopPropagation()}
+                          ref={dropProvided.innerRef}
+                          {...dropProvided.droppableProps}
+                          className={`transition-all rounded-xl p-1 ${
+                            dropSnapshot.isDraggingOver ? "bg-emerald-50/70 border border-emerald-100" : ""
+                          }`}
                         >
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="p-2"
-                            icon={<Edit3 className="h-4 w-4" />}
-                            onClick={() => handleEditQuestion(question, section.id)}
-                          />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="p-2"
-                            icon={<Trash2 className="h-4 w-4" />}
-                            onClick={() =>
-                              handleDeleteQuestion(question.id, section.id)
-                            }
-                          />
-                        </div>
-                      );
+                          {(section.questions || []).map((q, index) => {
+                            const typeLabel =
+                              questionTypes.find((t) => t.value === q.type)?.label || "سؤال";
+                            const subTag =
+                              q.mcqSubType && q.mcqSubType !== "general"
+                                ? q.mcqSubType === "chemical"
+                                  ? "معادلات"
+                                  : "قطعة"
+                                : null;
 
-                      return (
-                        <Panel
-                          key={question.id}
-                          className="!mb-3 !rounded-xl bg-gray-50"
-                          extra={extra}
-                          header={
-                            <div className="flex items-center gap-2">
-                              <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                                {index + 1}
-                              </span>
-                              <span className="text-xs font-medium px-2.5 py-0.5 rounded text-white bg-blue-600">
-                                {typeLabel}
-                              </span>
-                              {subTag && (
-                                <span className="text-xs font-medium px-2.5 py-0.5 rounded text-white bg-purple-600">
-                                  {subTag}
-                                </span>
-                              )}
-                            </div>
-                          }
-                        >
-                          {renderQuestionContent(question)}
-                        </Panel>
-                      );
-                    })}
-                  </Collapse>
+                            return (
+                              <Draggable key={q.id} draggableId={String(q.id)} index={index}>
+                                {(dragProvided, dragSnapshot) => (
+                                  <div
+                                    ref={dragProvided.innerRef}
+                                    {...dragProvided.draggableProps}
+                                    style={dragProvided.draggableProps.style}
+                                    className={`mb-3 rounded-2xl border bg-white p-3 shadow-sm transition-all ${
+                                      dragSnapshot.isDragging ? "ring-2 ring-emerald-300 shadow-md" : "hover:shadow-md"
+                                    }`}
+                                  >
+                                    {/* Header row with handle + actions */}
+                                    <div className="flex items-center gap-2">
+                                      <QuestionHeader
+                                        index={index}
+                                        typeLabel={typeLabel}
+                                        subTag={subTag}
+                                        dragHandleProps={dragProvided.dragHandleProps}
+                                      />
+                                      <div className="ms-2 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="px-2"
+                                          icon={<Edit3 className="h-4 w-4" />}
+                                          onClick={() => handleEditQuestion(q, section.id)}
+                                        />
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="px-2"
+                                          icon={<Trash2 className="h-4 w-4" />}
+                                          onClick={() => handleDeleteQuestion(q.id, section.id)}
+                                        />
+                                      </div>
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="mt-3">
+                                      {renderQuestionContent(q)}
+                                    </div>
+                                  </div>
+                                )}
+                              </Draggable>
+                            );
+                          })}
+                          {dropProvided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
                 )}
               </Panel>
             );

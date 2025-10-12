@@ -1,13 +1,64 @@
 "use client";
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { PlusIcon, Trash2, Paperclip, Image as ImageIcon } from "lucide-react";
+import { Plus as PlusIcon, Trash2, Paperclip, Image as ImageIcon } from "lucide-react";
 
-// IMPORTANT: load MathLive CSS once globally
+// If you use MathLive, load its CSS globally once (e.g., in your root layout):
 // import "mathlive/core.css";
 // import "mathlive/static.css";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+
+/* ================= Quill config (colors + background + sub/sup + align/RTL) ================= */
+function useQuillConfig({ allowImages = true, onImageRequest } = {}) {
+  const modules = useMemo(() => {
+    const toolbar = [
+      [{ header: [1, 2, 3, false] }],
+      ["bold", "italic", "underline", "strike"],
+      [{ script: "sub" }, { script: "super" }],
+      [{ list: "ordered" }, { list: "bullet" }],
+      [{ align: [] }, { direction: "rtl" }],
+      [{ color: [] }, { background: [] }],
+      ["link", "blockquote", "code-block", "clean"],
+    ];
+    if (allowImages) toolbar.push(["image"]);
+
+    return {
+      toolbar: allowImages
+        ? {
+            container: toolbar,
+            handlers: { image: () => typeof onImageRequest === "function" && onImageRequest() },
+          }
+        : toolbar,
+      clipboard: { matchVisual: false },
+      history: { delay: 500, maxStack: 200, userOnly: true },
+    };
+  }, [allowImages, onImageRequest]);
+
+  const formats = useMemo(
+    () => [
+      "header",
+      "bold",
+      "italic",
+      "underline",
+      "strike",
+      "script", // sub/super
+      "list",
+      "bullet",
+      "align",
+      "direction",
+      "color",
+      "background",
+      "link",
+      "blockquote",
+      "code-block",
+      ...(allowImages ? ["image"] : []),
+    ],
+    [allowImages]
+  );
+
+  return { modules, formats };
+}
 
 /* ============== ثابت عام لحجم الصور داخل المحررات ============== */
 const FIXED_IMG = { width: 320, height: 200, objectFit: "contain" };
@@ -39,11 +90,9 @@ function MathFieldInput({
     let mounted = true;
     (async () => {
       if (typeof window === "undefined") return;
-
       const mathlive = await import("mathlive");
       const MathfieldElement = mathlive.MathfieldElement || window.MathfieldElement;
       const setOptions = mathlive.setOptions || MathfieldElement?.setOptions;
-
       if (!MathfieldElement || !hostRef.current || !mounted) return;
 
       // لوحة مفاتيح عربية
@@ -142,22 +191,7 @@ function MathFieldInput({
   );
 }
 
-/* ============== Quill (مع زر إدراج صورة) ============== */
-const baseQuillModules = (onImage) => ({
-  toolbar: {
-    container: [
-      [{ header: [1, 2, false] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      [{ direction: "rtl" }, { align: [] }],
-      ["link", "image", "clean"],
-    ],
-    handlers: { image: () => onImage && onImage() },
-  },
-  clipboard: { matchVisual: false },
-});
-const quillFormats = ["header","bold","italic","underline","strike","list","bullet","direction","align","link","image"];
-
+/* ============== LabeledEditor (Quill مع ألوان + خلفية + sub/sup) ============== */
 function LabeledEditor({
   label,
   hint,
@@ -165,14 +199,14 @@ function LabeledEditor({
   onChange,
   placeholder = "اكتب هنا…",
   editorMinH = 140,
-  uploadImage,               // async (file) => url
+  uploadImage,               // async (file) => url (optional)
   imageSize = FIXED_IMG,
 }) {
   const quillRef = useRef(null);
   const fileRef = useRef(null);
 
   const openPicker = useCallback(() => fileRef.current?.click(), []);
-  const modules = useMemo(() => baseQuillModules(openPicker), [openPicker]);
+  const { modules, formats } = useQuillConfig({ allowImages: true, onImageRequest: openPicker });
 
   const applyFixedSizeToAllImages = useCallback(() => {
     const quill = quillRef.current?.getEditor?.();
@@ -254,7 +288,7 @@ function LabeledEditor({
           value={value}
           onChange={onChange}
           modules={modules}
-          formats={quillFormats}
+          formats={formats}
           placeholder={placeholder}
         />
       </div>
@@ -306,7 +340,14 @@ function AttachmentPicker({
         </button>
       </div>
 
-      <input ref={inputRef} type="file" multiple={multiple} accept={accept} onChange={handleChange} className="hidden" />
+      <input
+        ref={inputRef}
+        type="file"
+        multiple={multiple}
+        accept={accept}
+        onChange={handleChange}
+        className="hidden"
+      />
 
       {!!files?.length && (
         <div className="flex flex-wrap gap-2">
@@ -364,14 +405,14 @@ export default function McqSharedPassageEditor({
     text: "",
     options: [toOptionObject(""), toOptionObject("")],
     correctIndex: 0,
-    attachments: [], // احتياطي لو أردتها لاحقاً
+    attachments: [],
   });
 
   const createPassage = () => ({
     id: uid(),
     content: "",
     questions: [createQuestion()],
-    attachments: [], // سنستخدمها لصور/PDF على مستوى القطعة
+    attachments: [],
   });
 
   const normalize = (arr) =>
@@ -397,7 +438,9 @@ export default function McqSharedPassageEditor({
       }),
     }));
 
-  const [passages, setPassages] = useState(() => (initialData?.length ? normalize(initialData) : [createPassage()]));
+  const [passages, setPassages] = useState(() =>
+    initialData?.length ? normalize(initialData) : [createPassage()]
+  );
 
   useEffect(() => {
     onPassagesChange?.(passages);
@@ -405,13 +448,19 @@ export default function McqSharedPassageEditor({
 
   /* -------- Passage ops -------- */
   const addPassage = () => setPassages((ps) => [...ps, createPassage()]);
-  const removePassage = (pId) => setPassages((ps) => (ps.length > 1 ? ps.filter((p) => p.id !== pId) : ps));
-  const updatePassageContent = (pId, content) => setPassages((ps) => ps.map((p) => (p.id === pId ? { ...p, content } : p)));
+  const removePassage = (pId) =>
+    setPassages((ps) => (ps.length > 1 ? ps.filter((p) => p.id !== pId) : ps));
+  const updatePassageContent = (pId, content) =>
+    setPassages((ps) => ps.map((p) => (p.id === pId ? { ...p, content } : p)));
   const addPassageFiles = (pId, files) =>
-    setPassages((ps) => ps.map((p) => (p.id === pId ? { ...p, attachments: [...(p.attachments || []), ...files] } : p)));
+    setPassages((ps) =>
+      ps.map((p) => (p.id === pId ? { ...p, attachments: [...(p.attachments || []), ...files] } : p))
+    );
   const removePassageFile = (pId, fileIdx) =>
     setPassages((ps) =>
-      ps.map((p) => (p.id === pId ? { ...p, attachments: (p.attachments || []).filter((_, i) => i !== fileIdx) } : p))
+      ps.map((p) =>
+        p.id === pId ? { ...p, attachments: (p.attachments || []).filter((_, i) => i !== fileIdx) } : p
+      )
     );
 
   /* -------- Question ops -------- */
@@ -435,7 +484,12 @@ export default function McqSharedPassageEditor({
     setPassages((ps) =>
       ps.map((p) =>
         p.id === pId
-          ? { ...p, questions: p.questions.map((q) => (q.id === qId ? { ...q, options: [...q.options, { latex: "", explanation: "", images: [] }] } : q)) }
+          ? {
+              ...p,
+              questions: p.questions.map((q) =>
+                q.id === qId ? { ...q, options: [...q.options, { latex: "", explanation: "", images: [] }] } : q
+              ),
+            }
           : p
       )
     );
@@ -516,7 +570,7 @@ export default function McqSharedPassageEditor({
 
   const isPassage = mcqSubType === "passage";
   const isChemical = mcqSubType === "chemical";
-  const isMath = mcqSubType === "math" || mcqSubType === "chemical"; // ✅ معادلات لأي من الوضعين
+  const isMath = mcqSubType === "math" || mcqSubType === "chemical"; // معادلات لأي من الوضعين
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -589,7 +643,7 @@ export default function McqSharedPassageEditor({
                 />
               )}
 
-              {/* ✅ مرفقات القطعة للأنماط الرياضية أيضاً (صور/PDF) */}
+              {/* مرفقات القطعة للأنماط الرياضية أيضاً (صور/PDF) */}
               {isMath && (
                 <AttachmentPicker
                   label="مرفقات المعادلة (صور / PDF)"
@@ -708,7 +762,7 @@ export default function McqSharedPassageEditor({
                                   />
                                 </div>
 
-                                {/* ✅ مرفقات الاختيار: صور + PDF */}
+                                {/* مرفقات الاختيار: صور + PDF */}
                                 <AttachmentPicker
                                   label="مرفقات الاختيار (صور / PDF)"
                                   files={opt.images || []}

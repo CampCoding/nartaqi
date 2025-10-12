@@ -3,11 +3,10 @@ import Button from "@/components/atoms/Button";
 import PageLayout from "@/components/layout/PageLayout";
 import BreadcrumbsShowcase from "@/components/ui/BreadCrumbs";
 import PagesHeader from "@/components/ui/PagesHeader";
-import { Modal, Table, Dropdown, Menu, Select } from "antd";
+import { Modal, Table, Dropdown, Menu } from "antd";
 import {
   BarChart3,
   Download,
-  Edit,
   Eye,
   Plus,
   QrCode,
@@ -15,85 +14,11 @@ import {
   Upload,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 
 const breadcrumbs = [
   { label: "الرئيسية", href: "/", icon: BarChart3 },
   { label: "QR Code", href: "#", icon: QrCode, current: true },
-];
-
-const data = [
-  {
-    id: 1,
-    title: "Book 1",
-    categories: [
-      {
-        id: 1,
-        title: "Fiction",
-        subcategories: [
-          { id: 1, title: "Fantasy" },
-          { id: 2, title: "Science Fiction" },
-          { id: 3, title: "Adventure" },
-        ],
-      },
-      {
-        id: 2,
-        title: "Non-fiction",
-        subcategories: [
-          { id: 4, title: "Biography" },
-          { id: 5, title: "Self-help" },
-          { id: 6, title: "History" },
-        ],
-      },
-    ],
-  },
-  {
-    id: 2,
-    title: "Book 2",
-    categories: [
-      {
-        id: 3,
-        title: "Children",
-        subcategories: [
-          { id: 7, title: "Picture Books" },
-          { id: 8, title: "Early Reader" },
-          { id: 9, title: "Chapter Books" },
-        ],
-      },
-      {
-        id: 4,
-        title: "Educational",
-        subcategories: [
-          { id: 10, title: "Science" },
-          { id: 11, title: "Mathematics" },
-          { id: 12, title: "Language Arts" },
-        ],
-      },
-    ],
-  },
-  {
-    id: 3,
-    title: "Book 3",
-    categories: [
-      {
-        id: 5,
-        title: "Mystery",
-        subcategories: [
-          { id: 13, title: "Detective" },
-          { id: 14, title: "Thriller" },
-        ],
-      },
-      {
-        id: 6,
-        title: "Romance",
-        subcategories: [
-          { id: 15, title: "Contemporary" },
-          { id: 16, title: "Historical" },
-          { id: 17, title: "Romantic Comedy" },
-        ],
-      },
-    ],
-  },
 ];
 
 export default function Page() {
@@ -101,7 +26,8 @@ export default function Page() {
 
   // Modal + form state
   const [newModal, setNewModal] = useState(false);
-  const [selectedBook, setSelectedBook] = useState(null);
+  const [bookTitle, setBookTitle] = useState("");
+  const [categoryName, setCategoryName] = useState("");
   const [count, setCount] = useState(1);
 
   // Data (batches of QR codes)
@@ -114,15 +40,9 @@ export default function Page() {
     [pagination]
   );
 
-  // Derived helpers
-  const selectedBookObj = useMemo(
-    () => data.find((b) => b.id === selectedBook) || null,
-    [selectedBook]
-  );
-
   const handleGenerateQRCode = () => {
-    if (!selectedBookObj) {
-      alert("اختر الكتاب أولاً");
+    if (!bookTitle.trim()) {
+      alert("أدخل اسم الكتاب أولاً");
       return;
     }
     const n = parseInt(String(count), 10);
@@ -131,23 +51,23 @@ export default function Page() {
       return;
     }
 
-    // هذا السجل يمثل "دفعة" إنشاء QR، سيتم فتح تفاصيلها في صفحة منفصلة
     const batch = {
       id: Date.now(),
-      bookId: selectedBookObj.id,
-      book: selectedBookObj.title,
+      book: bookTitle.trim(),
+      category: categoryName.trim(),
       count: n,
       createdAt: new Date().toISOString(),
     };
 
     setQrData((prev) => [...prev, batch]);
-    // reset
     setNewModal(false);
-    setSelectedBook(null);
+    setBookTitle("");
+    setCategoryName("");
     setCount(1);
   };
 
-  const handleDelete = (id) => setQrData((prev) => prev.filter((x) => x.id !== id));
+  const handleDelete = (id) =>
+    setQrData((prev) => prev.filter((x) => x.id !== id));
 
   const columns = [
     {
@@ -158,6 +78,7 @@ export default function Page() {
     },
     { title: "#", dataIndex: "id", key: "id" },
     { title: "الكتاب", dataIndex: "book", key: "book" },
+    { title: "القسم", dataIndex: "category", key: "category" },
     { title: "عدد ال QR Code", dataIndex: "count", key: "count" },
     {
       title: "إجراء",
@@ -165,7 +86,13 @@ export default function Page() {
       render: (_t, record) => (
         <div className="flex gap-2 items-center">
           <button
-            onClick={() => router.push(`/qr-code/${record.id}?count=${record.count}`)}
+            onClick={() =>
+              router.push(
+                `/qr-code/${record.id}?count=${record.count}&book=${encodeURIComponent(
+                  record.book
+                )}&category=${encodeURIComponent(record.category)}`
+              )
+            }
             className="border rounded-md hover:bg-blue-500 hover:text-white transition-all duration-100 border-blue-500 text-blue-500 flex justify-center items-center p-2"
             title="تفاصيل"
           >
@@ -184,10 +111,12 @@ export default function Page() {
   ];
 
   const menu = (
-    <Menu>
-      <Menu.Item key="1" icon={<Upload />}>استيراد</Menu.Item>
-      <Menu.Item key="2" icon={<Download />}>تصدير</Menu.Item>
-    </Menu>
+    <Menu
+      items={[
+        { key: "1", icon: <Upload />, label: "استيراد" },
+        { key: "2", icon: <Download />, label: "تصدير" },
+      ]}
+    />
   );
 
   return (
@@ -200,7 +129,12 @@ export default function Page() {
           subtitle={"نظّم وأدر QR Code "}
           extra={
             <div className="flex items-center gap-4 gap-reverse">
-             
+              <Dropdown overlay={menu}>
+                <Button type="default" size="large">
+                  خيارات
+                </Button>
+              </Dropdown>
+
               <Button
                 onClick={() => setNewModal(true)}
                 type="primary"
@@ -220,7 +154,9 @@ export default function Page() {
           pagination={pagination}
           className="mt-6"
           rowClassName="hover:bg-gray-50 cursor-pointer"
-          onChange={(pag) => setPagination({ current: pag.current, pageSize: pag.pageSize })}
+          onChange={(pag) =>
+            setPagination({ current: pag.current, pageSize: pag.pageSize })
+          }
         />
 
         {/* Create Batch Modal */}
@@ -228,7 +164,8 @@ export default function Page() {
           open={newModal}
           onCancel={() => {
             setNewModal(false);
-            setSelectedBook(null);
+            setBookTitle("");
+            setCategoryName("");
             setCount(1);
           }}
           footer={null}
@@ -238,12 +175,24 @@ export default function Page() {
           <div className="modal-content">
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <label>الكتاب</label>
-                <Select
-                  placeholder="اختر الكتاب"
-                  value={selectedBook}
-                  onChange={setSelectedBook}
-                  options={data?.map((item) => ({ label: item.title, value: item.id }))}
+                <label>اسم الكتاب</label>
+                <input
+                  type="text"
+                  value={bookTitle}
+                  onChange={(e) => setBookTitle(e.target.value)}
+                  placeholder="أدخل اسم الكتاب"
+                  className="input border border-gray-200 rounded-md p-2 w-full"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label>اسم القسم</label>
+                <input
+                  type="text"
+                  value={categoryName}
+                  onChange={(e) => setCategoryName(e.target.value)}
+                  placeholder="أدخل اسم القسم"
+                  className="input border border-gray-200 rounded-md p-2 w-full"
                 />
               </div>
 

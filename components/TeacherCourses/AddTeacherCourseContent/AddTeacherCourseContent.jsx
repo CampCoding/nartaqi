@@ -676,6 +676,8 @@ export default function AddTeacherCourseContent() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6" dir="rtl">
+
+      
       {/* شريط التبويب + زر المخطط */}
       <div className="mb-4 flex items-center gap-2">
         {TABS.map((t) => (

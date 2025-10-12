@@ -1,68 +1,16 @@
 "use client";
-import React, { useMemo, useRef, useCallback, useEffect } from "react";
+
+import React, { useRef, useCallback, useEffect } from "react";
 import Button from "../atoms/Button";
 import { Plus, Trash2, Image as ImageIcon } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useQuillConfig } from "@/utils/quillConfig";
 
-// Dynamically import ReactQuill with SSR disabled
+// SSR-safe
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
-/* ================= Fixed image sizing config ================= */
-const FIXED_IMG = {
-  width: 320,       // ⬅️ change if you want a different fixed width
-  height: 200,      // ⬅️ change if you want a different fixed height
-  objectFit: "contain",
-};
+const FIXED_IMG = { width: 320, height: 200, objectFit: "contain" };
 
-/* ============== tiny helper: file -> data URL (fallback uploader) ============== */
-async function fileToDataUrl(file) {
-  const reader = new FileReader();
-  return new Promise((resolve, reject) => {
-    reader.onerror = reject;
-    reader.onload = () => resolve(String(reader.result || ""));
-    reader.readAsDataURL(file);
-  });
-}
-
-/* ================= Shared Quill config (factory with custom image handler) ================= */
-const useQuillConfig = (onImageRequest) =>
-  useMemo(
-    () => ({
-      modules: {
-        toolbar: {
-          container: [
-            [{ header: [1, 2, false] }],
-            ["bold", "italic", "underline", "strike"],
-            [{ list: "ordered" }, { list: "bullet" }],
-            [{ direction: "rtl" }, { align: [] }],
-            ["link", "image", "clean"], // <-- added image
-          ],
-          handlers: {
-            image: () => {
-              if (typeof onImageRequest === "function") onImageRequest();
-            },
-          },
-        },
-        clipboard: { matchVisual: false },
-      },
-      formats: [
-        "header",
-        "bold",
-        "italic",
-        "underline",
-        "strike",
-        "list",
-        "bullet",
-        "direction",
-        "align",
-        "link",
-        "image", // <-- allow image format
-      ],
-    }),
-    [onImageRequest]
-  );
-
-/* ============== Small labeled editor wrapper (with image upload + fixed size) ============== */
 const LabeledQuill = ({
   label,
   value,
@@ -70,25 +18,20 @@ const LabeledQuill = ({
   placeholder = "اكتب هنا…",
   minH = 120,
   className = "",
-  uploadImage, // optional: async (file: File) => string (URL)
-  imageSize = FIXED_IMG, // optional override
+  uploadImage,
+  imageSize = FIXED_IMG,
 }) => {
   const quillRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  const openPicker = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
+  const openPicker = useCallback(() => fileInputRef.current?.click(), []);
+  const { modules, formats } = useQuillConfig({ allowImages: true, onImageRequest: openPicker });
 
-  const { modules, formats } = useQuillConfig(openPicker);
-
-  // Apply fixed size to all images in this editor
-  const applyFixedSizeToAllImages = useCallback(() => {
-    const quill = quillRef.current?.getEditor?.();
-    const root = quill?.root;
+  const applyFixed = useCallback(() => {
+    const q = quillRef.current?.getEditor?.();
+    const root = q?.root;
     if (!root) return;
-    const imgs = root.querySelectorAll("img");
-    imgs.forEach((img) => {
+    root.querySelectorAll("img").forEach((img) => {
       img.style.width = `${imageSize.width}px`;
       img.style.height = `${imageSize.height}px`;
       img.style.objectFit = imageSize.objectFit || "contain";
@@ -96,73 +39,40 @@ const LabeledQuill = ({
     });
   }, [imageSize.height, imageSize.objectFit, imageSize.width]);
 
-  const handleFiles = useCallback(
-    async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+  const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result || ""));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
 
-      try {
-        const url =
-          (await (uploadImage ? uploadImage(file) : fileToDataUrl(file))) || "";
-        const editor = quillRef.current?.getEditor?.();
-        if (!editor || !url) return;
+  const handleFiles = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = (await (uploadImage ? uploadImage(file) : fileToDataUrl(file))) || "";
+    const editor = quillRef.current?.getEditor?.();
+    if (!editor || !url) return;
+    const range = editor.getSelection(true) || { index: editor.getLength(), length: 0 };
+    editor.insertEmbed(range.index, "image", url, "user");
+    editor.setSelection(range.index + 1, 0);
+    requestAnimationFrame(applyFixed);
+    e.target.value = "";
+  };
 
-        const range = editor.getSelection(true) || {
-          index: editor.getLength(),
-          length: 0,
-        };
-        editor.insertEmbed(range.index, "image", url, "user");
-        editor.setSelection(range.index + 1, 0);
-
-        // Ensure the newly inserted image gets the fixed dimensions
-        requestAnimationFrame(() => {
-          const root = editor.root;
-          try {
-            const img = root.querySelector(`img[src="${CSS.escape(url)}"]`);
-            if (img) {
-              img.style.width = `${imageSize.width}px`;
-              img.style.height = `${imageSize.height}px`;
-              img.style.objectFit = imageSize.objectFit || "contain";
-              img.style.display = "inline-block";
-            }
-          } catch {
-            // Fallback: apply to all if querySelector fails due to special chars
-            applyFixedSizeToAllImages();
-          }
-        });
-      } finally {
-        // allow selecting the same file again
-        if (e?.target) e.target.value = "";
-      }
-    },
-    [uploadImage, imageSize.height, imageSize.objectFit, imageSize.width, applyFixedSizeToAllImages]
-  );
-
-  // Re-apply fixed size after any content change or on mount
   useEffect(() => {
-    const quill = quillRef.current?.getEditor?.();
-    if (!quill) return;
-    const handler = () => requestAnimationFrame(applyFixedSizeToAllImages);
-    quill.on("text-change", handler);
-    requestAnimationFrame(applyFixedSizeToAllImages);
-    return () => quill.off("text-change", handler);
-  }, [applyFixedSizeToAllImages]);
-
-  // Also catch paste/drag-drop images and normalize size shortly after
-  const onPaste = useCallback(() => {
-    requestAnimationFrame(applyFixedSizeToAllImages);
-  }, [applyFixedSizeToAllImages]);
-
-  const onDrop = useCallback(() => {
-    requestAnimationFrame(applyFixedSizeToAllImages);
-  }, [applyFixedSizeToAllImages]);
+    const q = quillRef.current?.getEditor?.();
+    if (!q) return;
+    const h = () => requestAnimationFrame(applyFixed);
+    q.on("text-change", h);
+    requestAnimationFrame(applyFixed);
+    return () => q.off("text-change", h);
+  }, [applyFixed]);
 
   return (
     <div className={`space-y-2 ${className}`}>
       <div className="flex items-center justify-between">
-        <label className="block text-xs font-semibold text-gray-700">
-          {label}
-        </label>
+        <label className="block text-xs font-semibold text-gray-700">{label}</label>
         <Button
           variant="outline"
           size="xs"
@@ -175,12 +85,7 @@ const LabeledQuill = ({
         </Button>
       </div>
 
-      <div
-        className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20"
-        onPaste={onPaste}
-        onDrop={onDrop}
-        onDragOver={(e) => e.preventDefault()}
-      >
+      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
         <ReactQuill
           ref={quillRef}
           value={value}
@@ -191,16 +96,8 @@ const LabeledQuill = ({
         />
       </div>
 
-      {/* Hidden input for image picking */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFiles}
-      />
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFiles} />
 
-      {/* RTL + min height + fixed image CSS fallback */}
       <style jsx global>{`
         [dir="rtl"] .ql-editor {
           direction: rtl;
@@ -215,7 +112,6 @@ const LabeledQuill = ({
         .ql-container.ql-snow {
           border: 0;
         }
-        /* 🔒 Force all images inside *any* Quill editor to a fixed size as a safety net */
         .ql-editor img {
           width: ${imageSize.width}px !important;
           height: ${imageSize.height}px !important;
@@ -234,7 +130,7 @@ export default function CompleteQuestions({
   updateCompleteAnswer,
   removeCompleteAnswer,
   addCompleteAnswer,
-  uploadImage, // <-- optional prop passed down to all editors
+  uploadImage,
 }) {
   const isObjectMode =
     Array.isArray(completeAnswers) &&
@@ -249,44 +145,33 @@ export default function CompleteQuestions({
     return { answer: "", explanation: "" };
   };
 
-  // Send patch to parent while staying backward-compatible
   const patchAnswer = (index, next) => {
     const curr = normalizeItem(completeAnswers?.[index]);
     const payload = { ...curr, ...next };
-    // if parent uses string mode, only pass the "answer" string
     updateCompleteAnswer(index, isObjectMode ? payload : payload.answer);
   };
 
   return (
     <div className="space-y-5" dir="rtl">
-      {/* Main text (with … placeholders) */}
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         <LabeledQuill
           label="نص السؤال (ضع … في الأماكن الناقصة)"
           value={completeText}
           onChange={setCompleteText}
-          placeholder='أدخل نص السؤال ويمكنك إدراج صور، مع وضع (…) في الأماكن الناقصة'
+          placeholder="أدخل نص السؤال (يدعم الألوان والخلفية وsub/sup)"
           minH={160}
           uploadImage={uploadImage}
           imageSize={FIXED_IMG}
         />
         <p className="mt-2 text-[11px] text-gray-500">
-          مثال: &nbsp;
-          <span className="px-2 py-0.5 rounded bg-gray-100">ولد … في عام …</span>
+          مثال:&nbsp;<span className="px-2 py-0.5 rounded bg-gray-100">ولد … في عام …</span>
         </p>
       </div>
 
-      {/* Answers list */}
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <label className="block text-sm font-semibold text-gray-800">
-            الإجابات الصحيحة
-          </label>
-          <Button
-            variant="outline"
-            onClick={addCompleteAnswer}
-            icon={<Plus className="w-5 h-5" />}
-          >
+          <label className="block text-sm font-semibold text-gray-800">الإجابات الصحيحة</label>
+          <Button variant="outline" onClick={addCompleteAnswer} icon={<Plus className="w-5 h-5" />}>
             إضافة إجابة
           </Button>
         </div>
@@ -315,24 +200,22 @@ export default function CompleteQuestions({
                   )}
                 </div>
 
-                {/* Answer (rich text + images, fixed size) */}
                 <LabeledQuill
                   label="نص الإجابة"
                   value={item.answer}
                   onChange={(v) => patchAnswer(index, { answer: v })}
-                  placeholder={`الإجابة ${index + 1} (يمكنك إدراج صور)`}
+                  placeholder={`الإجابة ${index + 1} (يدعم الألوان والخلفية وsub/sup)`}
                   minH={110}
                   uploadImage={uploadImage}
                   imageSize={FIXED_IMG}
                 />
 
-                {/* Optional explanation (rich text + images, fixed size) */}
                 {isObjectMode && (
                   <LabeledQuill
                     label="شرح الإجابة (اختياري)"
                     value={item.explanation}
                     onChange={(v) => patchAnswer(index, { explanation: v })}
-                    placeholder="اكتب شرحًا لهذه الإجابة… ويمكنك إدراج صور توضيحية"
+                    placeholder="اكتب شرحًا لهذه الإجابة… (يدعم الألوان والخلفية وsub/sup)"
                     minH={100}
                     uploadImage={uploadImage}
                     imageSize={FIXED_IMG}

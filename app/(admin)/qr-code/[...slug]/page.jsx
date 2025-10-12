@@ -9,12 +9,12 @@ import BreadcrumbsShowcase from "../../../../components/ui/BreadCrumbs";
 import PagesHeader from "../../../../components/ui/PagesHeader";
 import Button from "../../../../components/atoms/Button";
 
-// Helper function to generate random ID
+
 const randomId = () => String(Math.random()).slice(2, 8);
 
 const breadcrumbs = [
   { label: "الرئيسية", href: "/", icon: BarChart3 },
-  { label: "انشاء ال QR Code", href: "/qr-code", icon: "" },
+  { label: "انشاء ال QR Code", href: "/qr-code", icon: QrCode },
   { label: "إدارة ال QR Code", href: "#", icon: "", current: true },
 ];
 
@@ -36,8 +36,12 @@ export default function Page() {
   );
 
   const countFromQuery = Number(searchParams.get("count") || "0");
-  const countFromPath = Number(params?.count ?? NaN);
+  const countFromPath = Number((params)?.count ?? NaN);
   const initialCount = countFromQuery || countFromPath || 0;
+
+  // NEW: read book & category from query
+  const bookFromQuery = (searchParams.get("book") || "").trim();
+  const categoryFromQuery = (searchParams.get("category") || "").trim();
 
   useEffect(() => {
     if (qrList.length > 0 || initialCount <= 0) return;
@@ -45,17 +49,29 @@ export default function Page() {
     const items = Array.from({ length: initialCount }).map(() => {
       const id = randomId();
       const createdAt = new Date().toISOString();
+      const meta = {
+        name: `QR-${id.slice(0, 4)}`,
+        notes: "",
+        book: bookFromQuery || "",
+        category: categoryFromQuery || "",
+      };
+      const payloadObj = {
+        id,
+        url: "",
+        meta,
+        createdAt,
+      };
       return {
         id,
-        name: `QR-${id.slice(0, 4)}`,
+        name: meta.name,
         url: "",
         notes: "",
         createdAt,
-        payload: JSON.stringify({ id, url: "", meta: {}, createdAt }),
+        payload: JSON.stringify(payloadObj),
       };
     });
     setQrList(items);
-  }, [initialCount, qrList.length]);
+  }, [initialCount, qrList.length, bookFromQuery, categoryFromQuery]);
 
   const openEdit = (record) => {
     setEditing(record);
@@ -69,13 +85,24 @@ export default function Page() {
 
   const saveEdit = () => {
     form.validateFields().then((values) => {
+      if (!editing) return;
       const updated = { ...editing, ...values };
-      updated.payload = JSON.stringify({
+
+      // keep book/category in meta
+      const old = JSON.parse(editing.payload || "{}");
+      const payloadObj = {
         id: updated.id,
         url: updated.url || "",
-        meta: { name: updated.name || "", notes: updated.notes || "" },
+        meta: {
+          name: updated.name || "",
+          notes: updated.notes || "",
+          book: bookFromQuery || old?.meta?.book || "",
+          category: categoryFromQuery || old?.meta?.category || "",
+        },
         createdAt: updated.createdAt,
-      });
+      };
+
+      updated.payload = JSON.stringify(payloadObj);
 
       setQrList((prev) => prev.map((q) => (q.id === updated.id ? updated : q)));
       setEditOpen(false);
@@ -96,7 +123,6 @@ export default function Page() {
   };
 
   const downloadQRCode = (record) => {
-    // يحوّل SVG المعروض إلى PNG ويحمّله كصورة واحدة
     const svg = document.getElementById(`qr-code-${record.id}`);
     if (!svg) {
       message.warning("تعذر إيجاد العنصر في الصفحة. افتح الصف الذي يحتوي على هذا الكود.");
@@ -110,31 +136,28 @@ export default function Page() {
     img.onload = () => {
       canvas.width = img.width;
       canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-
+      ctx?.drawImage(img, 0, 0);
       const pngFile = canvas.toDataURL("image/png");
       const downloadLink = document.createElement("a");
       const fileName = `${record.name || "qr-code"}.png`;
-
       downloadLink.download = fileName;
       downloadLink.href = pngFile;
       downloadLink.click();
     };
 
     img.src =
-      "data:image/svg+xml;base64," +
-      btoa(unescape(encodeURIComponent(svgData)));
+      "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
     message.success("جاري تحميل QR Code");
   };
 
-  // ---------- Helpers: توليد QR PNG بدون الاعتماد على عناصر الـ DOM ----------
+  // Inline generator for PNG without DOM
   const toPngDataUrl = async (value, { scale = 8, margin = 1 } = {}) => {
     try {
       const { default: QRCodeLib } = await import("qrcode");
       return await QRCodeLib.toDataURL(value, {
         errorCorrectionLevel: "M",
         margin,
-        scale, // scale*~37px تقريبا، غيّرها حسب ما تحب
+        scale,
       });
     } catch (e) {
       console.error(e);
@@ -143,7 +166,6 @@ export default function Page() {
     }
   };
 
-  // ---------- 1) تحميل الكل كصور مستقلة ----------
   const downloadAllAsImages = async () => {
     if (qrList.length === 0) {
       message.warning("لا توجد رموز للتحميل");
@@ -154,7 +176,6 @@ export default function Page() {
     try {
       for (let i = 0; i < qrList.length; i++) {
         const record = qrList[i];
-        // استخدم الـ payload مباشرة (لا تعتمد على وجود الـ SVG في الصفحة)
         const dataUrl = await toPngDataUrl(record.payload, { scale: 10, margin: 1 });
         const a = document.createElement("a");
         a.href = dataUrl;
@@ -162,17 +183,14 @@ export default function Page() {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        // فاصل صغير لتجنّب منع المتصفح للتحميلات المتعددة
-        // eslint-disable-next-line no-await-in-loop
         await new Promise((r) => setTimeout(r, 200));
       }
       message.success("تم تحميل جميع الصور بنجاح");
     } catch {
-      // رسائل الخطأ عرضناها أعلاه
+      /* handled above */
     }
   };
 
-  // ---------- 2) تحميل الكل داخل ملف PDF واحد ----------
   const downloadAllAsPDF = async () => {
     if (qrList.length === 0) {
       message.warning("لا توجد رموز للتحميل");
@@ -182,14 +200,12 @@ export default function Page() {
 
     try {
       const { jsPDF } = await import("jspdf");
-      // A4: 210 x 297 mm
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pageW = 210;
       const pageH = 297;
 
-      // حجم الصورة داخل الصفحة
-      const imgW = 120; // mm
-      const imgH = 120; // mm
+      const imgW = 120;
+      const imgH = 120;
       const x = (pageW - imgW) / 2;
       const titleY = 18;
       const imgY = 35;
@@ -199,20 +215,31 @@ export default function Page() {
         const record = qrList[i];
         const dataUrl = await toPngDataUrl(record.payload, { scale: 8, margin: 1 });
 
-        // عنوان (الاسم)
+        // Parse meta to print book/category
+        let metaBook = "";
+        let metaCategory = "";
+        try {
+          const parsed = JSON.parse(record.payload || "{}");
+          metaBook = parsed?.meta?.book || "";
+          metaCategory = parsed?.meta?.category || "";
+        } catch {}
+
         pdf.setFontSize(14);
         pdf.text(record.name || `QR ${record.id}`, pageW / 2, titleY, { align: "center" });
 
-        // الصورة
         pdf.addImage(dataUrl, "PNG", x, imgY, imgW, imgH);
 
-        // بيانات إضافية (ID / URL)
         pdf.setFontSize(10);
         pdf.text(`ID: ${record.id}`, pageW / 2, metaY, { align: "center" });
+
+        const bookLine = `Book: ${metaBook || "-"}`;
+        const catLine = `Category: ${metaCategory || "-"}`;
+        pdf.text(bookLine, pageW / 2, metaY + 6, { align: "center" });
+        pdf.text(catLine, pageW / 2, metaY + 12, { align: "center" });
+
         if (record.url) {
-          // قص النص لو طويل
           const urlText = record.url.length > 60 ? record.url.slice(0, 60) + "…" : record.url;
-          pdf.text(urlText, pageW / 2, metaY + 6, { align: "center" });
+          pdf.text(urlText, pageW / 2, metaY + 18, { align: "center" });
         }
 
         if (i < qrList.length - 1) pdf.addPage();
@@ -245,6 +272,17 @@ export default function Page() {
       dataIndex: "url",
       key: "url",
       render: (v) => v || "-",
+    },
+    // اختياري: إظهار الكتاب/القسم كأعمدة ثابتة من الـ query
+    {
+      title: "الكتاب",
+      key: "book",
+      render: () => bookFromQuery || "-",
+    },
+    {
+      title: "القسم",
+      key: "category",
+      render: () => categoryFromQuery || "-",
     },
     {
       title: "QR",
@@ -296,22 +334,45 @@ export default function Page() {
     <PageLayout>
       <div style={{ dir: "rtl" }}>
         <BreadcrumbsShowcase variant="pill" items={breadcrumbs} />
-        <PagesHeader title={"إدارة QR Code "} subtitle={"نظّم وأدر QR Code "} />
 
-        <div className="flex justify-between items-center mb-4">
-          <div className="text-sm text-gray-600">
-            عدد الأكواد المُتولَّدة من العنوان: <b>{initialCount || 0}</b>
+        <PagesHeader
+          title={"إدارة QR Code "}
+          subtitle={
+            bookFromQuery || categoryFromQuery
+              ? `الكتاب: ${bookFromQuery || "-"} — القسم: ${categoryFromQuery || "-"}`
+              : "نظّم وأدر QR Code "
+          }
+        />
+
+        {/* شريط معلومات سريع */}
+        <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
+          <div className="text-sm text-gray-700">
+            <span className="mr-3">
+              <b>الكتاب:</b> {bookFromQuery || "-"}
+            </span>
+            <span className="mr-3">
+              <b>القسم:</b> {categoryFromQuery || "-"}
+            </span>
+            <span className="mr-3">
+              <b>عدد الأكواد المُتولَّدة:</b> {initialCount || 0}
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* خيار PDF واحد */}
-            <Button onClick={downloadAllAsPDF} className="flex items-center gap-2" disabled={qrList.length === 0}>
+            <Button
+              onClick={downloadAllAsPDF}
+              className="flex items-center gap-2"
+              disabled={qrList.length === 0}
+            >
               <Download size={16} />
               تحميل الكل (PDF واحد)
             </Button>
 
-            {/* خيار صور مستقلة */}
-            <Button onClick={downloadAllAsImages} className="flex items-center gap-2" disabled={qrList.length === 0}>
+            <Button
+              onClick={downloadAllAsImages}
+              className="flex items-center gap-2"
+              disabled={qrList.length === 0}
+            >
               <Download size={16} />
               تحميل الكل (صور مستقلة)
             </Button>
@@ -325,7 +386,9 @@ export default function Page() {
           pagination={pagination}
           className="mt-4"
           rowClassName="hover:bg-gray-50"
-          onChange={(pag) => setPagination({ current: pag.current, pageSize: pag.pageSize })}
+          onChange={(pag) =>
+            setPagination({ current: pag.current, pageSize: pag.pageSize })
+          }
         />
 
         {/* Modal التعديل */}
@@ -388,7 +451,27 @@ export default function Page() {
             <div className="flex flex-col items-center gap-3">
               <QRCode value={preview.payload} size={256} />
               <div className="text-sm font-medium">الاسم: {preview.name || "غير محدد"}</div>
-              <div className="text-xs text-gray-500 font-mono break-all">الكود: {preview.id}</div>
+              <div className="text-xs text-gray-500 font-mono break-all">
+                الكود: {preview.id}
+              </div>
+
+              {/* عرض الكتاب والقسم من الـ payload */}
+              {(() => {
+                try {
+                  const p = JSON.parse(preview.payload || "{}");
+                  const book = p?.meta?.book || "";
+                  const category = p?.meta?.category || "";
+                  return (
+                    <div className="text-xs text-gray-700">
+                      <div>الكتاب: {book || "-"}</div>
+                      <div>القسم: {category || "-"}</div>
+                    </div>
+                  );
+                } catch {
+                  return null;
+                }
+              })()}
+
               {preview.url ? (
                 <a
                   href={preview.url}
