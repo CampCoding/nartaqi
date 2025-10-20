@@ -1,10 +1,33 @@
 /* import "mathlive/core.css";
 import "mathlive/static.css"; */
+@import 'mathlive/static.css';
+@import 'mathlive/fonts.css';
+
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+
+
+:where(.MLK__rows > .MLK__row div).vk-log {
+  background: linear-gradient(180deg, #14532d, #166534);
+  color: #fff;
+  width: 210px !important;
+  border-color: #064e3b;
+}
+:where(.MLK__rows > .MLK__row div).vk-log:hover,
+:where(.MLK__rows > .MLK__row div).vk-log.is-active,
+:where(.MLK__rows > .MLK__row div).vk-log.is-pressed {
+  background: linear-gradient(180deg, #166534, #15803d);
+  color: #fff;
+  border-color: #065f46;
+}
+
+:where(.MLK__rows > .MLK__row div).vk-log .ML__latex,
+:where(.MLK__rows > .MLK__row div).vk-log span {
+  font-weight: 600;
+}
 
 
 /* RTL افتراضي داخل هذا المحرر */

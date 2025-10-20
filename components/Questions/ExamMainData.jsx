@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import dynamic from "next/dynamic";
 import { Segmented, Select, Tag } from "antd";
 import {
   Plus as PlusIcon,
@@ -28,177 +27,12 @@ import EssayQuestions from "./EssayQuestions";
 import CompleteQuestions from "./CompleteQuestions";
 import DisplayQuestions from "./DisplayQuestions";
 import QuestionTypeSelector from "./QuestionTypeSelector";
-import McqSharedPassageEditor from "./McqQuestions";
+// import McqSharedPassageEditor from "./McqQuestions";
 import { colorMap, exam_types, mock_exam_section_Data, questionTypes } from "./utils";
 
 // Shared Quill config
-import { useQuillConfig } from "@/utils/quillConfig";
-
-// SSR-safe editor
-const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
-
-/* Helpers */
-const readFileAsDataURL = (file) =>
-  new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(String(r.result || ""));
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
-
-/* ---- LabeledEditor (with image button, color palette, sub/sup) ---- */
-const LabeledEditor = ({
-  label,
-  hint,
-  value,
-  onChange,
-  placeholder = "اكتب هنا…",
-  className = "",
-  editorMinH = 140,
-  allowImages = true,
-  maxImageSizeMB = 3,
-  acceptedImageTypes = "image/png,image/jpeg,image/webp,image/gif",
-  imageSize = { width: 320, height: 200, objectFit: "contain" },
-}) => {
-  const quillRef = useRef(null);
-  const hiddenInputRef = useRef(null);
-
-  const openFileDialog = useCallback(() => hiddenInputRef.current?.click(), []);
-  const { modules, formats } = useQuillConfig({
-    allowImages,
-    onImageRequest: openFileDialog,
-  });
-
-  const applyFixedSizeToAllImages = useCallback(() => {
-    const quill = quillRef.current?.getEditor?.();
-    const root = quill?.root;
-    if (!root) return;
-    const imgs = root.querySelectorAll("img");
-    imgs.forEach((img) => {
-      img.style.width = `${imageSize.width}px`;
-      img.style.height = `${imageSize.height}px`;
-      img.style.objectFit = imageSize.objectFit || "contain";
-      img.style.display = "inline-block";
-    });
-  }, [imageSize.height, imageSize.objectFit, imageSize.width]);
-
-  const insertImage = useCallback(
-    async (file) => {
-      if (!file || !file.type?.startsWith("image/")) return;
-      const sizeMB = file.size / (1024 * 1024);
-      if (sizeMB > (maxImageSizeMB || 3)) {
-        alert(`حجم الصورة ${sizeMB.toFixed(1)}MB — الحد الأقصى ${maxImageSizeMB}MB`);
-        return;
-      }
-      const dataUrl = await readFileAsDataURL(file);
-      const quill = quillRef.current?.getEditor?.();
-      if (!quill) return;
-      const range = quill.getSelection(true) || { index: quill.getLength(), length: 0 };
-      quill.insertEmbed(range.index, "image", dataUrl, "user");
-      quill.setSelection(range.index + 1, 0, "user");
-
-      requestAnimationFrame(() => {
-        const root = quill.root;
-        try {
-          const img = root.querySelector(`img[src="${CSS.escape(dataUrl)}"]`);
-          if (img) {
-            img.style.width = `${imageSize.width}px`;
-            img.style.height = `${imageSize.height}px`;
-            img.style.objectFit = imageSize.objectFit || "contain";
-            img.style.display = "inline-block";
-          } else {
-            applyFixedSizeToAllImages();
-          }
-        } catch {
-          applyFixedSizeToAllImages();
-        }
-      });
-    },
-    [applyFixedSizeToAllImages, imageSize.height, imageSize.objectFit, imageSize.width, maxImageSizeMB]
-  );
-
-  const onPickFile = useCallback(
-    async (e) => {
-      const f = e.target.files?.[0];
-      if (f) await insertImage(f);
-      e.target.value = "";
-    },
-    [insertImage]
-  );
-
-  useEffect(() => {
-    const quill = quillRef.current?.getEditor?.();
-    if (!quill) return;
-    const handler = () => requestAnimationFrame(applyFixedSizeToAllImages);
-    quill.on("text-change", handler);
-    requestAnimationFrame(applyFixedSizeToAllImages);
-    return () => quill.off("text-change", handler);
-  }, [applyFixedSizeToAllImages]);
-
-  return (
-    <div className={`space-y-2 ${className}`}>
-      <div className="flex items-center justify-between">
-        <label className="block text-xs font-semibold text-gray-700">{label}</label>
-        <div className="flex items-center gap-2">
-          {hint ? <span className="text-[11px] text-gray-400">{hint}</span> : null}
-          {allowImages && (
-            <>
-              <button
-                type="button"
-                onClick={openFileDialog}
-                className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-lg border border-gray-200 hover:bg-gray-50"
-                title="أدرج صورة"
-              >
-                <ImageIcon className="w-4 h-4" />
-                أدرج صورة
-              </button>
-              <input
-                ref={hiddenInputRef}
-                type="file"
-                accept={acceptedImageTypes}
-                onChange={onPickFile}
-                className="hidden"
-              />
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
-        <ReactQuill
-          ref={quillRef}
-          value={value}
-          onChange={onChange}
-          modules={modules}
-          formats={formats}
-          placeholder={placeholder}
-        />
-      </div>
-
-      <style jsx global>{`
-        [dir="rtl"] .ql-editor {
-          direction: rtl;
-          text-align: right;
-          min-height: ${editorMinH}px;
-        }
-        .ql-toolbar.ql-snow {
-          border: 0;
-          border-bottom: 1px solid #e5e7eb;
-          background: #fafafa;
-        }
-        .ql-container.ql-snow {
-          border: 0;
-        }
-        .ql-editor img {
-          width: ${imageSize.width}px !important;
-          height: ${imageSize.height}px !important;
-          object-fit: ${imageSize.objectFit};
-          display: inline-block;
-        }
-      `}</style>
-    </div>
-  );
-};
+import McqSharedPassageEditor from "./McqSharedPassageEditor/McqSharedPassageEditor";
+import LabeledEditor from "./McqSharedPassageEditor/parts/LabeledEditor";
 
 /* ===================== Main: ExamMainData ===================== */
 export default function ExamMainData({ examData: editExamData }) {

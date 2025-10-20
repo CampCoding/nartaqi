@@ -1,461 +1,12 @@
-// components/Questions/McqSharedPassageEditor.jsx
 "use client";
 
-import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import dynamic from "next/dynamic";
-import { Plus as PlusIcon, Trash2, Paperclip, Image as ImageIcon } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Plus as PlusIcon, Trash2 } from "lucide-react";
+import MathFieldInput from "./parts/MathFieldInput";
+import LabeledEditor, { FIXED_IMG } from "./parts/LabeledEditor";
+import AttachmentPicker from "./parts/AttachmentPicker";
 
-// Quill (client only)
-const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
-
-/* ================= Quill config ================= */
-function useQuillConfig({ allowImages = true, onImageRequest } = {}) {
-  const modules = useMemo(() => {
-    const toolbar = [
-      [{ header: [1, 2, 3, false] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ script: "sub" }, { script: "super" }],
-      [{ list: "ordered" }, { list: "bullet" }],
-      [{ align: [] }, { direction: "rtl" }],
-      [{ color: [] }, { background: [] }],
-      ["link", "blockquote", "code-block", "clean"],
-    ];
-    if (allowImages) toolbar.push(["image"]);
-
-    return {
-      toolbar: allowImages
-        ? {
-            container: toolbar,
-            handlers: { image: () => typeof onImageRequest === "function" && onImageRequest() },
-          }
-        : toolbar,
-      clipboard: { matchVisual: false },
-      history: { delay: 500, maxStack: 200, userOnly: true },
-    };
-  }, [allowImages, onImageRequest]);
-
-  const formats = useMemo(
-    () => [
-      "header",
-      "bold",
-      "italic",
-      "underline",
-      "strike",
-      "script",
-      "list",
-      "bullet",
-      "align",
-      "direction",
-      "color",
-      "background",
-      "link",
-      "blockquote",
-      "code-block",
-      ...(allowImages ? ["image"] : []),
-    ],
-    [allowImages]
-  );
-
-  return { modules, formats };
-}
-
-/* ============== ثابت عام لحجم الصور داخل المحررات ============== */
-const FIXED_IMG = { width: 320, height: 200, objectFit: "contain" };
-
-/* ============== file -> dataURL (fallback uploader) ============== */
-async function fileToDataUrl(file) {
-  if (!file) return "";
-  const reader = new FileReader();
-  return new Promise((resolve, reject) => {
-    reader.onerror = reject;
-    reader.onload = () => resolve(String(reader.result || ""));
-    reader.readAsDataURL(file);
-  });
-}
-
-/* ================= MathLive Arabic/RTL setup (JS only) ================= */
-import "mathlive"; // JS only (CSS must be imported globally in app/globals.css)
-
-/** run once per app load */
-function useMathliveArabicSetupOnce() {
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    if (window.__ML_AR_SETUP_DONE__) return;
-    window.__ML_AR_SETUP_DONE__ = true;
-
-    try {
-      if (document?.documentElement) {
-        document.documentElement.setAttribute("dir", "rtl");
-        document.documentElement.setAttribute("lang", "ar");
-      }
-
-      if (window.MathfieldElement) {
-        window.MathfieldElement.locale = "ar";
-        window.MathfieldElement.decimalSeparator = ",";
-        window.MathfieldElement.fractionNavigationOrder = "denominator-numerator";
-        window.MathfieldElement.strings = {
-          ...window.MathfieldElement.strings,
-          ar: {
-            "tooltip.undo": "تراجع",
-            "tooltip.redo": "إعادة",
-            "tooltip.copy": "نسخ",
-            "tooltip.paste": "لصق",
-            "tooltip.cut": "قص",
-            "tooltip.selectAll": "تحديد الكل",
-            "tooltip.virtualKeyboard": "لوحة المفاتيح",
-            "tooltip.hideKeypad": "إخفاء اللوحة",
-            "menu.settings": "الإعدادات",
-            "menu.math": "رياضيات",
-            "menu.text": "نص",
-          },
-        };
-      }
-
-      if (window.mathVirtualKeyboard) {
-        try {
-          window.mathVirtualKeyboard.setKeycap("[.]", { label: "،", insert: "{,}" });
-          window.mathVirtualKeyboard.setKeycap("[,]", { label: "٬", insert: "{,}" });
-        } catch {}
-
-        window.mathVirtualKeyboard.layouts = [
-          {
-            label: "١٢٣",
-            id: "numeric-ar",
-            rows: [
-              ["١", "٢", "٣", "+", "−", "×", "÷", "="],
-              ["٤", "٥", "٦", "(", ")", "[", "]", "%"],
-              ["٧", "٨", "٩", "،", ".", ",", "^"],
-              ["٠", "[backspace]", "[hide-keyboard]"],
-            ],
-          },
-          {
-            label: "رموز",
-            id: "symbols-ar",
-            rows: [
-              [
-                { latex: "+", label: "جمع" },
-                { latex: "−", label: "طرح" },
-                { latex: "×", label: "ضرب" },
-                { latex: "÷", label: "قسمة" },
-                { latex: "=", label: "يساوي" },
-                { latex: "≈", label: "تقريب" },
-                { latex: "≠", label: "لا يساوي" },
-              ],
-              [
-                { latex: "(", label: "(" },
-                { latex: ")", label: ")" },
-                { latex: "[", label: "[" },
-                { latex: "]", label: "]" },
-                { latex: "{", label: "{" },
-                { latex: "}", label: "}" },
-              ],
-              [
-                { latex: "\\pi", label: "π" },
-                { latex: "\\sqrt{#0}", label: "جذر", insert: "\\sqrt{#0}" },
-                { latex: "\\frac{#0}{#?}", label: "كسر", insert: "\\frac{#0}{#?}" },
-                { latex: "\\int", label: "تكامل" },
-                { latex: "\\sum", label: "مجموع" },
-                { latex: "\\infty", label: "مالانهاية" },
-              ],
-              [
-                { latex: "\\log", label: "لوغاريتم", class: "vk-log" },
-                { latex: "\\ln", label: "لوغاريتم طبيعي", class: "vk-log" },
-                {
-                  latex: "\\log_{#0}{#?}",
-                  label: "لوغاريتم أساس",
-                  insert: "\\log_{#0}{#?}",
-                  class: "vk-log",
-                },
-                { latex: "e^{#0}", label: "س^رقم", insert: "e^{#0}", class: "vk-log" },
-              ],
-              [
-                {
-                  latex: "ax^{2}+bx+c=0",
-                  label: "معادلة تربيعية",
-                  insert: "ax^{2}+bx+c=0",
-                  class: "vk-log",
-                },
-                {
-                  latex: "y=mx+b",
-                  label: "معادلة خطية",
-                  insert: "y=mx+b",
-                  class: "vk-log",
-                },
-              ],
-              ["[space]", "[backspace]", "[hide-keyboard]"],
-            ],
-          },
-          {
-            label: "AR",
-            id: "arabic",
-            rows: [
-              ["ض", "ص", "ث", "ق", "ف", "غ", "ع", "ه", "خ", "ح", "ج", "د"],
-              ["ش", "س", "ي", "ب", "ل", "ا", "ت", "ن", "م", "ك", "ط"],
-              ["ئ", "ء", "ؤ", "ر", "لا", "ى", "ة", "و", "ز", "ظ"],
-              ["[hide-keyboard]", "[space]", "[backspace]"],
-            ],
-          },
-        ];
-      }
-    } catch {}
-  }, []);
-}
-
-/** Simple wrapper for the <math-field> web component */
-function MathFieldInput({
-  value = "",
-  onChange,
-  className = "",
-  placeholder = "أدخل المعادلة (LaTeX)…",
-  options = { virtualKeyboardMode: "onfocus" },
-}) {
-  useMathliveArabicSetupOnce();
-
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    el.setAttribute("dir", "rtl");
-    el.style.textAlign = "right";
-    if (placeholder) el.setAttribute("aria-label", placeholder);
-    if (options?.virtualKeyboardMode) el.setAttribute("virtual-keyboard-mode", options.virtualKeyboardMode);
-
-    const handleInput = (e) => onChange?.(e?.target?.value ?? "");
-    const handleFocus = () => {
-      try {
-        el.executeCommand?.("showVirtualKeyboard");
-      } catch {}
-    };
-
-    el.addEventListener("input", handleInput);
-    el.addEventListener("focus", handleFocus);
-    return () => {
-      el.removeEventListener("input", handleInput);
-      el.removeEventListener("focus", handleFocus);
-    };
-  }, [onChange, placeholder, options?.virtualKeyboardMode]);
-
-  // keep latex value synced
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (String(el.value || "") !== String(value || "")) {
-      el.value = value || "";
-    }
-  }, [value]);
-
-  return (
-    <math-field
-      ref={ref}
-      dir="rtl"
-      style={{ fontSize: "14px", minHeight: "48px", width: "100%", textAlign: "right" }}
-      class={className}
-    />
-  );
-}
-
-/* ============== LabeledEditor (Quill) ============== */
-function LabeledEditor({
-  label,
-  hint,
-  value,
-  onChange,
-  placeholder = "اكتب هنا…",
-  editorMinH = 140,
-  uploadImage,
-  imageSize = FIXED_IMG,
-}) {
-  const quillRef = useRef(null);
-  const fileRef = useRef(null);
-
-  const openPicker = useCallback(() => fileRef.current?.click(), []);
-  const { modules, formats } = useQuillConfig({ allowImages: true, onImageRequest: openPicker });
-
-  const applyFixedSizeToAllImages = useCallback(() => {
-    const quill = quillRef.current?.getEditor?.();
-    const root = quill?.root;
-    if (!root) return;
-    const imgs = root.querySelectorAll("img");
-    imgs.forEach((img) => {
-      img.style.width = `${imageSize.width}px`;
-      img.style.height = `${imageSize.height}px`;
-      img.style.objectFit = imageSize.objectFit || "contain";
-      img.style.display = "inline-block";
-    });
-  }, [imageSize.height, imageSize.objectFit, imageSize.width]);
-
-  const handleFiles = useCallback(
-    async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      try {
-        const url = (await (uploadImage ? uploadImage(file) : fileToDataUrl(file))) || "";
-        const editor = quillRef.current?.getEditor?.();
-        if (!editor || !url) return;
-        const range = editor.getSelection(true) || { index: editor.getLength(), length: 0 };
-        editor.insertEmbed(range.index, "image", url, "user");
-        editor.setSelection(range.index + 1, 0);
-
-        requestAnimationFrame(() => {
-          const root = editor.root;
-          try {
-            const img = root.querySelector(`img[src="${CSS.escape(url)}"]`);
-            if (img) {
-              img.style.width = `${imageSize.width}px`;
-              img.style.height = `${imageSize.height}px`;
-              img.style.objectFit = imageSize.objectFit || "contain";
-              img.style.display = "inline-block";
-            } else {
-              applyFixedSizeToAllImages();
-            }
-          } catch {
-            applyFixedSizeToAllImages();
-          }
-        });
-      } finally {
-        if (e?.target) e.target.value = "";
-      }
-    },
-    [uploadImage, imageSize.height, imageSize.objectFit, imageSize.width, applyFixedSizeToAllImages]
-  );
-
-  useEffect(() => {
-    const quill = quillRef.current?.getEditor?.();
-    if (!quill) return;
-    const handler = () => requestAnimationFrame(applyFixedSizeToAllImages);
-    quill.on("text-change", handler);
-    requestAnimationFrame(applyFixedSizeToAllImages);
-    return () => quill.off("text-change", handler);
-  }, [applyFixedSizeToAllImages]);
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <label className="block text-xs font-semibold text-gray-700">{label}</label>
-        {hint ? (
-          <span className="text-[11px] text-gray-400">{hint}</span>
-        ) : (
-          <button
-            type="button"
-            onClick={openPicker}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs hover:bg-gray-50"
-          >
-            <ImageIcon className="h-4 w-4" /> أدرج صورة
-          </button>
-        )}
-      </div>
-
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20">
-        <ReactQuill
-          ref={quillRef}
-          value={value}
-          onChange={onChange}
-          modules={modules}
-          formats={formats}
-          placeholder={placeholder}
-        />
-      </div>
-
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFiles} />
-
-      <style jsx global>{`
-        [dir="rtl"] .ql-editor {
-          direction: rtl;
-          text-align: right;
-          min-height: ${editorMinH}px;
-        }
-        .ql-toolbar.ql-snow {
-          border: 0;
-          border-bottom: 1px solid #e5e7eb;
-          background: #fafafa;
-        }
-        .ql-container.ql-snow {
-          border: 0;
-        }
-        .ql-editor img {
-          width: ${imageSize.width}px !important;
-          height: ${imageSize.height}px !important;
-          object-fit: ${imageSize.objectFit};
-          display: inline-block;
-        }
-      `}</style>
-    </div>
-  );
-}
-
-/* ============== مُلتقط ملفات عام (صور + PDF) ============== */
-function AttachmentPicker({
-  label = "مرفقات",
-  files = [],
-  onAddFiles,
-  onRemoveFile,
-  accept = "application/pdf,image/*",
-  multiple = true,
-}) {
-  const inputRef = useRef(null);
-  const handlePick = () => inputRef.current?.click();
-  const handleChange = (e) => {
-    const list = Array.from(e.target.files || []);
-    if (list.length && onAddFiles) onAddFiles(list);
-    e.target.value = "";
-  };
-  const isImage = (f) => (f?.type || "").startsWith("image/");
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <label className="block text-xs font-semibold text-gray-700">{label}</label>
-        <button
-          type="button"
-          onClick={handlePick}
-          className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs shadow-sm hover:bg-gray-50"
-        >
-          <Paperclip className="h-4 w-4" /> اختر ملفات
-        </button>
-      </div>
-
-      <input
-        ref={inputRef}
-        type="file"
-        multiple={multiple}
-        accept={accept}
-        onChange={handleChange}
-        className="hidden"
-      />
-
-      {!!files?.length && (
-        <div className="flex flex-wrap gap-2">
-          {files.map((f, idx) => (
-            <div key={idx} className="group relative overflow-hidden rounded-lg border bg-white p-2">
-              {isImage(f) ? (
-                <img src={URL.createObjectURL(f)} alt={f.name} className="h-20 w-28 rounded-md object-cover" />
-              ) : (
-                <div className="flex h-20 w-28 items-center justify-center rounded-md bg-gray-100 p-2 text-center text-[11px] text-gray-600">
-                  {f.type === "application/pdf" ? "PDF" : "ملف"}
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={() => onRemoveFile?.(idx)}
-                className="absolute right-1 top-1 hidden rounded bg-red-600 px-1.5 py-0.5 text-[10px] text-white group-hover:block"
-              >
-                حذف
-              </button>
-              <div className="mt-1 w-28 truncate text-[11px] text-gray-700" title={f.name}>
-                {f.name}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      {!files?.length && <p className="text-xs text-gray-500">مسموح: صور وملفات PDF</p>}
-    </div>
-  );
-}
-
-/* ============== McqSharedPassageEditor (export) ============== */
+/** Main editor */
 export default function McqSharedPassageEditor({
   mcqSubType = "passage", // "passage" | "chemical" | "math"
   initialData = [],
@@ -464,7 +15,6 @@ export default function McqSharedPassageEditor({
 }) {
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
-  // خيار الإجابة: latex + explanation + images[]
   const toOptionObject = (opt) => {
     if (typeof opt === "string") return { latex: "", explanation: "", images: [] };
     if (opt && typeof opt === "object")
@@ -522,7 +72,7 @@ export default function McqSharedPassageEditor({
     onPassagesChange?.(passages);
   }, [passages, onPassagesChange]);
 
-  /* -------- Passage ops -------- */
+  // ---- passage ops ----
   const addPassage = () => setPassages((ps) => [...ps, createPassage()]);
   const removePassage = (pId) =>
     setPassages((ps) => (ps.length > 1 ? ps.filter((p) => p.id !== pId) : ps));
@@ -539,7 +89,7 @@ export default function McqSharedPassageEditor({
       )
     );
 
-  /* -------- Question ops -------- */
+  // ---- question ops ----
   const addQuestion = (pId) =>
     setPassages((ps) => ps.map((p) => (p.id === pId ? { ...p, questions: [...p.questions, createQuestion()] } : p)));
   const removeQuestion = (pId, qId) =>
@@ -555,7 +105,7 @@ export default function McqSharedPassageEditor({
       ps.map((p) => (p.id === pId ? { ...p, questions: p.questions.map((q) => (q.id === qId ? { ...q, text } : q)) } : p))
     );
 
-  /* -------- Options ops -------- */
+  // ---- options ops ----
   const addOption = (pId, qId) =>
     setPassages((ps) =>
       ps.map((p) =>
@@ -569,7 +119,6 @@ export default function McqSharedPassageEditor({
           : p
       )
     );
-
   const removeOption = (pId, qId, optIndex) =>
     setPassages((ps) =>
       ps.map((p) => {
@@ -588,7 +137,6 @@ export default function McqSharedPassageEditor({
         };
       })
     );
-
   const updateOptionField = (pId, qId, optIndex, field, value) =>
     setPassages((ps) =>
       ps.map((p) =>
@@ -604,7 +152,6 @@ export default function McqSharedPassageEditor({
           : p
       )
     );
-
   const addOptionImages = (pId, qId, optIndex, files) =>
     setPassages((ps) =>
       ps.map((p) =>
@@ -622,7 +169,6 @@ export default function McqSharedPassageEditor({
           : p
       )
     );
-
   const removeOptionImage = (pId, qId, optIndex, imgIdx) =>
     setPassages((ps) =>
       ps.map((p) =>
@@ -640,7 +186,6 @@ export default function McqSharedPassageEditor({
           : p
       )
     );
-
   const setCorrectIndex = (pId, qId, idx) =>
     setPassages((ps) =>
       ps.map((p) =>
@@ -698,7 +243,7 @@ export default function McqSharedPassageEditor({
               </button>
             </div>
 
-            {/* Passage content */}
+            {/* content */}
             <div className="space-y-4 p-4">
               {isChemical ? (
                 <>
@@ -717,10 +262,11 @@ export default function McqSharedPassageEditor({
                   <MathFieldInput
                     value={p.content}
                     onChange={(latex) => updatePassageContent(p.id, latex)}
-                    className="w-full"
+                    className="!w-full border border-gray-200"
                     options={{ virtualKeyboardMode: "onfocus" }}
                     placeholder="أدخل المعادلة هنا…"
                   />
+                  
                   <AttachmentPicker
                     label="مرفقات المعادلة (صور / PDF)"
                     files={p.attachments || []}
@@ -742,7 +288,7 @@ export default function McqSharedPassageEditor({
               )}
             </div>
 
-            {/* Questions */}
+            {/* questions */}
             <div className="p-4 pt-0">
               {isPassage && (
                 <div className="mb-3 flex items-center justify-between">
@@ -785,7 +331,6 @@ export default function McqSharedPassageEditor({
                       />
                     )}
 
-                    {/* الخيارات */}
                     <div className="mt-4 space-y-3">
                       <div className="text-xs font-semibold text-gray-700">
                         الاختيارات{isMath ? " (تُكتب كمعادلات) + مرفقات صور/PDF" : ""}
@@ -834,7 +379,6 @@ export default function McqSharedPassageEditor({
                               )}
                             </div>
 
-                            {/* محتوى الاختيار */}
                             {isMath ? (
                               <>
                                 <div className="space-y-2">
@@ -848,7 +392,6 @@ export default function McqSharedPassageEditor({
                                   />
                                 </div>
 
-                                {/* مرفقات الاختيار: صور + PDF */}
                                 <AttachmentPicker
                                   label="مرفقات الاختيار (صور / PDF)"
                                   files={opt.images || []}
@@ -869,7 +412,6 @@ export default function McqSharedPassageEditor({
                               />
                             )}
 
-                            {/* شرح الاختيار */}
                             <LabeledEditor
                               label="شرح الاختيار (لماذا هو صحيح/خاطئ)"
                               value={opt.explanation}

@@ -34,6 +34,7 @@ import {
 } from "@ant-design/icons";
 import { useQuillConfig } from "@/utils/quillConfig"; // ← uses your shared config
 import "react-quill-new/dist/quill.snow.css";
+import MathFieldInput from "../../../../components/Questions/McqSharedPassageEditor/parts/MathFieldInput";
 // import "mathlive/core.css";
 // import "mathlive/static.css";
 
@@ -262,174 +263,174 @@ const EnhancedQuillEditor = ({
 };
 
 /* ================= MathLive ================= */
-function MathFieldInput({
-  value = "",
-  onChange,
-  className = "",
-  options = { virtualKeyboardMode: "onfocus" },
-  placeholder = "أدخل المعادلة …",
-  arabic = true,
-  readOnly = false,
-}) {
-  const hostRef = useRef(null);
-  const mfRef = useRef(null);
+// function MathFieldInput({
+//   value = "",
+//   onChange,
+//   className = "",
+//   options = { virtualKeyboardMode: "onfocus" },
+//   placeholder = "أدخل المعادلة …",
+//   arabic = true,
+//   readOnly = false,
+// }) {
+//   const hostRef = useRef(null);
+//   const mfRef = useRef(null);
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      if (typeof window === "undefined") return;
+//   useEffect(() => {
+//     let mounted = true;
+//     (async () => {
+//       if (typeof window === "undefined") return;
 
-      const mathlive = await import("mathlive");
-      const MathfieldElement =
-        mathlive.MathfieldElement || window.MathfieldElement;
-      const setOptions = mathlive.setOptions || MathfieldElement?.setOptions;
+//       const mathlive = await import("mathlive");
+//       const MathfieldElement =
+//         mathlive.MathfieldElement || window.MathfieldElement;
+//       const setOptions = mathlive.setOptions || MathfieldElement?.setOptions;
 
-      if (!MathfieldElement || !hostRef.current || !mounted) return;
+//       if (!MathfieldElement || !hostRef.current || !mounted) return;
 
-      const customVirtualKeyboardLayers = {
-        "arabic-base": {
-          rows: [
-            [
-              { label: "١", insert: "1" },
-              { label: "٢", insert: "2" },
-              { label: "٣", insert: "3" },
-              { label: "٤", insert: "4" },
-              { label: "٥", insert: "5" },
-              { label: "٦", insert: "6" },
-              { label: "٧", insert: "7" },
-              { label: "٨", insert: "8" },
-              { label: "٩", insert: "9" },
-              { label: "٠", insert: "0" },
-            ],
-            [
-              { label: "＋", insert: "+" },
-              { label: "−", insert: "-" },
-              { label: "×", insert: "\\times " },
-              { label: "÷", insert: "\\div " },
-              { label: "=", insert: "=" },
-              { label: "≈", insert: "\\approx " },
-              { label: "≠", insert: "\\neq " },
-            ],
-            [
-              { label: "جذر", insert: "\\sqrt{}" },
-              { label: "كسر", insert: "\\frac{}{}" },
-              { label: "أس", insert: "^{ }" },
-              { label: "أسفل", insert: "_{ }" },
-              { label: "∞", insert: "\\infty " },
-              { label: "π", insert: "\\pi " },
-              { label: "θ", insert: "\\theta " },
-            ],
-            [
-              { label: "sin", insert: "\\sin " },
-              { label: "cos", insert: "\\cos " },
-              { label: "tan", insert: "\\tan " },
-              { label: "log", insert: "\\log " },
-              { label: "ln", insert: "\\ln " },
-              { label: "abs", insert: "\\left|\\,\\right|" },
-              { label: "()", insert: "\\left(\\,\\right)" },
-              { label: "[]", insert: "\\left[\\,\\right]" },
-              { label: "{}", insert: "\\left\\{\\,\\right\\}" },
-            ],
-          ],
-        },
-      };
+//       const customVirtualKeyboardLayers = {
+//         "arabic-base": {
+//           rows: [
+//             [
+//               { label: "١", insert: "1" },
+//               { label: "٢", insert: "2" },
+//               { label: "٣", insert: "3" },
+//               { label: "٤", insert: "4" },
+//               { label: "٥", insert: "5" },
+//               { label: "٦", insert: "6" },
+//               { label: "٧", insert: "7" },
+//               { label: "٨", insert: "8" },
+//               { label: "٩", insert: "9" },
+//               { label: "٠", insert: "0" },
+//             ],
+//             [
+//               { label: "＋", insert: "+" },
+//               { label: "−", insert: "-" },
+//               { label: "×", insert: "\\times " },
+//               { label: "÷", insert: "\\div " },
+//               { label: "=", insert: "=" },
+//               { label: "≈", insert: "\\approx " },
+//               { label: "≠", insert: "\\neq " },
+//             ],
+//             [
+//               { label: "جذر", insert: "\\sqrt{}" },
+//               { label: "كسر", insert: "\\frac{}{}" },
+//               { label: "أس", insert: "^{ }" },
+//               { label: "أسفل", insert: "_{ }" },
+//               { label: "∞", insert: "\\infty " },
+//               { label: "π", insert: "\\pi " },
+//               { label: "θ", insert: "\\theta " },
+//             ],
+//             [
+//               { label: "sin", insert: "\\sin " },
+//               { label: "cos", insert: "\\cos " },
+//               { label: "tan", insert: "\\tan " },
+//               { label: "log", insert: "\\log " },
+//               { label: "ln", insert: "\\ln " },
+//               { label: "abs", insert: "\\left|\\,\\right|" },
+//               { label: "()", insert: "\\left(\\,\\right)" },
+//               { label: "[]", insert: "\\left[\\,\\right]" },
+//               { label: "{}", insert: "\\left\\{\\,\\right\\}" },
+//             ],
+//           ],
+//         },
+//       };
 
-      const customVirtualKeyboards = {
-        "arabic-math": { label: "عربي", layers: "arabic-base" },
-      };
+//       const customVirtualKeyboards = {
+//         "arabic-math": { label: "عربي", layers: "arabic-base" },
+//       };
 
-      const inlineShortcuts = {
-        جذر: "\\sqrt{}",
-        كسر: "\\frac{}{}",
-        باي: "\\pi",
-        مالانهاية: "\\infty",
-        تق: "\\tan",
-        جيب: "\\sin",
-        جتا: "\\cos",
-        لوغ: "\\log",
-        لان: "\\ln",
-      };
+//       const inlineShortcuts = {
+//         جذر: "\\sqrt{}",
+//         كسر: "\\frac{}{}",
+//         باي: "\\pi",
+//         مالانهاية: "\\infty",
+//         تق: "\\tan",
+//         جيب: "\\sin",
+//         جتا: "\\cos",
+//         لوغ: "\\log",
+//         لان: "\\ln",
+//       };
 
-      try {
-        setOptions?.({ customVirtualKeyboardLayers, customVirtualKeyboards });
-      } catch {}
+//       try {
+//         setOptions?.({ customVirtualKeyboardLayers, customVirtualKeyboards });
+//       } catch {}
 
-      const mf = new MathfieldElement({
-        smartMode: false,
-        virtualKeyboardMode: options?.virtualKeyboardMode ?? "onfocus",
-        virtualKeyboards: arabic
-          ? "arabic-math numeric symbols functions"
-          : "numeric symbols functions",
-        locale: arabic ? "ar" : "en",
-        textDirection: "rtl",
-        virtualKeyboardLayout: "auto",
-        inlineShortcuts,
-        ...(options || {}),
-      });
+//       const mf = new MathfieldElement({
+//         smartMode: false,
+//         virtualKeyboardMode: options?.virtualKeyboardMode ?? "onfocus",
+//         virtualKeyboards: arabic
+//           ? "arabic-math numeric symbols functions"
+//           : "numeric symbols functions",
+//         locale: arabic ? "ar" : "en",
+//         textDirection: "rtl",
+//         virtualKeyboardLayout: "auto",
+//         inlineShortcuts,
+//         ...(options || {}),
+//       });
 
-      if (placeholder) mf.setAttribute("aria-label", placeholder);
-      mf.setAttribute("dir", "rtl");
-      mf.style.textAlign = "right";
-      if (readOnly) mf.readOnly = true;
+//       if (placeholder) mf.setAttribute("aria-label", placeholder);
+//       mf.setAttribute("dir", "rtl");
+//       mf.style.textAlign = "right";
+//       if (readOnly) mf.readOnly = true;
 
-      if (typeof mf.setValue === "function") mf.setValue(value || "");
-      else mf.value = value || "";
+//       if (typeof mf.setValue === "function") mf.setValue(value || "");
+//       else mf.value = value || "";
 
-      const handleInput = () => {
-        const latex =
-          typeof mf.getValue === "function"
-            ? mf.getValue("latex")
-            : mf.value || "";
-        onChange?.(latex);
-      };
-      mf.addEventListener("input", handleInput);
+//       const handleInput = () => {
+//         const latex =
+//           typeof mf.getValue === "function"
+//             ? mf.getValue("latex")
+//             : mf.value || "";
+//         onChange?.(latex);
+//       };
+//       mf.addEventListener("input", handleInput);
 
-      mf.addEventListener("focus", () => {
-        try {
-          mf.executeCommand?.("showVirtualKeyboard");
-        } catch {}
-        try {
-          mf.executeCommand?.("switchKeyboardLayer", "arabic-base");
-        } catch {}
-        try {
-          window.mathVirtualKeyboard?.switchKeyboardLayer?.("arabic-base");
-        } catch {}
-      });
+//       mf.addEventListener("focus", () => {
+//         try {
+//           mf.executeCommand?.("showVirtualKeyboard");
+//         } catch {}
+//         try {
+//           mf.executeCommand?.("switchKeyboardLayer", "arabic-base");
+//         } catch {}
+//         try {
+//           window.mathVirtualKeyboard?.switchKeyboardLayer?.("arabic-base");
+//         } catch {}
+//       });
 
-      hostRef.current.innerHTML = "";
-      hostRef.current.appendChild(mf);
-      mfRef.current = mf;
-    })();
+//       hostRef.current.innerHTML = "";
+//       hostRef.current.appendChild(mf);
+//       mfRef.current = mf;
+//     })();
 
-    return () => {
-      const mf = mfRef.current;
-      if (mf) {
-        try {
-          mf.remove();
-        } catch {}
-        mfRef.current = null;
-      }
-    };
-  }, [arabic, options, placeholder, readOnly, onChange]);
+//     return () => {
+//       const mf = mfRef.current;
+//       if (mf) {
+//         try {
+//           mf.remove();
+//         } catch {}
+//         mfRef.current = null;
+//       }
+//     };
+//   }, [arabic, options, placeholder, readOnly, onChange]);
 
-  useEffect(() => {
-    const mf = mfRef.current;
-    if (!mf) return;
-    const current =
-      typeof mf.getValue === "function" ? mf.getValue("latex") : mf.value || "";
-    if ((value || "") !== (current || "")) {
-      if (typeof mf.setValue === "function") mf.setValue(value || "");
-      else mf.value = value || "";
-    }
-  }, [value]);
+//   useEffect(() => {
+//     const mf = mfRef.current;
+//     if (!mf) return;
+//     const current =
+//       typeof mf.getValue === "function" ? mf.getValue("latex") : mf.value || "";
+//     if ((value || "") !== (current || "")) {
+//       if (typeof mf.setValue === "function") mf.setValue(value || "");
+//       else mf.value = value || "";
+//     }
+//   }, [value]);
 
-  return (
-    <div
-      ref={hostRef}
-      className={`min-h-[48px] px-3 py-2 border border-gray-200 rounded-xl bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 ${className}`}
-    />
-  );
-}
+//   return (
+//     <div
+//       ref={hostRef}
+//       className={`min-h-[48px] px-3 py-2 border border-gray-200 rounded-xl bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 ${className}`}
+//     />
+//   );
+// }
 
 /* ================= Option Card (General MCQ) ================= */
 const OptionCard = ({
