@@ -16,10 +16,20 @@ import {
   Layers,
   TrendingUp,
 } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Modal, Form, Input, Switch, message, Tooltip } from "antd";
-import { all_categories } from "../../page";
+import { Modal, Form, Input, Switch, message, Tooltip, Spin } from "antd";
+// import { all_categories } from "../../page";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  handleAddCategoryPart,
+  handleDeleteCategoryPart,
+  handleEditCategoryPart,
+  handleGetCategoryParts,
+} from "../../../../../lib/features/categoriesSlice";
+import { all_categories } from "../../../saudi_source_course/add-data/page";
+import { toast } from "react-toastify";
+import { configs } from "../../../../../configs";
 
 /* ===================== Utils ===================== */
 const fileToDataUrl = (file) =>
@@ -32,6 +42,7 @@ const fileToDataUrl = (file) =>
 
 /* ===================== Modals ===================== */
 function SectionFormModal({
+  id,
   open,
   title,
   onCancel,
@@ -40,8 +51,16 @@ function SectionFormModal({
   initialValues,
 }) {
   const [form] = Form.useForm();
-  const [preview, setPreview] = useState(initialValues?.imagePreview || null);
+  const [preview, setPreview] = useState(initialValues?.image_url || null);
   const fileInputRef = useRef(null);
+  const [imgFile, setImgFile] = useState(null);
+  const { add_categories_parts, edit_categories_parts } = useSelector(
+    (state) => state?.categories
+  );
+  const dispatch = useDispatch();
+  const router = useRouter();
+
+  // const [preview, setPreview] = useState(initialValues?.image_url || null);
 
   useEffect(() => {
     if (open) {
@@ -50,9 +69,20 @@ function SectionFormModal({
         name: initialValues?.name || "",
         isVisible: initialValues?.isVisible ?? true,
       });
-      setPreview(initialValues?.imagePreview || null);
+      setPreview(initialValues?.image_url || null); // 👈 overrides image_url
     }
   }, [open, initialValues, form]);
+
+  // useEffect(() => {
+  //   if (open) {
+  //     form.resetFields();
+  //     form.setFieldsValue({
+  //       name: initialValues?.name || "",
+  //       isVisible: initialValues?.isVisible ?? true,
+  //     });
+  //     setPreview(initialValues?.imagePreview || null);
+  //   }
+  // }, [open, initialValues, form]);
 
   const handleChoose = () => fileInputRef.current?.click();
 
@@ -65,14 +95,36 @@ function SectionFormModal({
     }
     const dataUrl = await fileToDataUrl(file);
     setPreview(dataUrl);
+    setImgFile(file);
   };
 
   const handleFinish = (values) => {
-    onSubmit({
-      name: values.name.trim(),
-      isVisible: !!values.isVisible,
-      imagePreview: preview || null,
-    });
+    onSubmit(values, imgFile);
+    // const formData = new FormData();
+    // formData.append("course_category_id" , id);
+    // formData.append("name" , values?.name?.trim())
+    // if(imgFile) {
+    //   formData.append("image" , imgFile )
+    // }
+
+    // dispatch(handleAddCategoryPart({body : formData}))
+    // .unwrap()
+    // .then(res => {
+    //   console.log(res);
+    //   if(res?.data?.status == "success") {
+    //     toast.success(res?.data?.message);
+    //     onCancel();
+    //     dispatch(handleGetCategoryParts({body : {
+    //       course_category_id : id
+    //     }}))
+    //   }else if(res?.data?.statusCode == 401) {
+    //     localStorage.removeItem(configs.tokenKey)
+    //     localStorage.removeItem(configs.userKey)
+    //     router.push("/login");
+    //   }else {
+    //     toast.error(res?.data?.message)
+    //   }
+    // }).catch(e => console.log(e))
   };
 
   return (
@@ -85,10 +137,17 @@ function SectionFormModal({
       className="rtl-modal"
       width={600}
     >
-      <Form form={form} layout="vertical" onFinish={handleFinish} className="mt-6">
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleFinish}
+        className="mt-6"
+      >
         <Form.Item
           name="name"
-          label={<span className="text-sm font-medium text-gray-700">اسم القسم</span>}
+          label={
+            <span className="text-sm font-medium text-gray-700">اسم القسم</span>
+          }
           rules={[
             { required: true, message: "يرجى إدخال اسم القسم" },
             { min: 3, message: "يجب أن لا يقل الاسم عن 3 أحرف" },
@@ -152,18 +211,6 @@ function SectionFormModal({
           </div>
         </div>
 
-        <Form.Item 
-          name="isVisible" 
-          valuePropName="checked" 
-          label={<span className="text-sm font-medium text-gray-700">حالة الظهور</span>}
-        >
-          <Switch 
-            checkedChildren="مرئي" 
-            unCheckedChildren="مخفي"
-            className="bg-gray-300"
-          />
-        </Form.Item>
-
         <div className="flex justify-end gap-4 pt-6 border-t border-gray-100">
           <button
             type="button"
@@ -174,10 +221,10 @@ function SectionFormModal({
           </button>
           <button
             type="submit"
-            disabled={confirmLoading}
+            disabled={add_categories_parts}
             className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 disabled:opacity-60 disabled:cursor-not-allowed font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
           >
-            {confirmLoading ? (
+            {add_categories_parts ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 جارٍ الحفظ...
@@ -192,21 +239,25 @@ function SectionFormModal({
   );
 }
 
-function ConfirmDeleteModal({ open, onCancel, onConfirm, name }) {
+function ConfirmDeleteModal({ open, loading, onCancel, onConfirm, name }) {
   return (
     <Modal
-      title={<div className="text-lg font-semibold text-red-600">تأكيد الحذف</div>}
+      title={
+        <div className="text-lg font-semibold text-red-600">تأكيد الحذف</div>
+      }
       open={open}
+      loading={loading}
       onCancel={onCancel}
       onOk={onConfirm}
       okText="حذف نهائياً"
-      okButtonProps={{ 
+      okButtonProps={{
         danger: true,
-        className: "bg-red-600 hover:bg-red-700 border-red-600 hover:border-red-700 h-10 px-6 font-medium"
+        className:
+          "bg-red-600 hover:bg-red-700 border-red-600 hover:border-red-700 h-10 px-6 font-medium",
       }}
       cancelText="إلغاء"
       cancelButtonProps={{
-        className: "h-10 px-6 font-medium"
+        className: "h-10 px-6 font-medium",
       }}
       className="rtl-modal"
     >
@@ -217,7 +268,8 @@ function ConfirmDeleteModal({ open, onCancel, onConfirm, name }) {
           </div>
           <div>
             <p className="text-gray-800 font-medium">
-              هل تريد حذف القسم <span className="text-red-600 font-bold">"{name}"</span>؟
+              هل تريد حذف القسم{" "}
+              <span className="text-red-600 font-bold">"{name}"</span>؟
             </p>
             <p className="text-gray-500 text-sm mt-1">
               سيتم حذف القسم نهائياً ولا يمكن التراجع عن هذا الإجراء.
@@ -234,23 +286,21 @@ function SectionCard({ section, onEdit, onToggleVisibility, onDelete }) {
   return (
     <div className="group relative">
       <div
-        className={`relative rounded-2xl border-2 bg-white shadow-sm overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${
-          section.isVisible 
-            ? "border-gray-200 hover:border-blue-300" 
-            : "border-gray-300 opacity-75 hover:opacity-90"
-        }`}
+        className={`relative rounded-2xl border-2 bg-white shadow-sm overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1
+          
+        `}
       >
         {/* Animated background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-purple-50/30 to-pink-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-        
+
         {/* Image header with enhanced styling */}
         <div className="relative h-48 bg-gradient-to-br from-gray-100 via-gray-50 to-white overflow-hidden">
-          {section.imagePreview ? (
+          {section?.image_url ? (
             <>
               <img
-                src={section.imagePreview}
-                alt={section.name}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                src={section?.image_url}
+                alt={section?.name}
+                className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </>
@@ -260,20 +310,22 @@ function SectionCard({ section, onEdit, onToggleVisibility, onDelete }) {
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 grid place-items-center mb-3 mx-auto">
                   <ImageIcon size={28} className="text-gray-500" />
                 </div>
-                <p className="text-sm text-gray-500 font-medium">لا توجد صورة</p>
+                <p className="text-sm text-gray-500 font-medium">
+                  لا توجد صورة
+                </p>
               </div>
             </div>
           )}
 
           {/* Enhanced visibility badge */}
-          {!section.isVisible && (
+          {/* {!section.isVisible && (
             <div className="absolute top-4 left-4">
               <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-gray-900/90 text-white font-medium backdrop-blur-sm">
                 <EyeOff size={12} />
                 مخفي
               </span>
             </div>
-          )}
+          )} */}
 
           {/* Enhanced hover actions */}
           <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
@@ -285,7 +337,7 @@ function SectionCard({ section, onEdit, onToggleVisibility, onDelete }) {
                 <Edit2 className="w-4 h-4" />
               </button>
             </Tooltip>
-            <Tooltip title={section.isVisible ? "إخفاء القسم" : "إظهار القسم"} placement="bottom">
+            {/* <Tooltip title={section.isVisible ? "إخفاء القسم" : "إظهار القسم"} placement="bottom">
               <button
                 onClick={onToggleVisibility}
                 className={`p-2.5 rounded-xl bg-white/95 hover:bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 backdrop-blur-sm ${
@@ -294,7 +346,7 @@ function SectionCard({ section, onEdit, onToggleVisibility, onDelete }) {
               >
                 {section.isVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
               </button>
-            </Tooltip>
+            </Tooltip> */}
             <Tooltip title="حذف القسم" placement="bottom">
               <button
                 onClick={onDelete}
@@ -313,12 +365,12 @@ function SectionCard({ section, onEdit, onToggleVisibility, onDelete }) {
               <h3 className="text-lg font-bold text-gray-900 truncate group-hover:text-blue-700 transition-colors duration-200">
                 {section.name}
               </h3>
-              <div className="flex items-center gap-2 mt-2">
+              {/* <div className="flex items-center gap-2 mt-2">
                 <div className={`w-2 h-2 rounded-full ${section.isVisible ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                 <p className="text-sm text-gray-600 font-medium">
                   {section.isVisible ? "مرئي للجميع" : "مخفي حالياً"}
                 </p>
-              </div>
+              </div> */}
             </div>
 
             {/* Mobile actions */}
@@ -329,12 +381,12 @@ function SectionCard({ section, onEdit, onToggleVisibility, onDelete }) {
               >
                 <Edit2 className="w-4 h-4" />
               </button>
-              <button
+              {/* <button
                 onClick={onToggleVisibility}
                 className="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
               >
                 {section.isVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-              </button>
+              </button> */}
               <button
                 onClick={onDelete}
                 className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
@@ -358,13 +410,22 @@ function StatsCard({ icon: Icon, title, value, color = "blue", trend }) {
     blue: "from-blue-500 to-blue-600 bg-blue-50 text-blue-600",
     green: "from-green-500 to-green-600 bg-green-50 text-green-600",
     purple: "from-purple-500 to-purple-600 bg-purple-50 text-purple-600",
-    orange: "from-orange-500 to-orange-600 bg-orange-50 text-orange-600"
+    orange: "from-orange-500 to-orange-600 bg-orange-50 text-orange-600",
   };
 
   return (
     <div className="group relative rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 overflow-hidden">
-      <div className="absolute top-0 right-0 w-20 h-20 rounded-full -translate-y-10 translate-x-10 bg-gradient-to-br opacity-10 transition-opacity group-hover:opacity-20" style={{background: `linear-gradient(135deg, ${colorClasses[color].split(' ')[0].replace('from-', '#')} 0%, ${colorClasses[color].split(' ')[1].replace('to-', '#')} 100%)`}}></div>
-      
+      <div
+        className="absolute top-0 right-0 w-20 h-20 rounded-full -translate-y-10 translate-x-10 bg-gradient-to-br opacity-10 transition-opacity group-hover:opacity-20"
+        style={{
+          background: `linear-gradient(135deg, ${colorClasses[color]
+            .split(" ")[0]
+            .replace("from-", "#")} 0%, ${colorClasses[color]
+            .split(" ")[1]
+            .replace("to-", "#")} 100%)`,
+        }}
+      ></div>
+
       <div className="relative flex items-start justify-between">
         <div>
           <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
@@ -372,11 +433,15 @@ function StatsCard({ icon: Icon, title, value, color = "blue", trend }) {
           {trend && (
             <div className="flex items-center gap-1 mt-2">
               <TrendingUp size={14} className="text-green-600" />
-              <span className="text-xs text-green-600 font-medium">{trend}</span>
+              <span className="text-xs text-green-600 font-medium">
+                {trend}
+              </span>
             </div>
           )}
         </div>
-        <div className={`p-3 rounded-xl bg-gradient-to-br ${colorClasses[color]}`}>
+        <div
+          className={`p-3 rounded-xl bg-gradient-to-br ${colorClasses[color]}`}
+        >
           <Icon size={24} className="text-white" />
         </div>
       </div>
@@ -388,8 +453,7 @@ function StatsCard({ icon: Icon, title, value, color = "blue", trend }) {
 export default function Page() {
   const { id } = useParams();
 
-  const [sections, setSections] = useState(
-    [
+  const [sections, setSections] = useState([
     { id: 1, name: "أساسيات البرمجة", imagePreview: null, isVisible: true },
     { id: 2, name: "تطوير الويب", imagePreview: null, isVisible: false },
     { id: 3, name: "قواعد البيانات", imagePreview: null, isVisible: true },
@@ -401,63 +465,134 @@ export default function Page() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState(null);
-  
+  const {
+    get_categories_parts_loading,
+    delete_categories_parts,
+    add_categories_parts,
+    edit_categories_parts,
+    get_categories_parts_list,
+  } = useSelector((state) => state?.categories);
+  const dispatch = useDispatch();
+
   useEffect(() => {
-    setSelected(all_categories?.find(item => item?.id == id))
-  } , [id])
+    const data_send = {
+      course_category_id: id,
+    };
+    dispatch(handleGetCategoryParts({ body: data_send }));
+  }, [id]);
+
+  useEffect(() => {
+    console.log(get_categories_parts_list?.data?.message);
+  }, [get_categories_parts_list]);
+
+  useEffect(() => {
+    setSelected(all_categories?.find((item) => item?.id == id));
+  }, [id]);
 
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
     { label: selected?.title ?? "الفئات", href: "/categories", icon: Book },
     { label: "أقسام الفئة", href: "#", icon: Book, current: true },
   ];
+  const router = useRouter();
+  const visibleCount = useMemo(
+    () => sections.filter((s) => s.isVisible).length,
+    [sections]
+  );
+  const hiddenCount = useMemo(
+    () => sections.filter((s) => !s.isVisible).length,
+    [sections]
+  );
 
-  const visibleCount = useMemo(() => sections.filter(s => s.isVisible).length, [sections]);
-  const hiddenCount = useMemo(() => sections.filter(s => !s.isVisible).length, [sections]);
+  const handleAdd = (payload, imgFile) => {
+    const formData = new FormData();
+    formData.append("course_category_id", id);
+    formData.append("name", payload?.name?.trim());
+    if (imgFile) {
+      formData.append("image", imgFile);
+    }
 
-  const handleAdd = (payload) => {
-    setLoading(true);
-    setTimeout(() => {
-      setSections((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          name: payload.name,
-          imagePreview: payload.imagePreview,
-          isVisible: payload.isVisible,
-        },
-      ]);
-      setLoading(false);
-      setAddOpen(false);
-      message.success("تم إضافة القسم بنجاح!");
-    }, 800);
+    dispatch(handleAddCategoryPart({ body: formData }))
+      .unwrap()
+      .then((res) => {
+        console.log(res);
+        if (res?.data?.status == "success") {
+          toast.success(res?.data?.message);
+          setAddOpen(false);
+          dispatch(
+            handleGetCategoryParts({
+              body: {
+                course_category_id: id,
+              },
+            })
+          );
+        } else if (res?.data?.statusCode == 401) {
+          localStorage.removeItem(configs.tokenKey);
+          localStorage.removeItem(configs.userKey);
+          router.push("/login");
+        } else {
+          toast.error(res?.data?.message);
+        }
+      })
+      .catch((e) => console.log(e));
   };
 
-  const handleEdit = (payload) => {
+  // const handleEdit = (payload , imgFile) => {
+  //   if (!selected) return;
+  //   console.log(selected,payload, imgFile);
+  //   // const formData = new FormData();
+  //   // formData.append("")
+  // };
+
+  const handleEdit = (payload, imgFile) => {
     if (!selected) return;
-    setLoading(true);
-    setTimeout(() => {
-      setSections((prev) =>
-        prev.map((s) =>
-          s.id === selected.id
-            ? {
-                ...s,
-                name: payload.name,
-                isVisible: payload.isVisible,
-                imagePreview: payload.imagePreview ?? s.imagePreview,
-              }
-            : s
-        )
-      );
-      setLoading(false);
-      setEditOpen(false);
-      setSelected(null);
-      message.success("تم تعديل القسم بنجاح!");
-    }, 800);
+
+    const formData = new FormData();
+
+    // backend field names – adjust if needed
+    formData.append("id", selected?.id); // 👈 the part id you are editing
+    formData.append("course_category_id", id); // 👈 keep category context
+    formData.append("name", payload?.name?.trim() || "");
+
+    // only send image if user picked a new one
+    if (imgFile) {
+      formData.append("image", imgFile);
+    }
+
+    dispatch(handleEditCategoryPart({ body: formData }))
+      .unwrap()
+      .then((res) => {
+        console.log(res);
+
+        if (res?.data?.status === "success") {
+          toast.success(res?.data?.message);
+
+          // close modal + clear selected
+          setEditOpen(false);
+          setSelected(null);
+
+          // refresh list
+          dispatch(
+            handleGetCategoryParts({
+              body: { course_category_id: id },
+            })
+          );
+        } else if (res?.data?.statusCode === 401) {
+          localStorage.removeItem(configs.tokenKey);
+          localStorage.removeItem(configs.userKey);
+          router.push("/login");
+        } else {
+          toast.error(res?.data?.message || "خطأ أثناء تعديل القسم");
+        }
+      })
+      .catch((e) => {
+        console.error(e);
+        toast.error("حدث خطأ غير متوقع أثناء تعديل القسم");
+      });
   };
 
   const toggleVisibility = (id) => {
-    const section = sections.find(s => s.id === id);
+    const section = sections.find((s) => s.id === id);
     setSections((prev) =>
       prev.map((s) => (s.id === id ? { ...s, isVisible: !s.isVisible } : s))
     );
@@ -466,24 +601,53 @@ export default function Page() {
 
   const confirmDelete = () => {
     if (!selected) return;
-    setLoading(true);
-    setTimeout(() => {
-      setSections((prev) => prev.filter((s) => s.id !== selected.id));
-      setLoading(false);
-      setDeleteOpen(false);
-      message.success("تم حذف القسم نهائياً");
-      setSelected(null);
-    }, 600);
+
+    const data_send = {
+      id: selected?.id,
+    };
+    dispatch(handleDeleteCategoryPart({ body: data_send }))
+    .unwrap()
+    .then((res) => {
+      console.log(res);
+      if (res?.data?.status === "success") {
+        toast.success(res?.data?.message);
+
+        // close modal + clear selected
+        setDeleteOpen(false);
+        setSelected(null);
+
+        // refresh list
+        dispatch(
+          handleGetCategoryParts({
+            body: { course_category_id: id },
+          })
+        );
+      } else if (res?.data?.statusCode === 401) {
+        localStorage.removeItem(configs.tokenKey);
+        localStorage.removeItem(configs.userKey);
+        router.push("/login");
+      } else {
+        toast.error(res?.data?.message || "خطأ أثناء حذف القسم");
+      }
+    });
   };
- 
+
+  if (get_categories_parts_loading) {
     return (
-       <PageLayout>
+      <div className="h-screen flex justify-center items-center">
+        <Spin size="large" spinning />
+      </div>
+    );
+  }
+
+  return (
+    <PageLayout>
       <div dir="rtl" className="space-y-8 max-w-7xl">
         <BreadcrumbsShowcase variant="pill" items={breadcrumbs} />
-        
+
         <PagesHeader
           title="إدارة أقسام الفئة"
-          subtitle={id ? `معرّف الفئة: ${id}` : "تنظيم وإدارة أقسام الفئة التعليمية"}
+          subtitle={""}
           extra={
             <button
               onClick={() => setAddOpen(true)}
@@ -496,7 +660,7 @@ export default function Page() {
         />
 
         {/* Enhanced Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
             icon={Layers}
             title="إجمالي الأقسام"
@@ -523,19 +687,23 @@ export default function Page() {
             color="purple"
             trend="+5% من الأمس"
           />
-        </div>
+        </div> */}
 
         {/* Enhanced Sections Grid */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-900">قائمة الأقسام</h2>
             <div className="text-sm text-gray-500">
-              {sections.length} {sections.length === 1 ? 'قسم' : 'أقسام'} إجمالي
+              {get_categories_parts_list?.data?.message?.length}{" "}
+              {get_categories_parts_list?.data?.message?.length === 1
+                ? "قسم"
+                : "أقسام"}{" "}
+              إجمالي
             </div>
           </div>
-          
+
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {sections.map((section) => (
+            {get_categories_parts_list?.data?.message?.map((section) => (
               <SectionCard
                 key={section.id}
                 section={section}
@@ -554,7 +722,7 @@ export default function Page() {
         </div>
 
         {/* Enhanced Empty State */}
-        {sections.length === 0 && (
+        {get_categories_parts_list?.data?.message?.length === 0 && (
           <div className="text-center py-20">
             <div className="relative inline-block">
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 grid place-items-center mb-6 mx-auto">
@@ -564,9 +732,12 @@ export default function Page() {
                 <Plus size={16} className="text-white" />
               </div>
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">لا توجد أقسام حتى الآن</h3>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              لا توجد أقسام حتى الآن
+            </h3>
             <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              ابدأ بإنشاء أول قسم لتنظيم محتوى الدورات التعليمية وتقسيمها إلى فئات مناسبة
+              ابدأ بإنشاء أول قسم لتنظيم محتوى الدورات التعليمية وتقسيمها إلى
+              فئات مناسبة
             </p>
             <button
               onClick={() => setAddOpen(true)}
@@ -580,11 +751,12 @@ export default function Page() {
 
         {/* Modals */}
         <SectionFormModal
+          id={id}
           open={addOpen}
           title="إضافة قسم جديد"
           onCancel={() => setAddOpen(false)}
           onSubmit={handleAdd}
-          confirmLoading={loading}
+          confirmLoading={add_categories_parts}
           initialValues={{ name: "", isVisible: true, imagePreview: null }}
         />
 
@@ -596,8 +768,10 @@ export default function Page() {
             setSelected(null);
           }}
           onSubmit={handleEdit}
-          confirmLoading={loading}
-          initialValues={selected || { name: "", isVisible: true, imagePreview: null }}
+          confirmLoading={edit_categories_parts}
+          initialValues={
+            selected || { name: "", isVisible: true, imagePreview: null }
+          }
         />
 
         <ConfirmDeleteModal
@@ -606,10 +780,11 @@ export default function Page() {
             setDeleteOpen(false);
             setSelected(null);
           }}
+          loading={delete_categories_parts}
           onConfirm={confirmDelete}
           name={selected?.name}
         />
-        </div>
-       </PageLayout>
+      </div>
+    </PageLayout>
   );
 }

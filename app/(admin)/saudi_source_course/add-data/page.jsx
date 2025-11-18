@@ -25,10 +25,11 @@ import AddCourseSourceContent from "../../../../components/SaudiCourseSource/Add
 import AddCourseSourceBasicInfo from "../../../../components/SaudiCourseSource/AddCourseSourceBasicInfo";
 import AddCourseSourceShedule from "../../../../components/SaudiCourseSource/AddCourseSourceShedule";
 import AddCourseSourceResource from "../../../../components/SaudiCourseSource/AddCourseSourceResource";
+import { useDispatch, useSelector } from "react-redux";
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 // Mock data for categories with sections
-const all_categories = [
+export const all_categories = [
   {
     id: 1,
     title: "دورات عامة",
@@ -120,6 +121,8 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
     maxStudents: 30,
     isActive: true,
   });
+  const dispatch = useDispatch();
+  const {add_round_loading} = useSelector(state => state?.rounds)
 
   // Update sections when category changes
   useEffect(() => {
@@ -282,7 +285,7 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
 
   const tabItems = [
     { key: 1, label: "المعلومات الأساسية", icon: <BookOutlined /> },
-    { key: 2, label: "الجدولة والمواعيد", icon: <CalendarOutlined /> },
+    // { key: 2, label: "الجدولة والمواعيد", icon: <CalendarOutlined /> },
     { key: 3, label: "المحتوى التفصيلي", icon: <FileTextOutlined /> },
     { key: 4, label: "المصادر والملفات", icon: <FolderOutlined /> },
   ];
@@ -324,10 +327,10 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
           </div>
 
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={handleFinish}
+            <div
+              // form={form}
+              // layout="vertical"
+              // onFinish={handleFinish}
               initialValues={{
                 code: "COURSE_" + Math.random().toString(36).substr(2, 6).toUpperCase(),
                 name: "",
@@ -474,7 +477,7 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
                   )}
                 </div>
               </div>
-            </Form>
+            </div>
           </div>
         </div>
     

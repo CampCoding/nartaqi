@@ -128,6 +128,11 @@ export default function Sidebar() {
       path:'/competitions'
     },
     {
+      name:"المسوقين",
+      icon:Users,
+      path:'/marketers'
+    },
+    {
       name:"المكافآت",
       icon : Trophy ,
       path:"/rewards"

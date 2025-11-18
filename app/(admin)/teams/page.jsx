@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BarChart3,
   Download,
@@ -30,6 +30,8 @@ import AddTeamModal from "../../../components/Teams/AddTeamModal/AddTeamModal";
 import BreadcrumbsShowcase from "../../../components/ui/BreadCrumbs";
 import EditTeamModal from "../../../components/Teams/EditTeamModal/EditTeamModal";
 import DeleteTeamModal from "../../../components/Teams/DeleteTeamModal/DeleteTeamModal";
+import { useDispatch, useSelector } from "react-redux";
+import { handleGetAllTeams } from "@/lib/features/teamSlice";
 
 const tabs = [
   { id: 1, title: "الكل", count: 12, color: "bg-blue-500" },
@@ -212,7 +214,17 @@ export default function TeamsPage() {
   const [openEditModal ,setOpenEditModal] = useState(false);
   const [openDeleteModal , setOpenDeleteModal] = useState(false);
   const [rowData , setRowData] = useState({});
+  const dispatch = useDispatch();
+  const {team_loading, team_list } = useSelector(state => state?.team);
   // Filter team members based on active tab and search term
+
+  useEffect(() => {
+    dispatch(handleGetAllTeams())
+  } , [dispatch])
+
+  useEffect(() => {
+    console.log(team_list)
+  } , [team_list])
 
   const breadcrumbs = [
       { label: "الرئيسية", href: "/", icon: BarChart3 },

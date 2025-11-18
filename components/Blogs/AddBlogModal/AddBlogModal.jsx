@@ -14,11 +14,15 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import { PlusOutlined, UploadOutlined, SendOutlined } from "@ant-design/icons";
+import { useDispatch, useSelector } from "react-redux";
+import { handleAddBlog } from "@/lib/features/blogSlice";
 
 export default function AddBlogModal({ open, setOpen, onSubmit, palette }) {
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
   const [fileList, setFileList] = useState([]);
+  const dispatch = useDispatch();
+  const {add_blog_loading} = useSelector(state => state?.blogs);
 
   const PALETTE = useMemo(
     () => ({
@@ -40,36 +44,32 @@ export default function AddBlogModal({ open, setOpen, onSubmit, palette }) {
   const onFinish = async (values) => {
     try {
       setSubmitting(true);
-
-      // استخدم رابط الصورة إن وُجد؛ وإلا استخدم الصورة المرفوعة (معاينة)
-      const imageFromUrl = (values.imageUrl || "").trim();
-      const imageFromUpload = fileList?.[0]?.thumbUrl || "";
-
-      const payload = {
-        id: `b-${Date.now()}`,
-        title: values.title?.trim(),
-        desc: values.desc?.trim() || "",
-        date: values.date ? values.date.format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
-        comments: Number(values.comments ?? 0),
-        views: Number(values.views ?? 0),
-        image: imageFromUrl || imageFromUpload || "",
-        // إن أردت الرفع الفعلي لاحقًا على السيرفر
-        imageFile: fileList?.[0]?.originFileObj,
-      };
-
-      if (!payload.image) {
-        message.warning("أضف رابط صورة أو ارفع صورة الغلاف.");
-        setSubmitting(false);
-        return;
+       
+      const formData = new FormData();
+      
+      // Append the actual file if exists (use originFileObj, not thumbUrl)
+      if (fileList && fileList.length > 0 && fileList[0].originFileObj) {
+        formData.append("image", fileList[0].originFileObj);
       }
+      
+      // Append other form fields
+      formData.append("title", values?.title?.trim());
+      formData.append("content", values?.desc?.trim());
 
-      if (typeof onSubmit === "function") {
-        await onSubmit(payload);
-      } else {
+      const res = await dispatch(handleAddBlog({ body: formData }));
+      
+      if (res.type === "blogSlice/handleAddBlog/fulfilled") {
         message.success("تمت إضافة المقال بنجاح ✅");
+        handleClose();
+        if (typeof onSubmit === "function") {
+          await onSubmit(res.payload);
+        }
+      } else {
+        message.error("حدث خطأ أثناء إضافة المقال");
       }
-
-      handleClose();
+    } catch (error) {
+      console.error("Error adding blog:", error);
+      message.error("حدث خطأ أثناء إضافة المقال");
     } finally {
       setSubmitting(false);
     }
@@ -140,13 +140,13 @@ export default function AddBlogModal({ open, setOpen, onSubmit, palette }) {
             </Form.Item>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Form.Item label="تاريخ النشر" name="date">
+              {/* <Form.Item label="تاريخ النشر" name="date">
                 <DatePicker className="w-full" />
-              </Form.Item>
+              </Form.Item> */}
 
-              <Form.Item label="رابط الصورة (اختياري)" name="imageUrl" rules={[{ type: "url", message: "الرابط غير صالح" }]}>
+              {/* <Form.Item label="رابط الصورة (اختياري)" name="imageUrl" rules={[{ type: "url", message: "الرابط غير صالح" }]}>
                 <Input placeholder="https://example.com/image.jpg" />
-              </Form.Item>
+              </Form.Item> */}
             </div>
 
             <Form.Item
@@ -154,14 +154,14 @@ export default function AddBlogModal({ open, setOpen, onSubmit, palette }) {
               name="imageUpload"
               valuePropName="fileList"
               getValueFromEvent={normalizeUpload}
-              extra="لن يتم الرفع فعلياً هنا — أرسل الملف من خلال onSubmit إن رغبت."
+              extra="سيتم رفع الصورة مع البيانات عند الضغط على إضافة."
             >
               <Upload.Dragger
                 name="file"
                 fileList={fileList}
                 maxCount={1}
                 accept="image/*"
-                beforeUpload={() => false} // منع الرفع التلقائي
+                beforeUpload={() => false} // منع الرفع التلقائي - سنرسل الملف يدوياً
                 onChange={({ fileList }) => setFileList(fileList)}
               >
                 <p className="ant-upload-drag-icon">
@@ -181,7 +181,7 @@ export default function AddBlogModal({ open, setOpen, onSubmit, palette }) {
                 type="primary"
                 className="bg-primary text-white"
                 icon={<SendOutlined />}
-                loading={submitting}
+                loading={submitting || add_blog_loading}
                 onClick={() => form.submit()}
               >
                 إضافة

@@ -1,52 +1,19 @@
-"use client";
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  ConfigProvider,
-  Modal,
-  Form,
-  Input,
-  Button,
-  Space,
-  Divider,
-  Tag,
-  Tooltip,
-  message,
-} from "antd";
-import {
-  PlusOutlined,
-  DeleteOutlined,
-  MinusCircleOutlined,
-  QuestionCircleOutlined,
-  SendOutlined,
-} from "@ant-design/icons";
+ "use client";
+import React, { useEffect, useMemo } from "react";
+import { ConfigProvider, Modal, Form, Input, Button, Divider, Select, message } from "antd";
+import { SendOutlined } from "@ant-design/icons";
+import { useDispatch, useSelector } from "react-redux";
+import { handleEditFaq, handleGetAllFaqs } from "@/lib/features/faqSlice";
 
-/**
- * Props:
- * - open (bool)
- * - setOpen (fn)
- * - rowData (object|array)  :
- *      { id?, question, answers: [string|{id?, text}] }
- *   OR { qa: [ ...same items... ] }
- *   OR [ ...same items... ]
- * - setRowData (fn)         : اختياري
- * - onSubmit (fn)           : async (payload) => void
- * - palette (obj)           : { primary, text, background }
- * - activeTab               : اختياري
- */
-export default function EditFaqModal({
-  open,
-  rowData,
-  setRowData,
-  setOpen,
-  onSubmit,
-  palette,
-  activeTab,
-}) {
-  
-  useEffect(() => {
-    console.log(rowData)
-  } , [rowData])
+const CATEGORY_OPTIONS = [
+  { value: "general", label: "عام" },
+  { value: "courses", label: "دورات" },
+  { value: "enroll", label: "التسجيل والدفع" },
+  { value: "support", label: "الدعم الفني" },
+  { value: "professional_license", label: "الرخص المهنية" },
+];
 
+export default function EditFaqModal({ open, rowData, setOpen, palette }) {
   const PALETTE = useMemo(
     () => ({
       primary: (palette && palette.primary) || "#0F7490",
@@ -56,133 +23,45 @@ export default function EditFaqModal({
     [palette]
   );
 
- // ⬇️ بدّل normalizeItem بالكامل بهذا الإصدار
-const normalizeItem = (item) => {
-  if (!item) return { question: "", answers: [{ text: "" }] };
+  const [form] = Form.useForm();
+  const dispatch = useDispatch();
+  const { edit_faq_loading } = useSelector((state) => state?.faq);
 
-  const answersArr = Array.isArray(item.answers) ? item.answers : [];
-  const normAnswers = answersArr.map((ans) => {
-    if (typeof ans === "string") return { text: ans };
-    if (ans && typeof ans === "object") {
-      return {
-        id: ans.id,
-        // يدعم text | answer | comment
-        text: ans.text ?? ans.answer ?? ans.comment ?? "",
-      };
-    }
-    return { text: "" };
-  });
-
-  return {
-    id: item.id,
-    // يدعم question | q | text
-    question: item.question ?? item.q ?? item.text ?? "",
-    answers: normAnswers.length ? normAnswers : [{ text: "" }],
-  };
-};
-
-
-  const normalizeRowData = (data) => {
-    if (!data) return [{ question: "", answers: [{ text: "" }] }];
-    if (Array.isArray(data)) return data.map(normalizeItem);
-    if (data.qa && Array.isArray(data.qa)) return data.qa.map(normalizeItem);
-    return [normalizeItem(data)];
-  };
-
-  const [qa, setQa] = useState([{ question: "", answers: [{ text: "" }] }]);
-  const [submitting, setSubmitting] = useState(false);
-
-  // عند فتح المودال أو تغيّر rowData حمّل البيانات
   useEffect(() => {
-    if (open) {
-      setQa(normalizeRowData(rowData));
+    if (open && rowData) {
+      form.setFieldsValue({
+        question: rowData?.text || "",
+        answer: rowData?.answers?.[0]?.comment || "",
+        category: rowData?.category || undefined,
+      });
     }
-  }, [open, rowData]);
-
-  const addQuestion = () =>
-    setQa((prev) => [...prev, { question: "", answers: [{ text: "" }] }]);
-
-  const removeQuestion = (qIdx) =>
-    setQa((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== qIdx)));
-
-  const updateQuestionText = (qIdx, text) =>
-    setQa((prev) => {
-      const copy = [...prev];
-      copy[qIdx] = { ...copy[qIdx], question: text };
-      return copy;
-    });
-
-  const addAnswer = (qIdx) =>
-    setQa((prev) => {
-      const copy = [...prev];
-      const arr = [...copy[qIdx].answers, { text: "" }];
-      copy[qIdx] = { ...copy[qIdx], answers: arr };
-      return copy;
-    });
-
-  const removeAnswer = (qIdx, aIdx) =>
-    setQa((prev) => {
-      const copy = [...prev];
-      const arr = [...copy[qIdx].answers];
-      if (arr.length === 1) return prev; // لا نحذف آخر حقل
-      arr.splice(aIdx, 1);
-      copy[qIdx] = { ...copy[qIdx], answers: arr };
-      return copy;
-    });
-
-  const updateAnswerText = (qIdx, aIdx, text) =>
-    setQa((prev) => {
-      const copy = [...prev];
-      const arr = [...copy[qIdx].answers];
-      const old = arr[aIdx] || { text: "" };
-      arr[aIdx] = { ...old, text };
-      copy[qIdx] = { ...copy[qIdx], answers: arr };
-      return copy;
-    });
-
-  const countFilledAnswers = (answers = []) =>
-    answers.filter((a) => a && (a.text || "").trim().length > 0).length;
+  }, [open, rowData, form]);
 
   const handleClose = () => {
+    form.resetFields();
     setOpen(false);
   };
 
-  const toSubmitPayload = (list) =>
-    list
-      .map((item) => ({
-        id: item.id,
-        question: (item.question || "").trim(),
-        answers: (item.answers || [])
-          .map((a) => ({
-            id: a.id,
-            text: (a.text || "").trim(),
-          }))
-          .filter((a) => a.text.length > 0),
-      }))
-      .filter((it) => it.question.length > 0 && it.answers.length > 0);
-
-  const handleSubmit = async () => {
-    const cleaned = toSubmitPayload(qa);
-
-    if (!cleaned.length) {
-      message.warning("أضف سؤالاً وإجابة واحدة على الأقل.");
-      return;
-    }
+  const onFinish = async (values) => {
+    const payload = {
+      id: rowData?.id,
+      question: values.question?.trim(),
+      answer: values.answer?.trim(),
+      category: values.category,
+    };
 
     try {
-      setSubmitting(true);
-      if (typeof onSubmit === "function") {
-        await onSubmit(cleaned, { activeTab, mode: "edit" });
+      const res = await dispatch(handleEditFaq({ body: payload })).unwrap();
+      if (res?.data?.status === "success") {
+        message.success(res?.data?.message || "تم تحديث السؤال بنجاح");
+        dispatch(handleGetAllFaqs());
+        handleClose();
       } else {
-        message.success("تم حفظ التعديلات بنجاح ✅");
+        message.error(res?.data?.message || "حدث خطأ أثناء التحديث");
       }
-      // اختياري: مرّر البيانات المعدّلة للخارج
-      if (typeof setRowData === "function") {
-        setRowData({ qa: cleaned });
-      }
-      setOpen(false);
-    } finally {
-      setSubmitting(false);
+    } catch (error) {
+      message.error("حدث خطأ أثناء التحديث");
+      console.error("Edit FAQ failed:", error);
     }
   };
 
@@ -197,141 +76,39 @@ const normalizeItem = (item) => {
         },
       }}
     >
-      <Modal
-        open={open}
-        onCancel={handleClose}
-        title={null}
-        footer={null}
-        destroyOnHidden
-        className="!w-full max-w-6xl"
-      >
+      <Modal open={open} onCancel={handleClose} title={null} footer={null} destroyOnHidden className="!w-full max-w-4xl">
         <div className="bg-white" dir="rtl">
-          {/* Header */}
           <div className="mb-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm"
-                style={{ background: PALETTE.primary }}
-              >
-                <PlusOutlined className="text-white text-lg" />
-              </div>
-              <h2 className="text-2xl font-bold" style={{ color: PALETTE.text }}>
-                تعديل تقييم
-              </h2>
-            </div>
-            <p className="text-sm text-gray-500">
-              عدّل الأسئلة والإجابات. يمكنك إضافة أسئلة/إجابات أو حذفها.
-            </p>
+            <h2 className="text-2xl font-bold" style={{ color: PALETTE.text }}>
+              تعديل السؤال
+            </h2>
+            <p className="text-sm text-gray-500">قم بتحديث بيانات السؤال والإجابة والتصنيف.</p>
           </div>
 
           <Divider className="my-4" />
 
-          {/* Questions Builder */}
-          <div className="space-y-6">
-            {qa.map((item, qIdx) => {
-              const filled = countFilledAnswers(item.answers);
-              return (
-                <div
-                  key={qIdx}
-                  className="rounded-xl border border-gray-200 p-4 bg-gray-50"
-                >
-                  {/* Question header */}
-                  <div className="flex items-center justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-2">
-                      <Tag color="blue">
-                        سؤال #{qIdx + 1}{item.id ? ` — ID: ${item.id}` : ""}
-                      </Tag>
-                      <Tooltip title="نص السؤال الذي سيظهر للمستخدم">
-                        <QuestionCircleOutlined className="text-gray-400" />
-                      </Tooltip>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Tag color={filled > 0 ? "green" : "default"}>
-                        إجابات: {filled} / {item.answers.length}
-                      </Tag>
-                      {qa.length > 1 && (
-                        <Button
-                          danger
-                          type="text"
-                          icon={<DeleteOutlined />}
-                          onClick={() => removeQuestion(qIdx)}
-                        >
-                          حذف السؤال
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+          <Form form={form} layout="vertical" onFinish={onFinish}>
+            <Form.Item label="التصنيف" name="category" rules={[{ required: true, message: "يرجى اختيار التصنيف" }]}>
+              <Select placeholder="اختر التصنيف" options={CATEGORY_OPTIONS} showSearch optionFilterProp="label" />
+            </Form.Item>
 
-                  {/* Question input */}
-                  <Form layout="vertical">
-                    <Form.Item label="نص السؤال">
-                      <Input
-                        placeholder="اكتب نص السؤال هنا…"
-                        value={item.question}
-                        onChange={(e) => updateQuestionText(qIdx, e.target.value)}
-                      />
-                    </Form.Item>
+            <Form.Item label="السؤال" name="question" rules={[{ required: true, message: "يرجى إدخال نص السؤال" }]}>
+              <Input placeholder="اكتب نص السؤال هنا…" />
+            </Form.Item>
 
-                    <Divider className="my-2">الإجــابــات</Divider>
+            <Form.Item label="الإجابة" name="answer" rules={[{ required: true, message: "يرجى إدخال الإجابة" }]}>
+              <Input.TextArea placeholder="اكتب الإجابة هنا…" autoSize={{ minRows: 3, maxRows: 6 }} />
+            </Form.Item>
 
-                    {/* Answers list */}
-                    <Space direction="vertical" className="w-full">
-                      {item.answers.map((ans, aIdx) => (
-                        <div key={aIdx} className="flex items-start gap-2">
-                          <Input.TextArea
-                            placeholder={`الإجابة ${aIdx + 1}…`}
-                            value={ans.text}
-                            autoSize={{ minRows: 2, maxRows: 5 }}
-                            onChange={(e) =>
-                              updateAnswerText(qIdx, aIdx, e.target.value)
-                            }
-                          />
-                          {item.answers.length > 1 && (
-                            <Button
-                              danger
-                              type="text"
-                              icon={<MinusCircleOutlined />}
-                              onClick={() => removeAnswer(qIdx, aIdx)}
-                              title="حذف هذه الإجابة"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </Space>
+            <Divider className="my-5" />
 
-                    {/* Add answer */}
-                    <div className="mt-3">
-                      <Button icon={<PlusOutlined />} onClick={() => addAnswer(qIdx)}>
-                        إضافة إجابة أخرى
-                      </Button>
-                    </div>
-                  </Form>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Add question */}
-          <div className="mt-5">
-            <Button type="dashed" block icon={<PlusOutlined />} onClick={addQuestion}>
-              إضافة سؤال جديد
-            </Button>
-          </div>
-
-          <Divider className="my-5" />
-
-          {/* Footer actions */}
-          <div className="flex items-center justify-end gap-3">
-            <Button onClick={handleClose}>إلغاء</Button>
-            <Button
-              type="primary"
-              icon={<SendOutlined />}
-              loading={submitting}
-              onClick={handleSubmit}
-            >
-              حفظ التعديلات
-            </Button>
-          </div>
+            <div className="flex items-center justify-end gap-3">
+              <Button onClick={handleClose}>إلغاء</Button>
+              <Button type="primary" icon={<SendOutlined />} loading={edit_faq_loading} onClick={() => form.submit()}>
+                حفظ التعديلات
+              </Button>
+            </div>
+          </Form>
         </div>
       </Modal>
     </ConfigProvider>

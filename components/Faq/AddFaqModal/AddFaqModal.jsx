@@ -1,24 +1,9 @@
 "use client";
-import React, { useMemo, useState } from "react";
-import {
-  ConfigProvider,
-  Modal,
-  Form,
-  Input,
-  Button,
-  Space,
-  Divider,
-  Tag,
-  Tooltip,
-  message,
-} from "antd";
-import {
-  PlusOutlined,
-  DeleteOutlined,
-  MinusCircleOutlined,
-  QuestionCircleOutlined,
-  SendOutlined,
-} from "@ant-design/icons";
+import React, { useMemo } from "react";
+import { ConfigProvider, Modal, Form, Input, Button, Divider, Select, message } from "antd";
+import { PlusOutlined, SendOutlined } from "@ant-design/icons";
+import { useDispatch, useSelector } from "react-redux";
+import { handleAddFaq, handleGetAllFaqs } from "@/lib/features/faqSlice";
 
 /**
  * Props:
@@ -27,7 +12,16 @@ import {
  * - onSubmit (fn)        : تُستدعى عند الإرسال بـ payload = [{ question, answers: [...] }, ...]
  * - palette (obj)        : ألوان الثيم اختياري { primary, text, background }
  */
-export default function AddFaqModal({ open, setOpen, onSubmit, palette  , activeTab}) {
+const CATEGORY_OPTIONS = [
+  { value: "general", label: "عام" },
+  { value: "courses", label: "دورات" },
+  { value: "enroll", label: "التسجيل والدفع" },
+  { value: "support", label: "الدعم الفني" },
+  { value: "professional_license", label: "الرخص المهنية" },
+];
+
+
+export default function AddFaqModal({ open, setOpen, palette }) {
   const PALETTE = useMemo(
     () => ({
       primary: (palette && palette.primary) || "#0F7490",
@@ -37,89 +31,34 @@ export default function AddFaqModal({ open, setOpen, onSubmit, palette  , active
     [palette]
   );
 
-  // نموذج البيانات: [{question: "", answers: [""]}]
-  const [qa, setQa] = useState([{ question: "", answers: [""] }]);
-  const [submitting, setSubmitting] = useState(false);
-
-  const addQuestion = () => setQa((prev) => [...prev, { question: "", answers: [""] }]);
-
-  const removeQuestion = (qIdx) =>
-    setQa((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== qIdx)));
-
-  const updateQuestionText = (qIdx, text) =>
-    setQa((prev) => {
-      const copy = [...prev];
-      copy[qIdx] = { ...copy[qIdx], question: text };
-      return copy;
-    });
-
-  const addAnswer = (qIdx) =>
-    setQa((prev) => {
-      const copy = [...prev];
-      const arr = [...copy[qIdx].answers, ""];
-      copy[qIdx] = { ...copy[qIdx], answers: arr };
-      return copy;
-    });
-
-  const removeAnswer = (qIdx, aIdx) =>
-    setQa((prev) => {
-      const copy = [...prev];
-      const arr = [...copy[qIdx].answers];
-      if (arr.length === 1) return prev; // لا نحذف آخر حقل
-      arr.splice(aIdx, 1);
-      copy[qIdx] = { ...copy[qIdx], answers: arr };
-      return copy;
-    });
-
-  const updateAnswerText = (qIdx, aIdx, text) =>
-    setQa((prev) => {
-      const copy = [...prev];
-      const arr = [...copy[qIdx].answers];
-      arr[aIdx] = text;
-      copy[qIdx] = { ...copy[qIdx], answers: arr };
-      return copy;
-    });
-
-  const countFilledAnswers = (answers) =>
-    (answers || []).filter((v) => v && v.trim().length > 0).length;
+  const [form] = Form.useForm();
+  const dispatch = useDispatch();
+  const { add_faq_loading } = useSelector((state) => state?.faq);
 
   const handleClose = () => {
+    form.resetFields();
     setOpen(false);
   };
 
-  const handleSubmit = async () => {
-    // تحقّق بسيط
-    const cleaned = qa
-      .map((item) => ({
-        question: (item.question || "").trim(),
-        answers: (item.answers || []).map((a) => (a || "").trim()).filter(Boolean),
-      }))
-      .filter((item) => item.question.length > 0);
-
-    if (!cleaned.length) {
-      message.warning("أضف سؤالاً واحدًا على الأقل.");
-      return;
-    }
-    if (cleaned.some((q) => q.answers.length === 0)) {
-      message.warning("لكل سؤال يجب أن تُدخل إجابة واحدة على الأقل.");
-      return;
-    }
+  const onFinish = async (values) => {
+    const payload = {
+      question: values.question?.trim(),
+      answer: values.answer?.trim(),
+      category: values.category,
+    };
 
     try {
-      setSubmitting(true);
-      if (typeof onSubmit === "function") {
-        await onSubmit(cleaned);
+      const res = await dispatch(handleAddFaq({ body: payload })).unwrap();
+      if (res?.data?.status === "success") {
+        message.success(res?.data?.message || "تم إضافة السؤال بنجاح");
+        handleClose();
+        dispatch(handleGetAllFaqs());
       } else {
-        // للعرض فقط إن لم تُمرّر onSubmit
-        // يمكنك ربطها بـ API بسهولة
-        // console.log(cleaned);
-        message.success("تم إرسال الاسئة بنجاح بنجاح ✅");
+        message.error(res?.data?.message || "حدث خطأ أثناء الإضافة");
       }
-      setOpen(false);
-      // إعادة التهيئة
-      setQa([{ question: "", answers: [""] }]);
-    } finally {
-      setSubmitting(false);
+    } catch (error) {
+      message.error("حدث خطأ أثناء الإضافة");
+      console.error("Add FAQ failed:", error);
     }
   };
 
@@ -163,103 +102,50 @@ export default function AddFaqModal({ open, setOpen, onSubmit, palette  , active
 
           <Divider className="my-4" />
 
-          {/* Questions Builder */}
-          <div className="space-y-6">
-            {qa.map((item, qIdx) => {
-              const filled = countFilledAnswers(item.answers);
-              return (
-                <div
-                  key={qIdx}
-                  className="rounded-xl border border-gray-200 p-4 bg-gray-50"
-                >
-                  {/* Question header */}
-                  <div className="flex items-center justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-2">
-                      <Tag color="blue">سؤال #{qIdx + 1}</Tag>
-                      <Tooltip title="نص السؤال الذي سيظهر للمستخدم">
-                        <QuestionCircleOutlined className="text-gray-400" />
-                      </Tooltip>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Tag color={filled > 0 ? "green" : "default"}>
-                        إجابات: {filled} / {item.answers.length}
-                      </Tag>
-                      {qa.length > 1 && (
-                        <Button
-                          danger
-                          type="text"
-                          icon={<DeleteOutlined />}
-                          onClick={() => removeQuestion(qIdx)}
-                        >
-                          حذف السؤال
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Question input */}
-                  <Form layout="vertical">
-                    <Form.Item label="نص السؤال">
-                      <Input
-                        placeholder="اكتب نص السؤال هنا…"
-                        value={item.question}
-                        onChange={(e) => updateQuestionText(qIdx, e.target.value)}
-                      />
-                    </Form.Item>
-
-                    <Divider className="my-2">الإجــابــات</Divider>
-
-                    {/* Answers list */}
-                    <Space direction="vertical" className="w-full">
-                      {item.answers.map((ans, aIdx) => (
-                        <div key={aIdx} className="flex items-start gap-2">
-                          <Input.TextArea
-                            placeholder={`الإجابة ${aIdx + 1}…`}
-                            value={ans}
-                            autoSize={{ minRows: 2, maxRows: 5 }}
-                            onChange={(e) =>
-                              updateAnswerText(qIdx, aIdx, e.target.value)
-                            }
-                          />
-                          {item.answers.length > 1 && (
-                            <Button
-                              danger
-                              type="text"
-                              icon={<MinusCircleOutlined />}
-                              onClick={() => removeAnswer(qIdx, aIdx)}
-                              title="حذف هذه الإجابة"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </Space>
-
-                    {/* Add answer */}
-                    <div className="mt-3">
-                      <Button
-                        icon={<PlusOutlined />}
-                        onClick={() => addAnswer(qIdx)}
-                      >
-                        إضافة إجابة أخرى
-                      </Button>
-                    </div>
-                  </Form>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Add question */}
-          <div className="mt-5">
-            <Button
-              type="dashed"
-              block
-              icon={<PlusOutlined />}
-              onClick={addQuestion}
+          <Form form={form} layout="vertical" onFinish={onFinish}>
+            <Form.Item
+              label="التصنيف"
+              name="category"
+              rules={[{ required: true, message: "يرجى اختيار التصنيف" }]}
             >
-              إضافة سؤال جديد
-            </Button>
-          </div>
+              <Select
+                placeholder="اختر التصنيف"
+                options={CATEGORY_OPTIONS}
+                showSearch
+                optionFilterProp="label"
+              />
+            </Form.Item>
+
+            <Form.Item
+              label="السؤال"
+              name="question"
+              rules={[{ required: true, message: "يرجى إدخال نص السؤال" }]}
+            >
+              <Input placeholder="اكتب نص السؤال هنا…" />
+            </Form.Item>
+
+            <Form.Item
+              label="الإجابة"
+              name="answer"
+              rules={[{ required: true, message: "يرجى إدخال الإجابة" }]}
+            >
+              <Input.TextArea placeholder="اكتب الإجابة هنا…" autoSize={{ minRows: 3, maxRows: 6 }} />
+            </Form.Item>
+
+            <Divider className="my-5" />
+
+            <div className="flex items-center justify-end gap-3">
+              <Button onClick={handleClose}>إلغاء</Button>
+              <Button
+                type="primary"
+                icon={<SendOutlined />}
+                loading={add_faq_loading}
+                onClick={() => form.submit()}
+              >
+                حفظ السؤال
+              </Button>
+            </div>
+          </Form>
 
           <Divider className="my-5" />
 
@@ -269,8 +155,8 @@ export default function AddFaqModal({ open, setOpen, onSubmit, palette  , active
             <Button
               type="primary"
               icon={<SendOutlined />}
-              loading={submitting}
-              onClick={handleSubmit}
+              loading={add_faq_loading}
+              onClick={onFinish}
             >
               إرسال التقييم
             </Button>

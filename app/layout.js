@@ -6,6 +6,7 @@ import "./styles/responsive.css";
 import Header from "../components/layout/Header";
 import FloatingButton from "../components/ui/FloatingButton";
 import AnimatedFooter from "../components/layout/Footer";
+import LayoutProvider from "../components/LayoutProvider";
 // import './styles/globals.css';
 
 
@@ -31,8 +32,9 @@ export default function RootLayout({ children }) {
         dir="rtl"
         className={`min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50 to-teal-100 relative  ${geistSans.variable} ${geistMono.variable}`}
       >
-
+        <LayoutProvider>
         {children}
+        </LayoutProvider>
       </body>
     </html>
   );

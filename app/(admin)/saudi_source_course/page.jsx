@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PageLayout from "../../../components/layout/PageLayout";
 import BreadcrumbsShowcase from "../../../components/ui/BreadCrumbs";
 import {
@@ -14,17 +14,24 @@ import {
   Trash2,
   Users,
   Copy,
+  Eye,
+  EyeOff,
 } from "lucide-react";
-import PagesHeader from "./../../../components/ui/PagesHeader";
-import { subjects } from "../../../data/subjects";
+import PagesHeader from "../../../components/ui/PagesHeader";
 import Button from "../../../components/atoms/Button";
 import SubjectsStats from "../../../components/Subjects/SubjectStats";
 import Table from "../../../components/ui/Table";
-import SearchAndFilters from "./../../../components/ui/SearchAndFilters";
+import SearchAndFilters from "../../../components/ui/SearchAndFilters";
 import Badge from "../../../components/atoms/Badge";
 import DeleteSubjectModal from "../../../components/Subjects/DeleteSubject.modal.jsx";
 import { useRouter } from "next/navigation";
 import CourseSourceSubjectCard from "../../../components/ui/Cards/CourseSourceSubjectCard";
+import { useDispatch, useSelector } from "react-redux";
+import { Spin } from "antd";
+import {
+  handleGetAllRounds,
+  handleGetSourceRound,
+} from "@/lib/features/roundsSlice";
 
 /* ===== Helpers ===== */
 function inferCategory(s) {
@@ -67,6 +74,7 @@ const getStatusColor = (s) =>
 
 const SubjectsManagementPage = () => {
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
@@ -88,29 +96,77 @@ const SubjectsManagementPage = () => {
   // ✅ إنشاء دورة كاملة جديدة + جدولة الظهور
   const [newCourseTitle, setNewCourseTitle] = useState("");
   const [newCourseCode, setNewCourseCode] = useState("");
-  const [releaseContentMode, setReleaseContentMode] = useState("now"); // 'now' | 'schedule'
+  const [releaseContentMode, setReleaseContentMode] =
+    useState("now");
   const [contentVisibleFrom, setContentVisibleFrom] = useState(""); // datetime-local
-  const [releaseSourcesMode, setReleaseSourcesMode] = useState("now"); // 'now' | 'schedule'
+  const [releaseSourcesMode, setReleaseSourcesMode] =
+    useState("now");
   const [sourcesVisibleFrom, setSourcesVisibleFrom] = useState(""); // datetime-local
 
-  // طبّع الداتا
-  const normalizedSubjects = useMemo(
-    () => subjects.map((s) => ({ ...s, _cat: inferCategory(s) })),
-    []
-  );
+  // ✅ pagination state (sync with backend)
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(4); // default per_page
+
+  const {
+    rounds_loading,
+    rounds_list,
+    source_round_loading,
+    source_round_list,
+  } = useSelector((state) => state?.rounds);
+
+  // meta from backend pagination
+  const meta = source_round_list?.data?.message || {};
+
+  /* ===== Effects ===== */
+
+  // Get all rounds once (if needed)
+  useEffect(() => {
+    dispatch(handleGetAllRounds());
+  }, [dispatch]);
+
+  // Fetch source rounds whenever page/pageSize change
+  useEffect(() => {
+    dispatch(
+      handleGetSourceRound({
+        page,
+        per_page: pageSize,
+      })
+    );
+  }, [dispatch, page, pageSize]);
+
+  // Debug: see raw data
+  useEffect(() => {
+    console.log("source_round_list:", source_round_list?.data?.message);
+  }, [source_round_list]);
+
+  // Normalize backend data to array
+  const normalizedSubjects = useMemo(() => {
+    const data = source_round_list?.data?.message?.data;
+    if (!Array.isArray(data)) return [];
+    return data.map((s) => ({
+      ...s,
+      _cat: inferCategory(s),
+    }));
+  }, [source_round_list]);
+
+  // Filter by tab + search
   const filteredSubjects = useMemo(() => {
     const term = (searchTerm || "").toLowerCase();
     const base =
       activeTab === "all"
         ? normalizedSubjects
         : normalizedSubjects.filter((s) => s._cat === activeTab);
-    return base.filter(
-      (s) =>
-        s.name?.toLowerCase().includes(term) ||
-        s.description?.toLowerCase().includes(term) ||
-        s.code?.toLowerCase().includes(term)
-    );
+
+    return base.filter((s) => {
+      const name = s.name?.toLowerCase() || "";
+      const desc = s.description?.toLowerCase() || "";
+      return name.includes(term) || desc.includes(term);
+    });
   }, [normalizedSubjects, activeTab, searchTerm]);
+
+  useEffect(() => {
+    console.log("filteredSubjects:", filteredSubjects);
+  }, [filteredSubjects]);
 
   // ✅ افتح مودال "دورة كاملة جديدة" مباشرة
   const openDuplicate = (record) => {
@@ -162,7 +218,7 @@ const SubjectsManagementPage = () => {
       };
 
       console.log("Duplicate (new full course):", payload);
-      // TODO: استبدل بالسطر الفعلي:
+      // TODO: call API here
       // await api.duplicateToNewCourse(payload)
 
       setDupTableOpen(false);
@@ -172,6 +228,8 @@ const SubjectsManagementPage = () => {
       setDupLoading(false);
     }
   };
+
+  /* ===== Table columns ===== */
 
   const columns = [
     {
@@ -197,7 +255,9 @@ const SubjectsManagementPage = () => {
       key: "description",
       render: (text) => (
         <div className="max-w-xs">
-          <p className="text-sm text-[#202938]/80 line-clamp-2 text-right">{text}</p>
+          <p className="text-sm text-[#202938]/80 line-clamp-2 text-right">
+            {text}
+          </p>
         </div>
       ),
     },
@@ -212,11 +272,11 @@ const SubjectsManagementPage = () => {
           </div>
           <div className="flex items-center justify-end gap-1 gap-reverse text-xs text-[#202938]/60">
             <Users className="w-3 h-3" />
-            <span>{record.students} طلاب</span>
+            <span>{record.students ?? 0} طلاب</span>
           </div>
           <div className="flex items-center justify-end gap-1 gap-reverse text-xs text-[#202938]/60">
             <Copy className="w-3 h-3" />
-            <span>{record.questions} أسئلة</span>
+            <span>{record.questions ?? 0} أسئلة</span>
           </div>
         </div>
       ),
@@ -331,6 +391,19 @@ const SubjectsManagementPage = () => {
     },
   ];
 
+  if (source_round_loading) {
+    return (
+      <div className="h-screen flex justify-center items-center">
+        <Spin size="large" spinning />
+      </div>
+    );
+  }
+
+  const total = meta?.total || 0;
+  const backendCurrentPage = meta?.current_page || page;
+  const backendPageSize = meta?.per_page || pageSize;
+  const lastPage = meta?.last_page || 1; // 👈 number of pages from backend
+
   return (
     <PageLayout>
       <div dir="rtl">
@@ -353,8 +426,6 @@ const SubjectsManagementPage = () => {
           }
         />
 
-        <SubjectsStats subjects={filteredSubjects} />
-
         <SearchAndFilters
           mode={viewMode}
           setMode={setViewMode}
@@ -367,8 +438,23 @@ const SubjectsManagementPage = () => {
             columns={columns}
             dataSource={filteredSubjects}
             rowKey={(r) => r.id || r.code}
-            pagination={{ pageSize: 10 }}
+            loading={source_round_loading}
             className="shadow-sm mt-3"
+            pagination={{
+              current: backendCurrentPage,
+              pageSize: backendPageSize,
+              total,
+              // 👇 Antd will compute number of pages as total / pageSize,
+              // while backend gives you `last_page` if you ever need it.
+              showSizeChanger: true,
+              showTotal: (total, range) =>
+                `عرض ${range[0]}–${range[1]} من ${total} دورة (عدد الصفحات: ${lastPage})`,
+              onChange: (newPage, newPageSize) => {
+                setPage(newPage);
+                setPageSize(newPageSize);
+                // fetch handled by useEffect above
+              },
+            }}
           />
         ) : (
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -378,7 +464,6 @@ const SubjectsManagementPage = () => {
                 subject={subject}
                 course_type="egyptian"
                 buttonStyle="dropdown"
-                // لو الكارت بيدعم استدعاء مودال خارجي:
                 onRequestDuplicate={(subj) => openDuplicate(subj)}
                 onEdit={(subject) => console.log("Edit:", subject)}
                 onDelete={(subject) => console.log("Delete:", subject)}
@@ -451,10 +536,13 @@ const SubjectsManagementPage = () => {
                           type="datetime-local"
                           className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
                           value={contentVisibleFrom}
-                          onChange={(e) => setContentVisibleFrom(e.target.value)}
+                          onChange={(e) =>
+                            setContentVisibleFrom(e.target.value)
+                          }
                         />
                         <div className="mt-1 text-[11px] text-gray-500">
-                          لن يظهر أي محتوى (وحدات/دروس/اختبارات) للطلاب قبل هذا الموعد.
+                          لن يظهر أي محتوى (وحدات/دروس/اختبارات) للطلاب قبل هذا
+                          الموعد.
                         </div>
                       </div>
                     )}
@@ -488,7 +576,9 @@ const SubjectsManagementPage = () => {
                           type="datetime-local"
                           className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
                           value={sourcesVisibleFrom}
-                          onChange={(e) => setSourcesVisibleFrom(e.target.value)}
+                          onChange={(e) =>
+                            setSourcesVisibleFrom(e.target.value)
+                          }
                         />
                         <div className="mt-1 text-[11px] text-gray-500">
                           لن تظهر ملفات/مصادر الدورة قبل هذا الموعد.
@@ -499,12 +589,15 @@ const SubjectsManagementPage = () => {
                 </div>
 
                 <div className="rounded-lg border p-3 text-xs text-gray-600 bg-gray-50">
-                  سيتم نسخ <b>الدورة كاملة</b> (الوحدات، الدروس، الأسئلة، المرفقات، المصادر)
-                  إلى دورة جديدة باسمك المحدد، مع احترام مواعيد الظهور أعلاه.
+                  سيتم نسخ <b>الدورة كاملة</b> (الوحدات، الدروس، الأسئلة،
+                  المرفقات، المصادر) إلى دورة جديدة باسمك المحدد، مع احترام مواعيد
+                  الظهور أعلاه.
                 </div>
               </div>
 
-              {dupError && <p className="text-sm text-red-600 mt-3">{dupError}</p>}
+              {dupError && (
+                <p className="text-sm text-red-600 mt-3">{dupError}</p>
+              )}
 
               <div className="mt-6 flex justify-end gap-2">
                 <button

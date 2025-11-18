@@ -1,7 +1,7 @@
 // app/blog/BlogContent.jsx
-'use client';
+"use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PageLayout from "../../../components/layout/PageLayout";
 import BreadcrumbsShowcase from "../../../components/ui/BreadCrumbs";
 import PagesHeader from "../../../components/ui/PagesHeader";
@@ -19,13 +19,18 @@ import {
   Calendar as CalendarIcon,
   Edit3,
   Trash2,
+  MessageCircleWarning,
 } from "lucide-react";
 
-import { message } from "antd";
+import { message, Spin } from "antd";
 import AddBlogModal from "../../../components/Blogs/AddBlogModal/AddBlogModal";
 import EditBlogModal from "../../../components/Blogs/EditBlogModal/EditBlogModal";
 import DeleteBlogModal from "../../../components/Blogs/DeleteBlogModal/DeleteBlogModal";
 import BlogDetailsModal from "../../../components/Blogs/BlogDetailsModal/BlogDetailsModal";
+import ShowHideModal from "../../../components/Blogs/ShowHideModal/ShowHideModal";
+import { useDispatch, useSelector } from "react-redux";
+import { handleGetAllBlogs } from "@/lib/features/blogSlice";
+import SharedImage from "@/components/ui/SharedImage";
 
 /* ========================
    Breadcrumbs
@@ -36,71 +41,28 @@ const breadcrumbs = [
 ];
 
 /* ========================
-   Sample Data
-======================== */
-const BLOGS_SEED = [
-  {
-    id: "b-001",
-    title: "كيف تحسن مهارة الكتابة العربية؟",
-    desc:
-      "خطوات عملية وتمارين يومية لصقل مهارة الكتابة وتحسين الأسلوب لدى المتدربين والمبتدئين.",
-    image:
-      "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop",
-    date: "2025-08-05",
-    comments: 24,
-    views: 1280,
-  },
-  {
-    id: "b-002",
-    title: "خريطة طريق لتعلم القراءة السريعة",
-    desc:
-      "مقدمة مختصرة في تقنيات القراءة السريعة وكيفية مضاعفة الاستيعاب دون التضحية بالفهم.",
-    image:
-      "https://images.unsplash.com/photo-1463320726281-696a485928c7?q=80&w=1200&auto=format&fit=crop",
-    date: "2025-07-19",
-    comments: 13,
-    views: 845,
-  },
-  {
-    id: "b-003",
-    title: "أخطاء إملائية شائعة وحلول بسيطة",
-    desc:
-      "نتناول أكثر الأخطاء الإملائية شيوعاً مع أمثلة توضيحية وتمارين قصيرة لتثبيت القاعدة.",
-    image:
-      "https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1200&auto=format&fit=crop",
-    date: "2025-06-30",
-    comments: 31,
-    views: 1543,
-  },
-  {
-    id: "b-004",
-    title: "نصائح للبدء مع البرمجة للأطفال",
-    desc:
-      "كيف تقدّم مفاهيم البرمجة الأساسية للأطفال بطريقة ممتعة وعملية باستخدام الأنشطة والألعاب.",
-    image:
-      "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=1200&auto=format&fit=crop",
-    date: "2025-06-10",
-    comments: 9,
-    views: 510,
-  },
-];
-
-/* ========================
    Cards & Table
 ======================== */
-function BlogCard({ post, onEdit, onDelete, onDetails }) {
+function BlogCard({ post, onEdit, onDelete, onDetails, onShowHide }) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition relative">
       {/* actions */}
-      
-      <div className='absolute bottom-0 bg-primary blur-3xl w-24 h-24 rounded-full'></div>
+
+      <div className="absolute bottom-0 bg-primary blur-3xl w-24 h-24 rounded-full"></div>
       <div className="absolute top-3 left-3 z-10 flex gap-2">
         <button
-        className="p-2 rounded-lg bg-white/80 hover:bg-white border border-gray-200 text-sky-600"
-          title="تفاصيل"
-          onClick={() =>onDetails(post)}
+          className="p-2 rounded-lg bg-white/80 hover:bg-white border border-gray-200 text-sky-600"
+          title="اخفاء/اظهار"
+          onClick={() => onShowHide(post)}
         >
-          <Eye className="w-4 h-4"/>
+          <Eye className="w-4 h-4" />
+        </button>
+        <button
+          className="p-2 rounded-lg bg-white/80 hover:bg-white border border-gray-200 text-sky-600"
+          title="تفاصيل"
+          onClick={() => onDetails(post)}
+        >
+          <MessageCircleWarning className="w-4 h-4" />
         </button>
         <button
           onClick={() => onEdit(post)}
@@ -119,26 +81,26 @@ function BlogCard({ post, onEdit, onDelete, onDetails }) {
       </div>
 
       <div className="relative">
-        <img
-          src={post.image}
-          alt={post.title}
-          className="w-full h-[220px] object-cover"
+        <SharedImage
+          src={post?.image || "/images/logo.svg"}
+          alt={post?.title}
+          className="w-full h-full object-contain"
         />
       </div>
 
       <div className="p-4 space-y-3">
-        <h3 className="text-lg font-semibold text-gray-900">{post.title}</h3>
-        <p className="text-sm text-gray-600 line-clamp-3">{post.desc}</p>
+        <h3 className="text-lg font-semibold text-gray-900">{post?.title}</h3>
+        <p className="text-sm text-gray-600 line-clamp-3">{post?.content}</p>
 
         <div className="flex items-center justify-between text-sm text-gray-600 pt-1">
           <div className="flex items-center gap-1">
             <CalendarIcon className="w-4 h-4" />
-            <span>{new Date(post.date).toLocaleDateString("ar-EG")}</span>
+            <span>{new Date(post.created_at).toLocaleDateString("ar-EG")}</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
               <MessageSquare className="w-4 h-4" />
-              {post.comments}
+              {post.comments_count}
             </span>
             <span className="flex items-center gap-1">
               <Eye className="w-4 h-4" />
@@ -151,7 +113,8 @@ function BlogCard({ post, onEdit, onDelete, onDetails }) {
   );
 }
 
-function BlogTable({ rows, onEdit, onDelete, onDetails }) {
+function BlogTable({ rows, onEdit, onDelete, onDetails, onShowHide }) {
+  const safeRows = rows || [];
   return (
     <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
       <table className="min-w-full text-sm">
@@ -165,57 +128,71 @@ function BlogTable({ rows, onEdit, onDelete, onDetails }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((post) => (
-            <tr key={post.id} className="border-t">
-              <td className="p-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-16 h-12 rounded-md overflow-hidden bg-gray-100">
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-900">
-                      {post.title}
+          {safeRows.length > 0 ? (
+            safeRows.map((post) => (
+              <tr key={post.id} className="border-t">
+                <td className="p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 h-12 rounded-md overflow-hidden bg-gray-100">
+                      {/* <img
+                        src={post.image || "/images/logo.svg"}
+                        alt={post.title}
+                        className="w-full h-full object-contain"
+                        onError={(e) => e.currentTarget.src = "/images/logo.svg"}
+                      /> */}
+                      <SharedImage
+                        src={post?.image || "/images/logo.svg"}
+                        alt={post?.title}
+                        className="w-full h-full object-contain"
+                      />
                     </div>
-                    <div className="text-xs text-gray-500 line-clamp-1">
-                      {post.desc}
+                    <div>
+                      <div className="font-medium text-gray-900">
+                        {post.title}
+                      </div>
+                      <div className="text-xs text-gray-500 line-clamp-1">
+                        {post.content}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </td>
-              <td className="p-3">
-                {new Date(post.date).toLocaleDateString("ar-EG")}
-              </td>
-              <td className="p-3">{post.comments}</td>
-              <td className="p-3">{post.views}</td>
-              <td className="p-3">
-                <div className="flex items-center gap-2">
-                   <button
-                    onClick={() => onDetails(post)}
-                    className="px-3 py-1.5 rounded-lg text-sm bg-white border border-sky-200 text-sky-600 hover:bg-sky-50"
-                  >
-                    تفاصيل
-                  </button>
-                  <button
-                    onClick={() => onEdit(post)}
-                    className="px-3 py-1.5 rounded-lg text-sm bg-white border border-green-200 text-green-600 hover:bg-green-50"
-                  >
-                    تعديل
-                  </button>
-                  <button
-                    onClick={() => onDelete(post)}
-                    className="px-3 py-1.5 rounded-lg text-sm bg-white border border-rose-200 text-rose-600 hover:bg-rose-50"
-                  >
-                    حذف
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-          {rows.length === 0 && (
+                </td>
+                <td className="p-3">
+                  {new Date(post.created_at).toLocaleDateString("ar-EG")}
+                </td>
+                <td className="p-3">{post.comments_count}</td>
+                <td className="p-3">{post.views}</td>
+                <td className="p-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => onShowHide(post)}
+                      className="px-3 py-1.5 rounded-lg text-sm bg-white border border-sky-200 text-sky-600 hover:bg-sky-50"
+                      title="إخفاء/إظهار"
+                    >
+                      <Eye className="w-4 h-4 inline" />
+                    </button>
+                    <button
+                      onClick={() => onDetails(post)}
+                      className="px-3 py-1.5 rounded-lg text-sm bg-white border border-sky-200 text-sky-600 hover:bg-sky-50"
+                    >
+                      تفاصيل
+                    </button>
+                    <button
+                      onClick={() => onEdit(post)}
+                      className="px-3 py-1.5 rounded-lg text-sm bg-white border border-green-200 text-green-600 hover:bg-green-50"
+                    >
+                      تعديل
+                    </button>
+                    <button
+                      onClick={() => onDelete(post)}
+                      className="px-3 py-1.5 rounded-lg text-sm bg-white border border-rose-200 text-rose-600 hover:bg-rose-50"
+                    >
+                      حذف
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          ) : (
             <tr>
               <td colSpan={5} className="p-6 text-center text-gray-500">
                 لا توجد مقالات مطابقة.
@@ -228,31 +205,42 @@ function BlogTable({ rows, onEdit, onDelete, onDetails }) {
   );
 }
 
-
 /* ========================
    Page
 ======================== */
 export default function BlogContent() {
   const [viewMode, setViewMode] = useState("grid");
   const [searchTerm, setSearchTerm] = useState("");
-  const [posts, setPosts] = useState(BLOGS_SEED);
   const [detailModal, setDetailModal] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [rowData, setRowData] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [showHideTarget, setShowHideTarget] = useState(null);
+  const dispatch = useDispatch();
+  const { blogs_loading, blogs_data } = useSelector((state) => state?.blogs);
+
+  useEffect(() => {
+    dispatch(handleGetAllBlogs());
+  }, [dispatch]);
 
   const filtered = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    if (!q) return posts;
-    return posts.filter((p) => {
-      const hay = `${p.title} ${p.desc}`.toLowerCase();
+    const blogs = blogs_data?.data?.message || [];
+    const q = searchTerm?.trim().toLowerCase();
+    if (!q) return blogs;
+    return blogs.filter((p) => {
+      const hay = `${p?.title} ${p?.content}`.toLowerCase();
       return hay.includes(q);
     });
-  }, [posts, searchTerm]);
+  }, [blogs_data, searchTerm]);
+
+  useEffect(() => {
+    console.log(blogs_data?.data?.message, filtered);
+  }, [blogs_data, filtered]);
 
   const handleAdd = async (payload) => {
-    setPosts((prev) => [payload, ...prev]);
+    // Refresh blogs after adding
+    dispatch(handleGetAllBlogs());
   };
 
   const requestEdit = (post) => {
@@ -261,21 +249,36 @@ export default function BlogContent() {
   };
 
   const saveEdit = async (updated) => {
-    setPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    // Refresh blogs after editing
+    dispatch(handleGetAllBlogs());
   };
 
   const requestDelete = (post) => setDeleteTarget(post);
   const confirmDelete = () => {
     if (deleteTarget) {
-      setPosts((prev) => prev.filter((p) => p.id !== deleteTarget.id));
+      // Refresh blogs after deleting
+      dispatch(handleGetAllBlogs());
       message.success("تم حذف المقال");
     }
     setDeleteTarget(null);
   };
- 
+
   function handleShowDetails(item) {
     setDetailModal(true);
-    setRowData(item)
+    setRowData(item);
+  }
+
+  function handleShowHide(item) {
+    setRowData(item);
+    setShowHideTarget(item);
+  }
+
+  if (blogs_loading) {
+    return (
+      <div className="h-screen flex justify-center items-center">
+        <Spin size="large" spinning />
+      </div>
+    );
   }
 
   return (
@@ -315,43 +318,56 @@ export default function BlogContent() {
 
         {/* Results */}
         <div className="mt-6">
-          {viewMode === "grid" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filtered.map((post) => (
-                <BlogCard 
-                  onDetails={handleShowDetails}
-                  key={post.id}
-                  post={post}
-                  onEdit={requestEdit}
-                  onDelete={requestDelete}
-                />
-              ))}
-            </div>
+          {Array.isArray(filtered) && filtered.length > 0 ? (
+            viewMode === "grid" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filtered.map((post) => (
+                  <BlogCard
+                    onDetails={handleShowDetails}
+                    key={post.id}
+                    post={post}
+                    onEdit={requestEdit}
+                    onDelete={requestDelete}
+                    onShowHide={handleShowHide}
+                  />
+                ))}
+              </div>
+            ) : (
+              <BlogTable
+                onDetails={handleShowDetails}
+                rows={filtered}
+                onEdit={requestEdit}
+                onDelete={requestDelete}
+                onShowHide={handleShowHide}
+              />
+            )
           ) : (
-            <BlogTable
-              onDetails={handleShowDetails}
-              rows={filtered}
-              onEdit={requestEdit}
-              onDelete={requestDelete}
-            />
-          )}
-
-          {/* Empty state */}
-          {filtered.length === 0 && (
             <div className="mt-10 bg-white rounded-2xl border border-dashed border-gray-300 p-12 text-center">
               <TextIcon className="w-12 h-12 mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                لا توجد نتائج
+                {searchTerm ? "لا توجد نتائج" : "لا توجد مقالات"}
               </h3>
               <p className="text-gray-600 mb-6">
-                جرّب تعديل الفلاتر أو البحث بكلمات أخرى.
+                {searchTerm
+                  ? "جرّب تعديل الفلاتر أو البحث بكلمات أخرى."
+                  : "لم يتم إضافة أي مقالات بعد. ابدأ بإضافة مقال جديد."}
               </p>
-              <button
-                onClick={() => setSearchTerm("")}
-                className="px-4 py-2 rounded-xl bg-primary text-white"
-              >
-                مسح البحث
-              </button>
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition"
+                >
+                  مسح البحث
+                </button>
+              )}
+              {!searchTerm && (
+                <button
+                  onClick={() => setAddOpen(true)}
+                  className="px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition"
+                >
+                  إضافة مقال جديد
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -365,9 +381,22 @@ export default function BlogContent() {
         rowData={rowData}
         onSubmit={saveEdit}
       />
-      
-      <DeleteBlogModal open={deleteTarget} setOpen={setDeleteTarget} rowData={rowData} />
-      <BlogDetailsModal open={detailModal} setOpen={setDetailModal} rowData={rowData}/>
+
+      <DeleteBlogModal
+        open={deleteTarget}
+        setOpen={setDeleteTarget}
+        rowData={rowData}
+      />
+      <BlogDetailsModal
+        open={detailModal}
+        setOpen={setDetailModal}
+        rowData={rowData}
+      />
+      <ShowHideModal
+        open={showHideTarget}
+        setOpen={setShowHideTarget}
+        rowData={rowData}
+      />
     </PageLayout>
   );
 }

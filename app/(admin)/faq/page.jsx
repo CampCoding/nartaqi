@@ -22,6 +22,10 @@ import SearchAndFilters from "../../../components/ui/SearchAndFilters";
 import AddFaqModal from "../../../components/Faq/AddFaqModal/AddFaqModal";
 import EditFaqModal from "../../../components/Faq/EditFaqModal/EditFaqModal";
 import DeleteFaqModal from "../../../components/Faq/DeleteFaqModal/DeleteFaqModal";
+import ShowHideFaqModal from "../../../components/Faq/ShowHideFaqModal/ShowHideFaqModal";
+import { useDispatch, useSelector } from "react-redux";
+import { handleGetAllFaqs } from "@/lib/features/faqSlice";
+import { Spin } from "antd";
 
 /** =========================
  *  Breadcrumbs & Tabs
@@ -31,141 +35,20 @@ const breadcrumbs = [
   { label: "الأسئلة الشائعة", href: "/faq", icon: Star, current: true },
 ];
 
-const TABS = [
-  { id: 1, key: "all", title: "الكل", count: 15 },
-  { id: 2, key: "general", title: "عام", count: 3 },
-  { id: 3, key: "courses", title: "دورات", count: 5 },
-  { id: 4, key: "enroll", title: "التسجيل والدفع", count: 4 },
-  { id: 5, key: "support", title: "الدعم الفني", count: 3 },
-];
-
-const QA_DATA = [
-  // PLATFORM
-  {
-    id: "q1",
-    category: "courses",
-    text: "ما مدى سهولة التسجيل والدخول إلى المنصة؟",
-    hint: "قيّم سهولة الخطوات ووضوح الواجهة",
-    createdAt: "2025-08-01",
-    answers: [
-      {
-        id: "a1",
-        user: "أحمد محمود",
-        avatar: "AM",
-        rating: 5,
-        comment: "العملية واضحة جدًا ودخلت من أول مرة. التصميم بسيط ومفهوم.",
-        date: "2025-08-19",
-        likes: 8,
-        verified: true,
-      },
-      {
-        id: "a2",
-        user: "دينا محمد",
-        avatar: "DM",
-        rating: 4,
-        comment: "كويسه لكن رسالة التوثيق وصلت بعد دقيقتين.",
-        date: "2025-08-18",
-        likes: 3,
-        verified: false,
-      },
-    ],
-  },
-  {
-    id: "q2",
-    category: "support",
-    text: "سرعة التصفح وأداء المنصة أثناء مشاهدة المحتوى؟",
-    createdAt: "2025-08-02",
-    answers: [
-      {
-        id: "a3",
-        user: "كريم ياسر",
-        avatar: "KY",
-        rating: 4,
-        comment: "فيه تحسن كبير، الفيديوهات تشتغل بسرعة والتنقل سلس.",
-        date: "2025-08-20",
-        likes: 6,
-        verified: true,
-      },
-    ],
-  },
-
-  // TRAINER
-  {
-    id: "q3",
-    category: "enroll",
-    text: "مدى وضوح الشرح واستجابة المدرب للأسئلة؟",
-    hint: "هل يقدّم أمثلة عملية؟ هل يرد سريعًا؟",
-    createdAt: "2025-08-03",
-    answers: [
-      {
-        id: "a4",
-        user: "سارة علي",
-        avatar: "SA",
-        rating: 5,
-        comment: "المدرب رائع وبيجاوب على كل الأسئلة بوضوح تام.",
-        date: "2025-08-12",
-        likes: 12,
-        verified: true,
-      },
-      {
-        id: "a5",
-        user: "محمود سمير",
-        avatar: "MS",
-        rating: 5,
-        comment: "تفاعل ممتاز ومتابعة للواجبات والمشاريع.",
-        date: "2025-08-18",
-        likes: 10,
-        verified: true,
-      },
-    ],
-  },
-
-  // COURSE
-  {
-    id: "q4",
-    category: "enroll",
-    text: "تنظيم محتوى الدورة وجودة المواد المرفقة؟",
-    createdAt: "2025-08-04",
-    answers: [
-      {
-        id: "a6",
-        user: "محمد خالد",
-        avatar: "MK",
-        rating: 4,
-        comment: "تقسيم الوحدات ممتاز والمرفقات مفيدة ومنظمة بشكل رائع.",
-        date: "2025-08-05",
-        likes: 4,
-        verified: false,
-      },
-    ],
-  },
-
-  // GENERAL
-  {
-    id: "q5",
-    category: "general",
-    text: "ما تقييمك العام لتجربتك معنا؟",
-    createdAt: "2025-08-05",
-    answers: [
-      {
-        id: "a7",
-        user: "ندى عصام",
-        avatar: "NE",
-        rating: 4,
-        comment: "تجربة إيجابية جداً وسهولة في الدفع والتواصل.",
-        date: "2025-07-28",
-        likes: 2,
-        verified: true,
-      },
-    ],
-  },
-];
+const CATEGORY_LABELS = {
+  general: "عام",
+  courses: "دورات",
+  enroll: "التسجيل والدفع",
+  support: "الدعم الفني",
+  platform: "المنصة",
+  professional_license: "الرخص المهنية",
+};
 
 /** =========================
  *  Small helpers & components
  *  ========================= */
 function averageRating(answers) {
-  if (!answers.length) return 0;
+  if (!Array.isArray(answers) || !answers.length) return 0;
   const sum = answers.reduce((s, a) => s + (a.rating || 0), 0);
   return +(sum / answers.length).toFixed(1);
 }
@@ -175,6 +58,7 @@ function QuestionActionsMenu({
   setEditModal,
   setRowData,
   onDelete,
+  onToggleVisibility,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -204,6 +88,17 @@ function QuestionActionsMenu({
             <hr className="my-1" />
             <button
               onClick={() => {
+                onToggleVisibility(question);
+                setIsOpen(false);
+              }}
+              className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
+            >
+              <TrendingUp className="w-4 h-4" />
+              {question.hidden ? "إظهار" : "إخفاء"}
+            </button>
+            <hr className="my-1" />
+            <button
+              onClick={() => {
                 onDelete(question);
                 setIsOpen(false);
               }}
@@ -219,7 +114,8 @@ function QuestionActionsMenu({
   );
 }
 
-function QuestionCard({ question, setRowData, setEditModal, onDelete }) {
+function QuestionCard({ question, setRowData, setEditModal, onDelete, onToggleVisibility }) {
+  const answers = Array.isArray(question.answers) ? question.answers : [];
   return (
     <div className="bg-white relative rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group">
       <div className="absolute w-32 h-32 -top-10 -right-20 rounded-full bg-gradient-to-br from-blue-500/10 to-purple-500/10 group-hover:from-blue-500/20 group-hover:to-purple-500/20 transition-all duration-300"></div>
@@ -235,17 +131,25 @@ function QuestionCard({ question, setRowData, setEditModal, onDelete }) {
                 setEditModal={setEditModal}
                 setRowData={setRowData}
                 onDelete={(q) => onDelete(q)}
+                onToggleVisibility={onToggleVisibility}
               />
             </div>
 
-            <h3 className="text-lg font-semibold text-gray-800 leading-relaxed mb-2">
-              {question.text}
-            </h3>
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-lg font-semibold text-gray-800 leading-relaxed flex-1">
+                {question.text}
+              </h3>
+              {question.hidden && (
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-600 border border-red-100">
+                  مخفي
+                </span>
+              )}
+            </div>
 
             <div className="flex items-center gap-4 mb-4">
               <div className="flex items-center gap-1 text-sm text-gray-600">
                 <MessageSquare className="w-4 h-4" />
-                <span>{question.answers.length} إجابة</span>
+                <span>{answers.length} إجابة</span>
               </div>
             </div>
           </div>
@@ -253,7 +157,7 @@ function QuestionCard({ question, setRowData, setEditModal, onDelete }) {
 
         {/* Answers preview */}
         <div className="space-y-3">
-          {question.answers.slice(0, 2).map((answer) => (
+          {answers.slice(0, 2).map((answer) => (
             <div
               key={answer.id}
               className="rounded-xl border border-gray-100 bg-gray-50/60 p-4 hover:bg-white hover:shadow-sm transition-all duration-200"
@@ -264,7 +168,7 @@ function QuestionCard({ question, setRowData, setEditModal, onDelete }) {
             </div>
           ))}
 
-          {question.answers.length === 0 && (
+          {answers.length === 0 && (
             <div className="rounded-xl border border-dashed border-gray-200 p-6 text-center">
               <MessageSquare className="w-8 h-8 mx-auto text-gray-400 mb-2" />
               <p className="text-gray-600 text-sm">لا توجد إجابات على هذا السؤال بعد</p>
@@ -290,7 +194,7 @@ function getLastActivityDate(q) {
   return iso ? new Date(iso) : null;
 }
 
-function FaqTable({ items, setEditModal, setRowData, onDelete }) {
+function FaqTable({ items, setEditModal, setRowData, onDelete, onToggleVisibility }) {
   return (
     <div className="mt-8 overflow-x-auto rounded-2xl border border-gray-200 bg-white">
       <table className="w-full text-right" dir="rtl">
@@ -333,6 +237,12 @@ function FaqTable({ items, setEditModal, setRowData, onDelete }) {
                       تعديل
                     </button>
                     <button
+                      onClick={() => onToggleVisibility(q)}
+                      className="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-sm"
+                    >
+                      {q.hidden ? "إظهار" : "إخفاء"}
+                    </button>
+                    <button
                       onClick={() => onDelete(q)}
                       className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-sm"
                     >
@@ -360,7 +270,7 @@ function FaqTable({ items, setEditModal, setRowData, onDelete }) {
  *  Main Page
  *  ========================= */
 export default function FaqPage() {
-  const [activeTab, setActiveTab] = useState(1);
+  const [activeTab, setActiveTab] = useState("all");
   const [query, setQuery] = useState("");
   const [minRating, setMinRating] = useState(0);
   const [sort, setSort] = useState("newest");
@@ -370,19 +280,92 @@ export default function FaqPage() {
   const [deleteModal, setDeleteModal] = useState({ open: false, question: null });
   const [EditModal, setEditModal] = useState(false);
   const [rowData, setRowData] = useState({});
+  const [showHideModal, setShowHideModal] = useState({ open: false, question: null });
+  const dispatch = useDispatch();
+  const { faq_list, faq_loading } = useSelector((state) => state?.faq);
+
+  useEffect(() => {
+    dispatch(handleGetAllFaqs())
+  } , [dispatch])
+
+
+  useEffect(() => {
+    console.log(faq_list?.data?.message)
+  } , [faq_list])
 
   useEffect(() => {
     document.body.style.overflow = EditModal || NewModal ? "hidden" : "auto";
   }, [EditModal, NewModal]);
 
-  const activeKey = useMemo(
-    () => TABS.find((t) => t.id === activeTab)?.key ?? "all",
-    [activeTab]
-  );
+  const normalizedFaqs = useMemo(() => {
+    const message = faq_list?.data?.message;
+    if (!Array.isArray(message)) return [];
+
+    return message.map((item, index) => {
+      const answersArray = Array.isArray(item.answers) ? item.answers : [];
+      const fallbackAnswer =
+        !answersArray.length && item.answer
+          ? [
+              {
+                id: `${item.id || index}-answer`,
+                comment: item.answer,
+                user: item.answer_user || "",
+                date: item.updated_at || item.created_at,
+              },
+            ]
+          : [];
+
+      const answers = [...answersArray, ...fallbackAnswer].map((ans, idx) => ({
+        id: ans.id || `${item.id || index}-ans-${idx}`,
+        user: ans.user || ans.author || "مستخدم",
+        avatar: ans.avatar || (ans.user ? ans.user.slice(0, 2).toUpperCase() : "NA"),
+        rating: ans.rating ?? 0,
+        comment: ans.comment || ans.text || ans.answer || "",
+        date: ans.date || ans.created_at || item.updated_at || item.created_at,
+        likes: ans.likes ?? 0,
+        verified: ans.verified ?? false,
+      }));
+
+      return {
+        id: item.id || `faq-${index}`,
+        category: item.category || "other",
+        text: item.question || "",
+        hint: item.hint || "",
+        createdAt: item.created_at || item.updated_at || new Date().toISOString(),
+        answers,
+        hidden: Boolean(item.hidden),
+      };
+    });
+  }, [faq_list]);
+
+  const tabs = useMemo(() => {
+    const counts = normalizedFaqs.reduce((acc, item) => {
+      const key = item.category || "other";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    const categoryTabs = Object.entries(counts).map(([key, count]) => ({
+      id: key,
+      key,
+      title: CATEGORY_LABELS[key] || key,
+      count,
+    }));
+
+    return [{ id: "all", key: "all", title: "الكل", count: normalizedFaqs.length }, ...categoryTabs];
+  }, [normalizedFaqs]);
+
+  useEffect(() => {
+    if (activeTab === "all") return;
+    const exists = tabs.some((tab) => tab.key === activeTab);
+    if (!exists) {
+      setActiveTab("all");
+    }
+  }, [activeTab, tabs]);
 
   /** Filter questions per tab, then search/sort */
   const questions = useMemo(() => {
-    let list = QA_DATA.filter((q) => (activeKey === "all" ? true : q.category === activeKey));
+    let list = normalizedFaqs.filter((q) => (activeTab === "all" ? true : q.category === activeTab));
 
     if (query.trim()) {
       const q = query.trim();
@@ -411,12 +394,25 @@ export default function FaqPage() {
     }
 
     return list;
-  }, [activeKey, query, minRating, sort]);
+  }, [normalizedFaqs, activeTab, query, minRating, sort]);
 
   const handleDelete = (question) => {
     setDeleteModal({ open: true, question });
     setRowData(question);
   };
+
+  const handleToggleVisibility = (question) => {
+    setRowData(question);
+    setShowHideModal({ open: true, question });
+  };
+
+  if(faq_loading) {
+    return (
+      <div className="h-screen flex justify-center items-center">
+        <Spin size="large" spinning/>
+      </div>
+    )
+  }
 
   return (
     <PageLayout>
@@ -452,29 +448,31 @@ export default function FaqPage() {
 
         
         {/* Tabs */}
-        <div className="mt-6 flex flex-wrap gap-3">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`group relative px-6 py-3 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-3 ${
-                activeTab === tab.id
-                  ? " bg-primary text-white shadow-lg scale-105"
-                  : "bg-white/80 backdrop-blur-sm text-gray-700 border-2 border-gray-200 hover:bg-white hover:border-blue-300 hover:scale-105 shadow-sm"
-              }`}
-            >
-              <div className={`w-2.5 h-2.5 rounded-full ${activeTab === tab.id ? "bg-white" : "bg-primary"}`} />
-              <span>{tab.title}</span>
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  activeTab === tab.id ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600"
+        {tabs.length > 0 && (
+          <div className="mt-6 flex flex-wrap gap-3">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`group relative px-6 py-3 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-3 ${
+                  activeTab === tab.key
+                    ? " bg-primary text-white shadow-lg scale-105"
+                    : "bg-white/80 backdrop-blur-sm text-gray-700 border-2 border-gray-200 hover:bg-white hover:border-blue-300 hover:scale-105 shadow-sm"
                 }`}
               >
-                {tab.count}
-              </span>
-            </button>
-          ))}
-        </div>
+                <div className={`w-2.5 h-2.5 rounded-full ${activeTab === tab.key ? "bg-white" : "bg-primary"}`} />
+                <span>{tab.title}</span>
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    activeTab === tab.key ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {tab.count ?? 0}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* View switch: Grid vs Table */}
         {viewMode === "grid" ? (
@@ -486,6 +484,7 @@ export default function FaqPage() {
                 setEditModal={setEditModal}
                 setRowData={setRowData}
                 onDelete={handleDelete}
+                onToggleVisibility={handleToggleVisibility}
               />
             ))}
           </div>
@@ -495,6 +494,7 @@ export default function FaqPage() {
             setEditModal={setEditModal}
             setRowData={setRowData}
             onDelete={handleDelete}
+            onToggleVisibility={handleToggleVisibility}
           />
         )}
 
@@ -519,9 +519,14 @@ export default function FaqPage() {
       </div>
 
       {/* Modals */}
-      <AddFaqModal open={NewModal} setOpen={setNewModal} activeTab={activeTab} />
+      <AddFaqModal open={NewModal} setOpen={setNewModal} />
       <EditFaqModal open={EditModal} setOpen={setEditModal} rowData={rowData} activeTab={activeTab} setRowData={setRowData} />
       <DeleteFaqModal open={deleteModal?.open} setOpen={setDeleteModal} rowData={rowData} />
+      <ShowHideFaqModal
+        open={showHideModal?.open}
+        setOpen={setShowHideModal}
+        rowData={showHideModal?.question}
+      />
     </PageLayout>
   );
 }

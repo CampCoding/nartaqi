@@ -1,23 +1,31 @@
 import React, { useState } from "react";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import CustomModal from "../../layout/Modal";
+import { useDispatch, useSelector } from "react-redux";
+import { handleDeleteBlog, handleGetAllBlogs } from "@/lib/features/blogSlice";
+import { toast } from "react-toastify";
 
 const DeleteBlogModal = ({ open, setOpen, rowData }) => {
   const [loading, setLoading] = useState(false);
-
+  const dispatch = useDispatch() ;
+  const {delete_blog_loading } = useSelector(state => state?.blogs)
+  
   const handleDelete = async () => {
-    setLoading(true);
+    console.log(open);
     try {
-      // Implement your deletion logic here, e.g., API call
-      // await deleteSubject(selectedSubject.id);
-      // Close the modal after successful deletion
-      setOpen(false);
+      const res = await dispatch(handleDeleteBlog({body : {
+        id: open?.id
+      }})).unwrap()
+      if(res?.data?.status == "success") {
+        toast.success(res?.data?.message);
+        dispatch(handleGetAllBlogs())
+        setOpen(false);
+      }else {
+        toast.error(res?.data?.message);
+      }
     } catch (error) {
-      // Handle error (e.g., show a notification)
       console.error("فشل حذف السؤال:", error);
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
   return (
@@ -52,12 +60,12 @@ const DeleteBlogModal = ({ open, setOpen, rowData }) => {
           </button>
           <button
             onClick={handleDelete}
-            disabled={loading}
+            disabled={delete_blog_loading}
             className={`px-4 py-2 ${
-              loading ? "bg-gray-400" : "bg-red-600"
+              delete_blog_loading ? "bg-gray-400" : "bg-red-600"
             } text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2`}
           >
-            {loading ? (
+            {delete_blog_loading ? (
               "جاري الحذف..."
             ) : (
               <>

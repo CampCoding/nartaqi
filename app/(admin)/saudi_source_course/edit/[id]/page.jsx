@@ -325,7 +325,7 @@ const Page = () => {
 
   const tabItems = [
     { key: 1, label: "المعلومات الأساسية", icon: <BookOutlined /> },
-    { key: 2, label: "الجدولة والمواعيد", icon: <CalendarOutlined /> },
+    // { key: 2, label: "الجدولة والمواعيد", icon: <CalendarOutlined /> },
     { key: 3, label: "المحتوى التفصيلي", icon: <FileTextOutlined /> },
     { key: 4, label: "المصادر والملفات", icon: <FolderOutlined /> },
   ];
@@ -428,7 +428,7 @@ const Page = () => {
           )}
 
           {/* Schedule Tab */}
-          {activeTab === 2 && (
+          {/* {activeTab === 2 && (
             <AddCourseSourceShedule
               rowData={rowData}
               setRowData={setRowData}
@@ -440,7 +440,7 @@ const Page = () => {
               setNewSchedule={setNewSchedule}
               isEditing={isEditing}
             />
-          )}
+          )} */}
 
           {/* Content Tab */}
           {activeTab === 3 && (

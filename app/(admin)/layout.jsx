@@ -3,11 +3,14 @@ import { ToastContainer } from "react-toastify";
 import RouteLoader from "../../components/layout/RouteLoader";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
+import LayoutProvider from "../../components/LayoutProvider";
 
 
 export default function AdminLayout({ children }) {
   return (
     <div className="flex min-h-screen  ">
+      <LayoutProvider>
+
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Topbar />
@@ -15,6 +18,7 @@ export default function AdminLayout({ children }) {
           {children}
         </main>
       </div>
+      </LayoutProvider>
 
       <ToastContainer />
 

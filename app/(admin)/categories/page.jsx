@@ -13,52 +13,31 @@ import {
   Eye,
   EyeOff,
   Trash2,
-  X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
-import { Modal, Form, Input, Switch, message, Tooltip } from "antd";
-import { useRouter } from "next/navigation";
+import { message, Tooltip, Pagination } from "antd";
 import AddCategoryModal from "@/components/Categories/AddCategoryModal";
 import DeleteCategoryModal from "@/components/Categories/DeleteCategoryModal";
-
-/* ===================== Initial Data ===================== */
-export const all_categories = [
-  {
-    id: 1,
-    title: "الدورات العامة",
-    description: "دورات تدريبية عامة في مختلف المجالات",
-    coursesCount: 15,
-    createdAt: "2024-01-15",
-    status: "active",
-    sections: ["مهارات أساسية", "تنمية ذاتية", "إدارة الوقت"],
-  },
-  {
-    id: 2,
-    title: "الرخصة المهنية",
-    description: "دورات تأهيل للحصول على الرخص المهنية",
-    coursesCount: 8,
-    createdAt: "2024-02-10",
-    status: "active",
-    sections: ["رخصة المعلم", "اختبارات قياس", "أسئلة سابقة"],
-  },
-  {
-    id: 3,
-    title: "دورات اخري   ",
-    description: "دورات متخصصة في اللغات والتقنية والعلوم الشرعية",
-    coursesCount: 23,
-    createdAt: "2024-03-05",
-    status: "active",
-    sections: ["لغة عربية", "لغة إنجليزية", "برمجة للمبتدئين", "حفظ القرآن"],
-  },
-].map((c) => ({ ...c, visible: true })); // ✅ اجعل كل الفئات مرئية افتراضياً
+import { useDispatch, useSelector } from "react-redux";
+import {
+  handleGetAllCoursesCategories,
+  handleAddCategory,
+  handleEditCategory,
+  handleShowHideCategory,
+} from "@/lib/features/categoriesSlice";
+import SharedImage from "../../../components/ui/SharedImage";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 /* ===================== Small Helpers ===================== */
 const arDate = (iso) =>
-  new Date(iso).toLocaleDateString("ar-EG", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
+  iso
+    ? new Date(iso).toLocaleDateString("ar-EG", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+    : "--";
 
 /* ===================== Grid Card ===================== */
 const CategoryCard = ({
@@ -71,83 +50,104 @@ const CategoryCard = ({
   onToggleExpand,
 }) => {
   const router = useRouter();
+
+  const mappedCategory = {
+    id: category.id,
+    title: category.name,
+    description: category.description,
+    coursesCount: category.courses_count || 0,
+    createdAt: category.created_at,
+    status: category.active === "1" ? "active" : "inactive",
+    visible: category.visible !== false,
+    sections: category.sections || [],
+    image: category.image_url,
+  };
+
   return (
     <div
       className={`bg-white relative rounded-xl overflow-hidden shadow-md border border-gray-100 p-6 transition-all ${
-        category.visible ? "hover:shadow-lg" : "opacity-60"
+        mappedCategory.visible ? "hover:shadow-lg" : "opacity-60"
       }`}
     >
       {/* Soft blobs */}
       <div className="absolute w-20 h-20 top-0 right-0 rounded-full blur-3xl bg-[#3B82F6]/40 pointer-events-none" />
       <div className="absolute w-20 h-20 bottom-0 left-0 rounded-full blur-3xl bg-[#F97316]/40 pointer-events-none" />
 
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs bg-blue-50 text-blue-700 mb-2">
-            <Book className="w-4 h-4" />
-            {arDate(category.createdAt)}
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900">
-            {category.title}
-          </h3>
-        </div>
+      <div className="flex flex-col gap-2">
+        <SharedImage
+          src={mappedCategory.image}
+          alt={mappedCategory.title}
+          className="h-[200px]"
+        />
 
-        <div className="flex items-center gap-2">
-          {!category.visible && (
-            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-700">
-              مخفي
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs bg-blue-50 text-blue-700 mb-2">
+              <Book className="w-4 h-4" />
+              {arDate(mappedCategory.createdAt)}
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900">
+              {mappedCategory.title}
+            </h3>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {!mappedCategory.visible && (
+              <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-700">
+                مخفي
+              </span>
+            )}
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                mappedCategory.status === "active"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
+              {mappedCategory.status === "active" ? "نشط" : "غير نشط"}
             </span>
-          )}
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${
-              category.status === "active"
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
-            }`}
-          >
-            {category.status === "active" ? "نشط" : "غير نشط"}
-          </span>
+          </div>
         </div>
       </div>
 
       <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-        {category.description}
+        {mappedCategory.description}
       </p>
 
-      {/* Sections */}
-      {Array.isArray(category.sections) && category.sections.length > 0 && (
-        <div className="mb-4">
-          <div className="text-sm text-gray-700 mb-2">الأقسام:</div>
-          <div className="flex flex-wrap gap-2">
-            {(expanded ? category.sections : category.sections.slice(0, 6)).map(
-              (s, idx) => (
+      {Array.isArray(mappedCategory.sections) &&
+        mappedCategory.sections.length > 0 && (
+          <div className="mb-4">
+            <div className="text-sm text-gray-700 mb-2">الأقسام:</div>
+            <div className="flex flex-wrap gap-2">
+              {(expanded
+                ? mappedCategory.sections
+                : mappedCategory.sections.slice(0, 6)
+              ).map((s, idx) => (
                 <span
                   key={idx}
                   className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700"
                 >
                   {s}
                 </span>
-              )
-            )}
-            {category.sections.length > 6 && (
-              <button
-                onClick={() => onToggleExpand(category.id)}
-                className="px-2 py-1 rounded-full text-xs bg-blue-50 text-blue-700"
-              >
-                {expanded
-                  ? "إظهار أقل"
-                  : `+${category.sections.length - 6} المزيد`}
-              </button>
-            )}
+              ))}
+              {mappedCategory.sections.length > 6 && (
+                <button
+                  onClick={() => onToggleExpand(mappedCategory.id)}
+                  className="px-2 py-1 rounded-full text-xs bg-blue-50 text-blue-700"
+                >
+                  {expanded
+                    ? "إظهار أقل"
+                    : `+${mappedCategory.sections.length - 6} المزيد`}
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Actions */}
       <div className="flex items-center justify-between">
         <button
           onClick={() =>
-            router.push(`/categories/sub-category/${category?.id}`)
+            router.push(`/categories/sub-category/${mappedCategory.id}`)
           }
           className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm"
           title="عرض الأقسام"
@@ -165,13 +165,12 @@ const CategoryCard = ({
             </button>
           </Tooltip>
 
-          {/* ✅ Show/Hide */}
-          <Tooltip title={category.visible ? "إخفاء" : "إظهار"}>
+          <Tooltip title={mappedCategory.visible ? "إخفاء" : "إظهار"}>
             <button
               onClick={() => onToggleVisibility(category)}
               className="p-2 hover:bg-gray-50 rounded-lg text-gray-700"
             >
-              {category.visible ? (
+              {mappedCategory.visible ? (
                 <EyeOff className="w-4 h-4" />
               ) : (
                 <Eye className="w-4 h-4" />
@@ -193,7 +192,6 @@ const CategoryCard = ({
   );
 };
 
-
 /* ===================== Mobile Row (Cards) ===================== */
 const MobileCategoryRow = ({
   category,
@@ -203,40 +201,53 @@ const MobileCategoryRow = ({
   onToggleVisibility,
 }) => {
   const router = useRouter();
+
+  const mappedCategory = {
+    id: category.id,
+    title: category.name,
+    description: category.description,
+    coursesCount: category.courses_count || 0,
+    createdAt: category.created_at,
+    status: category.active === "1" ? "active" : "inactive",
+    visible: category.visible !== false,
+    sections: category.sections || [],
+  };
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="text-base font-semibold text-gray-900 truncate">
-            {category.title}
+            {mappedCategory.title}
           </h3>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
             <span
               className={`inline-flex px-2 py-1 rounded-full ${
-                category.status === "active"
+                mappedCategory.status === "active"
                   ? "bg-green-100 text-green-800"
                   : "bg-red-100 text-red-800"
               }`}
             >
-              {category.status === "active" ? "نشط" : "غير نشط"}
+              {mappedCategory.status === "active" ? "نشط" : "غير نشط"}
             </span>
             <span
               className={`inline-flex px-2 py-1 rounded-full ${
-                category.visible
+                mappedCategory.visible
                   ? "bg-blue-100 text-blue-800"
                   : "bg-gray-200 text-gray-700"
               }`}
             >
-              {category.visible ? "ظاهر" : "مخفي"}
+              {mappedCategory.visible ? "ظاهر" : "مخفي"}
             </span>
           </div>
         </div>
 
-        {/* Actions */}
         <div className="shrink-0 flex items-center gap-1">
           <Tooltip title="عرض الأقسام">
             <button
-              onClick={() => router.push(`/categories/sub-category/${category?.id}`)}
+              onClick={() =>
+                router.push(`/categories/sub-category/${mappedCategory.id}`)
+              }
               className="p-2 rounded-lg hover:bg-blue-50 text-blue-600"
             >
               <Eye className="w-4 h-4" />
@@ -252,12 +263,12 @@ const MobileCategoryRow = ({
               <span className="sr-only">تعديل</span>
             </button>
           </Tooltip>
-          <Tooltip title={category.visible ? "إخفاء" : "إظهار"}>
+          <Tooltip title={mappedCategory.visible ? "إخفاء" : "إظهار"}>
             <button
               onClick={() => onToggleVisibility(category)}
               className="p-2 rounded-lg hover:bg-gray-50 text-gray-700"
             >
-              {category.visible ? (
+              {mappedCategory.visible ? (
                 <EyeOff className="w-4 h-4" />
               ) : (
                 <Eye className="w-4 h-4" />
@@ -277,44 +288,42 @@ const MobileCategoryRow = ({
         </div>
       </div>
 
-      {/* Meta */}
       <div className="mt-2 text-xs text-gray-500">
-        <span>عدد الدورات: {category.coursesCount}</span>
+        <span>عدد الدورات: {mappedCategory.coursesCount}</span>
         <span className="mx-2">•</span>
-        <span>تاريخ: {arDate(category.createdAt)}</span>
+        <span>تاريخ: {arDate(mappedCategory.createdAt)}</span>
       </div>
 
-      {/* Description */}
-      {category.description && (
+      {mappedCategory.description && (
         <p className="mt-2 text-sm text-gray-600 line-clamp-2">
-          {category.description}
+          {mappedCategory.description}
         </p>
       )}
 
-      {/* Sections */}
-      {Array.isArray(category.sections) && category.sections.length > 0 && (
-        <div className="mt-3">
-          <div className="text-xs text-gray-700 mb-1">الأقسام:</div>
-          <div className="flex flex-wrap gap-2">
-            {category.sections.slice(0, 4).map((s, i) => (
-              <span
-                key={i}
-                className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700"
-              >
-                {s}
-              </span>
-            ))}
-            {category.sections.length > 4 && (
-              <button
-                onClick={() => onViewSections(category)}
-                className="text-xs text-blue-600 underline"
-              >
-                عرض الكل (+{category.sections.length - 4})
-              </button>
-            )}
+      {Array.isArray(mappedCategory.sections) &&
+        mappedCategory.sections.length > 0 && (
+          <div className="mt-3">
+            <div className="text-xs text-gray-700 mb-1">الأقسام:</div>
+            <div className="flex flex-wrap gap-2">
+              {mappedCategory.sections.slice(0, 4).map((s, i) => (
+                <span
+                  key={i}
+                  className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700"
+                >
+                  {s}
+                </span>
+              ))}
+              {mappedCategory.sections.length > 4 && (
+                <button
+                  onClick={() => onViewSections(category)}
+                  className="text-xs text-blue-600 underline"
+                >
+                  عرض الكل (+{mappedCategory.sections.length - 4})
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 };
@@ -328,7 +337,6 @@ const CategoriesTable = ({
   onToggleVisibility,
 }) => (
   <>
-    {/* Mobile: cards */}
     <div className="block md:hidden space-y-3">
       {categories?.map((category) => (
         <MobileCategoryRow
@@ -342,8 +350,7 @@ const CategoriesTable = ({
       ))}
     </div>
 
-    {/* Desktop / md+: table with horizontal scroll */}
-    <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 mt-4">
       <div className="overflow-x-auto">
         <table className="min-w-[1000px] divide-y divide-gray-200">
           <thead className="bg-gray-50 sticky top-0 z-10">
@@ -353,12 +360,6 @@ const CategoriesTable = ({
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                 الوصف
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                الأقسام
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                عدد الدورات
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                 تاريخ الإنشاء
@@ -375,116 +376,106 @@ const CategoriesTable = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {categories?.map((category) => (
-              <tr key={category.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap w-[220px]">
-                  <div className="text-sm font-medium text-gray-900 truncate">
-                    {category.title}
-                  </div>
-                </td>
-                <td className="px-6 py-4 w-[320px]">
-                  <div className="text-sm text-gray-500 line-clamp-2">
-                    {category.description}
-                  </div>
-                </td>
-                <td className="px-6 py-4 w-[320px]">
-                  <div className="flex flex-wrap gap-1 max-w-lg">
-                    {category.sections?.slice(0, 5).map((s, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700"
-                      >
-                        {s}
-                      </span>
-                    ))}
-                    {category.sections && category.sections.length > 5 && (
-                      <button
-                        onClick={() => onViewSections(category)}
-                        className="text-blue-600 text-xs underline"
-                      >
-                        عرض الكل
-                      </button>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap w-[120px]">
-                  <div className="text-sm text-gray-900">
-                    {category.coursesCount}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap w-[160px]">
-                  <div className="text-sm text-gray-500">
-                    {arDate(category.createdAt)}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap w-[140px]">
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      category.status === "active"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {category.status === "active" ? "نشط" : "غير نشط"}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap w-[140px]">
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      category.visible
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-gray-200 text-gray-700"
-                    }`}
-                  >
-                    {category.visible ? "ظاهر" : "مخفي"}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium w-[160px]">
-                  <div className="flex items-center gap-2">
-                    <Tooltip title="عرض الأقسام">
-                      <button
-                        onClick={() => onViewSections(category)}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span className="sr-only">عرض الأقسام</span>
-                      </button>
-                    </Tooltip>
-                    <Tooltip title="تعديل">
-                      <button
-                        onClick={() => onEdit(category)}
-                        className="text-green-600 hover:text-green-900"
-                      >
-                        <Edit className="w-4 h-4" />
-                        <span className="sr-only">تعديل</span>
-                      </button>
-                    </Tooltip>
-                    <Tooltip title={category.visible ? "إخفاء" : "إظهار"}>
-                      <button
-                        onClick={() => onToggleVisibility(category)}
-                        className="text-gray-700 hover:text-gray-900"
-                      >
-                        {category.visible ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
+            {categories?.map((category) => {
+              const mappedCategory = {
+                id: category.id,
+                title: category.name,
+                description: category.description,
+                coursesCount: category.courses_count || 0,
+                createdAt: category.created_at,
+                status: category.active === "1" ? "active" : "inactive",
+                visible: category.visible !== false,
+                sections: category.sections || [],
+              };
+
+              return (
+                <tr key={mappedCategory.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap w-[220px]">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {mappedCategory.title}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 w-[320px]">
+                    <div className="text-sm text-gray-500 line-clamp-2">
+                      {mappedCategory.description}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap w-[250px]">
+                    <div className="text-sm text-gray-500">
+                      {arDate(mappedCategory.createdAt)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap w-[140px]">
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        mappedCategory.status === "active"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {mappedCategory.status === "active" ? "نشط" : "غير نشط"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap w-[140px]">
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        mappedCategory.visible
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-gray-200 text-gray-700"
+                      }`}
+                    >
+                      {mappedCategory.visible ? "ظاهر" : "مخفي"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium min-w-[160px]">
+                    <div className="flex items-center gap-2">
+                      <Tooltip title="عرض الأقسام">
+                        <button
+                          onClick={() => onViewSections(category)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
                           <Eye className="w-4 h-4" />
-                        )}
-                        <span className="sr-only">تبديل الظهور</span>
-                      </button>
-                    </Tooltip>
-                    <Tooltip title="حذف">
-                      <button
-                        onClick={() => onDelete(category)}
-                        className="text-red-600 hover:text-red-900"
+                          <span className="sr-only">عرض الأقسام</span>
+                        </button>
+                      </Tooltip>
+                      <Tooltip title="تعديل">
+                        <button
+                          onClick={() => onEdit(category)}
+                          className="text-green-600 hover:text-green-900"
+                        >
+                          <Edit className="w-4 h-4" />
+                          <span className="sr-only">تعديل</span>
+                        </button>
+                      </Tooltip>
+                      <Tooltip
+                        title={mappedCategory.visible ? "إخفاء" : "إظهار"}
                       >
-                        <Trash2 className="w-4 h-4" />
-                        <span className="sr-only">حذف</span>
-                      </button>
-                    </Tooltip>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                        <button
+                          onClick={() => onToggleVisibility(category)}
+                          className="text-gray-700 hover:text-gray-900"
+                        >
+                          {mappedCategory.visible ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                          <span className="sr-only">تبديل الظهور</span>
+                        </button>
+                      </Tooltip>
+                      <Tooltip title="حذف">
+                        <button
+                          onClick={() => onDelete(category)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span className="sr-only">حذف</span>
+                        </button>
+                      </Tooltip>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -499,7 +490,6 @@ export default function Page() {
     { label: "فئات الدورات", href: "#", icon: Book, current: true },
   ];
 
-  const [categories, setCategories] = useState(all_categories);
   const [newModal, setNewModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
@@ -510,11 +500,37 @@ export default function Page() {
   const [sectionsModal, setSectionsModal] = useState(false);
   const [sectionsFor, setSectionsFor] = useState(null);
 
-  // ✅ توسيع/طي الأقسام داخل الكروت
-  const [expandedCards, setExpandedCards] = useState(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  // ✅ فلتر للظهور: all | visible | hidden
-  const [visibilityFilter, setVisibilityFilter] = useState("visible");
+  const [expandedCards, setExpandedCards] = useState(
+    new Set()
+  );
+  const [visibilityFilter, setVisibilityFilter] =
+    useState("visible");
+
+  const dispatch = useDispatch();
+  const { all_courses_categories_loading, all_courses_categories_list  , active_course_category_loading} =
+    useSelector((state) => state?.categories);
+
+  // API message structure: { current_page, data, total, per_page, last_page, ... }
+  const apiMessage = all_courses_categories_list?.data?.message;
+
+  useEffect(() => {
+    dispatch(
+      handleGetAllCoursesCategories({
+        per_page: pageSize,
+        page: currentPage,
+      })
+    );
+  }, [dispatch, currentPage, pageSize]);
+
+  // Sync pageSize with API per_page
+  useEffect(() => {
+    if (apiMessage?.per_page && apiMessage.per_page !== pageSize) {
+      setPageSize(apiMessage.per_page);
+    }
+  }, [apiMessage?.per_page, pageSize]);
 
   const onToggleExpand = (id) => {
     setExpandedCards((prev) => {
@@ -525,49 +541,43 @@ export default function Page() {
     });
   };
 
-  // ✅ بحث + فلترة
+  const handlePageChange = (page, size) => {
+    setCurrentPage(page);
+    setPageSize(size);
+  };
+
+  // Filter + search
   const filteredCategories = useMemo(() => {
+    const apiCategories = apiMessage?.data || [];
     const term = (searchTerm || "").toLowerCase();
-    return categories
+
+    return apiCategories
       .filter((c) => {
         const matchesTerm =
-          c.title?.toLowerCase().includes(term) ||
+          c.name?.toLowerCase().includes(term) ||
           c.description?.toLowerCase().includes(term);
+
+        const isVisible = c.active === "1";
         const matchesVisibility =
           visibilityFilter === "all"
             ? true
             : visibilityFilter === "visible"
-            ? c.visible
-            : !c.visible;
+            ? isVisible
+            : !isVisible;
+
         return matchesTerm && matchesVisibility;
       })
-      .sort((a, b) => Number(b.visible) - Number(a.visible)); // المرئي يظهر أولاً
-  }, [categories, searchTerm, visibilityFilter]);
+      .map((category) => ({
+        ...category,
+        visible: category.active === "1",
+      }))
+      .sort((a, b) => Number(b.visible) - Number(a.visible));
+  }, [apiMessage?.data, searchTerm, visibilityFilter]);
 
-  /* ---------- Handlers ---------- */
+  /* ---------- CRUD Handlers ---------- */
   const handleAdd = () => {
     setNewModal(true);
     setSelectedCategory(null);
-  };
-
-  const handleAddFinish = (values) => {
-    setConfirmLoading(true);
-    setTimeout(() => {
-      const newCategory = {
-        id: Math.max(...categories.map((c) => c.id), 0) + 1,
-        title: values.title,
-        description: values.description,
-        coursesCount: 0,
-        createdAt: new Date().toISOString().split("T")[0],
-        status: values.status ? "active" : "inactive",
-        visible: true,
-        sections: [],
-      };
-      setCategories((prev) => [...prev, newCategory]);
-      setNewModal(false);
-      setConfirmLoading(false);
-      message.success("تم إضافة الفئة بنجاح");
-    }, 500);
   };
 
   const handleEdit = (category) => {
@@ -580,26 +590,66 @@ export default function Page() {
     setSectionsModal(true);
   };
 
-  const handleEditFinish = (values) => {
+  // ✅ Add (from modal)
+  const handleAddFinish = ({ formData }) => {
     setConfirmLoading(true);
-    setTimeout(() => {
-      setCategories((prev) =>
-        prev.map((c) =>
-          c.id === selectedCategory.id
-            ? {
-                ...c,
-                title: values.title,
-                description: values.description,
-                status: values.status ? "active" : "inactive",
-              }
-            : c
-        )
-      );
-      setEditModal(false);
-      setSelectedCategory(null);
-      setConfirmLoading(false);
-      message.success("تم تعديل الفئة بنجاح");
-    }, 500);
+
+    dispatch(handleAddCategory({ body: formData }))
+      .unwrap()
+      .then((res) => {
+        if (res?.data?.status === "success") {
+          toast.success(res?.data?.message || "تم إضافة الفئة بنجاح");
+          setNewModal(false);
+          setSelectedCategory(null);
+          dispatch(
+            handleGetAllCoursesCategories({
+              per_page: pageSize,
+              page: currentPage,
+            })
+          );
+        } else {
+          toast.error(res?.data?.message || "حدث خطأ أثناء إضافة الفئة");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        toast.error("حدث خطأ أثناء إضافة الفئة");
+      })
+      .finally(() => setConfirmLoading(false));
+  };
+
+  // ✅ Edit (from modal)
+  const handleEditFinish = ({ formData }) => {
+    if (!selectedCategory?.id) return;
+    setConfirmLoading(true);
+
+    dispatch(
+      handleEditCategory({
+        id: selectedCategory.id,
+        body: formData,
+      })
+    )
+      .unwrap()
+      .then((res) => {
+        if (res?.data?.status === "success") {
+          toast.success(res?.data?.message || "تم تعديل الفئة بنجاح");
+          setEditModal(false);
+          setSelectedCategory(null);
+          dispatch(
+            handleGetAllCoursesCategories({
+              per_page: pageSize,
+              page: currentPage,
+            })
+          );
+        } else {
+          toast.error(res?.data?.message || "حدث خطأ أثناء تعديل الفئة");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        toast.error("حدث خطأ أثناء تعديل الفئة");
+      })
+      .finally(() => setConfirmLoading(false));
   };
 
   const handleDelete = (category) => {
@@ -609,12 +659,18 @@ export default function Page() {
 
   const confirmDelete = () => {
     setConfirmLoading(true);
+    // TODO: حط هنا API الحذف الحقيقي لما يبقى جاهز
     setTimeout(() => {
-      setCategories((prev) => prev.filter((c) => c.id !== selectedCategory.id));
+      setConfirmLoading(false);
       setDeleteModal(false);
       setSelectedCategory(null);
-      setConfirmLoading(false);
-      message.success("تم حذف الفئة بنجاح");
+      message.success("تم حذف الفئة بنجاح (ديمو)");
+      dispatch(
+        handleGetAllCoursesCategories({
+          per_page: pageSize,
+          page: currentPage,
+        })
+      );
     }, 500);
   };
 
@@ -623,19 +679,29 @@ export default function Page() {
     setSelectedCategory(null);
   };
 
-  // ✅ Toggle Show/Hide
   const toggleVisibility = (category) => {
-    setCategories((prev) =>
-      prev.map((c) =>
-        c.id === category.id ? { ...c, visible: !c.visible } : c
-      )
-    );
-    message.success(category.visible ? "تم إخفاء الفئة" : "تم إظهار الفئة");
+    console.log(category)
+    const formData = new FormData();
+    formData.append("id" , category?.id);
+    formData.append("active" , category?.active ? 0 : 1);
+
+    dispatch(handleShowHideCategory({body : formData}))
+    .unwrap()
+    .then(res => {
+      console.log(res);
+    })
+    // message.success(category.visible ? "تم إخفاء الفئة" : "تم إظهار الفئة");
+    // // TODO: استدعي API لتغيير حالة الظهور
+    // dispatch(
+    //   handleGetAllCoursesCategories({
+    //     per_page: pageSize,
+    //     page: currentPage,
+    //   })
+    // );
   };
 
-  // ✅ Export (JSON)
   const handleExport = () => {
-    const data = JSON.stringify(categories, null, 2);
+    const data = JSON.stringify(filteredCategories, null, 2);
     const blob = new Blob([data], { type: "application/json;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -647,8 +713,7 @@ export default function Page() {
     URL.revokeObjectURL(url);
   };
 
-  const countShown = filteredCategories.length;
-  const countAll = categories.length;
+  const totalItems = apiMessage?.total || filteredCategories.length;
 
   return (
     <PageLayout>
@@ -686,7 +751,7 @@ export default function Page() {
           setSearchTerm={setSearchTerm}
         />
 
-        {/* ✅ Visibility Filter */}
+        {/* Visibility Filter */}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="text-sm text-gray-600">الظهور:</span>
           <button
@@ -723,7 +788,11 @@ export default function Page() {
 
         {/* Data Display */}
         <div className="mt-6">
-          {filteredCategories.length === 0 ? (
+          {all_courses_categories_loading ? (
+            <div className="text-center py-12">
+              <div className="text-gray-500 text-lg">جاري التحميل...</div>
+            </div>
+          ) : filteredCategories.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-gray-500 text-lg mb-2">لا توجد فئات</div>
               <div className="text-gray-400 text-sm">
@@ -758,10 +827,23 @@ export default function Page() {
           )}
         </div>
 
-        {/* Results Summary */}
-        {countAll > 0 && (
-          <div className="mt-6 text-sm text-gray-500 text-center">
-            عرض {countShown} من {countAll} فئة
+        {/* Pagination */}
+        {!all_courses_categories_loading && apiMessage && (
+          <div className="mt-6 flex justify-center">
+            <Pagination
+              current={apiMessage.current_page || currentPage}
+              pageSize={apiMessage.per_page || pageSize}
+              total={totalItems} // ✅ إجمالي العناصر (19 مثلاً)
+              onChange={handlePageChange}
+              showSizeChanger={false}
+              locale={{
+                items_per_page: "/ الصفحة",
+                jump_to: "اذهب إلى",
+                page: "الصفحة",
+                prev_page: "الصفحة السابقة",
+                next_page: "الصفحة التالية",
+              }}
+            />
           </div>
         )}
 
@@ -783,21 +865,22 @@ export default function Page() {
           }}
           onFinish={handleEditFinish}
           initialValues={{
-            title: selectedCategory?.title,
+            title: selectedCategory?.name,
             description: selectedCategory?.description,
-            status: selectedCategory?.status === "active",
+            status: selectedCategory?.active === "1",
           }}
           formTitle="تعديل الفئة"
           confirmLoading={confirmLoading}
+          selectdCategory={selectedCategory}
         />
 
         {/* Delete Confirmation Modal */}
-        <DeleteCategoryModal 
-        cancelDelete={cancelDelete}
-        confirmDelete={confirmDelete}
-        confirmLoading={confirmLoading}
-        deleteModal={deleteModal}
-        selectedCategory={selectedCategory}
+        <DeleteCategoryModal
+          cancelDelete={cancelDelete}
+          confirmDelete={confirmDelete}
+          confirmLoading={confirmLoading}
+          deleteModal={deleteModal}
+          selectedCategory={selectedCategory}
         />
       </div>
     </PageLayout>
