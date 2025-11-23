@@ -11,29 +11,27 @@ import {
   Select,
   ConfigProvider,
   Dropdown,
-  Modal,
   Segmented,
   Badge,
 } from "antd";
 import {
   EyeOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  TrophyOutlined,
-  CalendarOutlined,
   UserOutlined,
   MoreOutlined,
-  EditOutlined,
   DeleteOutlined,
-  SyncOutlined,
+  CalendarOutlined,
+  FacebookOutlined,
+  InstagramOutlined,
+  LinkedinOutlined,
+  TwitterOutlined,
+  YoutubeOutlined,
+  FacebookFilled,
 } from "@ant-design/icons";
 import { subjects } from "../../data/subjects";
-import EditTeacherModal from "../Teachers/EditTeacher.modal";
 import EditStudentModal from "./EditStudentModal";
-import { useRouter } from "next/navigation";
 import DeleteStudentModal from "./DeleteStudentModal";
-// import EditTeacherModal from "./EditTeacher.modal";
-// import { subjects } from "../../data/subjects";
+import { Globe } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const PALETTE = {
   primary: "#0F7490",
@@ -74,12 +72,12 @@ function StudentsGrid({
   const [statusFilter, setStatusFilter] = useState("all"); // all | approved | pending | rejected
   const [deleteModal, setDeleteModal] = useState(false);
   const router = useRouter();
-
+  
   const normalizedData = useMemo(
     () =>
       (data || []).map((t) => ({
         ...t,
-        _status: toStatus(t.status),
+        _status: toStatus(t.status || "approved"),
       })),
     [data]
   );
@@ -114,28 +112,8 @@ function StudentsGrid({
     if (page > maxPage) setPage(1);
   }, [total, ps, page]);
 
-  const STATUS_OPTIONS = [
-    {
-      label: `${STATUS_META.approved.dot} ${STATUS_META.approved.label}`,
-      value: "approved",
-    },
-    {
-      label: `${STATUS_META.pending.dot} ${STATUS_META.pending.label}`,
-      value: "pending",
-    },
-    {
-      label: `${STATUS_META.rejected.dot} ${STATUS_META.rejected.label}`,
-      value: "rejected",
-    },
-  ];
-
-  useEffect(() => {
-    console.log(pageData);
-  }, [pageData]);
-
   const moreMenu = (teacher) => ({
     items: [
-     
       { type: "divider" },
       {
         key: "delete",
@@ -148,6 +126,7 @@ function StudentsGrid({
       if (key === "edit") {
         setEdit(true);
         setSelectedTeacher(teacher);
+        onEdit?.(teacher);
         return;
       }
       if (key.startsWith("status:")) {
@@ -158,6 +137,7 @@ function StudentsGrid({
       if (key === "delete") {
         setDeleteModal(true);
         setSelectedTeacher(teacher);
+        onDelete?.(teacher);
       }
     },
   });
@@ -184,7 +164,8 @@ function StudentsGrid({
       }}
     >
       <div className="space-y-4" dir="rtl">
-        {/* Header filters */}
+        {/* (Optional) status segmented filter - uncomment if you want it */}
+        {/* 
         <div className="flex items-center justify-between">
           <Segmented
             value={statusFilter}
@@ -232,7 +213,6 @@ function StudentsGrid({
             ]}
           />
 
-          {/* Page size */}
           <Select
             value={ps}
             onChange={(v) => {
@@ -246,11 +226,11 @@ function StudentsGrid({
             className="min-w-[130px] rounded-lg"
           />
         </div>
+        */}
 
         {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
           {pageData.map((t) => {
-            const meta = STATUS_META[t._status] || STATUS_META.pending;
             return (
               <Card
                 key={t.id}
@@ -261,13 +241,18 @@ function StudentsGrid({
                 <div className="flex items-start gap-3">
                   <Avatar
                     size={48}
+                    src={t.avatar || t.image_url || t.image}
                     style={{
                       background:
                         "linear-gradient(135deg, #8B5CF6 0%, #0F7490 100%)",
                     }}
-                    icon={<UserOutlined />}
+                    icon={
+                      !t.avatar && !t.image_url && !t.image ? (
+                        <UserOutlined />
+                      ) : undefined
+                    }
                   >
-                    {initials(t.name)}
+                    {!t.avatar && !t.image_url && !t.image && initials(t.name)}
                   </Avatar>
 
                   <div className="flex-1">
@@ -276,18 +261,20 @@ function StudentsGrid({
                         {t.name}
                       </h3>
                       <Tag
-                        color={meta.color}
+                        color={t?.gender === "male" ? "blue" : "pink"}
                         className="rounded-full px-3 py-1 text-[12px]"
                       >
-                        <span className="ml-1">{meta.dot}</span>
-                        {meta.label}
+                        {t?.gender === "male" ? "ذكر" : "أنثى"}
                       </Tag>
                     </div>
                     <p className="text-gray-500 text-sm m-0">{t.email}</p>
+                    <p className="text-gray-400 text-sm m-0">
+                      {t?.description}
+                    </p>
                   </div>
                 </div>
 
-                {/* Subjects */}
+                {/* Subjects (if any) */}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {(t.subjects || []).map((s, i) => (
                     <Tag
@@ -307,13 +294,63 @@ function StudentsGrid({
                   {/* Meta row */}
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     <div className="flex items-center gap-2 text-[#202938]">
-                      <TrophyOutlined style={{ color: PALETTE.secondary }} />
-                      <span className="text-sm">{t.experience}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[#202938]">
                       <CalendarOutlined style={{ color: PALETTE.accent }} />
-                      <span className="text-sm">{t.joinDate}</span>
+                      <span className="text-sm">
+                        {(t.joinDate || t.created_at || "")
+                          ?.toString()
+                          ?.split("T")[0] || "—"}
+                      </span>
                     </div>
+                  </div>
+
+                  {/* Social links */}
+                  <div className="grid grid-cols-7 my-3 gap-1">
+                    {t?.facebook && (
+                      <a href={t?.facebook} target="_blank" rel="noreferrer">
+                        <FacebookFilled className="w-7 h-7 text-blue-600" />
+                      </a>
+                    )}
+
+                    {t?.instagram && (
+                      <a href={t?.instagram} target="_blank" rel="noreferrer">
+                        <InstagramOutlined className="w-7 h-7 text-pink-500" />
+                      </a>
+                    )}
+
+                    {t?.linkedin && (
+                      <a href={t?.linkedin} target="_blank" rel="noreferrer">
+                        <LinkedinOutlined className="w-7 h-7 text-blue-400" />
+                      </a>
+                    )}
+
+                    {t?.tiktok && (
+                      <a href={t?.tiktok} target="_blank" rel="noreferrer">
+                        <Globe className="w-4 h-4 text-black mx-auto" />
+                      </a>
+                    )}
+
+                    {t?.twitter && (
+                      <a href={t?.twitter} target="_blank" rel="noreferrer">
+                        <TwitterOutlined className="w-7 h-7 text-blue-400" />
+                      </a>
+                    )}
+
+                    {t?.youtube && (
+                      <a href={t?.youtube} target="_blank" rel="noreferrer">
+                        <YoutubeOutlined className="w-7 h-7 text-red-500" />
+                      </a>
+                    )}
+
+                    {t?.website && (
+                      <a
+                        href={t?.website}
+                        className="flex justify-center items-center"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <Globe className="w-4 h-4 text-gray-500" />
+                      </a>
+                    )}
                   </div>
 
                   {/* Actions */}
@@ -329,26 +366,6 @@ function StudentsGrid({
                     </Tooltip>
 
                     <div className="flex items-center gap-2">
-                      {t._status !== "approved" && (
-                        <Button
-                          type="primary"
-                          className="bg-green-600 hover:!bg-green-700 rounded-lg"
-                          icon={<CheckCircleOutlined />}
-                          onClick={() => onApprove?.(t)}
-                        >
-                          اعتماد
-                        </Button>
-                      )}
-                      {t._status !== "rejected" && (
-                        <Button
-                          className="rounded-lg"
-                          icon={<CloseCircleOutlined />}
-                          onClick={() => onReject?.(t)}
-                        >
-                          رفض
-                        </Button>
-                      )}
-
                       <Dropdown
                         trigger={["click"]}
                         placement="bottomRight"

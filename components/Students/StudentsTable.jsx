@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import {
   Avatar,
@@ -15,7 +17,7 @@ import {
   Grid,
 } from "antd";
 import DataTable from "../layout/DataTable";
-import { Mail } from "lucide-react";
+import { Globe, Mail } from "lucide-react";
 
 import Button from "./../atoms/Button";
 import {
@@ -27,12 +29,17 @@ import {
   TrophyOutlined,
   PhoneOutlined,
   UserOutlined,
+  FacebookFilled,
+  InstagramOutlined,
+  LinkedinOutlined,
+  TwitterOutlined,
+  YoutubeOutlined,
+  TikTokFilled,
 } from "@ant-design/icons";
 
 const { Text, Title } = Typography;
 const { useBreakpoint } = Grid;
 
-/* ---------- Helpers ---------- */
 const statusLabelAr = (status) => {
   switch (status) {
     case "pending":
@@ -42,17 +49,16 @@ const statusLabelAr = (status) => {
     case "rejected":
       return "محظور";
     default:
-      return status;
+      return status || "غير محدد";
   }
 };
 
-// antd Badge statuses: success | processing | default | error | warning
 const getStatusColor = (status) => {
   switch (status) {
-    case "pending":
-      return "warning";
-    case "approved":
-      return "success";
+    case "male":
+      return "blue";
+    case "female":
+      return "pink";
     case "rejected":
       return "error";
     default:
@@ -76,80 +82,36 @@ const getStatusIcon = (status) => {
 const getInitials = (name = "") =>
   name
     .split(" ")
-    .map((n) => n[0])
+    .map((n) => n?.[0] || "")
     .join("")
     .toUpperCase();
 
-const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
-  // بيانات طلاب تجريبية (نفس البنية المستخدمة في صفحات الإدارة عندك)
-  const [students, setStudents] = useState([
-    {
-      id: 1,
-      name: "Youssef Ibrahim",
-      email: "youssef.ibr@school.edu",
-      phone: "+20 100 111 2233",
-      subjects: ["Math (G9)", "English", "Biology"],
-      status: "approved",
-      joinDate: "2024-09-10",
-      experience: "معدل حضور: 92%",
-      qualification: "الصف التاسع - قسم A",
-      avatar: null,
-    },
-    {
-      id: 2,
-      name: "Mariam Tarek",
-      email: "mariam.tarek@school.edu",
-      phone: "+20 101 222 3344",
-      subjects: ["Physics (G10)", "Chemistry", "English"],
-      status: "pending",
-      joinDate: "2025-02-01",
-      experience: "معدل حضور: 86%",
-      qualification: "الصف العاشر - قسم B",
-      avatar: null,
-    },
-    {
-      id: 3,
-      name: "Omar Salah",
-      email: "omar.salah@school.edu",
-      phone: "+20 102 333 4455",
-      subjects: ["History (G8)", "Arabic"],
-      status: "approved",
-      joinDate: "2023-11-20",
-      experience: "معدل حضور: 95%",
-      qualification: "الصف الثامن - قسم C",
-      avatar: null,
-    },
-    {
-      id: 4,
-      name: "Hana Mohamed",
-      email: "hana.mohamed@school.edu",
-      phone: "+20 103 444 5566",
-      subjects: ["Math (G7)", "Science", "Computer"],
-      status: "rejected",
-      joinDate: "2024-01-05",
-      experience: "معدل حضور: 61%",
-      qualification: "الصف السابع - قسم A",
-      avatar: null,
-    },
-    {
-      id: 5,
-      name: "Karim Ali",
-      email: "karim.ali@school.edu",
-      phone: "+20 104 555 6677",
-      subjects: ["Geography (G9)", "English"],
-      status: "pending",
-      joinDate: "2024-03-12",
-      experience: "معدل حضور: 78%",
-      qualification: "الصف التاسع - قسم B",
-      avatar: null,
-    },
-  ]);
-
-  const [filteredStudents, setFilteredStudents] = useState(students);
+const StudentsTable = ({
+  searchText = "",
+  selectedStatus = "all",
+  data = [],
+}) => {
+  const [students, setStudents] = useState([]);
+  const [filteredStudents, setFilteredStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const screens = useBreakpoint();
+
+  // normalize incoming data (API teachers)
+  useEffect(() => {
+    const normalized =
+      (data || []).map((s) => ({
+        ...s,
+        status: s.status || "approved",
+        subjects: s.subjects || [],
+        experience: s.experience || s.description || "—",
+        joinDate: s.joinDate || s.created_at || "",
+        avatar: s.avatar || s.image_url || s.image || null,
+        qualification: s.qualification || "محاضر",
+      })) || [];
+    setStudents(normalized);
+  }, [data]);
 
   const handleStatusChange = (studentId, newStatus) => {
     setLoading(true);
@@ -157,7 +119,9 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
       setStudents((prev) =>
         prev.map((s) => (s.id === studentId ? { ...s, status: newStatus } : s))
       );
-      message.success(`تم تغيير حالة المتدرب إلى: ${statusLabelAr(newStatus)} بنجاح`);
+      message.success(
+        `تم تغيير حالة المتدرب إلى: ${statusLabelAr(newStatus)} بنجاح`
+      );
       setLoading(false);
     }, 400);
   };
@@ -188,7 +152,82 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
     setViewModalVisible(true);
   };
 
-  // Responsive columns configuration
+  const renderSubjects = (subjects) => {
+    if (!subjects || !Array.isArray(subjects) || subjects.length === 0) {
+      return <Tag className="md:hidden">0 دورات</Tag>;
+    }
+
+    return (
+      <>
+        <div
+          className="hidden md:flex flex-wrap w-full max-w-[240px] gap-2"
+          dir="rtl"
+        >
+          {subjects.slice(0, 2).map((sub, i) => (
+            <Tag
+              key={i}
+              className="px-2 py-1 w-fit text-xs font-medium border-0"
+              style={{
+                backgroundColor: "#26829B",
+                color: "white",
+              }}
+            >
+              {sub}
+            </Tag>
+          ))}
+          {subjects.length > 2 && (
+            <Tag className="bg-gray-500 text-white">
+              +{subjects.length - 2}
+            </Tag>
+          )}
+        </div>
+        <Tooltip title={subjects.join(", ")}>
+          <Tag className="md:hidden">{subjects.length} دورات</Tag>
+        </Tooltip>
+      </>
+    );
+  };
+
+  const renderExperience = (experience) => {
+    if (!experience) return "—";
+
+    return (
+      <div className="flex items-center text-gray-700" dir="rtl">
+        <TrophyOutlined className="ml-2 text-yellow-500" />
+        <span className="hidden md:inline">{experience}</span>
+        <span className="md:hidden">
+          {experience.includes(":")
+            ? experience.split(":")[0]
+            : experience.substring(0, 15) + "..."}
+        </span>
+      </div>
+    );
+  };
+
+  const renderDate = (date) => {
+    if (!date) return "—";
+
+    try {
+      return (
+        <div className="flex items-center text-gray-700" dir="rtl">
+          <CalendarOutlined className="ml-2 text-blue-500" />
+          <span className="hidden md:inline">
+            {new Date(date).toLocaleDateString("ar-EG")}
+          </span>
+          <span className="md:hidden">
+            {new Date(date).toLocaleDateString("ar-EG", {
+              month: "2-digit",
+              day: "2-digit",
+              year: "2-digit",
+            })}
+          </span>
+        </div>
+      );
+    } catch (error) {
+      return "—";
+    }
+  };
+
   const getColumns = () => {
     const baseColumns = [
       {
@@ -200,97 +239,116 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
           <div className="flex items-center gap-3" dir="rtl">
             <Avatar
               size={screens.xs ? 40 : 48}
+              src={record.avatar}
               className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold"
             >
               {getInitials(name)}
             </Avatar>
             <div>
-              <Text className="text-gray-900 block text-sm md:text-base">{name}</Text>
+              <Text className="text-gray-900 block text-sm md:text-base">
+                {name || "—"}
+              </Text>
               <div className="text-xs md:text-sm text-gray-500 flex items-center mt-1">
                 <Mail className="ml-1 text-xs" />
-                <span className="hidden md:inline">{record.email}</span>
-                <span className="md:hidden">{record.email.split('@')[0]}</span>
+                <span className="hidden md:inline">
+                  {record.email || "—"}
+                </span>
+                <span className="md:hidden">
+                  {(record.email || "").split("@")[0]}
+                </span>
               </div>
             </div>
           </div>
         ),
       },
-      {
-        title: "الدورات",
-        dataIndex: "subjects",
-        key: "subjects",
-        responsive: ['md'],
-        render: (subjects) => (
-          <div className="flex flex-wrap w-full max-w-[240px] gap-2" dir="rtl">
-            {subjects.map((sub, i) => (
-              <Tag
-                key={i}
-                className="px-2 py-1 w-fit text-xs font-medium border-0 hidden md:inline-block"
-                style={{
-                  backgroundColor: "#26829B",
-                  color: "white",
-                }}
-              >
-                {sub}
-              </Tag>
-            ))}
-            <Tooltip title={subjects.join(', ')}>
-              <Tag className="md:hidden">
-                {subjects.length} دورات
-              </Tag>
-            </Tooltip>
-          </div>
-        ),
-      },
+      
       {
         title: "الحالة",
-        dataIndex: "status",
-        key: "status",
-        responsive: ['sm'],
+        dataIndex: "gender",
+        key: "gender",
+        responsive: ["sm"],
         render: (status) => (
           <Badge
-            status={getStatusColor(status)}
+            color={status == "male" ?"blue":"pink"}
             text={
               <span className="capitalize font-medium hidden md:inline">
-                {getStatusIcon(status)} {statusLabelAr(status)}
+               {status =="male" ? "ذكر" :"أنثي"}
               </span>
             }
           />
         ),
       },
       {
-        title: "الخبرة",
+        title: "الوصف",
         dataIndex: "experience",
         key: "experience",
-        responsive: ['lg'],
-        render: (experience) => (
-          <div className="flex items-center text-gray-700" dir="rtl">
-            <TrophyOutlined className="ml-2 text-yellow-500" />
-            <span className="hidden md:inline">{experience}</span>
-            <span className="md:hidden">{experience.split(':')[0]}</span>
-          </div>
-        ),
+        responsive: ["lg"],
+        render: renderExperience,
+      },
+       {
+        title: "السوشيال ميديا",
+        dataIndex: "",
+        key: "",
+        responsive: ["lg"],
+        render: (_, record) => {
+          return (
+             <div className="grid grid-cols-4 my-3 gap-1">
+                                {record?.facebook && (
+                                  <a href={record?.facebook} target="_blank" rel="noreferrer">
+                                    <FacebookFilled className="w-7 h-7 text-blue-600" />
+                                  </a>
+                                )}
+            
+                                {record?.instagram && (
+                                  <a href={record?.instagram} target="_blank" rel="noreferrer">
+                                    <InstagramOutlined className="w-7 h-7 text-pink-500" />
+                                  </a>
+                                )}
+            
+                                {record?.linkedin && (
+                                  <a href={record?.linkedin} target="_blank" rel="noreferrer">
+                                    <LinkedinOutlined className="w-7 h-7 text-blue-400" />
+                                  </a>
+                                )}
+            
+                                {record?.tiktok && (
+                                  <a href={record?.tiktok} target="_blank" rel="noreferrer">
+                                    <TikTokFilled className="w-4 h-4 text-black mx-auto" />
+                                  </a>
+                                )}
+            
+                                {record?.twitter && (
+                                  <a href={record?.twitter} target="_blank" rel="noreferrer">
+                                    <TwitterOutlined className="w-7 h-7 text-blue-400" />
+                                  </a>
+                                )}
+            
+                                {record?.youtube && (
+                                  <a href={record?.youtube} target="_blank" rel="noreferrer">
+                                    <YoutubeOutlined className="w-7 h-7 text-red-500" />
+                                  </a>
+                                )}
+            
+                                {record?.website && (
+                                  <a
+                                    href={record?.website}
+                                    className="flex justify-center items-center"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    <Globe className="w-4 h-4 text-gray-500" />
+                                  </a>
+                                )}
+                              </div>
+          )
+        },
       },
       {
         title: "تاريخ الانضمام",
         dataIndex: "joinDate",
         key: "joinDate",
-        responsive: ['md'],
-        render: (date) => (
-          <div className="flex items-center text-gray-700" dir="rtl">
-            <CalendarOutlined className="ml-2 text-blue-500" />
-            <span className="hidden md:inline">
-              {new Date(date).toLocaleDateString("ar-EG")}
-            </span>
-            <span className="md:hidden">
-              {new Date(date).toLocaleDateString("ar-EG", { 
-                month: '2-digit', 
-                day: '2-digit',
-                year: '2-digit'
-              })}
-            </span>
-          </div>
-        ),
+        responsive: ["md"],
+        render: renderDate,
       },
       {
         title: "إجراءات",
@@ -298,7 +356,11 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
         fixed: screens.xs ? "right" : false,
         width: screens.xs ? 120 : undefined,
         render: (_, record) => (
-          <Space size="small" direction="horizontal" style={{ direction: "rtl" }}>
+          <Space
+            size="small"
+            direction="horizontal"
+            style={{ direction: "rtl" }}
+          >
             <Tooltip title="عرض التفاصيل">
               <Button
                 type="primary"
@@ -308,7 +370,7 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
                 onClick={() => handleViewStudent(record)}
               />
             </Tooltip>
-            {record.status !== "approved" && (
+            {/* {record.status !== "approved" && (
               <Button
                 type="primary"
                 size="small"
@@ -329,15 +391,11 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
               >
                 {screens.md ? "رفض" : ""}
               </Button>
-            )}
-            
-            {/* Mobile dropdown for actions */}
+            )} */}
+
             {!screens.sm && (
               <Tooltip title="المزيد من الإجراءات">
-                <Button
-                  size="small"
-                  icon={<UserOutlined />}
-                />
+                <Button size="small" icon={<UserOutlined />} />
               </Tooltip>
             )}
           </Space>
@@ -348,14 +406,30 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
     return baseColumns;
   };
 
+  const renderModalSubjects = (subjects) => {
+    if (!subjects || !Array.isArray(subjects) || subjects.length === 0) {
+      return <Text className="text-gray-500">لا توجد دورات مسجلة</Text>;
+    }
+
+    return (
+      <div className="flex flex-wrap gap-2 mt-2">
+        {subjects.map((subject, index) => (
+          <Tag key={index} color="blue" className="px-3 py-1">
+            {subject}
+          </Tag>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <>
       <Card className="shadow-lg border-0" dir="rtl">
         <DataTable
           searchable={false}
-          table={{ 
-            header: getColumns(), 
-            rows: filteredStudents 
+          table={{
+            header: getColumns(),
+            rows: filteredStudents,
           }}
           pagination={{
             pageSize: 10,
@@ -371,7 +445,6 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
         />
       </Card>
 
-      {/* Student Detail Modal */}
       <Modal
         title="تفاصيل المتدرب"
         open={viewModalVisible}
@@ -391,11 +464,12 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
               <Col xs={24} md={8} className="text-center">
                 <Avatar
                   size={100}
-                  className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold mx-auto mb-4"
+                  src={selectedStudent.avatar}
+                  className="mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold"
                 >
                   {getInitials(selectedStudent.name)}
                 </Avatar>
-                <Title level={4}>{selectedStudent.name}</Title>
+                <Title level={4}>{selectedStudent.name || "—"}</Title>
                 <Badge
                   status={getStatusColor(selectedStudent.status)}
                   text={statusLabelAr(selectedStudent.status)}
@@ -408,21 +482,27 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
                     <div className="flex items-center mb-3">
                       <Mail className="ml-2" />
                       <Text strong>البريد الإلكتروني:</Text>
-                      <Text className="mr-2">{selectedStudent.email}</Text>
+                      <Text className="mr-2">
+                        {selectedStudent.email || "—"}
+                      </Text>
                     </div>
                   </Col>
                   <Col xs={24} sm={12}>
                     <div className="flex items-center mb-3">
                       <PhoneOutlined className="ml-2" />
                       <Text strong>الهاتف:</Text>
-                      <Text className="mr-2">{selectedStudent.phone}</Text>
+                      <Text className="mr-2">
+                        {selectedStudent.phone || "—"}
+                      </Text>
                     </div>
                   </Col>
                   <Col xs={24} sm={12}>
                     <div className="flex items-center mb-3">
                       <TrophyOutlined className="ml-2" />
                       <Text strong>الخبرة:</Text>
-                      <Text className="mr-2">{selectedStudent.experience}</Text>
+                      <Text className="mr-2">
+                        {selectedStudent.experience || "—"}
+                      </Text>
                     </div>
                   </Col>
                   <Col xs={24} sm={12}>
@@ -430,29 +510,25 @@ const StudentsTable = ({ searchText = "", selectedStatus = "all" }) => {
                       <CalendarOutlined className="ml-2" />
                       <Text strong>تاريخ الانضمام:</Text>
                       <Text className="mr-2">
-                        {new Date(selectedStudent.joinDate).toLocaleDateString("ar-EG")}
+                        {selectedStudent.joinDate
+                          ? new Date(
+                              selectedStudent.joinDate
+                            ).toLocaleDateString("ar-EG")
+                          : "—"}
                       </Text>
                     </div>
                   </Col>
                   <Col xs={24}>
                     <Divider />
                     <Text strong>الدورات المسجلة:</Text>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {selectedStudent.subjects.map((subject, index) => (
-                        <Tag
-                          key={index}
-                          color="blue"
-                          className="px-3 py-1"
-                        >
-                          {subject}
-                        </Tag>
-                      ))}
-                    </div>
+                    {renderModalSubjects(selectedStudent.subjects)}
                   </Col>
                   <Col xs={24}>
                     <Divider />
                     <Text strong>التخصص/المؤهل:</Text>
-                    <Text className="block mt-2">{selectedStudent.qualification}</Text>
+                    <Text className="block mt-2">
+                      {selectedStudent.qualification || "—"}
+                    </Text>
                   </Col>
                 </Row>
               </Col>

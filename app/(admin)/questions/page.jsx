@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { Button, Table, Tag, Space, Modal, Input, Select, message, Popconfirm, Tooltip } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, BookOutlined, GlobalOutlined, CalculatorOutlined, ExperimentOutlined } from '@ant-design/icons';
+import { useDispatch, useSelector } from 'react-redux';
 
 const { Option } = Select;
 
@@ -40,6 +41,8 @@ const QuestionManager = () => {
     difficulty: '',
     tags: []
   });
+  const dispatch = useDispatch();
+  const {all_exam_list , all_exam_loading} = useSelector(state => state?.exam)
 
   const categoryIcons = {
     Physics: <ExperimentOutlined className="text-purple-500" />,

@@ -11,6 +11,15 @@ const initialState = {
 
   add_round_loading: false,
   active_round_loading : false,
+  copy_round_loading : false,
+  delet_round_loading :false,
+
+  round_resources_list : [],
+  round_resources_loading : false,
+
+  all_round_lessons:[],
+  all_round_lessons_loading : false,
+
 };
 
 export const handleGetAllRounds = createAsyncThunk(
@@ -23,10 +32,28 @@ export const handleGetAllRounds = createAsyncThunk(
   }
 );
 
-export const handleGetSourceRound = createAsyncThunk("roundesSlice/handleGetSourceRound",async({page , per_page}) => {
-    const response = await api.get(`${apiRoutes.get_source_rounds}?page=${page}&per_page=${per_page}`);
+export const handleGetSourceRound = createAsyncThunk(
+  "roundesSlice/handleGetSourceRound",
+  async ({ page, per_page } = {}) => {
+    // لو بعت page و per_page استخدمهم في الكويري
+    if (page && per_page) {
+      const response = await api.get(
+        `${apiRoutes.get_source_rounds}?page=${page}&per_page=${per_page}`
+      );
+      return response;
+    }
+
+    // لو مبعتهمش خالص أو ناقصين هيرجع الداتا الديفولت من غير pagination params
+    const response = await api.get(apiRoutes.get_source_rounds);
     return response;
+  }
+);
+
+export const handleGetRoundLessons = createAsyncThunk("roundesSlice/handleGetRoundLessons",async({body}) => {
+  const response = await api.post(`admin/contents/lessons/get_all_lessons`, {body}) ;
+  return response;
 })
+
 
 export const handleAddBaiskRound = createAsyncThunk(
   "roundesSlice/handleAddBaiskRound",
@@ -40,11 +67,25 @@ export const handleAddBaiskRound = createAsyncThunk(
 );
 
 export const handleActiveRound = createAsyncThunk("roundesSlice/handleActiveRound",async({body}) =>{
-  const response = await api.post(apiRoutes.active_round , {body});
+  const response = await api.post(apiRoutes.active_round , {body , isFile: true});
   return response;
 })
 
 
+export const handleCopyRound=  createAsyncThunk("roundesSlice/handleCopyRound",async({body}) => {
+  const response = await api.post(apiRoutes.copy_round , {body});
+  return response;
+})
+
+export const handleDeleteRound = createAsyncThunk("roundesSlice/handleDeleteRound",async({body}) => {
+  const response = await api.post(apiRoutes.delete_round, {body});
+  return response;
+})
+
+export const handleGetRoundResources = createAsyncThunk("roundesSlice/handleGetRoundResources",async({body}) => {
+  const response = await api.post(apiRoutes.get_resources ,{body});
+  return response;
+})
 
 export const roundsSlice = createSlice({
   name: "roundesSlice",
@@ -91,7 +132,38 @@ export const roundsSlice = createSlice({
       })
       .addCase(handleActiveRound.rejected, (state) => {
         state.active_round_loading = false;
-      });
+      })
+
+      .addCase(handleCopyRound.pending, (state) => {
+        state.copy_round_loading = true;
+      })
+      .addCase(handleCopyRound.fulfilled, (state, action) => {
+        state.copy_round_loading = false;
+      })
+      .addCase(handleCopyRound.rejected, (state) => {
+        state.copy_round_loading = false;
+      })
+
+      .addCase(handleDeleteRound.pending, (state) => {
+        state.delet_round_loading = true;
+      })
+      .addCase(handleDeleteRound.fulfilled, (state, action) => {
+        state.delet_round_loading = false;
+      })
+      .addCase(handleDeleteRound.rejected, (state) => {
+        state.delet_round_loading = false;
+      })
+
+      .addCase(handleGetRoundLessons.pending, (state) => {
+        state.all_round_lessons_loading = true;
+      })
+      .addCase(handleGetRoundLessons.fulfilled, (state, action) => {
+        state.all_round_lessons_loading = false;
+        state.all_round_lessons = action.payload
+      })
+      .addCase(handleGetRoundLessons.rejected, (state) => {
+        state.all_round_lessons_loading = false;
+      })
   },
 });
 

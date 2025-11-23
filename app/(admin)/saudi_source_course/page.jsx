@@ -14,8 +14,6 @@ import {
   Trash2,
   Users,
   Copy,
-  Eye,
-  EyeOff,
 } from "lucide-react";
 import PagesHeader from "../../../components/ui/PagesHeader";
 import Button from "../../../components/atoms/Button";
@@ -27,11 +25,14 @@ import DeleteSubjectModal from "../../../components/Subjects/DeleteSubject.modal
 import { useRouter } from "next/navigation";
 import CourseSourceSubjectCard from "../../../components/ui/Cards/CourseSourceSubjectCard";
 import { useDispatch, useSelector } from "react-redux";
-import { Spin } from "antd";
+import { Spin, Modal, Pagination } from "antd";
 import {
   handleGetAllRounds,
   handleGetSourceRound,
+  handleActiveRound,
+  handleDeleteRound,
 } from "@/lib/features/roundsSlice";
+import { toast } from "react-toastify";
 
 /* ===== Helpers ===== */
 function inferCategory(s) {
@@ -55,6 +56,7 @@ function inferCategory(s) {
     return "general";
   return "other";
 }
+
 const getDifficultyColor = (d) =>
   d === "Easy"
     ? "green"
@@ -63,6 +65,7 @@ const getDifficultyColor = (d) =>
     : d === "Hard"
     ? "red"
     : "default";
+
 const getStatusColor = (s) =>
   s === "active"
     ? "blue"
@@ -96,11 +99,9 @@ const SubjectsManagementPage = () => {
   // ✅ إنشاء دورة كاملة جديدة + جدولة الظهور
   const [newCourseTitle, setNewCourseTitle] = useState("");
   const [newCourseCode, setNewCourseCode] = useState("");
-  const [releaseContentMode, setReleaseContentMode] =
-    useState("now");
+  const [releaseContentMode, setReleaseContentMode] = useState("now");
   const [contentVisibleFrom, setContentVisibleFrom] = useState(""); // datetime-local
-  const [releaseSourcesMode, setReleaseSourcesMode] =
-    useState("now");
+  const [releaseSourcesMode, setReleaseSourcesMode] = useState("now");
   const [sourcesVisibleFrom, setSourcesVisibleFrom] = useState(""); // datetime-local
 
   // ✅ pagination state (sync with backend)
@@ -115,7 +116,18 @@ const SubjectsManagementPage = () => {
   } = useSelector((state) => state?.rounds);
 
   // meta from backend pagination
-  const meta = source_round_list?.data?.message || {};
+  const metaData = source_round_list?.data?.message;
+  const total = metaData?.total || 0;
+  const backendCurrentPage = metaData?.current_page || page;
+  const backendPageSize = metaData?.per_page || pageSize;
+  const lastPage = metaData?.last_page || 1;
+
+  // ✅ Active toggle modal state
+  const [activeModal, setActiveModal] = useState({
+    open: false,
+    subject: null,
+  });
+  const [activeLoading, setActiveLoading] = useState(false);
 
   /* ===== Effects ===== */
 
@@ -168,8 +180,11 @@ const SubjectsManagementPage = () => {
     console.log("filteredSubjects:", filteredSubjects);
   }, [filteredSubjects]);
 
+  /* ===== Handlers ===== */
+
   // ✅ افتح مودال "دورة كاملة جديدة" مباشرة
   const openDuplicate = (record) => {
+    console.log(record);
     setDupFromSubject(record);
     setDupError("");
     setNewCourseTitle(record?.name ? `نسخة من ${record.name}` : "");
@@ -226,6 +241,68 @@ const SubjectsManagementPage = () => {
       setDupError(e?.message || "تعذّر النسخ، جرّب مرة أخرى.");
     } finally {
       setDupLoading(false);
+    }
+  };
+
+  const openActiveModal = (subject) => {
+    setActiveModal({
+      open: true,
+      subject,
+    });
+  };
+
+  const closeActiveModal = () => {
+    if (activeLoading) return;
+    setActiveModal({
+      open: false,
+      subject: null,
+    });
+  };
+
+  const confirmActiveToggle = () => {
+    if (!activeModal.subject) return;
+    const subject = activeModal.subject;
+
+    const formData = new FormData();
+    formData.append("id", subject?.id);
+    // current value "1"/1 = active -> make 0, else 1
+    const isActive = subject?.active === "1" || subject?.active === 1;
+    formData.append("active", isActive ? 0 : 1);
+
+    setActiveLoading(true);
+    dispatch(handleActiveRound({ body: formData }))
+      .unwrap()
+      .then((res) => {
+        console.log(res);
+        if (res?.data?.status === "success") {
+          toast.success(res?.data?.message);
+          dispatch(
+            handleGetSourceRound({
+              page,
+              per_page: pageSize,
+            })
+          );
+        } else {
+          toast.error(res?.data?.message || "حدث خطأ أثناء تحديث الحالة");
+        }
+      })
+      .catch((e) => {
+        console.log(e);
+        toast.error("حدث خطأ أثناء تحديث الحالة");
+      })
+      .finally(() => {
+        setActiveLoading(false);
+        closeActiveModal();
+      });
+  };
+
+  // ✅ Pagination handler (used by table & grid Pagination)
+  const handlePageChange = (newPage, newPageSize) => {
+    if (newPageSize !== pageSize) {
+      setPage(1);
+      setPageSize(newPageSize);
+    } else {
+      setPage(newPage);
     }
   };
 
@@ -399,11 +476,6 @@ const SubjectsManagementPage = () => {
     );
   }
 
-  const total = meta?.total || 0;
-  const backendCurrentPage = meta?.current_page || page;
-  const backendPageSize = meta?.per_page || pageSize;
-  const lastPage = meta?.last_page || 1; // 👈 number of pages from backend
-
   return (
     <PageLayout>
       <div dir="rtl">
@@ -444,37 +516,59 @@ const SubjectsManagementPage = () => {
               current: backendCurrentPage,
               pageSize: backendPageSize,
               total,
-              // 👇 Antd will compute number of pages as total / pageSize,
-              // while backend gives you `last_page` if you ever need it.
               showSizeChanger: true,
               showTotal: (total, range) =>
                 `عرض ${range[0]}–${range[1]} من ${total} دورة (عدد الصفحات: ${lastPage})`,
               onChange: (newPage, newPageSize) => {
-                setPage(newPage);
-                setPageSize(newPageSize);
-                // fetch handled by useEffect above
+                handlePageChange(newPage, newPageSize);
               },
             }}
           />
         ) : (
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSubjects?.map((subject) => (
-              <CourseSourceSubjectCard
-                key={subject.code || subject.id}
-                subject={subject}
-                course_type="egyptian"
-                buttonStyle="dropdown"
-                onRequestDuplicate={(subj) => openDuplicate(subj)}
-                onEdit={(subject) => console.log("Edit:", subject)}
-                onDelete={(subject) => console.log("Delete:", subject)}
-              />
-            ))}
-            {filteredSubjects.length === 0 && (
-              <div className="col-span-full text-center text-gray-500 py-16">
-                لا توجد دورات ضمن هذا التبويب تطابق بحثك
+          <>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredSubjects?.map((subject) => (
+                <CourseSourceSubjectCard
+                  key={subject.code || subject.id}
+                  subject={subject}
+                  course_type="egyptian"
+                  buttonStyle="dropdown"
+                  onActive={openActiveModal} // ✅ تفعيل/إلغاء التفعيل
+                  onRequestDuplicate={(subj) => openDuplicate(subj)}
+                  onEdit={(subject) => console.log("Edit:", subject)}
+                  onDelete={(subject) => {
+                    setSelectedSubject(subject);
+                    setDeleteModal(true);
+                  }}
+                />
+              ))}
+              {filteredSubjects.length === 0 && (
+                <div className="col-span-full text-center text-gray-500 py-16">
+                  لا توجد دورات ضمن هذا التبويب تطابق بحثك
+                </div>
+              )}
+            </div>
+
+            {/* ✅ Pagination for grid view */}
+            {metaData && total > 0 && (
+              <div className="mt-6 flex justify-center">
+                <Pagination
+                  current={backendCurrentPage}
+                  pageSize={backendPageSize}
+                  total={total}
+                  onChange={handlePageChange}
+                  showSizeChanger
+                  locale={{
+                    items_per_page: "/ الصفحة",
+                    jump_to: "اذهب إلى",
+                    page: "الصفحة",
+                    prev_page: "الصفحة السابقة",
+                    next_page: "الصفحة التالية",
+                  }}
+                />
               </div>
             )}
-          </div>
+          </>
         )}
 
         {/* ✅ مودال النسخ لدورة كاملة جديدة + جدولة الظهور */}
@@ -504,6 +598,19 @@ const SubjectsManagementPage = () => {
                     placeholder="مثال: دورة العلوم – فصل 1"
                     value={newCourseTitle}
                     onChange={(e) => setNewCourseTitle(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    كود الدورة (اختياري)
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                    placeholder="مثال: SCIENCE-101"
+                    value={newCourseCode}
+                    onChange={(e) => setNewCourseCode(e.target.value)}
                   />
                 </div>
 
@@ -590,8 +697,8 @@ const SubjectsManagementPage = () => {
 
                 <div className="rounded-lg border p-3 text-xs text-gray-600 bg-gray-50">
                   سيتم نسخ <b>الدورة كاملة</b> (الوحدات، الدروس، الأسئلة،
-                  المرفقات، المصادر) إلى دورة جديدة باسمك المحدد، مع احترام مواعيد
-                  الظهور أعلاه.
+                  المرفقات، المصادر) إلى دورة جديدة باسمك المحدد، مع احترام
+                  مواعيد الظهور أعلاه.
                 </div>
               </div>
 
@@ -618,6 +725,43 @@ const SubjectsManagementPage = () => {
             </div>
           </div>
         )}
+
+        {/* ✅ Active Toggle Modal */}
+        <Modal
+          open={activeModal.open}
+          onCancel={closeActiveModal}
+          onOk={confirmActiveToggle}
+          okText={
+            activeModal.subject &&
+            (activeModal.subject.active === "1" ||
+              activeModal.subject.active === 1)
+              ? "جعلها غير نشطة"
+              : "جعلها نشطة"
+          }
+          cancelText="إلغاء"
+          confirmLoading={activeLoading}
+          centered
+          title={
+            activeModal.subject &&
+            (activeModal.subject.active === "1" ||
+              activeModal.subject.active === 1)
+              ? "إلغاء تفعيل الدورة"
+              : "تفعيل الدورة"
+          }
+        >
+          <p className="mb-2">
+            {activeModal.subject &&
+            (activeModal.subject.active === "1" ||
+              activeModal.subject.active === 1)
+              ? "هل أنت متأكد أنك تريد جعل هذه الدورة غير نشطة؟ لن تظهر للطلاب."
+              : "هل أنت متأكد أنك تريد تفعيل هذه الدورة لتظهر للطلاب؟"}
+          </p>
+          {activeModal.subject && (
+            <div className="p-3 rounded-md bg-slate-50 border text-sm text-slate-700">
+              {activeModal.subject.name}
+            </div>
+          )}
+        </Modal>
 
         <DeleteSubjectModal
           open={deleteModal}

@@ -1,20 +1,27 @@
 import React, { useState } from "react";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import CustomModal from "../layout/Modal";
+import { handleDeleteTeacher, handleGetAllTeachers } from "../../lib/features/teacherSlice";
+import { toast } from "react-toastify";
+import { useDispatch, useSelector } from "react-redux";
 
 const DeleteStudentModal = ({ open, setOpen, rowData }) => {
-  const [loading, setLoading] = useState(false);
-
-  const handleDelete = async () => {
-    setLoading(true);
-    try {
-      setOpen(false);
-    } catch (error) {
-      console.error("فشل حذف الموضوع:", error);
-    } finally {
-      setLoading(false);
+ const {delete_teahcer_loading} = useSelector(state => state?.teachers)
+   const dispatch = useDispatch();
+    function handleDeleteStudent() {
+      const data_send ={
+        id: rowData?.id
+      }
+      dispatch(handleDeleteTeacher({body  : data_send}))
+      .unwrap()
+      .then(res => {
+        if(res?.data?.status == "success") {
+          toast.success(res?.data?.message)
+          dispatch(handleGetAllTeachers());
+          setOpen(false)
+        }
+      })
     }
-  };
 
   return (
     <CustomModal
@@ -47,13 +54,13 @@ const DeleteStudentModal = ({ open, setOpen, rowData }) => {
             إلغاء
           </button>
           <button
-            onClick={handleDelete}
-            disabled={loading}
+            onClick={handleDeleteStudent}
+            disabled={delete_teahcer_loading}
             className={`px-4 py-2 ${
-              loading ? "bg-gray-400" : "bg-red-600"
+              delete_teahcer_loading ? "bg-gray-400" : "bg-red-600"
             } text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2`}
           >
-            {loading ? (
+            {delete_teahcer_loading ? (
               "جاري الحذف..."
             ) : (
               <>

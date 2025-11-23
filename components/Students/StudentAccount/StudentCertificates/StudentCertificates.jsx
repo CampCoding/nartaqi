@@ -9,8 +9,10 @@ import EditCertificateModal from "./EditCertificateModal";
 import CertificateStats from "./CertificateStats";
 import CertificateSearchFilter from "./CertificateSearchFilter";
 import CertificateHeader from "./CertificateHeader";
+// import { handleGetAllCertificates } from "../../../../lib/features/certificateSlice";
+import { useDispatch, useSelector } from "react-redux";
 
-export default function StudentsCertificates() {
+export default function StudentsCertificates({student_id}) {
   const [viewMode, setViewMode] = useState("grid"); // grid | list
   const [filterGrade, setFilterGrade] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -77,6 +79,20 @@ export default function StudentsCertificates() {
   ];
 
   const [certificates, setCertificates] = useState(SEED);
+
+  const dispatch = useDispatch();
+  const {certificate_loading , certificate_list} = useSelector(state => state?.certificate);
+
+  // useEffect(() => {
+  //   const data_send = {
+  //      student_id : student_id
+  //   }
+  //   dispatch(handleGetAllCertificates({body : data_send}))
+  // } , [dispatch])
+  
+  // useEffect(() => {
+  //   console.log(certificate_list)
+  // } , [certificate_list])
 
   useEffect(() => {
     const saved = localStorage.getItem("students_certificates");

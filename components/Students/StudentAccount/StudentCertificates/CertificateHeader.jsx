@@ -1,5 +1,7 @@
 import { Grid, List, Plus } from "lucide-react";
-import React from "react";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { handleGetAllCertificates } from "../../../../lib/features/certificateSlice";
 
 export default function CertificateHeader({
   certificates,
@@ -7,6 +9,8 @@ export default function CertificateHeader({
   setViewMode,
   viewMode,
 }) {
+  
+
   return (
     <div className="flex items-center justify-between mb-8">
       <div>

@@ -16,6 +16,7 @@ import {
   handleAddTeamMember,
   handleGetAllTeams,
 } from "@/lib/features/teamSlice";
+import { toast } from "react-toastify";
 
 export default function AddTeamModal({ open, setOpen }) {
   const [form] = Form.useForm();
@@ -34,10 +35,12 @@ export default function AddTeamModal({ open, setOpen }) {
   };
 
   const onFinish = async (values) => {
+    console.log(values)
     const formData = new FormData();
-    Object.entries(values).forEach(([key, value]) => {
-      formData.append(key, value);
-    });
+    formData.append('name' , values?.name)
+    formData.append('email' , values?.email)
+    formData.append('role' , values?.role)
+    formData.append('category' , values?.category)
 
     if (fileList?.[0]?.originFileObj) {
       formData.append("image", fileList[0].originFileObj);
@@ -47,16 +50,16 @@ export default function AddTeamModal({ open, setOpen }) {
       const res = await dispatch(
         handleAddTeamMember({ body: formData })
       ).unwrap();
-
+      console.log(res);
       if (res?.data?.status === "success") {
-        message.success(res?.data?.message || "تم إضافة عضو الفريق بنجاح");
+        toast.success(res?.data?.message || "تم إضافة عضو الفريق بنجاح");
         handleClose();
         dispatch(handleGetAllTeams());
       } else {
-        message.error(res?.data?.message || "حدث خطأ أثناء الإضافة");
+        toast.error(res?.data?.message || "حدث خطأ أثناء الإضافة");
       }
     } catch (error) {
-      message.error("حدث خطأ أثناء الإضافة");
+      toast.error("حدث خطأ أثناء الإضافة");
       console.error("Add team member failed:", error);
     }
   };
@@ -122,9 +125,9 @@ export default function AddTeamModal({ open, setOpen }) {
               </Form.Item> */}
 
               <Form.Item
-                label="الوظيفه"
-                name="role"
-                rules={[{ required: true, message: "يرجى إدخال الوظيفة" }]}
+                label="الفئة"
+                name="category"
+                rules={[{ required: true, message: "يرجى إدخال الفئة" }]}
               >
                 <Select
                   options={[
@@ -134,6 +137,14 @@ export default function AddTeamModal({ open, setOpen }) {
                     { label: "ادخال بيانات", value: "data_entry" },
                   ]}
                 ></Select>
+              </Form.Item>
+
+               <Form.Item
+                label="الوظيفة"
+                name="role"
+                rules={[{ required: true, message: "يرجى إدخال الوظيفة" }]}
+              >
+                <Input />
               </Form.Item>
 
               <Form.Item

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Tag,
   Modal,
@@ -11,6 +11,7 @@ import {
   Badge,
   Typography,
   Divider,
+  Spin,
 } from "antd";
 import "@ant-design/v5-patch-for-react-19";
 import {
@@ -26,14 +27,7 @@ import {
 import PageLayout from "../../../components/layout/PageLayout";
 import PagesHeader from "./../../../components/ui/PagesHeader";
 import BreadcrumbsShowcase from "./../../../components/ui/BreadCrumbs";
-import {
-  BarChart3,
-  Download,
-  Plus,
-  Users,
-  GraduationCap,
-  User2,
-} from "lucide-react";
+import { BarChart3, Plus, Users, GraduationCap, User2 } from "lucide-react";
 import Button from "./../../../components/atoms/Button";
 import AddStudentModal from "../../../components/Students/AddStudent.modal";
 import StudentsGrid from "../../../components/Students/StudnetsGrid";
@@ -41,119 +35,66 @@ import StudentsTable from "../../../components/Students/StudentsTable";
 import StudentsStats from "../../../components/Students/StudentsStats";
 import SearchAndFilters from "../../../components/ui/SearchAndFilters";
 import { subjects } from "../../../data/subjects";
+import { useDispatch, useSelector } from "react-redux";
+import { handleGetAllTeachers } from "../../../lib/features/teacherSlice";
 
 const { Text, Title } = Typography;
 
+// normalize API teacher object into what UI components expect
+const normalizeTeacher = (t) => ({
+  id: t.id,
+  role: "lecturer", // all from this endpoint are lecturers
+  name: t.name,
+  email: t.email,
+  gender: t.gender,
+  description: t.description || "",
+  avatar: t.image_url || t.image || null,
+  facebook: t.facebook || "",
+  instagram: t.instagram || "",
+  linkedin: t.linkedin || "",
+  tiktok: t.tiktok || "",
+  twitter: t.twitter || "",
+  youtube: t.youtube || "",
+  website: t.website || "",
+  created_at: t.created_at || "",
+  // fields used by table/grid/modal
+  status: t.status || "approved",
+  subjects: t.subjects || [], // if you add later from another API
+  experience: t.experience || t.description || "—",
+  joinDate: t.joinDate || t.created_at || "",
+  qualification: t.qualification || "محاضر",
+});
+
 const StudentsManagement = () => {
   const [addNewModal, setAddNewModal] = useState(false);
-
-  // Seed now includes `role` so we can filter by محاضر/طالب
-  const [teachers, setTeachers] = useState([
-    {
-      id: 1,
-      role: "lecturer", // محاضر
-      name: "Youssef Ibrahim",
-      email: "youssef.ibr@school.edu",
-      phone: "+20 100 111 2233",
-      subjects: ["Math (G9)", "English", "Biology"],
-      status: "approved",
-      joinDate: "2024-09-10",
-      experience: "معدل حضور: 92%",
-      qualification: "الصف التاسع - قسم A",
-      avatar: null,
-    },
-    {
-      id: 2,
-      role: "lecturer",
-      name: "Mariam Tarek",
-      email: "mariam.tarek@school.edu",
-      phone: "+20 101 222 3344",
-      subjects: ["Physics (G10)", "Chemistry", "English"],
-      status: "pending",
-      joinDate: "2025-02-01",
-      experience: "معدل حضور: 86%",
-      qualification: "الصف العاشر - قسم B",
-      avatar: null,
-    },
-    {
-      id: 3,
-      role: "lecturer",
-      name: "Omar Salah",
-      email: "omar.salah@school.edu",
-      phone: "+20 102 333 4455",
-      subjects: ["History (G8)", "Arabic"],
-      status: "approved",
-      joinDate: "2023-11-20",
-      experience: "معدل حضور: 95%",
-      qualification: "الصف الثامن - قسم C",
-      avatar: null,
-    },
-    {
-      id: 4,
-      role: "lecturer",
-      name: "Hana Mohamed",
-      email: "hana.mohamed@school.edu",
-      phone: "+20 103 444 5566",
-      subjects: ["Math (G7)", "Science", "Computer"],
-      status: "rejected",
-      joinDate: "2024-01-05",
-      experience: "معدل حضور: 61%",
-      qualification: "الصف السابع - قسم A",
-      avatar: null,
-    },
-    {
-      id: 5,
-      role: "lecturer",
-      name: "Karim Ali",
-      email: "karim.ali@school.edu",
-      phone: "+20 104 555 6677",
-      subjects: ["Geography (G9)", "English"],
-      status: "pending",
-      joinDate: "2024-03-12",
-      experience: "معدل حضور: 78%",
-      qualification: "الصف التاسع - قسم B",
-      avatar: null,
-    },
-    // Students
-    {
-      id: 6,
-      role: "student", // طالب
-      name: "Ahmed Adel",
-      email: "ahmed.adel@student.edu",
-      phone: "+20 105 000 1111",
-      subjects: ["English", "Biology"],
-      status: "approved",
-      joinDate: "2024-06-01",
-      experience: "—",
-      qualification: "طالب",
-      avatar: null,
-    },
-    {
-      id: 7,
-      role: "student",
-      name: "Nada Samir",
-      email: "nada.samir@student.edu",
-      phone: "+20 106 000 2222",
-      subjects: ["Math", "Computer"],
-      status: "pending",
-      joinDate: "2024-10-10",
-      experience: "—",
-      qualification: "طالبة",
-      avatar: null,
-    },
-  ]);
-
+  const [teachers, setTeachers] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchText, setSearchText] = useState("");
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
+  const [roleFilter, setRoleFilter] = useState("all"); // all | lecturer | student
 
-  // NEW: role filter (all | lecturer | student)
-  const [roleFilter, setRoleFilter] = useState("all");
+  const dispatch = useDispatch();
+  const { teachers_loading, teachers_list } = useSelector(
+    (state) => state?.teachers
+  );
 
-  // Icons per status
+  // fetch from API
+  useEffect(() => {
+    dispatch(handleGetAllTeachers());
+  }, [dispatch]);
+
+  // normalize API data into local state
+  useEffect(() => {
+    const apiTeachers = teachers_list?.data?.message || [];
+    if (!Array.isArray(apiTeachers)) return;
+
+    const normalized = apiTeachers.map((t) => normalizeTeacher(t));
+    setTeachers(normalized);
+  }, [teachers_list]);
+
   const getStatusIcon = (status) => {
     switch (status) {
       case "pending":
@@ -213,7 +154,7 @@ const StudentsManagement = () => {
     }, 500);
   };
 
-  // Filtered list by role
+  // Filter by role (UI only)
   const filteredData = useMemo(() => {
     return teachers.filter((t) => {
       const roleOk =
@@ -237,8 +178,7 @@ const StudentsManagement = () => {
     { label: "المتدربين", href: "/students", icon: Users, current: true },
   ];
 
-  // Pretty role tab button
-  const RoleTab = ({ active, onClick, icon: Icon, label, count, gradient }) => (
+  const RoleTab = ({ active, onClick, icon: Icon, label, count }) => (
     <button
       type="button"
       onClick={onClick}
@@ -263,6 +203,14 @@ const StudentsManagement = () => {
       </span>
     </button>
   );
+
+  if (teachers_loading) {
+    return (
+      <div className="h-screen flex justify-center items-center">
+        <Spin size="large" spinning />
+      </div>
+    );
+  }
 
   return (
     <PageLayout>
@@ -291,7 +239,14 @@ const StudentsManagement = () => {
 
         {/* View mode + role filter row */}
         <div className="flex flex-col gap-3">
-          <SearchAndFilters mode={viewMode} setMode={setViewMode} />
+          <SearchAndFilters
+            mode={viewMode}
+            setMode={setViewMode}
+            searchText={searchText}
+            setSearchText={setSearchText}
+            selectedStatus={selectedStatus}
+            setSelectedStatus={setSelectedStatus}
+          />
 
           {/* Role filter (Pills) */}
           <div className="flex items-center justify-between flex-wrap gap-3">
@@ -304,7 +259,6 @@ const StudentsManagement = () => {
                 icon={Users}
                 label="الكل"
                 count={roleCounts.total}
-                gradient="from-sky-500 to-cyan-600"
               />
               <RoleTab
                 active={roleFilter === "lecturer"}
@@ -312,7 +266,6 @@ const StudentsManagement = () => {
                 icon={GraduationCap}
                 label="معلم"
                 count={roleCounts.lecturer}
-                gradient="from-violet-500 to-fuchsia-600"
               />
               <RoleTab
                 active={roleFilter === "student"}
@@ -320,7 +273,6 @@ const StudentsManagement = () => {
                 icon={User2}
                 label="طالب"
                 count={roleCounts.student}
-                gradient="from-emerald-500 to-teal-600"
               />
             </div>
           </div>
@@ -331,6 +283,7 @@ const StudentsManagement = () => {
           <StudentsTable
             searchText={searchText}
             selectedStatus={selectedStatus}
+            data={filteredData}
           />
         ) : (
           <StudentsGrid
@@ -366,6 +319,7 @@ const StudentsManagement = () => {
             <div className="text-center mb-8">
               <Avatar
                 size={100}
+                src={selectedTeacher.avatar}
                 className="bg-gradient-to-br from-cyan-500 to-purple-600 text-white font-bold text-2xl mb-4"
               >
                 {getInitials(selectedTeacher.name)}
@@ -447,7 +401,7 @@ const StudentsManagement = () => {
                     <PhoneOutlined className="mr-2 text-green-600" />
                     الهاتف
                   </Text>
-                  <Text>{selectedTeacher.phone}</Text>
+                  <Text>{selectedTeacher.phone || "—"}</Text>
                 </div>
               </Col>
 
@@ -458,9 +412,11 @@ const StudentsManagement = () => {
                     تاريخ الانضمام
                   </Text>
                   <Text>
-                    {new Date(
-                      selectedTeacher.joinDate
-                    ).toLocaleDateString("ar-EG")}
+                    {selectedTeacher.joinDate
+                      ? new Date(
+                          selectedTeacher.joinDate
+                        ).toLocaleDateString("ar-EG")
+                      : "—"}
                   </Text>
                 </div>
               </Col>
@@ -475,45 +431,11 @@ const StudentsManagement = () => {
                 </div>
               </Col>
             </Row>
-
-            {/* Actions */}
-            <div className="text-center flex items-center justify-center gap-3">
-              {selectedTeacher.status !== "approved" && (
-                <Button
-                  type="primary"
-                  size="large"
-                  className="bg-green-600 hover:bg-green-700 border-green-600 px-8"
-                  icon={<CheckCircleOutlined />}
-                  loading={loading}
-                  onClick={() => {
-                    handleStatusChange(selectedTeacher.id, "approved");
-                    setViewModalVisible(false);
-                  }}
-                >
-                  قبول
-                </Button>
-              )}
-              {selectedTeacher.status !== "rejected" && (
-                <Button
-                  danger
-                  size="large"
-                  className="px-8"
-                  icon={<CloseCircleOutlined />}
-                  loading={loading}
-                  onClick={() => {
-                    handleStatusChange(selectedTeacher.id, "rejected");
-                    setViewModalVisible(false);
-                  }}
-                >
-                  رفض
-                </Button>
-              )}
-            </div>
           </div>
         )}
       </Modal>
 
-      {/* Add new */}
+      {/* Add new – adds to local list */}
       <AddStudentModal
         open={addNewModal}
         onCancel={() => setAddNewModal(false)}
@@ -524,7 +446,7 @@ const StudentsManagement = () => {
               id: prev.length ? Math.max(...prev.map((t) => t.id)) + 1 : 1,
               status: "pending",
               avatar: null,
-              role: payload.role || "student", // keep selected role
+              role: payload.role || "student",
               name: payload.name || "بدون اسم",
               email: payload.email || "",
               phone: payload.phone || "",

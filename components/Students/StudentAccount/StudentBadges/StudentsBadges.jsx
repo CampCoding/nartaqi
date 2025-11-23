@@ -1,87 +1,96 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Award, Calendar, Trophy, Star, Crown, Plus } from "lucide-react";
 import BadgeCard from "./BadgeCard";
 import BadgeForm from "./BadgeForm";
+import { useDispatch, useSelector } from "react-redux";
+import { handleGetAllStudentBadges } from "../../../../lib/features/badgeSlice";
+import { Spin } from "antd";
 
-export default function StudentsBadges() {
+export default function StudentsBadges({ student_id }) {
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [filterType, setFilterType] = useState("all");
   const [isAdding, setIsAdding] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingBadge, setEditingBadge] = useState(null);
 
-  // Seed
-  const SEED = [
-    {
-      id: 1,
-      name: "طالب متميز",
-      description: "حصل على درجات عالية في جميع الاختبارات والمشاريع",
-      courseTitle: "أساسيات البرمجة للأطفال",
-      awardedDate: "2023-11-20",
-      icon: "🏆",
-      imageUrl: "",
-      color: "from-yellow-400 via-yellow-500 to-orange-500", // gradient
-      type: "القدرات العامة",
-      categoryId: null,
-      rarity: "نادر",
-      points: 100,
-      achievement: "حصل على 95% في جميع الاختبارات",
-      glow: true,
-    },
-    {
-      id: 2,
-      name: "مثابر الشهر",
-      description: "التزام مستمر بحضور الدروس وأداء الواجبات",
-      courseTitle: "اللغة الإنجليزية",
-      awardedDate: "2023-10-30",
-      icon: "⭐",
-      imageUrl: "",
-      color: "from-blue-400 via-blue-500 to-purple-500",
-      type: "تحصيلي",
-      categoryId: null,
-      rarity: "شائع",
-      points: 50,
-      achievement: "حضر 100% من الدروس لمدة شهر",
-      glow: false,
-    },
-  ];
+  const dispatch = useDispatch();
+  const { student_badges_loading, student_badges_list } = useSelector(
+    (state) => state?.badges
+  );
 
-  const [badges, setBadges] = useState(SEED);
-
-  // Persist
+  // Fetch student badges
   useEffect(() => {
-    const saved = localStorage.getItem("students_badges");
-    if (saved) {
-      try {
-        setBadges(JSON.parse(saved));
-      } catch {
-        setBadges(SEED);
-      }
-    }
-  }, []);
+    if (!student_id) return;
+    const data_send = {
+      student_id: student_id, // Use prop, not hardcoded
+    };
+    dispatch(handleGetAllStudentBadges({ body: data_send }));
+  }, [student_id, dispatch]);
+
+  const [badges, setBadges] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
+
   useEffect(() => {
-    localStorage.setItem("students_badges", JSON.stringify(badges));
-  }, [badges]);
+    const list = student_badges_list?.data?.message || [];
+    // Map the API data to a UI badge shape
+    const mapped = list.map((item, index) => {
+      const badge = item.badge || {};
+      const round = item.round || {};
+      const createdAt = item.created_at || badge.created_at || "";
+      return {
+        id: item.id ?? badge.id ?? index,
+        name: badge.name || "شارة",
+        description: badge.description || "",
+        courseTitle: round.name || "",
+        awardedDate: createdAt ? createdAt.split("T")[0] : "",
+        icon: "🏆",
+        imageUrl: badge.image_path || "",
+        color: "from-blue-400 via-blue-500 to-purple-500",
+        type: badge.category || "أخرى",
+        categoryId: badge.id || null,
+        rarity: "شائع",
+        points: 0,
+        achievement: "",
+        glow: false,
+      };
+    });
 
-  const badgeTypes = [
-    { key: "all", label: "جميع الشارات", icon: Award },
-    { key: "القدرات العامة", label: "القدرات العامة", icon: Trophy },
-    { key: "تحصيلي", label: "تحصيلي", icon: Calendar },
-    { key: "الرخصة المهنية", label: "الرخصة المهنية", icon: Star },
-    { key: "قدرات الجامعيين", label: "قدرات الجامعيين", icon: Crown },
-  ];
+    setBadges(mapped);
 
-  const filteredBadges =
-    filterType === "all" ? badges : badges.filter((b) => b.type === filterType);
+    // Extract unique categories from badges and set them as options for filter
+    const categorySet = new Set(
+      list.map((item) => item.badge?.category).filter(Boolean)
+    );
 
-  // CRUD
+    const cats = [
+      { key: "all", label: "الكل", icon: Award },
+      ...Array.from(categorySet).map((cat) => ({
+        key: cat,
+        label: cat,
+        icon: Award,
+      })),
+    ];
+
+    setAllCategories(cats);
+  }, [student_badges_list]);
+
+  const filteredBadges = useMemo(
+    () =>
+      filterType === "all"
+        ? badges
+        : badges.filter((b) => b.type === filterType),
+    [badges, filterType]
+  );
+
+  // Handle Add Badge
   const handleAddBadge = (newBadge) => {
     const newId = Math.max(...badges.map((b) => b.id), 0) + 1;
     setBadges([...badges, { ...newBadge, id: newId }]);
     setIsAdding(false);
   };
 
+  // Handle Update Badge
   const handleUpdateBadge = (updatedBadge) => {
     if (!updatedBadge.id && editingBadge?.id) updatedBadge.id = editingBadge.id;
     setBadges((prev) =>
@@ -102,6 +111,14 @@ export default function StudentsBadges() {
     }
   };
 
+  if (student_badges_loading) {
+    return (
+      <div className="h-screen flex justify-center items-center">
+        <Spin size="large" spinning />
+      </div>
+    );
+  }
+
   return (
     <div
       className="bg-white rounded-3xl shadow-lg border border-gray-100 p-8"
@@ -117,21 +134,11 @@ export default function StudentsBadges() {
             مجموعة الإنجازات والتميز الأكاديمي ({badges.length} شارة)
           </p>
         </div>
-
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setIsAdding(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-          >
-            <Plus size={20} />
-            إضافة شارة
-          </button>
-        </div>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2 mb-8 p-2 bg-gray-50 rounded-2xl">
-        {badgeTypes.map((type) => {
+        {allCategories.map((type) => {
           const Icon = type.icon;
           const count =
             type.key === "all"
@@ -165,7 +172,7 @@ export default function StudentsBadges() {
         })}
       </div>
 
-      {/* Grid */}
+      {/* Badges grid */}
       {filteredBadges.length === 0 ? (
         <div className="text-center py-16">
           <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
@@ -179,14 +186,14 @@ export default function StudentsBadges() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {filteredBadges.map((badge) => (
             <BadgeCard
+              key={badge.id}
+              badge={badge}
               setEditingBadge={setEditingBadge}
               setIsEditing={setIsEditing}
               handleDeleteBadge={handleDeleteBadge}
-              key={badge.id}
-              badge={badge}
             />
           ))}
         </div>

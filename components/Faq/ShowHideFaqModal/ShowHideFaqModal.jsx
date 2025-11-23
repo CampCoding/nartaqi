@@ -91,3 +91,7 @@ const ShowHideFaqModal = ({ open, setOpen, rowData }) => {
 export default ShowHideFaqModal;
 
 
+
+
+
+

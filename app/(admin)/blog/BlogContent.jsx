@@ -20,6 +20,8 @@ import {
   Edit3,
   Trash2,
   MessageCircleWarning,
+  EyeOff,
+  MessageSquareMore,
 } from "lucide-react";
 
 import { message, Spin } from "antd";
@@ -31,6 +33,7 @@ import ShowHideModal from "../../../components/Blogs/ShowHideModal/ShowHideModal
 import { useDispatch, useSelector } from "react-redux";
 import { handleGetAllBlogs } from "@/lib/features/blogSlice";
 import SharedImage from "@/components/ui/SharedImage";
+import { useRouter } from "next/navigation";
 
 /* ========================
    Breadcrumbs
@@ -44,18 +47,26 @@ const breadcrumbs = [
    Cards & Table
 ======================== */
 function BlogCard({ post, onEdit, onDelete, onDetails, onShowHide }) {
+  const router = useRouter();
   return (
     <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition relative">
       {/* actions */}
 
       <div className="absolute bottom-0 bg-primary blur-3xl w-24 h-24 rounded-full"></div>
       <div className="absolute top-3 left-3 z-10 flex gap-2">
+         <button
+          className="p-2 rounded-lg bg-white/80 hover:bg-white border border-gray-200 text-sky-600"
+          title={"التعليقات"}
+          onClick={() => router.push(`/blog/${post?.id}/comments`)}
+        >
+          <MessageSquareMore className="w-4 h-4" />
+        </button>
         <button
           className="p-2 rounded-lg bg-white/80 hover:bg-white border border-gray-200 text-sky-600"
-          title="اخفاء/اظهار"
+          title={post?.hidden? "إظهار":"إخفاء"}
           onClick={() => onShowHide(post)}
         >
-          <Eye className="w-4 h-4" />
+          {post?.hidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" /> }
         </button>
         <button
           className="p-2 rounded-lg bg-white/80 hover:bg-white border border-gray-200 text-sky-600"
@@ -115,6 +126,7 @@ function BlogCard({ post, onEdit, onDelete, onDetails, onShowHide }) {
 
 function BlogTable({ rows, onEdit, onDelete, onDetails, onShowHide }) {
   const safeRows = rows || [];
+  const router = useRouter();
   return (
     <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
       <table className="min-w-full text-sm">
@@ -163,6 +175,13 @@ function BlogTable({ rows, onEdit, onDelete, onDetails, onShowHide }) {
                 <td className="p-3">{post.views}</td>
                 <td className="p-3">
                   <div className="flex items-center gap-2">
+                     <button
+          className="p-2 rounded-lg bg-white/80 hover:bg-white border border-gray-200 text-sky-600"
+          title={"التعليقات"}
+          onClick={() => router.push(`/blog/${post?.id}/comments`)}
+        >
+          <MessageSquareMore className="w-4 h-4" />
+        </button>
                     <button
                       onClick={() => onShowHide(post)}
                       className="px-3 py-1.5 rounded-lg text-sm bg-white border border-sky-200 text-sky-600 hover:bg-sky-50"
@@ -374,8 +393,9 @@ export default function BlogContent() {
       </div>
 
       {/* Modals */}
-      <AddBlogModal open={addOpen} setOpen={setAddOpen} onSubmit={handleAdd} />
+      <AddBlogModal blogsData={blogs_data} open={addOpen} setOpen={setAddOpen} onSubmit={handleAdd} />
       <EditBlogModal
+      blogsData={blogs_data}
         open={editOpen}
         setOpen={setEditOpen}
         rowData={rowData}

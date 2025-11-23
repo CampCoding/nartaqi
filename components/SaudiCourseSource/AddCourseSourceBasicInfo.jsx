@@ -32,8 +32,9 @@ import {
   handleGetAllCoursesCategories,
   handleGetCategoryParts,
 } from "../../lib/features/categoriesSlice";
-import { handleAddBaiskRound } from "../../lib/features/roundsSlice";
+import { handleAddBaiskRound, handleGetSourceRound } from "../../lib/features/roundsSlice";
 import { handleGetAllTeachers } from "../../lib/features/teacherSlice";
+import { toast } from "react-toastify";
 
 const { Dragger } = Upload;
 const { TextArea } = Input;
@@ -93,14 +94,14 @@ export default function AddCourseSourceBasicInfo({
   const [selectedOption, setSelectedOption] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {teachers_loading , teachers_list} = useSelector(state => state?.teachers)
-
+  const [teacherOptions , setTeacherOptions]  = useState([]);
   /* ====================== Load categories & parts ====================== */
   useEffect(() => {
     dispatch(handleGetAllTeachers())
   } , [dispatch])
 
   useEffect(() => {
-    console.log(teachers_list)
+  setTeacherOptions(teachers_list?.data?.message?.map(item => ({label : item?.name , value : item?.id})))
   } ,[teachers_list])
 
   useEffect(() => {
@@ -247,7 +248,6 @@ export default function AddCourseSourceBasicInfo({
 
   async function handleSubmit(values) {
     try {
-      setIsSubmitting(true);
 
       // 🔹 Validate all required fields before submission
       const validationErrors = validateFormBeforeSubmit(values);
@@ -341,13 +341,21 @@ export default function AddCourseSourceBasicInfo({
         formData.append("image", imageFile);
       }
 
-      dispatch(handleAddBaiskRound({ body: formData })).unwrap();
+      dispatch(handleAddBaiskRound({ body: formData })).unwrap()
+      .then(res => {
+        if(res?.data?.status == "success") {
+          toast.success(res?.data?.message);
+          dispatch(handleGetSourceRound())
+        }else {
+          toast.error(res?.data?.message)
+        }
+      })
     } catch (error) {
       console.error("Submission error:", error);
-      message.error({ content: "فشل في إضافة الدورة", key: "save" });
+      toast.error({ content: "فشل في إضافة الدورة", key: "save" });
 
       if (error.message) {
-        message.error(`خطأ: ${error.message}`);
+        toast.error(`خطأ: ${error.message}`);
       }
     } finally {
       setIsSubmitting(false);
@@ -634,12 +642,7 @@ export default function AddCourseSourceBasicInfo({
                   mode="multiple"
                   className="rounded-xl"
                   placeholder="اختر المدربين"
-                  options={[
-                    { label: "أحمد محمد", value: 1 },
-                    { label: "رحمة إسماعيل", value: 2 },
-                    { label: "محمد علي", value: 3 },
-                    { label: "فاطمة أحمد", value: 4 },
-                  ]}
+                  options={teacherOptions}
                 />
               </Form.Item>
             </Col>

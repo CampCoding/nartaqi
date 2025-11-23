@@ -1,9 +1,57 @@
-import React from "react";
+"use client";
+import React, { useEffect, useState } from "react";
 import Card from "./ExamCard";
 import Input from "./ExamInput";
 import { FileText } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { handleGetSourceRound } from "../../lib/features/roundsSlice";
 
-export default function ExamMainInfo({ examData,colorMap, setExamData , exam_types , getEstimatedDuration}) {
+export default function ExamMainInfo({
+  examData,
+  colorMap,
+  setExamData,
+  exam_types,
+  getEstimatedDuration,
+}) {
+  const dispatch = useDispatch();
+  const { source_round_list, all_round_lessons, all_round_lessons_loading } =
+    useSelector((state) => state?.rounds);
+  const [exmaInfoData, setExamInfoData] = useState({
+    title: "", // required, string, max 255 chars
+    description: "", // required, string
+    free: 0, // required, string, 0 or 1
+    time: "", // required, string, exam duration
+    date: "", // required, string, exam date
+  });
+  useEffect(() => {
+    dispatch(handleGetSourceRound());
+  }, []);
+
+  useEffect(() => {
+    console.log(source_round_list);
+  }, [source_round_list]);
+
+  const handleInputChange = (field, value) => {
+    setExamInfoData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleExamTypeChange = (type) => {
+    setExamData({
+      ...examData,
+      exam_type: type.value,
+      lesson_id: type.value === "full_round" ? "" : examData.lesson_id,
+      sections: [],
+    });
+  };
+
+  useEffect(() => {
+    console.log(examData);
+  }, [examData]);
+
+  function handleSubmit() {
+    console.log(exmaInfoData)
+  }
+
   return (
     <Card title="معلومات الاختبار الأساسية" icon={FileText}>
       <div className="space-y-6">
@@ -11,15 +59,50 @@ export default function ExamMainInfo({ examData,colorMap, setExamData , exam_typ
           <Input
             label="اسم الاختبار"
             placeholder="أدخل اسم الاختبار"
-            value={examData?.name}
-            onChange={(e) =>
-              setExamData((p) => ({ ...p, name: e.target.value }))
-            }
+            value={exmaInfoData?.title || ""}
+            onChange={(e) => handleInputChange("name", e.target.value)}
           />
 
+         
+          <Input
+            label="الوصف"
+            placeholder="أدخل وصف الاختبار"
+            value={exmaInfoData?.description || ""}
+            onChange={(e) => handleInputChange("description", e.target.value)}
+            multiline
+          />
+
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              مجاني
+            </label>
+            <select
+              value={exmaInfoData?.free || "0"}
+              onChange={(e) => handleInputChange("free", e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="0">لا</option>
+              <option value="1">نعم</option>
+            </select>
+          </div>
+
+          <Input
+            label="المدة (س:د:ث)"
+            placeholder="أدخل مدة الاختبار (01:00:00)"
+            value={exmaInfoData?.time || ""}
+            onChange={(e) => handleInputChange("time", e.target.value)}
+          />
+
+          <Input
+            label="التاريخ"
+            type="date"
+            value={exmaInfoData?.date || ""}
+            onChange={(e) => handleInputChange("date", e.target.value)}
+          />
         </div>
 
-        {/* Exam Type Selection */}
+        {/* Exam Type Selection - Keeping your existing UI for visual selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-4">
             نوع الاختبار
@@ -27,20 +110,14 @@ export default function ExamMainInfo({ examData,colorMap, setExamData , exam_typ
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {exam_types.map((type) => {
               const Icon = type.icon;
-              const isSelected = examData?.type === type.value;
+              const isSelected = examData?.exam_type === type.value;
               const palette = colorMap[type.color];
 
               return (
                 <button
                   key={type.id}
-                  onClick={() =>
-                    setExamData({
-                      name: examData.name,
-                      duration: examData.duration,
-                      type: type.value,
-                      sections: [],
-                    })
-                  }
+                  type="button"
+                  onClick={() => handleExamTypeChange(type)}
                   className={`p-6 rounded-xl border-2 transition-all duration-200 text-right hover:scale-[1.02] ${
                     isSelected
                       ? `${palette.cardSelected} shadow-lg`
@@ -74,6 +151,13 @@ export default function ExamMainInfo({ examData,colorMap, setExamData , exam_typ
           </div>
         </div>
       </div>
+
+      <button
+        className="bg-blue-500 text-white p-3 rounded-md"
+        onClick={handleSubmit}
+      >
+        إضافة
+      </button>
     </Card>
   );
 }

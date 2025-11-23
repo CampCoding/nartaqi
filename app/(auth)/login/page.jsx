@@ -1,7 +1,7 @@
 "use client";
 // src/pages/auth/LoginPage.jsx
 import { useState, useEffect } from "react";
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Phone } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -212,14 +212,14 @@ export default function LoginPage() {
                 className="block text-sm font-semibold"
                 style={{ color: "#F97316" }}
               >
-                البريد الالكتروني
+                رقم الهاتف
               </label>
               <div className="relative group">
                 <div
                   className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors"
                   style={{ color: "#3B82F6" }}
                 >
-                  <Mail className="w-5 h-5 opacity-60 group-focus-within:opacity-100" />
+                  <Phone className="w-5 h-5 opacity-60 group-focus-within:opacity-100" />
                 </div>
                 <input
                   type="email"
@@ -228,7 +228,7 @@ export default function LoginPage() {
                   onChange={onChange}
                   onKeyDown={onKeyDown}
                   className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl transition-all duration-300 text-gray-800 placeholder-gray-400 outline-none focus:border-[#3B82F6] focus:[box-shadow:0_0_0_3px_rgba(59,130,246,0.12)]"
-                  placeholder="you@example.com"
+                  placeholder="xxxxxxxxx"
                   required
                 />
               </div>

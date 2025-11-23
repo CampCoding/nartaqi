@@ -7,6 +7,11 @@ import marketerReducer from '../features/marketersSlice';
 import roundesReducer from '../features/roundsSlice';
 import categoriesReducer from '../features/categoriesSlice';
 import teachersReducer from '../features/teacherSlice';
+import certificateReducer from '../features/certificateSlice';
+import badegReducer from '../features/badgeSlice';
+import resourceReducer from '../features/resourcesSlice';
+import examReducer from '../features/examSlice';
+
 
 export const rootReducer = combineReducers({
    auth : authReducer,
@@ -16,5 +21,9 @@ export const rootReducer = combineReducers({
    marketer :  marketerReducer,
    rounds : roundesReducer,
    categories: categoriesReducer,
-   teachers : teachersReducer
+   teachers : teachersReducer,
+   certificate : certificateReducer,
+   badges : badegReducer,
+   resource:resourceReducer,
+   exam: examReducer
 });

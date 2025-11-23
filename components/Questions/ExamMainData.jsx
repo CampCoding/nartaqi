@@ -33,6 +33,7 @@ import { colorMap, exam_types, mock_exam_section_Data, questionTypes } from "./u
 // Shared Quill config
 import McqSharedPassageEditor from "./McqSharedPassageEditor/McqSharedPassageEditor";
 import LabeledEditor from "./McqSharedPassageEditor/parts/LabeledEditor";
+import { useDispatch, useSelector } from "react-redux";
 
 /* ===================== Main: ExamMainData ===================== */
 export default function ExamMainData({ examData: editExamData }) {
@@ -165,8 +166,8 @@ export default function ExamMainData({ examData: editExamData }) {
   const canAddMoreQuestions = (sectionId) =>
     !sectionId ? false : examData.type !== "mock" ? true : getQuestionsCount(sectionId) < 24;
 
-  const handleMcqPassagesChange = (passages) =>
-    setMcqPassages((prev) => ({ ...prev, [mcqSubType]: passages }));
+  const handleMcqPassagesChange = useCallback((passages) =>
+    setMcqPassages((prev) => ({ ...prev, [mcqSubType]: passages })), []);
 
   /* Add / Update Question */
   const addOrUpdateQuestion = () => {

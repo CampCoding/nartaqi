@@ -1,47 +1,97 @@
 "use client";
 import { Save, X } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  handleAddCertificate,
+  handleGetAllApplications,
+} from "../../../../lib/features/certificateSlice";
+import axios from "axios";
+import { base_url } from "../../../../constants";
+import { configs } from "../../../../configs";
+import { toast } from "react-toastify";
 
 function AddCertificateModal({ onClose, onSave }) {
   const [title, setTitle] = useState("");
   const [issueDate, setIssueDate] = useState(
     new Date().toISOString().slice(0, 10)
   );
-  const [thumbUrl, setThumbUrl] = useState("");
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const dispatch = useDispatch();
+  const { applications_loading, applications_list } = useSelector(
+    (state) => state?.certificate
+  );
+  const [pdfLoading, setPdfLoading] = useState(false);
 
-  const handleImage = (e) => {
+  const handlePdfChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setThumbUrl(url);
+    const url = URL.createObjectURL(file); // Create a URL for the PDF
+    setPdfUrl(file);
   };
 
   const handleSubmit = (e) => {
+    const token = localStorage.getItem(configs.tokenKey)
+      ? localStorage.getItem(configs.tokenKey)
+      : "";
+    console.log(token);
     e.preventDefault();
-    if (!title || !issueDate) return;
+    if (!title || !pdfUrl) return;
 
-    const newId = Math.max(0, ...certificates.map((c) => c.id)) + 1;
-    const newCert = {
-      id: newId,
-      title, // اسم الشهادة
-      courseTitle: "", // اختياري
-      issueDate, // تاريخ الإنجاز
-      grade: "جيد", // افتراضي
-      gradePercentage: 80, // افتراضي
-      instructorName: "", // اختياري
-      pdfUrl: "#", // اختياري
-      certificateId: `CERT-CUST-${Date.now()}`,
-      category: "أخرى",
-      duration: "—",
-      skills: [],
-      verified: false,
-      shareableLink: "",
-      thumbnailUrl: thumbUrl, // الصورة
-    };
-
-    onSave(newCert);
-    onClose();
+    if (pdfUrl) {
+      setPdfLoading(true);
+      const formData = new FormData();
+      formData.append("pdf", pdfUrl);
+      axios
+        .post(base_url + "admin/certificates/upload_pdf", formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((res) => {
+          console.log(res);
+          if (res?.data?.status == "success") {
+            const data_send = {
+              student_id: 6,
+              application_id: 4,
+              round_id: 2,
+              name: title,
+              certification_name: title, // اسم الشهادة
+              pdf_path: res?.data?.message?.pdf_path, // The uploaded P
+            };
+            dispatch(handleAddCertificate({ body: data_send }))
+              .unwrap()
+              .then((certificateRes) => {
+                console.log(certificateRes);
+                if (certificateRes.data?.status == "success") {
+                  toast.success("تم اضافة الشهاده بنجاح");
+                  onClose();
+                  setTitle("");
+                  setPdfUrl(null);
+                } else {
+                  toast.error("هناك خطأ أثناء اضافة الشهاده");
+                }
+              })
+              .catch((e) => console.log(e))
+              .finally(() => {
+                onClose();
+                setPdfLoading(false);
+              });
+          }
+        });
+    }
   };
+
+  useEffect(() => {
+    const data_send = {
+      student_id: 6,
+    };
+    dispatch(handleGetAllApplications({ body: data_send }));
+  }, [dispatch]);
+
+  useEffect(() => {
+    console.log(applications_list);
+  }, [applications_list]);
 
   return (
     <div
@@ -79,33 +129,19 @@ function AddCertificateModal({ onClose, onSave }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              تاريخ الإنجاز *
-            </label>
-            <input
-              type="date"
-              value={issueDate}
-              onChange={(e) => setIssueDate(e.target.value)}
-              required
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              صورة الشهادة (اختياري)
+              شهادة PDF *
             </label>
             <input
               type="file"
-              accept="image/*"
-              onChange={handleImage}
+              accept="application/pdf"
+              onChange={handlePdfChange}
+              required
               className="w-full rounded-xl border border-gray-300 px-4 py-2"
             />
-            {thumbUrl && (
-              <img
-                src={thumbUrl}
-                alt="preview"
-                className="mt-2 w-28 h-20 object-cover rounded-lg border"
-              />
+            {pdfUrl && (
+              <div className="mt-2 text-gray-700">
+                <p>تم اختيار ملف PDF</p>
+              </div>
             )}
           </div>
 
@@ -121,7 +157,10 @@ function AddCertificateModal({ onClose, onSave }) {
               type="submit"
               className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:shadow-lg"
             >
-              <Save size={16} /> حفظ الشهادة
+              <Save size={16} />
+              {applications_loading || pdfLoading
+                ? "جاري تحميل...."
+                : "حفظ الشهادة "}
             </button>
           </div>
         </form>

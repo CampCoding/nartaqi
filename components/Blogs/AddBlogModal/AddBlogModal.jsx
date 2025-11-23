@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ConfigProvider,
   Modal,
@@ -11,18 +11,25 @@ import {
   Button,
   Divider,
   message,
+  Select,
 } from "antd";
 import dayjs from "dayjs";
 import { PlusOutlined, UploadOutlined, SendOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
-import { handleAddBlog } from "@/lib/features/blogSlice";
+import { handleAddBlog, handleGetAllBlogs } from "@/lib/features/blogSlice";
+import { toast } from "react-toastify";
 
-export default function AddBlogModal({ open, setOpen, onSubmit, palette }) {
+export default function AddBlogModal({ open, blogsData, setOpen, onSubmit, palette }) {
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
   const [fileList, setFileList] = useState([]);
   const dispatch = useDispatch();
-  const {add_blog_loading} = useSelector(state => state?.blogs);
+  const {add_blog_loading , blogs_data , blogs_loading} = useSelector(state => state?.blogs);
+  const [allBlogsOptions , setALlBlogsOptions] = useState([]);
+
+  useEffect(() => {
+    setALlBlogsOptions(blogs_data?.data?.message?.map(item => ({label: item?.title , value:item?.id})))
+  } , [blogs_data])
 
   const PALETTE = useMemo(
     () => ({
@@ -43,8 +50,6 @@ export default function AddBlogModal({ open, setOpen, onSubmit, palette }) {
 
   const onFinish = async (values) => {
     try {
-      setSubmitting(true);
-       
       const formData = new FormData();
       
       // Append the actual file if exists (use originFileObj, not thumbUrl)
@@ -55,23 +60,23 @@ export default function AddBlogModal({ open, setOpen, onSubmit, palette }) {
       // Append other form fields
       formData.append("title", values?.title?.trim());
       formData.append("content", values?.desc?.trim());
-
-      const res = await dispatch(handleAddBlog({ body: formData }));
-      
-      if (res.type === "blogSlice/handleAddBlog/fulfilled") {
-        message.success("تمت إضافة المقال بنجاح ✅");
-        handleClose();
-        if (typeof onSubmit === "function") {
-          await onSubmit(res.payload);
-        }
-      } else {
-        message.error("حدث خطأ أثناء إضافة المقال");
+      if(values?.related_blogs && Array.isArray(values?.related_blogs) && values?.related_blogs?.length > 0) {
+        formData.append("related_blogs_ids", values?.related_blogs?.join(","))
       }
+
+      const res = await dispatch(handleAddBlog({ body: formData })).unwrap();
+      // console.log(res);
+      if(res?.data?.status == "success") {
+        toast.success(res?.data?.message);
+        dispatch(handleGetAllBlogs());
+handleClose()
+      }
+     else {
+      toast.error(res?.data?.message)
+     }
     } catch (error) {
       console.error("Error adding blog:", error);
       message.error("حدث خطأ أثناء إضافة المقال");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -139,6 +144,16 @@ export default function AddBlogModal({ open, setOpen, onSubmit, palette }) {
               <Input.TextArea placeholder="نبذة قصيرة عن المقال…" autoSize={{ minRows: 3, maxRows: 6 }} />
             </Form.Item>
 
+              <Form.Item
+              label="المقالات ذات الصلة"
+              name="related_blogs"
+              rules={[{ required: true, message: "الرجاء  اختيار مقالة" }]}
+            >
+             <Select options={allBlogsOptions}
+             mode="multiple"
+             ></Select>
+            </Form.Item>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* <Form.Item label="تاريخ النشر" name="date">
                 <DatePicker className="w-full" />
@@ -181,7 +196,7 @@ export default function AddBlogModal({ open, setOpen, onSubmit, palette }) {
                 type="primary"
                 className="bg-primary text-white"
                 icon={<SendOutlined />}
-                loading={submitting || add_blog_loading}
+                loading={add_blog_loading}
                 onClick={() => form.submit()}
               >
                 إضافة

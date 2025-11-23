@@ -25,6 +25,7 @@ import {
   Files,
   Award,
   Trophy,
+  Badge,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -136,6 +137,11 @@ export default function Sidebar() {
       name:"المكافآت",
       icon : Trophy ,
       path:"/rewards"
+    },
+    {
+      name:"الشارات",
+      icon:Badge,
+      path:"/badge",
     },
     {
       name:"فريق العمل",

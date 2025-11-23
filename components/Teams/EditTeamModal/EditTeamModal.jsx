@@ -7,30 +7,78 @@ import {
   Upload,
   Button,
   message,
+  Select,
 } from "antd";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  handleUpdateTeamMember,
+  handleGetAllTeams,
+} from "@/lib/features/teamSlice";
+import { toast } from "react-toastify";
 
 export default function EditTeamModal({ open, setOpen, rowData, setRowData }) {
   const [form] = Form.useForm();
-  const [image, setImage] = useState(null);
+  const [fileList, setFileList] = useState([]);
+  const dispatch = useDispatch();
+  const { update_team_loading } = useSelector((state) => state?.team);
 
-  // Handle image upload
-  const handleImageChange = (info) => {
-    if (info.file.status === "done") {
-      setImage(info.file.response.url); // Assuming response contains the URL of the uploaded image
-      message.success(`${info.file.name} file uploaded successfully`);
-    } else if (info.file.status === "error") {
-      message.error(`${info.file.name} file upload failed.`);
+  // Set initial form values when the modal opens
+  useEffect(() => {
+    if (rowData) {
+      form.setFieldsValue({
+        name: rowData?.name,
+        email: rowData?.email,
+        role: rowData?.role,
+        category: rowData?.category,
+      });
+      setFileList(rowData?.image ? [{ url: rowData?.image }] : []); // Set image if exists
     }
+  }, [rowData, form]);
+
+  const handleClose = () => {
+    form.resetFields();
+    setFileList([]);
+    setOpen(false);
   };
 
-  // Handle form submission
-  const onFinish = (values) => {
-    console.log("Form values:", values);
-    console.log("Image URL:", image);
-    // Do the necessary logic like sending data to the server
-    setOpen(false); // Close the modal after submission
+  // Handle image change
+  const handleImageChange = ({ fileList: newFileList }) => {
+    setFileList(newFileList);
+  };
+
+  const onFinish = async (values) => {
+    const formData = new FormData();
+    formData.append("id", rowData?.id);
+    formData.append("name", values?.name);
+    formData.append("email", values?.email);
+    formData.append("role", values?.role);
+    formData.append("category", values?.category);
+
+    // If a new image is uploaded, append it to the form data
+    if (fileList?.[0]?.originFileObj) {
+      formData.append("image", fileList[0].originFileObj); // Append new image if selected
+    } else if (rowData?.image) {
+      // If no new image, send the existing image URL as a string
+      formData.append("image", rowData?.image);
+    }
+
+    try {
+      const res = await dispatch(
+        handleUpdateTeamMember({ body: formData })
+      ).unwrap();
+      if (res?.data?.status === "success") {
+        toast.success(res?.data?.message || "تم تحديث عضو الفريق بنجاح");
+        handleClose();
+        dispatch(handleGetAllTeams());
+      } else {
+        toast.error(res?.data?.message || "حدث خطأ أثناء التحديث");
+      }
+    } catch (error) {
+      toast.error("حدث خطأ أثناء التحديث");
+      console.error("Update team member failed:", error);
+    }
   };
 
   return (
@@ -59,7 +107,7 @@ export default function EditTeamModal({ open, setOpen, rowData, setRowData }) {
               </div>
               <h1 className="text-3xl font-bold text-[#202938]">تعديل فريق</h1>
             </div>
-            <p className="text-gray-600">تعديل فريق </p>
+            <p className="text-gray-600">تعديل فريق</p>
           </div>
 
           <div className="mx-auto">
@@ -67,13 +115,7 @@ export default function EditTeamModal({ open, setOpen, rowData, setRowData }) {
               form={form}
               onFinish={onFinish}
               layout="vertical"
-              initialValues={{
-                remember: true,
-                name: rowData?.name,
-                role: rowData?.role,
-                email: rowData?.email,
-                phone: rowData?.phone,
-              }}
+              initialValues={{ remember: true }}
             >
               <Form.Item
                 label="الاسم"
@@ -92,46 +134,52 @@ export default function EditTeamModal({ open, setOpen, rowData, setRowData }) {
               </Form.Item>
 
               <Form.Item
-                label="الهاتف"
-                name="phone"
-                rules={[{ required: true, message: "يرجى إدخال الهاتف" }]}
-              >
-                <Input placeholder="Please Enter Phone" />
-              </Form.Item>
-
-              <Form.Item
-                label="الوظيفه"
+                label="الوظيفة"
                 name="role"
                 rules={[{ required: true, message: "يرجى إدخال الوظيفة" }]}
               >
                 <Input placeholder="Please Enter Role" />
               </Form.Item>
 
-             <Form.Item
-  label="صورة"
-  name="image"
-  rules={[{ required: true, message: "يرجى رفع صورة" }]}
->
-  <Upload
-    name="file"
-    action="/upload" // Add your upload URL here
-    listType="picture"
-    onChange={handleImageChange}
-    fileList={image ? [{ url: image }] : []} // Use fileList here
-    showUploadList={false}
-  >
-    <Button icon={<UploadOutlined />}>Click to Upload</Button>
-  </Upload>
-</Form.Item>
+              <Form.Item
+                label="الفئة"
+                name="category"
+                rules={[{ required: true, message: "يرجى إدخال الفئة" }]}
+              >
+                <Select
+                  options={[
+                    { label: "ادمن", value: "administrators" },
+                    { label: "فني", value: "technicians" },
+                    { label: "الدعم الفني", value: "technical_support" },
+                    { label: "ادخال بيانات", value: "data_entry" },
+                  ]}
+                ></Select>
+              </Form.Item>
 
+              <Form.Item
+                label="صورة"
+                name="image"
+                rules={rowData?.image ? [] : [{ required: true, message: "يرجى رفع صورة" }]} // Remove required if image exists in rowData
+              >
+                <Upload
+                  name="file"
+                  listType="picture"
+                  beforeUpload={() => false}
+                  onChange={handleImageChange}
+                  fileList={fileList}
+                >
+                  <Button icon={<UploadOutlined />}>رفع الصورة</Button>
+                </Upload>
+              </Form.Item>
 
               <Form.Item>
                 <Button
                   type="primary"
-                  className="!bg-primary  !text-white"
-                  htmltype="submit"
+                  className="!bg-primary !text-white"
+                  htmlType="submit"
+                  loading={update_team_loading}
                 >
-                  إضافة الفريق
+                  تحديث الفريق
                 </Button>
               </Form.Item>
             </Form>

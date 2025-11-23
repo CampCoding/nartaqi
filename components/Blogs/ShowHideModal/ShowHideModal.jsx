@@ -11,7 +11,7 @@ const ShowHideModal = ({ open, setOpen, rowData }) => {
 
   // Determine if blog is currently shown or hidden
   // Adjust this based on your API response structure (could be status, is_visible, etc.)
-  const isVisible = rowData?.status === "visible" || rowData?.is_visible === 1 || rowData?.is_visible === true;
+  const isVisible = rowData?.hidden == 1 || rowData?.is_visible === 1 || rowData?.is_visible === true;
 
   const handleToggle = async () => {
     try {
@@ -25,6 +25,7 @@ const ShowHideModal = ({ open, setOpen, rowData }) => {
         handleShowHideBlog({
           body: {
             id: blogId,
+            hidden : rowData?.hidden ? 0 : 1
           },
         })
       ).unwrap();
@@ -46,28 +47,28 @@ const ShowHideModal = ({ open, setOpen, rowData }) => {
     <CustomModal
       isOpen={!!open}
       onClose={() => setOpen(null)}
-      title={isVisible ? "إخفاء المدونة" : "إظهار المدونة"}
+      title={!isVisible ? "إخفاء المدونة" : "إظهار المدونة"}
       size="sm"
     >
       <div className="space-y-4">
         <div
           className={`flex items-center gap-3 p-4 border rounded-lg ${
-            isVisible
+            !isVisible
               ? "bg-orange-50 border-orange-200"
               : "bg-green-50 border-green-200"
           }`}
         >
-          {isVisible ? (
+          {!isVisible ? (
             <EyeOff className="w-6 h-6 text-orange-600 flex-shrink-0" />
           ) : (
             <Eye className="w-6 h-6 text-green-600 flex-shrink-0" />
           )}
           <div>
-            <h4 className={`font-medium ${isVisible ? "text-orange-900" : "text-green-900"}`}>
+            <h4 className={`font-medium ${!isVisible ? "text-orange-900" : "text-green-900"}`}>
               هل أنت متأكد؟
             </h4>
-            <p className={`text-sm ${isVisible ? "text-orange-700" : "text-green-700"}`}>
-              {isVisible
+            <p className={`text-sm ${!isVisible ? "text-orange-700" : "text-green-700"}`}>
+              {!isVisible
                 ? "سيتم إخفاء هذه المدونة عن المستخدمين."
                 : "سيتم إظهار هذه المدونة للمستخدمين."}
             </p>
@@ -92,7 +93,7 @@ const ShowHideModal = ({ open, setOpen, rowData }) => {
             className={`px-4 py-2 ${
               show_hide_blog_loading
                 ? "bg-gray-400"
-                : isVisible
+                : !isVisible
                 ? "bg-orange-600 hover:bg-orange-700"
                 : "bg-green-600 hover:bg-green-700"
             } text-white rounded-lg transition-colors flex items-center gap-2`}
@@ -101,7 +102,7 @@ const ShowHideModal = ({ open, setOpen, rowData }) => {
               "جاري التحديث..."
             ) : (
               <>
-                {isVisible ? (
+                {!isVisible ? (
                   <>
                     <EyeOff className="w-4 h-4" /> إخفاء
                   </>

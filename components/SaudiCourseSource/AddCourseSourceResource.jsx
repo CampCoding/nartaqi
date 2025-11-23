@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button, Col, Form, Input, Modal, Row } from "antd";
 import {
   FolderOutlined,
@@ -7,6 +7,8 @@ import {
   DeleteOutlined,
   UploadOutlined,
 } from "@ant-design/icons";
+import { useDispatch, useSelector } from "react-redux";
+import { handleGetAllRoundResources } from "../../lib/features/resourcesSlice";
 
 export default function AddCourseSourceResource({
   videos,
@@ -23,6 +25,8 @@ export default function AddCourseSourceResource({
   const [dupError, setDupError] = useState("");
   const [targetsSearch, setTargetsSearch] = useState("");
   const [selectedTargets, setSelectedTargets] = useState([]);
+  const dispatch = useDispatch();
+  const {add_resource_loading , all_resources_loading , all_resources_list} = useSelector(state => state?.resource)
 
   const filteredTargets = useMemo(() => {
     const term = (targetsSearch || "").toLowerCase();
@@ -111,6 +115,14 @@ export default function AddCourseSourceResource({
       { id: Date.now(), name: "", source: "url", url: "" },
     ]);
   };
+
+  useEffect(() => {
+    dispatch(handleGetAllRoundResources())
+  } , [dispatch])
+
+  useEffect(() => {
+    console.log(all_resources_list)
+  } , [all_resources_list])
 
   return (
     <div className="space-y-8">

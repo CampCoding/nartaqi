@@ -1,24 +1,36 @@
 import React, { useState } from "react";
 import CustomModal from "../layout/Modal";
 import { AlertTriangle, Trash2 } from "lucide-react";
+import { handleDeleteRound, handleGetSourceRound } from "../../lib/features/roundsSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
 
 const DeleteSubjectModal = ({ open, setOpen, selectedSubject }) => {
   const [loading, setLoading] = useState(false);
+  const {delet_round_loading} = useSelector(state => state?.rounds);
+  const dispatch= useDispatch();
 
-  const handleDelete = async () => {
-    setLoading(true);
-    try {
-      // Implement your deletion logic here, e.g., API call
-      // await deleteSubject(selectedSubject.id);
-      // Close the modal after successful deletion
-      setOpen(false);
-    } catch (error) {
-      // Handle error (e.g., show a notification)
-      console.error("فشل حذف الموضوع:", error);
-    } finally {
-      setLoading(false);
+  function handleDelete() {
+    const data_send = {
+     id: selectedSubject?.id
     }
-  };
+    dispatch(handleDeleteRound({body : data_send}))
+    .unwrap()
+    .then(res => {
+     console.log(res);
+     if(res?.data?.status== "success") {
+       toast.success(res?.data?.message)
+       dispatch(
+             handleGetSourceRound({
+               page,
+               per_page: pageSize,
+             })
+           );
+     }else {
+       toast.error(res?.data?.message)
+     }
+    }).catch(e => console.log(e))
+   }
 
   return (
     <CustomModal
@@ -52,12 +64,12 @@ const DeleteSubjectModal = ({ open, setOpen, selectedSubject }) => {
           </button>
           <button
             onClick={handleDelete}
-            disabled={loading}
+            disabled={delet_round_loading}
             className={`px-4 py-2 ${
-              loading ? "bg-gray-400" : "bg-red-600"
+              delet_round_loading ? "bg-gray-400" : "bg-red-600"
             } text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2`}
           >
-            {loading ? (
+            {delet_round_loading ? (
               "جاري الحذف..."
             ) : (
               <>

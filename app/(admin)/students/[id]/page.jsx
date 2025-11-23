@@ -558,10 +558,10 @@ export default function StudentAccountPage() {
         )}
 
         {/* -------- Badges Tab -------- */}
-        {activeTab === "badges" && <StudentsBadges />}
+        {activeTab === "badges" && <StudentsBadges student_id={id}/>}
 
         {/* -------- Certificates Tab -------- */}
-        {activeTab === "certificates" && <StudentsCertificates />}
+        {activeTab === "certificates" && <StudentsCertificates student_id={id} />}
 
         {/* ----------Ratings Tab ----------- */}
         {activeTab === "rating" && <StudentRatings data={rating}  />}

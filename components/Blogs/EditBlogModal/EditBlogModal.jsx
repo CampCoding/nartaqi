@@ -5,27 +5,39 @@ import {
   Modal,
   Form,
   Input,
-  DatePicker,
-  InputNumber,
   Upload,
   Button,
   Divider,
   message,
+  Select,
 } from "antd";
-import dayjs from "dayjs";
 import { PlusOutlined, UploadOutlined, SendOutlined } from "@ant-design/icons";
+import { useDispatch } from "react-redux";
+import { handleEditBlog } from "../../../lib/features/blogSlice";
 
 export default function EditBlogModal({
   open,
   rowData,
-  setRowData, // اختياري: لتحديث الحالة في الصفحة الأم
+  setRowData,
   setOpen,
   onSubmit,
   palette,
+  blogsData,
 }) {
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
   const [fileList, setFileList] = useState([]);
+  const [allBlogsOptions, setALlBlogsOptions] = useState([]);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    setALlBlogsOptions(
+      blogsData?.data?.message?.map((item) => ({
+        label: item?.title,
+        value: item?.id,
+      })) || []
+    );
+  }, [blogsData]);
 
   const PALETTE = useMemo(
     () => ({
@@ -39,24 +51,53 @@ export default function EditBlogModal({
   // جهّز القيم الابتدائية عند فتح المودال أو تغيّر rowData
   useEffect(() => {
     if (!open) return;
+
+    // حول "18,19" → [18,19]
+    let relatedArray = [];
+    if (typeof rowData?.related_blogs_ids === "string") {
+      relatedArray = rowData.related_blogs_ids
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean)
+        .map((id) => Number(id));
+    } else if (Array.isArray(rowData?.related_blogs_ids)) {
+      relatedArray = rowData.related_blogs_ids;
+    }
+
     const init = {
       title: rowData?.title ?? "",
-      desc: rowData?.desc ?? "",
-      date: rowData?.date ? dayjs(rowData.date) : undefined,
-      imageUrl: "", // نتركه فارغًا لأن لدينا صورة موجودة أصلًا
-      comments: rowData?.comments ?? 0,
-      views: rowData?.views ?? 0,
+      desc: rowData?.content ?? "",
+      related_blogs: relatedArray,
+      imageUrl: "",
     };
+
     form.setFieldsValue(init);
 
-    // عرض صورة حالية في قائمة الرفع (معاينة فقط)
-    if (rowData?.image) {
+    // إعداد رابط الصورة الكامل
+    const STORAGE_BASE_URL =
+      process.env.NEXT_PUBLIC_STORAGE_URL ||
+      "https://camp-coding.site/nartaqi/public/storage/";
+
+    if (rowData?.image_url || rowData?.image) {
+      let fullUrl = rowData.image_url;
+
+      if (!fullUrl && rowData.image) {
+        // لو image مجرد "blogs/xxx.gif" نخليها full URL
+        if (rowData.image.startsWith("http")) {
+          fullUrl = rowData.image;
+        } else {
+          const base = STORAGE_BASE_URL.replace(/\/$/, "");
+          const path = rowData.image.replace(/^\/?storage\//, "");
+          fullUrl = `${base}/${path}`;
+        }
+      }
+
       setFileList([
         {
           uid: "-1",
-          name: "cover.jpg",
+          name: rowData.title || "cover",
           status: "done",
-          url: rowData.image,
+          url: fullUrl,
         },
       ]);
     } else {
@@ -76,41 +117,71 @@ export default function EditBlogModal({
     try {
       setSubmitting(true);
 
-      // اختيار الصورة: رابط جديد أو ملف مرفوع أو الصورة القديمة
       const imageFromUrl = (values.imageUrl || "").trim();
-      const imageFromUpload =
-        fileList?.[0]?.thumbUrl || fileList?.[0]?.url || "";
-      const finalImage = imageFromUrl || imageFromUpload || rowData?.image || "";
+      const existingImage = rowData?.image || "";
+      const imageFile = fileList?.[0]?.originFileObj || null;
 
-      if (!finalImage) {
-        message.warning("أضف رابط صورة أو ارفع صورة الغلاف، أو أبقِ الصورة الحالية.");
-        setSubmitting(false);
+      // لو مفيش published_at في الفورم، نستخدم created_at أو نخليها فاضية
+      const publishedAt = rowData?.published_at || rowData?.created_at || "";
+
+      const relatedSelected = Array.isArray(values.related_blogs)
+        ? values.related_blogs
+        : [];
+
+      const updated = {
+        ...rowData,
+        id: rowData?.id,
+        title: values.title?.trim(),
+        content: values.desc?.trim() || "",
+        published_at: publishedAt,
+        image: imageFromUrl || existingImage,
+        related_blogs_ids: relatedSelected,
+      };
+
+      if (!imageFile && !imageFromUrl && !existingImage) {
+        message.warning(
+          "أضف رابط صورة أو ارفع صورة الغلاف، أو أبقِ الصورة الحالية."
+        );
         return;
       }
 
-      const updated = {
-        ...rowData, // نحافظ على الحقول/المعرف
-        title: values.title?.trim(),
-        desc: values.desc?.trim() || "",
-        date: values.date ? values.date.format("YYYY-MM-DD") : rowData?.date,
-        comments: Number(values.comments ?? rowData?.comments ?? 0),
-        views: Number(values.views ?? rowData?.views ?? 0),
-        image: finalImage,
-        imageFile: fileList?.[0]?.originFileObj, // إن رغبت برفع فعلي لاحقًا
-      };
+      // ✅ FormData بنفس ستايل AddBlogModal
+      const formData = new FormData();
 
-      if (typeof onSubmit === "function") {
-        await onSubmit(updated, { mode: "edit" });
-      } else {
-        message.success("تم حفظ التعديلات ✅");
+      if (rowData?.id != null) {
+        formData.append("id", String(rowData.id));
       }
 
-      // تحديث السجل في الحالة الأم إن رغبت
+      formData.append("title", updated.title || "");
+      formData.append("content", updated.content || "");
+      formData.append("published_at", updated.published_at || "");
+
+      if (relatedSelected.length > 0) {
+        formData.append("related_blogs_ids", relatedSelected.join(","));
+      }
+
+      // الصورة: ملف جديد أو رابط جديد فقط
+      if (imageFile) {
+        formData.append("image", imageFile);
+      } else if (imageFromUrl) {
+        formData.append("image", imageFromUrl);
+      }
+
+      const res = await dispatch(handleEditBlog({ body: formData })).unwrap();
+      console.log(res);
+
+      // حدّث السطر لو حابب في الجدول
       if (typeof setRowData === "function") {
-        setRowData(updated);
+        setRowData({
+          ...updated,
+          related_blogs_ids: relatedSelected.join(","),
+        });
       }
 
       handleClose();
+    } catch (err) {
+      console.error(err);
+      message.error("حدث خطأ أثناء حفظ التعديلات");
     } finally {
       setSubmitting(false);
     }
@@ -177,17 +248,22 @@ export default function EditBlogModal({
             </Form.Item>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Form.Item label="تاريخ النشر" name="date">
-                <DatePicker className="w-full" />
-              </Form.Item>
-
               <Form.Item
-                label="رابط الصورة (اختياري)"
-                name="imageUrl"
-                rules={[{ type: "url", message: "الرابط غير صالح" }]}
-                extra="إن لم تُدخل رابطًا سيُستخدم المرفوع أو الصورة الحالية."
+                label="المقالات ذات الصلة"
+                name="related_blogs"
+                rules={[
+                  {
+                    required: true,
+                    message: "الرجاء اختيار مقالة واحدة على الأقل",
+                  },
+                ]}
               >
-                <Input placeholder="https://example.com/image.jpg" />
+                <Select
+                  options={allBlogsOptions}
+                  mode="multiple"
+                  placeholder="اختر مقالة أو أكثر"
+                  allowClear
+                />
               </Form.Item>
             </div>
 
@@ -196,11 +272,12 @@ export default function EditBlogModal({
               name="imageUpload"
               valuePropName="fileList"
               getValueFromEvent={normalizeUpload}
-              extra="لن يتم الرفع فعلياً هنا — يمكنك رفع الملف من خلال onSubmit لاحقًا."
+              extra="لن يتم الرفع تلقائيًا؛ سنرسل الملف ضمن FormData عند الحفظ."
             >
               <Upload.Dragger
                 name="file"
                 fileList={fileList}
+                listType="picture-card" // 👈 عشان يظهر الـ thumbnail
                 maxCount={1}
                 accept="image/*"
                 beforeUpload={() => false}

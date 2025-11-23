@@ -1,7 +1,8 @@
 "use client";
 import { Save, X } from "lucide-react";
 import React, { useState } from "react";
-import { all_categories } from "../../../../app/(admin)/categories/page";
+import { all_categories } from "../../../../app/(admin)/saudi_source_course/add-data/page";
+// import { all_categories } from "../../../../app/(admin)/categories/page";
 
 /** Gradient palette (Tailwind classes) */
 const GRADIENTS = [
