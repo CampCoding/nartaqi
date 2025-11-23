@@ -1,16 +1,18 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import dynamic from "next/dynamic";
+import React, { useState } from "react";
 import { BookOpen } from "lucide-react";
 import Card from "./ExamCard";
 import "react-quill-new/dist/quill.snow.css";
+import { useDispatch, useSelector } from "react-redux";
+import dynamic from "next/dynamic";
+import { handleCreateExamSection } from "../../lib/features/examSlice";
+import { toast } from "react-toastify";
 
 // SSR-safe import
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
-/** Toolbar with color/background + sub/sup already supported in ExamMainData editors.
- * For section name/desc, we also enable them here. */
+// Quill toolbar config
 const quillModules = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
@@ -38,30 +40,40 @@ const quillFormats = [
   "link",
 ];
 
-export default function QuestionSections({ examData, filteredSection, onAddSection }) {
-  const [nameHtml, setNameHtml] = useState("");
-  const [descHtml, setDescHtml] = useState("");
+export default function QuestionSections({
+  examData,
+  filteredSection,
+  onAddSection,
+}) {
+  const [nameHtml, setNameHtml] = useState(""); // Section Name
+  const [descHtml, setDescHtml] = useState(""); // Section Description
 
-  const selectedItem = null; // (dropdown was removed in your provided version)
+  const dispatch = useDispatch();
+  const { add_exam_section_loading } = useSelector((state) => state?.exam);
 
+  // Reset quill editor values
   const resetEditors = () => {
     setNameHtml("");
     setDescHtml("");
   };
 
+  // Add custom section to the exam
   const addCustomSection = () => {
-    const trimmedName = nameHtml.replace(/<p>|<\/p>/g, "").trim();
+    const trimmedName = nameHtml.replace(/<p>|<\/p>/g, "").trim(); // Remove <p> tags and check for empty name
     if (!trimmedName) return;
 
     const newSection = {
-      id: `custom-${Date.now()}`,
-      name: nameHtml,
-      desc: descHtml,
-      questions: [],
+      exam_id: 1, // Create unique id for the section
+      title: nameHtml, // Section name
+      description: descHtml, // Section description
+      // questions: [], // Initialize with no questions
+      time_if_free:"01:30:0",
     };
-
-    onAddSection(newSection);
-    resetEditors();
+    onAddSection(newSection)
+    
+    
+    // onAddSection(newSection); // Callback function to add the section
+    // resetEditors(); // Reset the inputs
   };
 
   if (!examData?.type) return null;
@@ -73,13 +85,18 @@ export default function QuestionSections({ examData, filteredSection, onAddSecti
           <div className="flex items-center justify-between">
             <p className="font-semibold text-gray-900">إنشاء قسم مخصص</p>
             {examData?.type === "mock" && (
-              <span className="text-xs text-gray-500">للمحاكاة: أضِف أسئلة لاحقًا للوصول إلى 24 سؤالًا كحد أدنى</span>
+              <span className="text-xs text-gray-500">
+                للمحاكاة: أضِف أسئلة لاحقًا للوصول إلى 24 سؤالًا كحد أدنى
+              </span>
             )}
           </div>
 
           <div className="mt-3 space-y-4">
+            {/* Section Name */}
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-gray-600">اسم القسم</label>
+              <label className="block text-xs font-semibold text-gray-600">
+                اسم القسم
+              </label>
               <div className="bg-white rounded-xl border border-gray-200">
                 <ReactQuill
                   theme="snow"
@@ -92,8 +109,11 @@ export default function QuestionSections({ examData, filteredSection, onAddSecti
               </div>
             </div>
 
+            {/* Section Description */}
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-gray-600">وصف القسم</label>
+              <label className="block text-xs font-semibold text-gray-600">
+                وصف القسم
+              </label>
               <div className="bg-white rounded-xl border border-gray-200">
                 <ReactQuill
                   theme="snow"
@@ -106,6 +126,7 @@ export default function QuestionSections({ examData, filteredSection, onAddSecti
               </div>
             </div>
 
+            {/* Action Buttons */}
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => {
@@ -122,9 +143,13 @@ export default function QuestionSections({ examData, filteredSection, onAddSecti
                 className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
                 type="button"
                 disabled={!nameHtml.replace(/<p>|<\/p>/g, "").trim()}
-                title={!nameHtml.replace(/<p>|<\/p>/g, "").trim() ? "اسم القسم مطلوب" : undefined}
+                title={
+                  !nameHtml.replace(/<p>|<\/p>/g, "").trim()
+                    ? "اسم القسم مطلوب"
+                    : undefined
+                }
               >
-                إضافة قسم جديد
+               {add_exam_section_loading ?"جاري الإضافة..." : " إضافة قسم جديد"}
               </button>
             </div>
           </div>

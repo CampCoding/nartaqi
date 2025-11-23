@@ -78,4 +78,9 @@ export const apiRoutes = {
   //exams
   get_exams : "admin/exams/GetAllExamsRoundByRoundId",
   add_exam:"admin/exams/store_exam",
+  get_exam_sections:"admin/exams/exam-sections/GetAllExamSectionsByExamId",
+  add_exam_sections:"admin/exams/exam-sections/store_exam_section",
+  delete_exam_sections:"admin/exams/exam-sections/delete_exam_section",
+  update_exam_sections:"admin/exams/exam-sections/edit_exam_section",
+  assign_exam:"admin/exams/assign_exam_round"
 };

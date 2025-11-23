@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Segmented, Select, Tag } from "antd";
 import {
   Plus as PlusIcon,
@@ -28,12 +34,23 @@ import CompleteQuestions from "./CompleteQuestions";
 import DisplayQuestions from "./DisplayQuestions";
 import QuestionTypeSelector from "./QuestionTypeSelector";
 // import McqSharedPassageEditor from "./McqQuestions";
-import { colorMap, exam_types, mock_exam_section_Data, questionTypes } from "./utils";
+import {
+  colorMap,
+  exam_types,
+  mock_exam_section_Data,
+  questionTypes,
+} from "./utils";
 
 // Shared Quill config
 import McqSharedPassageEditor from "./McqSharedPassageEditor/McqSharedPassageEditor";
 import LabeledEditor from "./McqSharedPassageEditor/parts/LabeledEditor";
 import { useDispatch, useSelector } from "react-redux";
+import {
+  handleCreateExam,
+  handleCreateExamSection,
+} from "../../lib/features/examSlice";
+import { toast } from "react-toastify";
+import AssignExam from "./AssignExam";
 
 /* ===================== Main: ExamMainData ===================== */
 export default function ExamMainData({ examData: editExamData }) {
@@ -67,10 +84,16 @@ export default function ExamMainData({ examData: editExamData }) {
   const emptyOption = () => ({ text: "", explanation: "" });
   const normalizeOption = (opt) => {
     if (typeof opt === "string") return { text: opt, explanation: "" };
-    if (opt && typeof opt === "object") return { text: opt.text || "", explanation: opt.explanation || "" };
+    if (opt && typeof opt === "object")
+      return { text: opt.text || "", explanation: opt.explanation || "" };
     return emptyOption();
   };
-  const [mcqOptions, setMcqOptions] = useState([emptyOption(), emptyOption(), emptyOption(), emptyOption()]);
+  const [mcqOptions, setMcqOptions] = useState([
+    emptyOption(),
+    emptyOption(),
+    emptyOption(),
+    emptyOption(),
+  ]);
   const [mcqCorrectAnswer, setMcqCorrectAnswer] = useState(0);
 
   // MCQ subtype
@@ -79,8 +102,10 @@ export default function ExamMainData({ examData: editExamData }) {
 
   /* Effects */
   useEffect(() => {
-    if (examData?.type === "intern") setFilteredSection(mock_exam_section_Data[1]);
-    else if (examData?.type === "mock") setFilteredSection(mock_exam_section_Data[2]);
+    if (examData?.type === "intern")
+      setFilteredSection(mock_exam_section_Data[1]);
+    else if (examData?.type === "mock")
+      setFilteredSection(mock_exam_section_Data[2]);
     else setFilteredSection([]);
   }, [examData?.type]);
 
@@ -89,7 +114,8 @@ export default function ExamMainData({ examData: editExamData }) {
   }, []); // eslint-disable-line
 
   useEffect(() => {
-    if (examData?.sections?.length > 0 && !selectedSectionId) setSelectedSectionId(examData.sections[0].id);
+    if (examData?.sections?.length > 0 && !selectedSectionId)
+      setSelectedSectionId(examData.sections[0].id);
   }, [examData?.sections, selectedSectionId]);
 
   /* Helpers */
@@ -98,11 +124,104 @@ export default function ExamMainData({ examData: editExamData }) {
     [examData.sections, selectedSectionId]
   );
 
+  const dispatch = useDispatch();
+  const { add_exam_loading } = useSelector((state) => state?.exam);
+
+  const [exmaInfoData, setExamInfoData] = useState({
+    title: "",
+    description: "",
+    free: 0,
+    time: "",
+    date: "",
+    type: "mock",
+  });
+  const [openExamSection, setOpenExamSection] = useState(false);
+  const [openExamQuestion, setOpenExamQuestion] = useState(false);
+  // Function to handle basic exam data changes
+  const handleBasicDataChange = (field, value) => {
+    setExamInfoData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleExamTypeChange = (type) => {
+    setExamInfoData({
+      ...exmaInfoData,
+      type: type.value,
+    });
+    setExamData({
+      ...examData,
+      exam_type: type.value,
+      lesson_id: type.value === "full_round" ? "" : examData.lesson_id,
+      sections: [],
+    });
+  };
+
+  const handleSubmitBasicData = () => {
+    if (!exmaInfoData.title) {
+      toast.warn("ادخل اسم الاختبار أولا!");
+      return;
+    }
+
+    if (!exmaInfoData.description) {
+      toast.warn("ادخل وصف الاختبار أولا!");
+      return;
+    }
+
+    if(exmaInfoData?.type =="mock" && !exmaInfoData?.time) {
+      toast.warn("اختر وقت أولا");
+      return
+    }
+
+     if(exmaInfoData?.type =="mock" && !exmaInfoData?.date) {
+      toast.warn("اختر تاريخ أولا");
+      return
+    }
+
+    const data_send = {
+      title: exmaInfoData.title,
+      description: exmaInfoData.description,
+      free: JSON.stringify(exmaInfoData.free),
+      time: exmaInfoData.time,
+      date: exmaInfoData.date,
+    };
+
+    dispatch(handleCreateExam({ body: data_send }))
+      .unwrap()
+      .then((res) => {
+        console.log(res);
+        if (res?.data?.status == "success") {
+          toast.success("تم إضافة الاختبار بنجاح!");
+          setOpenExamSection(res?.data?.message);
+          setExamData({ ...examData, sections: [] }); // Reset exam data after submission
+        } else {
+          toast.error("هناك خطأ أثناء اضافه الاختبار");
+          setOpenExamSection(false);
+        }
+      })
+      .catch((e) => {
+        console.log(e);
+        toast.error("حدث خطأ أثناء إضافة الاختبار.");
+      });
+  };
+
   const onAddSection = (section) => {
-    const isAdded = examData?.sections.some((s) => s.id === section.id);
-    if (isAdded) return;
-    const newSection = { ...section, questions: section.questions || [] };
-    setExamData((prev) => ({ ...prev, sections: [...prev.sections, newSection] }));
+    console.log(section);
+
+    dispatch(
+      handleCreateExamSection({
+        body: { ...section, exam_id: openExamSection?.id },
+      })
+    )
+      .unwrap()
+      .then((res) => {
+        console.log(res);
+        if (res?.data?.status == "success") {
+          toast.success("تم إضافة القسم بنجاح");
+          setOpenExamQuestion(res?.data?.message);
+        } else {
+          toast.error(res?.data?.message || "هناك خطأ أثناء اضافة القسم");
+        }
+      })
+      .catch((e) => console.log(e));
   };
 
   const toggleSection = (sectionId) =>
@@ -127,8 +246,10 @@ export default function ExamMainData({ examData: editExamData }) {
     setMcqPassages({ chemical: [], passage: [] });
   };
 
-  const addCompleteAnswer = () => setCompleteAnswers((a) => [...a, { answer: "" }]);
-  const removeCompleteAnswer = (index) => setCompleteAnswers((a) => a.filter((_, i) => i !== index));
+  const addCompleteAnswer = () =>
+    setCompleteAnswers((a) => [...a, { answer: "" }]);
+  const removeCompleteAnswer = (index) =>
+    setCompleteAnswers((a) => a.filter((_, i) => i !== index));
   const updateCompleteAnswer = (index, value) => {
     setCompleteAnswers((a) => {
       const next = [...a];
@@ -149,25 +270,39 @@ export default function ExamMainData({ examData: editExamData }) {
     setMcqOptions((opts) => {
       if (opts.length <= 2) return opts;
       const next = opts.filter((_, i) => i !== index);
-      setMcqCorrectAnswer((curr) => (curr >= index ? Math.max(0, curr - 1) : curr));
+      setMcqCorrectAnswer((curr) =>
+        curr >= index ? Math.max(0, curr - 1) : curr
+      );
       return next;
     });
   };
 
   const getQuestionsCount = (sectionId) =>
-    sectionId ? examData.sections.find((s) => s.id === sectionId)?.questions?.length || 0 : 0;
+    sectionId
+      ? examData.sections.find((s) => s.id === sectionId)?.questions?.length ||
+        0
+      : 0;
 
   const getTotalQuestions = () =>
     examData.sections.reduce((acc, s) => acc + (s.questions?.length || 0), 0);
 
   const getEstimatedDuration = () =>
-    examData.type === "mock" ? examData.sections.length * 25 : parseInt(examData.duration || "0");
+    examData.type === "mock"
+      ? examData.sections.length * 25
+      : parseInt(examData.duration || "0");
 
   const canAddMoreQuestions = (sectionId) =>
-    !sectionId ? false : examData.type !== "mock" ? true : getQuestionsCount(sectionId) < 24;
+    !sectionId
+      ? false
+      : examData.type !== "mock"
+      ? true
+      : getQuestionsCount(sectionId) < 24;
 
-  const handleMcqPassagesChange = useCallback((passages) =>
-    setMcqPassages((prev) => ({ ...prev, [mcqSubType]: passages })), []);
+  const handleMcqPassagesChange = useCallback(
+    (passages) =>
+      setMcqPassages((prev) => ({ ...prev, [mcqSubType]: passages })),
+    []
+  );
 
   /* Add / Update Question */
   const addOrUpdateQuestion = () => {
@@ -187,8 +322,11 @@ export default function ExamMainData({ examData: editExamData }) {
             type: "mcq",
             mcqSubType,
             question: q.text || "",
-            options: Array.isArray(q.options) ? q.options.map(normalizeOption) : [],
-            correctAnswer: typeof q.correctIndex === "number" ? q.correctIndex : 0,
+            options: Array.isArray(q.options)
+              ? q.options.map(normalizeOption)
+              : [],
+            correctAnswer:
+              typeof q.correctIndex === "number" ? q.correctIndex : 0,
             passage: { id: p.id, content: p.content || "" },
             sectionId: selectedSectionId,
           });
@@ -201,18 +339,26 @@ export default function ExamMainData({ examData: editExamData }) {
         generated[0] = { ...generated[0], id: editingQuestion.id };
 
         const extra = generated.slice(1);
-        const available = examData.type === "mock" ? Math.max(0, 24 - currentCount) : Infinity;
+        const available =
+          examData.type === "mock" ? Math.max(0, 24 - currentCount) : Infinity;
         if (extra.length > available) {
-          alert(`لا يمكن إضافة ${extra.length} سؤال إضافي. المتاح الآن: ${available}`);
+          alert(
+            `لا يمكن إضافة ${extra.length} سؤال إضافي. المتاح الآن: ${available}`
+          );
           const updatedSectionsOnlyReplace = examData.sections.map((section) =>
             section.id !== selectedSectionId
               ? section
               : {
                   ...section,
-                  questions: (section.questions || []).map((q) => (q.id === editingQuestion.id ? generated[0] : q)),
+                  questions: (section.questions || []).map((q) =>
+                    q.id === editingQuestion.id ? generated[0] : q
+                  ),
                 }
           );
-          setExamData((prev) => ({ ...prev, sections: updatedSectionsOnlyReplace }));
+          setExamData((prev) => ({
+            ...prev,
+            sections: updatedSectionsOnlyReplace,
+          }));
           resetQuestionForm();
           return;
         }
@@ -223,7 +369,9 @@ export default function ExamMainData({ examData: editExamData }) {
             : {
                 ...section,
                 questions: [
-                  ...(section.questions || []).map((q) => (q.id === editingQuestion.id ? generated[0] : q)),
+                  ...(section.questions || []).map((q) =>
+                    q.id === editingQuestion.id ? generated[0] : q
+                  ),
                   ...extra,
                 ],
               }
@@ -236,7 +384,9 @@ export default function ExamMainData({ examData: editExamData }) {
 
       if (examData.type === "mock" && currentCount + generated.length > 24) {
         alert(
-          `لا يمكن إضافة ${generated.length} سؤال. الحد الأقصى 24 سؤال في القسم. المتاح الآن: ${Math.max(
+          `لا يمكن إضافة ${
+            generated.length
+          } سؤال. الحد الأقصى 24 سؤال في القسم. المتاح الآن: ${Math.max(
             0,
             24 - currentCount
           )}`
@@ -247,7 +397,10 @@ export default function ExamMainData({ examData: editExamData }) {
       const updatedSections = examData.sections.map((section) =>
         section.id !== selectedSectionId
           ? section
-          : { ...section, questions: [...(section.questions || []), ...generated] }
+          : {
+              ...section,
+              questions: [...(section.questions || []), ...generated],
+            }
       );
 
       setExamData((prev) => ({ ...prev, sections: updatedSections }));
@@ -290,7 +443,11 @@ export default function ExamMainData({ examData: editExamData }) {
         newQuestion = { ...newQuestion, modelAnswer: modalAnswer };
         break;
       case "complete":
-        newQuestion = { ...newQuestion, text: completeText, answers: completeAnswers };
+        newQuestion = {
+          ...newQuestion,
+          text: completeText,
+          answers: completeAnswers,
+        };
         break;
     }
 
@@ -299,10 +456,15 @@ export default function ExamMainData({ examData: editExamData }) {
       if (editingQuestion) {
         return {
           ...section,
-          questions: (section.questions || []).map((q) => (q.id === editingQuestion.id ? newQuestion : q)),
+          questions: (section.questions || []).map((q) =>
+            q.id === editingQuestion.id ? newQuestion : q
+          ),
         };
       }
-      return { ...section, questions: [...(section.questions || []), newQuestion] };
+      return {
+        ...section,
+        questions: [...(section.questions || []), newQuestion],
+      };
     });
 
     setExamData((prev) => ({ ...prev, sections: updatedSections }));
@@ -326,7 +488,10 @@ export default function ExamMainData({ examData: editExamData }) {
                 id: `${Date.now()}-q`,
                 text: question.question || "",
                 options: (question.options || []).map(normalizeOption),
-                correctIndex: typeof question.correctAnswer === "number" ? question.correctAnswer : 0,
+                correctIndex:
+                  typeof question.correctAnswer === "number"
+                    ? question.correctAnswer
+                    : 0,
               },
             ],
           },
@@ -334,9 +499,18 @@ export default function ExamMainData({ examData: editExamData }) {
       }));
     } else {
       setMcqOptions(
-        (question.options || [emptyOption(), emptyOption(), emptyOption(), emptyOption()]).map(normalizeOption)
+        (
+          question.options || [
+            emptyOption(),
+            emptyOption(),
+            emptyOption(),
+            emptyOption(),
+          ]
+        ).map(normalizeOption)
       );
-      setMcqCorrectAnswer(typeof question.correctAnswer === "number" ? question.correctAnswer : 0);
+      setMcqCorrectAnswer(
+        typeof question.correctAnswer === "number" ? question.correctAnswer : 0
+      );
     }
 
     setEditingQuestion(question);
@@ -344,28 +518,46 @@ export default function ExamMainData({ examData: editExamData }) {
 
   /* UI */
   return (
-    <div className="max-w-6xl mx-auto space-y-6 p-6 bg-gray-50 min-h-screen" dir="rtl">
+    <div
+      className="max-w-6xl mx-auto space-y-6 p-6 bg-gray-50 min-h-screen"
+      dir="rtl"
+    >
       <QuestionStats
         examData={examData}
         getEstimatedDuration={getEstimatedDuration}
         getTotalQuestions={getTotalQuestions}
       />
 
-      <ExamMainInfo
+      {/* <ExamMainInfo
         colorMap={colorMap}
         examData={examData}
         exam_types={exam_types}
         getEstimatedDuration={getEstimatedDuration}
         setExamData={setExamData}
-      />
+      /> */}
 
-      <QuestionSections
+      <ExamMainInfo
+        add_exam_loading={add_exam_loading}
+        exam_types={exam_types}
         examData={examData}
-        filteredSection={filteredSection}
-        onAddSection={onAddSection}
+        setExamData={setExamData}
+        examInfoData={exmaInfoData}
+        handleBasicDataChange={handleBasicDataChange}
+        handleExamTypeChange={handleExamTypeChange}
+        handleSubmitBasicData={handleSubmitBasicData}
       />
 
-      {examData?.name && examData?.sections?.length > 0 ? (
+      {openExamSection && (
+        <QuestionSections
+          examData={examData}
+          filteredSection={filteredSection}
+          onAddSection={onAddSection}
+        />
+      )}
+
+      {openExamSection&& <AssignExam exam={openExamSection} />}
+
+      {openExamQuestion ? (
         <>
           <Card title="إنشاء الأسئلة" icon={Edit3}>
             <div className="space-y-6">
@@ -378,8 +570,15 @@ export default function ExamMainData({ examData: editExamData }) {
               {/* Section selector */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-gray-700">اختر القسم لإضافة السؤال</label>
-                  {selectedSection && <Tag color="blue">إجمالي أسئلة القسم: {getQuestionsCount(selectedSection.id)}</Tag>}
+                  <label className="block text-sm font-medium text-gray-700">
+                    اختر القسم لإضافة السؤال
+                  </label>
+                  {selectedSection && (
+                    <Tag color="blue">
+                      إجمالي أسئلة القسم:{" "}
+                      {getQuestionsCount(selectedSection.id)}
+                    </Tag>
+                  )}
                 </div>
 
                 <Select
@@ -402,7 +601,9 @@ export default function ExamMainData({ examData: editExamData }) {
                           {section?.desc ? (
                             <div
                               className="text-xs text-gray-500"
-                              dangerouslySetInnerHTML={{ __html: section?.desc }}
+                              dangerouslySetInnerHTML={{
+                                __html: section?.desc,
+                              }}
                             />
                           ) : null}
                         </div>
@@ -411,7 +612,9 @@ export default function ExamMainData({ examData: editExamData }) {
                   }))}
                   dropdownRender={(menu) => (
                     <div className="p-2">
-                      <div className="px-2 pb-2 text-xs text-gray-500">اختر من الأقسام المضافة بالأسفل</div>
+                      <div className="px-2 pb-2 text-xs text-gray-500">
+                        اختر من الأقسام المضافة بالأسفل
+                      </div>
                       <div className="rounded-xl border">{menu}</div>
                     </div>
                   )}
@@ -423,26 +626,36 @@ export default function ExamMainData({ examData: editExamData }) {
                       <div className="space-y-1">
                         <h4
                           className="font-semibold text-gray-800"
-                          dangerouslySetInnerHTML={{ __html: selectedSection.name }}
+                          dangerouslySetInnerHTML={{
+                            __html: selectedSection.name,
+                          }}
                         />
                         {selectedSection?.desc ? (
                           <p
                             className="text-sm text-gray-600"
-                            dangerouslySetInnerHTML={{ __html: selectedSection.desc }}
+                            dangerouslySetInnerHTML={{
+                              __html: selectedSection.desc,
+                            }}
                           />
                         ) : null}
                         <div className="flex items-center gap-2 text-xs text-gray-500">
                           <span>
                             عدد الأسئلة:
-                            <b className="mx-1">{getQuestionsCount(selectedSection.id)}</b>/
-                            {examData.type === "mock" ? "24" : "∞"}
+                            <b className="mx-1">
+                              {getQuestionsCount(selectedSection.id)}
+                            </b>
+                            /{examData.type === "mock" ? "24" : "∞"}
                           </span>
-                          {examData.type === "mock" && <Tag color="volcano">اختبار محاكي</Tag>}
+                          {examData.type === "mock" && (
+                            <Tag color="volcano">اختبار محاكي</Tag>
+                          )}
                         </div>
                       </div>
                       <div
                         className={`mt-1 w-4 h-4 rounded-full border-2 ${
-                          selectedSectionId ? "border-blue-500 bg-blue-500" : "border-gray-300"
+                          selectedSectionId
+                            ? "border-blue-500 bg-blue-500"
+                            : "border-gray-300"
                         }`}
                         title="القسم الحالي"
                       />
@@ -455,7 +668,9 @@ export default function ExamMainData({ examData: editExamData }) {
               {questionType === "mcq" && (
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-sm font-medium text-gray-700">نوع الأسئلة المتعددة</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      نوع الأسئلة المتعددة
+                    </label>
                   </div>
 
                   <div className="rounded-2xl border bg-white p-3 shadow-sm">
@@ -519,19 +734,26 @@ export default function ExamMainData({ examData: editExamData }) {
                             <div
                               key={index}
                               className={`border rounded-2xl p-4 bg-white space-y-3 shadow-sm transition ${
-                                isCorrect ? "ring-1 ring-green-200" : "ring-1 ring-transparent"
+                                isCorrect
+                                  ? "ring-1 ring-green-200"
+                                  : "ring-1 ring-transparent"
                               }`}
                             >
                               <div className="flex items-center gap-3">
                                 <span
                                   className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-                                    isCorrect ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700"
+                                    isCorrect
+                                      ? "bg-green-600 text-white"
+                                      : "bg-gray-100 text-gray-700"
                                   }`}
                                 >
                                   {letter}
                                 </span>
 
-                                <label className="flex items-center gap-2 text-xs font-medium text-gray-600" title="الإجابة الصحيحة">
+                                <label
+                                  className="flex items-center gap-2 text-xs font-medium text-gray-600"
+                                  title="الإجابة الصحيحة"
+                                >
                                   <input
                                     type="radio"
                                     checked={isCorrect}
@@ -556,15 +778,21 @@ export default function ExamMainData({ examData: editExamData }) {
                               <LabeledEditor
                                 label={`نص الخيار #${index + 1}`}
                                 value={option.text}
-                                onChange={(v) => updateMcqOption(index, "text", v)}
+                                onChange={(v) =>
+                                  updateMcqOption(index, "text", v)
+                                }
                                 editorMinH={110}
                                 allowImages
                               />
 
                               <LabeledEditor
-                                label={`شرح الخيار #${index + 1} (لماذا هو صحيح/خاطئ)`}
+                                label={`شرح الخيار #${
+                                  index + 1
+                                } (لماذا هو صحيح/خاطئ)`}
                                 value={option.explanation}
-                                onChange={(v) => updateMcqOption(index, "explanation", v)}
+                                onChange={(v) =>
+                                  updateMcqOption(index, "explanation", v)
+                                }
                                 editorMinH={90}
                                 allowImages
                               />
@@ -614,7 +842,10 @@ export default function ExamMainData({ examData: editExamData }) {
               )}
 
               {questionType === "essay" && (
-                <EssayQuestions modalAnswer={modalAnswer} setModalAnswer={setModalAnswer} />
+                <EssayQuestions
+                  modalAnswer={modalAnswer}
+                  setModalAnswer={setModalAnswer}
+                />
               )}
 
               {questionType === "complete" && (
@@ -635,11 +866,16 @@ export default function ExamMainData({ examData: editExamData }) {
                   disabled={
                     !selectedSectionId ||
                     (questionType !== "mcq" && !currentQuestion) ||
-                    (examData.type === "mock" && !canAddMoreQuestions(selectedSectionId))
+                    (examData.type === "mock" &&
+                      !canAddMoreQuestions(selectedSectionId))
                   }
                   className="w-full inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 px-4 py-3"
                 >
-                  {editingQuestion ? <Save className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
+                  {editingQuestion ? (
+                    <Save className="h-4 w-4" />
+                  ) : (
+                    <PlusIcon className="h-4 w-4" />
+                  )}
                   {editingQuestion ? "تحديث السؤال" : "إضافة السؤال"}
                 </button>
                 {examData.type === "mock" && selectedSectionId && (
@@ -679,7 +915,12 @@ export default function ExamMainData({ examData: editExamData }) {
               className="inline-flex items-center gap-2 px-4 py-3 text-sm rounded-xl border border-gray-200 bg-white hover:bg-gray-50"
               onClick={() => {
                 if (confirm("هل أنت متأكد من إلغاء التغييرات؟")) {
-                  setExamData({ name: "", duration: "", type: "", sections: [] });
+                  setExamData({
+                    name: "",
+                    duration: "",
+                    type: "",
+                    sections: [],
+                  });
                   resetQuestionForm();
                   setSelectedSectionId(null);
                   setExpandedSections({});
@@ -696,7 +937,11 @@ export default function ExamMainData({ examData: editExamData }) {
                 alert("تم حفظ الاختبار بنجاح!");
                 console.log("Exam Data:", examData);
               }}
-              disabled={!examData.name || !examData.type || examData.sections.length === 0}
+              disabled={
+                !examData.name ||
+                !examData.type ||
+                examData.sections.length === 0
+              }
             >
               <Save className="h-4 w-4" />
               حفظ الاختبار
@@ -708,8 +953,12 @@ export default function ExamMainData({ examData: editExamData }) {
           <div className="bg-blue-50 p-6 rounded-full w-20 h-20 mx-auto flex items-center justify-center mb-4">
             <BookOpen className="h-10 w-10 text-blue-600" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">ابدأ بإنشاء اختبار جديد</h3>
-          <p className="text-gray-600 mb-6">املأ معلومات الاختبار الأساسية وأضف الأقسام لبدء إنشاء الأسئلة</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            ابدأ بإنشاء اختبار جديد
+          </h3>
+          <p className="text-gray-600 mb-6">
+            املأ معلومات الاختبار الأساسية وأضف الأقسام لبدء إنشاء الأسئلة
+          </p>
         </div>
       )}
     </div>
