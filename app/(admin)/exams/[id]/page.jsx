@@ -20,8 +20,8 @@ import ExamOverview from "../../../../components/Exams/ExamOverview";
 import ExamMainDescription from "../../../../components/Exams/ExamMainDescription";
 import EditNewExamModal from "../../../../components/Exams/EditNewExamModal";
 import { useDispatch, useSelector } from "react-redux";
+import { handleGetExamDetails } from "@/lib/features/examSlice";
 import { useParams } from "next/navigation";
-import { handleGetAllExams, handleGetAllExamSections, handleGetExamQuestions } from "../../../../lib/features/examSlice";
 
 /* ---------- Small UI helpers ---------- */
 const Pill = ({ children, color = "bg-gray-100 text-gray-700 border-gray-200", className = "" }) => (
@@ -58,6 +58,14 @@ const ActionButton = ({ icon: Icon, children, variant = "secondary", className =
     </button>
   );
 };
+
+/* =============================================================
+   NORMALIZATION
+   This page now accepts either:
+   - An exam in the old/flat (questionsData) or new/flat (questions) shape, OR
+   - The editor payload from <ExamMainData /> with { name, type, duration, sections:[{id,name,questions:[...] }]}.
+   It flattens sections -> questions and maps all types to the viewer schema.
+   ============================================================= */
 
 /** Map an editor MCQ (general/chemical/passage) to viewer MCQ answers[] */
 function mapMcqAnswers(options = [], correctIndex = 0) {
@@ -306,19 +314,18 @@ function MCQView({ answers, showCorrectOnly }) {
       {list.map((a) => (
         <div
           key={a.id}
-          className={`flex items-start gap-2 rounded-lg border p-2.5 ${
-            a.isCorrect ? "border-emerald-200 bg-emerald-50/50" : "border-gray-200 bg-white"
-          }`}
+          className={`flex items-start gap-2 rounded-lg border p-2.5 ${a?.is_correct ? "border-emerald-200 bg-emerald-50/50" : "border-gray-200 bg-white"
+            }`}
         >
-          {a.isCorrect ? (
+          {a?.is_correct ? (
             <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" />
           ) : (
             <XCircle className="mt-0.5 h-4 w-4 text-gray-400" />
           )}
           <div className="flex-1">
-            <div className="text-sm text-gray-800">{a.text}</div>
+            <div className="text-sm text-gray-800" dangerouslySetInnerHTML={{ __html: a?.option_text }}></div>
             {a.explanation && (
-              <div className="mt-1 text-xs text-gray-500">{a.explanation}</div>
+              <div className="mt-1 text-xs text-gray-500" dangerouslySetInnerHTML={{ __html: a?.question_explanation }}></div>
             )}
           </div>
         </div>
@@ -380,23 +387,24 @@ function FillView({ gaps, answerText }) {
 
 /* ---------- Questions Panel ---------- */
 function QuestionsPanel({ questions, query, setQuery, showCorrectOnly, setShowCorrectOnly }) {
+  console.log("questions", questions)
   const filtered = useMemo(() => {
     const q = (query || "").toLowerCase().trim();
     if (!q) return questions;
     return questions.filter((x) => {
-      const inTitle = (x.title || "").toLowerCase().includes(q);
+      const inTitle = (x?.question_text || "").toLowerCase().includes(q);
       if (inTitle) return true;
-      if (x.type === "mcq") {
-        return (x.answers || []).some((a) => (a.text || "").toLowerCase().includes(q));
+      if (x.question_type === "mcq") {
+        return (x.options || []).some((o) => (o.option_text || "").toLowerCase().includes(q));
       }
-      if (x.type === "fill") {
+      if (x.question_type === "fill") {
         return (
-          (x.answerText || "").toLowerCase().includes(q) ||
+          (x.answer || "").toLowerCase().includes(q) ||
           (x.gaps || []).some((g) => String(g).toLowerCase().includes(q))
         );
       }
-      if (x.type === "written") {
-        return (x.sampleAnswer || "").toLowerCase().includes(q);
+      if (x.question_type === "written") {
+        return (x.answer || "").toLowerCase().includes(q);
       }
       return false;
     });
@@ -407,7 +415,7 @@ function QuestionsPanel({ questions, query, setQuery, showCorrectOnly, setShowCo
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 text-gray-800 font-semibold">
           <ListChecks className="w-5 h-5" />
-          الأسئلة ({filtered.length})
+          الأسئلة ({filtered?.length})
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
@@ -432,66 +440,66 @@ function QuestionsPanel({ questions, query, setQuery, showCorrectOnly, setShowCo
       </div>
 
       <div className="space-y-5">
-        {filtered.map((q, idx) => (
+        {filtered && filtered?.length && filtered.map((q, idx) => (
           <div key={q.id ?? idx} className="rounded-xl border p-4 bg-gray-50/40">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <Pill className="bg-teal-50 text-teal-700 border-teal-200">سؤال {idx + 1}</Pill>
               <Pill
                 color={
-                  q.type === "mcq"
+                  q.question_type === "mcq"
                     ? "bg-indigo-100 text-indigo-800 border-indigo-200"
-                    : q.type === "tf"
-                    ? "bg-emerald-100 text-emerald-800 border-emerald-200"
-                    : q.type === "written"
-                    ? "bg-amber-100 text-amber-800 border-amber-200"
-                    : "bg-cyan-100 text-cyan-800 border-cyan-200"
+                    : q.question_type === "tf"
+                      ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                      : q.question_type === "written"
+                        ? "bg-amber-100 text-amber-800 border-amber-200"
+                        : "bg-cyan-100 text-cyan-800 border-cyan-200"
                 }
               >
-                {q.type === "mcq"
+                {q.question_type === "mcq"
                   ? "اختيار من متعدد"
-                  : q.type === "tf"
-                  ? "صح / خطأ"
-                  : q.type === "written"
-                  ? "سؤال مقالي"
-                  : "أكمل الفراغ"}
+                  : q.question_type === "tf"
+                    ? "صح / خطأ"
+                    : q.question_type === "written"
+                      ? "سؤال مقالي"
+                      : "أكمل الفراغ"}
               </Pill>
-              {q?._meta?.sectionName && (
-                <Pill className="bg-gray-100 text-gray-700 border-gray-200">قسم: {q._meta.sectionName}</Pill>
+              {q?.section?.name && (
+                <Pill className="bg-gray-100 text-gray-700 border-gray-200">قسم: {q.section.name}</Pill>
               )}
-              {q?._meta?.mcqSubType && q._meta.mcqSubType !== "general" && (
+              {q?.paragraph && (
                 <Pill className="bg-purple-100 text-purple-800 border-purple-200">
-                  نوع: {q._meta.mcqSubType === "passage" ? "قطعة" : "معادلات"}
+                  نوع: قطعة
                 </Pill>
               )}
             </div>
 
-            <div className="text-gray-900 font-medium">{q.title}</div>
-            {q.explanation && (
-              <div className="text-xs text-gray-500 mt-1">{q.explanation}</div>
+            <div className="text-gray-900 font-medium" dangerouslySetInnerHTML={{ __html: q.question_text }} />
+            {q.instructions && (
+              <div className="text-xs text-gray-500 mt-1" dangerouslySetInnerHTML={{ __html: q.instructions }} />
             )}
 
             {/* Show passage content if provided */}
-            {q?._meta?.passage?.content && (
+            {q?.paragraph?.content && (
               <div className="mt-3 rounded-lg border bg-white p-3">
                 <div className="text-xs text-gray-500 mb-1">نص القطعة</div>
-                <div className="text-sm text-gray-800 whitespace-pre-wrap">{q._meta.passage.content}</div>
+                <div className="text-sm text-gray-800 whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: q.paragraph.content }} />
               </div>
             )}
 
             <div className="mt-3">
-              {q.type === "mcq" && (
-                <MCQView answers={q.answers || []} showCorrectOnly={showCorrectOnly} />
+              {q.question_type === "mcq" && (
+                <MCQView answers={q.options || []} showCorrectOnly={showCorrectOnly} />
               )}
-              {q.type === "tf" && <TFView correct={!!q.correct} />}
-              {q.type === "written" && <WrittenView sampleAnswer={q.sampleAnswer} />}
-              {q.type === "fill" && (
-                <FillView gaps={q.gaps || []} answerText={q.answerText || ""} />
+              {q.question_type === "tf" && <TFView correct={q.options?.[0]?.is_correct == 1} />}
+              {q.question_type === "written" && <WrittenView sampleAnswer={q.answer} />}
+              {q.question_type === "fill" && (
+                <FillView gaps={q.gaps || []} answerText={q.answer || ""} />
               )}
             </div>
           </div>
         ))}
 
-        {!filtered.length && (
+        {!filtered?.length && (
           <div className="text-center py-10 text-gray-500 text-sm">لا توجد أسئلة مطابقة لبحثك.</div>
         )}
       </div>
@@ -506,23 +514,22 @@ export default function ExamDetailsPage({ exam: examProp }) {
   const [editModal, setEditModal] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
   const dispatch = useDispatch();
-  const {get_exam_questions_list , get_exam_questions_loading , all_exam_loading , all_exam_list} = useSelector(state => state?.exam)
-  const {id} = useParams();
-  const [filteredExam , setFilteredExam] = useState({});
+  const examDetailsSelector = useSelector((state) => state.exam.exam_details);
+  const params = useParams();
+  const [examDetails, setExamDetails] = useState([]);
+  useEffect(() => {
+    if (params?.id)
+      dispatch(handleGetExamDetails({ exam_id: params?.id }))
+  }, [params])
 
   useEffect(() => {
-    dispatch(handleGetExamQuestions({body : {exam_id : id}}))
-    dispatch(handleGetAllExams())
-  } , [id])
+    if (examDetailsSelector?.data?.message && Array.isArray(examDetailsSelector?.data?.message))
+      setExamDetails(examDetailsSelector?.data?.message[0] || {});
+  }, [examDetailsSelector]);
 
   useEffect(() => {
-    setFilteredExam(all_exam_list?.data?.message?.find(item => item?.id == id))
-  } , [id])
-
-  useEffect(() => {
-    dispatch(handleGetAllExamSections({body : {exam_id : filteredExam?.id}}))
-  } , [filteredExam])
-
+    console.log("examDetails", examDetails)
+  }, [examDetails])
   // Optionally pull last saved editor payload from localStorage if no prop passed
   const [incoming, setIncoming] = useState(examProp);
   useEffect(() => {
@@ -530,7 +537,7 @@ export default function ExamDetailsPage({ exam: examProp }) {
       try {
         const raw = localStorage.getItem("latestExam");
         if (raw) setIncoming(JSON.parse(raw));
-      } catch {}
+      } catch { }
     }
   }, [examProp]);
 
@@ -539,12 +546,12 @@ export default function ExamDetailsPage({ exam: examProp }) {
 
   const stats = useMemo(
     () => [
-      { icon: BookOpen, label: "عدد الأسئلة", value: exam.questions.length },
+      { icon: BookOpen, label: "عدد الأسئلة", value: examDetails?.mcq?.length },
       { icon: Clock3, label: "المدة (دقيقة)", value: exam.duration },
       { icon: Users, label: "المشاركون", value: exam.participants },
       { icon: Star, label: "التقييم", value: exam.rating },
     ],
-    [exam]
+    [examDetails]
   );
 
   const avgPerQuestion = exam.questions.length
@@ -610,10 +617,10 @@ export default function ExamDetailsPage({ exam: examProp }) {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Left */}
             <div className="lg:col-span-8 space-y-8">
-              <ExamMainDescription exam={exam} />
+              <ExamMainDescription exam={examDetails} />
 
               <QuestionsPanel
-                questions={exam.questions}
+                questions={examDetails?.mcq}
                 query={query}
                 setQuery={setQuery}
                 showCorrectOnly={showCorrectOnly}
@@ -623,11 +630,11 @@ export default function ExamDetailsPage({ exam: examProp }) {
 
             {/* Right */}
             <div className="lg:col-span-4 space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              {/* <div className="grid grid-cols-2 gap-4">
                 {stats.map((s) => (
                   <Stat key={s.label} icon={s.icon} label={s.label} value={s.value} />
                 ))}
-              </div>
+              </div> */}
 
               <ExamOverview />
             </div>
@@ -640,3 +647,4 @@ export default function ExamDetailsPage({ exam: examProp }) {
     </PageLayout>
   );
 }
+

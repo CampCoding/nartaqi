@@ -1,3 +1,4 @@
+
 import React from "react";
 const SectionCard = ({
   title,
@@ -16,7 +17,7 @@ const SectionCard = ({
             <Icon className="w-5 h-5 text-teal-600" />
           </div>
         )}
-        <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+        <h3 className="text-lg font-bold text-gray-800" dangerouslySetInnerHTML={{ __html: title }}></h3>
       </div>
       {extra}
     </div>

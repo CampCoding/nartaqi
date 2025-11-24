@@ -77,7 +77,7 @@ export default function QuestionSections({
     get_exam_sections_loading,
     get_exam_sections_list,
   } = useSelector((state) => state?.exam);
-
+  const {time , setTime} = useState("")
   const params = useParams();
 
   // Load sections when component mounts or when params change
@@ -180,7 +180,7 @@ export default function QuestionSections({
           exam_id: params["exam-id"],
           title: nameHtml,
           description: descHtml,
-          time_if_free: "01:30:00",
+          time_if_free: time || "",
         };
 
         dispatch(handleCreateExamSection({ body: newSection }))
@@ -349,6 +349,11 @@ export default function QuestionSections({
                   formats={quillFormats}
                   placeholder="اكتب وصفًا مختصرًا للقسم..."
                 />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-gray-500 text-lg">الوقت</label>
+                <input type="time" onChange={(e) => setTime(e?.target?.value)} value={time} className="w-full border border-gray-300 p-2 rounded-md"/>
               </div>
             </div>
 

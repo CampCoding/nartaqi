@@ -20,7 +20,9 @@ const initialState = {
   get_exam_questions_list : [],
   get_exam_question_loading : false, 
 
-  add_question_loading : false
+  add_question_loading : false,
+  get_exam_details_loading: false,
+  exam_details: [],
 }
 
 export const handleGetAllExams = createAsyncThunk("examSlice/handleGetAllExams", async() => {
@@ -77,6 +79,14 @@ export const handleAddQuestion = createAsyncThunk("examSlice/handleAddQuestion",
   const response = await api.post(apiRoutes.store_question , {body});
   return response;
 })
+
+
+export const handleGetExamDetails = createAsyncThunk("examSlice/handleGetExamDetails", async ({ exam_id }) => {
+  const body = {exam_id}
+  const response = await api.post(apiRoutes.get_exam_sections, { body }, );
+  return response;
+})
+
 
 export const examSlice = createSlice({
   name:"examSlice",
@@ -198,6 +208,17 @@ export const examSlice = createSlice({
     .addCase(handleAddQuestion.rejected ,(state) => {
       state.add_question_loading = false;
     })
+
+     .addCase(handleGetExamDetails.pending, (state) => {
+        state.get_exam_details_loading = true;
+      })
+      .addCase(handleGetExamDetails.fulfilled, (state, action) => {
+        state.get_exam_details_loading = false;
+        state.exam_details = action.payload
+      })
+      .addCase(handleGetExamDetails.rejected, (state) => {
+        state.get_exam_details_loading = false;
+      })
   }
 })
 

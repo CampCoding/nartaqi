@@ -54,8 +54,8 @@ export default function AssignExam({exam}) {
   } , [assignData.round_id])
 
   useEffect(() => {
-    console.log(all_round_lessons)
-  } , [all_round_lessons])
+    console.log("assign data" ,exam)
+  } , [exam])
 
   const handleSubmit = () => {
     const { type, round_id, lesson_id } = assignData;
