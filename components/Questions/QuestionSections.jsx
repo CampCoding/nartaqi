@@ -351,10 +351,10 @@ export default function QuestionSections({
                 />
               </div>
 
-              <div className="flex flex-col gap-2">
+             {data?.free == 1 && <div className="flex flex-col gap-2">
                 <label className="text-gray-500 text-lg">الوقت</label>
                 <input type="time" onChange={(e) => setTime(e?.target?.value)} value={time} className="w-full border border-gray-300 p-2 rounded-md"/>
-              </div>
+              </div>}
             </div>
 
             {/* Action Buttons */}

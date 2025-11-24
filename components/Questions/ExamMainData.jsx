@@ -1,11 +1,6 @@
 "use client";
 
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Segmented, Select, Tag } from "antd";
 import {
   Plus as PlusIcon,
@@ -86,7 +81,9 @@ export default function ExamMainData({
   // Complete
   const [completeText, setCompleteText] = useState("");
   const [completeAnswers, setCompleteAnswers] = useState([{ answer: "" }]);
-  const {get_exam_questions_list} = useSelector(state => state?.exam);
+  const { get_exam_questions_list, get_exam_questions_loading } = useSelector(
+    (state) => state?.exam
+  );
   // MCQ (general) - Updated structure to match API
   const emptyOption = () => ({
     answer: "",
@@ -102,9 +99,8 @@ export default function ExamMainData({
       return {
         // IMPORTANT: support latex from chemical/math editor
         answer: opt.answer || opt.text || opt.latex || "",
-        instructions:"Instructions",
-        question_explanation:
-          opt.question_explanation || opt.explanation || "",
+        instructions: "Instructions",
+        question_explanation: opt.question_explanation || opt.explanation || "",
         correct_or_not:
           opt.correct_or_not !== undefined && opt.correct_or_not !== null
             ? String(opt.correct_or_not)
@@ -342,9 +338,7 @@ export default function ExamMainData({
                 })
               );
             } else {
-              toast.error(
-                res?.data?.message || "هناك خطأ أثناء تعديل القسم"
-              );
+              toast.error(res?.data?.message || "هناك خطأ أثناء تعديل القسم");
             }
           })
           .catch((e) => console.log(e));
@@ -423,12 +417,7 @@ export default function ExamMainData({
     setModalAnswer("");
     setCompleteText("");
     setCompleteAnswers([{ answer: "" }]);
-    setMcqOptions([
-      emptyOption(),
-      emptyOption(),
-      emptyOption(),
-      emptyOption(),
-    ]);
+    setMcqOptions([emptyOption(), emptyOption(), emptyOption(), emptyOption()]);
     setMcqCorrectAnswer(0);
     setEditingQuestion(null);
     setMcqSubType("general");
@@ -456,8 +445,7 @@ export default function ExamMainData({
       return next;
     });
 
-  const addMcqOption = () =>
-    setMcqOptions((opts) => [...opts, emptyOption()]);
+  const addMcqOption = () => setMcqOptions((opts) => [...opts, emptyOption()]);
   const removeMcqOption = (index) => {
     setMcqOptions((opts) => {
       if (opts.length <= 2) return opts;
@@ -471,15 +459,12 @@ export default function ExamMainData({
 
   const getQuestionsCount = (sectionId) =>
     sectionId
-      ? examData.sections.find((s) => s.id === sectionId)?.questions
-          ?.length || 0
+      ? examData.sections.find((s) => s.id === sectionId)?.questions?.length ||
+        0
       : 0;
 
   const getTotalQuestions = () =>
-    examData.sections.reduce(
-      (acc, s) => acc + (s.questions?.length || 0),
-      0
-    );
+    examData.sections.reduce((acc, s) => acc + (s.questions?.length || 0), 0);
 
   const getEstimatedDuration = () =>
     examData.type === "mock"
@@ -511,9 +496,7 @@ export default function ExamMainData({
       return;
     }
 
-    const section = examData?.sections.find(
-      (s) => s.id === selectedSectionId
-    );
+    const section = examData?.sections.find((s) => s.id === selectedSectionId);
     const currentCount = section?.questions?.length || 0;
     const isMock = examData.type === "mock";
     const maxPerSection = 24;
@@ -585,6 +568,8 @@ export default function ExamMainData({
               questions: groupQuestionsForPayload,
             });
           }
+
+          console.log(groupQuestionsForPayload)
         }
 
         if (!flatQuestions.length) {
@@ -625,14 +610,17 @@ export default function ExamMainData({
         try {
           // API: send grouped paragraph_mcq payloads
           for (const payload of paragraphPayloads) {
-            await dispatch(handleAddQuestion({ body: payload })).unwrap()
-            .then(res => {
-              if(res?.data?.status == "success") {
-               dispatch(handleGetExamQuestions({body : {
-                exam_section_id : res?.data?.message?.exam_section_id
-               }}))
-              }
-            })
+            await dispatch(handleAddQuestion({ body: payload }))
+              .unwrap()
+              .then((res) => {
+                if (res?.data?.status == "success") {
+                  dispatch(
+                    handleGetExamQuestions({
+                body: { exam_section_id: res?.data?.message?.exam_section_id || res?.data?.message?.questions[0]?.exam_section_id || res?.data?.message?.paragraph[0]?.exam_section_id},
+              })
+                  );
+                }
+              });
           }
           toast.success("تم حفظ أسئلة الفقرة بنجاح");
         } catch (err) {
@@ -671,7 +659,7 @@ export default function ExamMainData({
             mcqSubType,
             mcq_array: normalizedOptions,
             correctAnswer: q.correctIndex ?? 0,
-            instructions:"اختر الاجابة الصحيحه"
+            instructions: "اختر الاجابة الصحيحه",
           });
         }
       }
@@ -710,15 +698,15 @@ export default function ExamMainData({
       // Send each chemical question as normal MCQ to API
       for (const q of questionsToAdd) {
         try {
-          const res =  await dispatch(handleAddQuestion({ body: q })).unwrap();
+          const res = await dispatch(handleAddQuestion({ body: q })).unwrap();
           console.log(res);
-          if(res?.data?.status == "success") {
+          if (res?.data?.status == "success") {
             toast.success("تم اضافة السؤال بنجاح");
             dispatch(
-            handleGetExamQuestions({
-              body: { exam_section_id: res?.data?.message?.exam_section_id },
-            })
-          );
+              handleGetExamQuestions({
+                body: { exam_section_id: res?.data?.message?.exam_section_id || res?.data?.message?.questions[0]?.exam_section_id || res?.data?.message?.paragraph[0]?.exam_section_id},
+              })
+            );
           }
         } catch (err) {
           toast.error(`فشل حفظ سؤال: ${err}`);
@@ -747,9 +735,7 @@ export default function ExamMainData({
 
     switch (questionType) {
       case "mcq":
-        if (
-          mcqOptions?.filter((o) => o?.answer?.trim())?.length < 2
-        ) {
+        if (mcqOptions?.filter((o) => o?.answer?.trim())?.length < 2) {
           toast.error("يجب إضافة خيارين على الأقل");
           return;
         }
@@ -803,18 +789,14 @@ export default function ExamMainData({
           toast.error("اكتب نص الجملة");
           return;
         }
-        if (
-          completeAnswers.filter((a) => a.answer.trim()).length === 0
-        ) {
+        if (completeAnswers.filter((a) => a.answer.trim()).length === 0) {
           toast.error("أضف إجابة واحدة على الأقل");
           return;
         }
         finalQuestion = {
           ...finalQuestion,
           text: completeText,
-          answers: completeAnswers
-            .map((a) => a.answer)
-            .filter(Boolean),
+          answers: completeAnswers.map((a) => a.answer).filter(Boolean),
         };
         break;
     }
@@ -843,6 +825,7 @@ export default function ExamMainData({
     try {
       const result = await dispatch(
         handleAddQuestion({ body: finalQuestion })
+        
       ).unwrap();
 
       if (result?.data?.status === "success") {
@@ -851,8 +834,8 @@ export default function ExamMainData({
         if (exSectionId) {
           dispatch(
             handleGetExamQuestions({
-              body: { exam_section_id: exSectionId },
-            })
+                body: { exam_section_id: res?.data?.message?.exam_section_id || res?.data?.message?.questions[0]?.exam_section_id || res?.data?.message?.paragraph[0]?.exam_section_id},
+              })
           );
         }
       }
@@ -864,10 +847,6 @@ export default function ExamMainData({
       toast.error(error || "فشل حفظ السؤال");
     }
   };
-
-
-
-
 
   const editMcqPassageQuestion = (question) => {
     setQuestionType("mcq");
@@ -913,9 +892,7 @@ export default function ExamMainData({
         }))
       );
       setMcqCorrectAnswer(
-        typeof question.correctAnswer === "number"
-          ? question.correctAnswer
-          : 0
+        typeof question.correctAnswer === "number" ? question.correctAnswer : 0
       );
     }
 
@@ -969,8 +946,7 @@ export default function ExamMainData({
         <AssignExam exam={openExamSection || filteredData} />
       )}
 
-      {(openExamSection &&
-        get_exam_sections_list?.data?.message?.length) ||
+      {(openExamSection && get_exam_sections_list?.data?.message?.length) ||
       isEditMode ? (
         <>
           <Card title="إنشاء الأسئلة" icon={Edit3}>
@@ -1167,9 +1143,7 @@ export default function ExamMainData({
                                   <input
                                     type="radio"
                                     checked={isCorrect}
-                                    onChange={() =>
-                                      setMcqCorrectAnswer(index)
-                                    }
+                                    onChange={() => setMcqCorrectAnswer(index)}
                                     className="h-4 w-4 text-blue-600"
                                   />
                                   إجابة صحيحة
@@ -1178,9 +1152,7 @@ export default function ExamMainData({
                                 {mcqOptions.length > 2 && (
                                   <button
                                     type="button"
-                                    onClick={() =>
-                                      removeMcqOption(index)
-                                    }
+                                    onClick={() => removeMcqOption(index)}
                                     className="ml-auto px-2 py-1 text-red-600 hover:text-red-800 text-xs rounded-lg hover:bg-red-50"
                                     title="حذف الخيار"
                                   >
@@ -1305,8 +1277,7 @@ export default function ExamMainData({
                 </button>
                 {examData.type === "mock" && selectedSectionId && (
                   <p className="text-sm text-gray-500 mt-2 text-center">
-                    {getQuestionsCount(selectedSectionId)}/24 سؤال في هذا
-                    القسم
+                    {getQuestionsCount(selectedSectionId)}/24 سؤال في هذا القسم
                   </p>
                 )}
               </div>
@@ -1314,63 +1285,34 @@ export default function ExamMainData({
           </Card>
 
           {/* Questions list */}
-          {/* <DisplayQuestions
-          get_exam_questions_list ={get_exam_questions_list}
-            selectedSectionId={selectedSectionId}
-            toggleSection={toggleSection}
-            examData={examData}
-            expandedSections={expandedSections}
-            questionTypes={questionTypes}
-            setCompleteAnswers={setCompleteAnswers}
-            setCompleteText={setCompleteText}
-            setCurrentQuestion={setCurrentQuestion}
-            setEditingQuestion={setEditingQuestion}
-            setExamData={setExamData}
-            setMcqCorrectAnswer={setMcqCorrectAnswer}
-            setMcqOptions={setMcqOptions}
-            setModalAnswer={setModalAnswer}
-            setQuestionType={setQuestionType}
-            setSelectedSectionId={setSelectedSectionId}
-            setTrueFalseAnswer={setTrueFalseAnswer}
-            setTrueFalseExplanation={setTrueFalseExplanation}
-            setMcqSubType={setMcqSubType}
-            editMcqPassageQuestion={editMcqPassageQuestion}
-          /> */}
-
-          {/* Final actions */}
-          {/* <div className="flex justify-end gap-3 pt-4">
-            <button
-              className="inline-flex items-center gap-2 px-4 py-3 text-sm rounded-xl border border-gray-200 bg-white hover:bg-gray-50"
-              onClick={() => {
-                if (confirm("هل أنت متأكد من إلغاء التغييرات؟")) {
-                  setExamData({
-                    name: "",
-                    duration: "",
-                    type: "",
-                    sections: [],
-                  });
-                  resetQuestionForm();
-                  setSelectedSectionId(null);
-                  setExpandedSections({});
-                }
-              }}
-            >
-              <X className="h-4 w-4" />
-              إلغاء
-            </button>
-
-            <button
-              className="inline-flex items-center gap-2 px-4 py-3 text-sm rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
-              onClick={() => {
-                alert("تم حفظ الاختبار بنجاح!");
-                console.log("Exam Data:", examData);
-              }}
-              disabled={!examData.sections.length}
-            >
-              <Save className="h-4 w-4" />
-              حفظ الاختبار
-            </button>
-          </div> */}
+          {(
+            <DisplayQuestions
+              selectedSectionId={selectedSectionId}
+            />
+            // <DisplayQuestions
+            // get_exam_questions_loading={get_exam_questions_loading}
+            //   data={get_exam_questions_list}
+            //   selectedSectionId={selectedSectionId}
+            //   toggleSection={toggleSection}
+            //   examData={examData}
+            //   expandedSections={expandedSections}
+            //   questionTypes={questionTypes}
+            //   setCompleteAnswers={setCompleteAnswers}
+            //   setCompleteText={setCompleteText}
+            //   setCurrentQuestion={setCurrentQuestion}
+            //   setEditingQuestion={setEditingQuestion}
+            //   setExamData={setExamData}
+            //   setMcqCorrectAnswer={setMcqCorrectAnswer}
+            //   setMcqOptions={setMcqOptions}
+            //   setModalAnswer={setModalAnswer}
+            //   setQuestionType={setQuestionType}
+            //   setSelectedSectionId={setSelectedSectionId}
+            //   setTrueFalseAnswer={setTrueFalseAnswer}
+            //   setTrueFalseExplanation={setTrueFalseExplanation}
+            //   setMcqSubType={setMcqSubType}
+            //   editMcqPassageQuestion={editMcqPassageQuestion}
+            // />
+          )}
         </>
       ) : (
         <div className="text-center py-12">
