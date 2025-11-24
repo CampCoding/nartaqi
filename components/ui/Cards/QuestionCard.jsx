@@ -1,25 +1,14 @@
 import React from "react";
-import Badge from "../../atoms/Badge";
 import Button from "../../atoms/Button";
 import {
-  Clock,
-  Copy,
-  Edit3,
   Eye,
-  MoreVertical,
-  BookOpen,
+  Edit3,
   Trash2,
-  User,
-  Calendar,
-  Timer,
+  BookOpen,
   Users,
   FileText,
-  Award,
-  Play,
-  Settings,
 } from "lucide-react";
 import Card from "../../atoms/Card";
-import { Modal } from "antd";
 import { useRouter } from "next/navigation";
 
 const ExamCard = ({
@@ -30,71 +19,9 @@ const ExamCard = ({
   setSelectedExam,
   deleteModal,
   setDeleteModal,
+  viewMode,
 }) => {
-  const [previewModal, setPreviewModal] = React.useState(false);
   const router = useRouter();
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "active":
-      case "نشط":
-        return "green";
-      case "draft":
-      case "مسودة":
-        return "gold";
-      case "completed":
-      case "مكتمل":
-        return "blue";
-      case "expired":
-      case "منتهي":
-        return "red";
-      default:
-        return "default";
-    }
-  };
-
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case "Easy":
-      case "سهل":
-        return "green";
-      case "Medium":
-      case "متوسط":
-        return "gold";
-      case "Hard":
-      case "صعب":
-        return "red";
-      default:
-        return "default";
-    }
-  };
-
-  const getStatusLabelAr = (status) => {
-    switch (status) {
-      case "active":
-        return "نشط";
-      case "draft":
-        return "مسودة";
-      case "completed":
-        return "مكتمل";
-      case "expired":
-        return "منتهي";
-      default:
-        return status || "غير محدد";
-    }
-  };
-
-  const getDifficultyLabelAr = (difficulty) => {
-    switch (difficulty) {
-      case "Easy":
-        return "سهل";
-      case "Medium":
-        return "متوسط";
-      case "Hard":
-        return "صعب";
-      default:
-        return difficulty || "غير محدد";
-    }
-  };
 
   return (
     <Card className="relative overflow-hidden group hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 bg-gradient-to-br from-white to-gray-50/50 border-0 shadow-lg">
@@ -143,19 +70,15 @@ const ExamCard = ({
                 }`}
               />
             </div>
-            <div>
-              {/* <Badge 
-                color={getStatusColor(exam.status)}
-                className="mb-1 text-xs font-medium"
-              >
-                {getStatusLabelAr(exam.status)}
-              </Badge>
-              <Badge 
-                color={getDifficultyColor(exam.difficulty)}
-                className="text-xs font-medium"
-              >
-                {getDifficultyLabelAr(exam.difficulty)}
-              </Badge> */}
+            <div className="flex flex-col gap-1">
+              <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                {exam.type === "mock" ? "اختبار محاكي" : "تدريب"}
+              </span>
+              {exam.date && (
+                <span className="text-[11px] text-gray-500">
+                  {exam.date}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -163,7 +86,7 @@ const ExamCard = ({
         {/* Exam Title */}
         <div className="mb-6">
           <h3 className="text-xl font-bold text-[#1a202c] mb-3 line-clamp-2 leading-tight">
-            {exam.name}
+            {exam.name || exam.title}
           </h3>
           <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
             {exam.description}
@@ -180,7 +103,7 @@ const ExamCard = ({
               <div>
                 <p className="text-xs text-gray-500 mb-1">عدد الأسئلة</p>
                 <p className="text-lg font-bold text-gray-800">
-                  {exam.questionsCount || 25}
+                  {exam.questionsCount || 0}
                 </p>
               </div>
             </div>

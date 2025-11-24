@@ -23,7 +23,7 @@ export default function page() {
   const params = useParams();
   const [activeTab, setActiveTab] = useState("info"); // "info" or "questions"
   const [rowData , setRowData] = useState({});
-
+  
   // Fetch the exam data if editing
   useEffect(() => {
     if (params["exam-id"]) {
@@ -34,15 +34,8 @@ export default function page() {
 
   useEffect(() => {
     setExamData(rowData)
+    console.log(rowData);
   } , [rowData])
-
-  useEffect(() => {
-    console.log(examData)
-  } , [examData])
-
-  const handleAddExam = () => {
-    console.log(examData);
-  };
 
   const addSection = (section) => {
     const isAlreadyAdded = examData?.sections?.some((s) => s.id === section.id);
@@ -85,6 +78,8 @@ export default function page() {
         />
 
         <ExamMainData
+        rowData={rowData}
+        setRowData={setRowData}
           examData={examData}
           setExamData={setExamData}
           onAddSection={addSection}

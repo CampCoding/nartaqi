@@ -198,11 +198,12 @@
 
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Input from "./ExamInput";
 import { FileText } from "lucide-react";
 import { toast } from "react-toastify";
 import Card from "./ExamCard";
+import { useParams } from "next/navigation";
 
 export default function ExamMainInfo({
   examData,
@@ -216,7 +217,7 @@ export default function ExamMainInfo({
 }) {
 
   const currentDate = new Date().toISOString().split("T")[0];
-
+  const params = useParams();
   return (
     <Card title="معلومات الاختبار الأساسية" icon={FileText}>
       <div className="space-y-6">
@@ -243,6 +244,29 @@ export default function ExamMainInfo({
             >
               <option value="0">لا</option>
               <option value="1">نعم</option>
+            </select>
+          </div>
+
+           <Input
+          min={currentDate}
+          required
+            label="التاريخ"
+            type="date"
+            placeholder=""
+            value={examInfoData?.date || ""}
+            onChange={(e) => handleBasicDataChange("date", e.target.value)}
+          />
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">المستوي</label>
+            <select
+              value={examInfoData?.level || "0"}
+              onChange={(e) => handleBasicDataChange("level", e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="normal">سهل</option>
+              <option value="medium">متوسط</option>
+              <option value="hard">صعب</option>
             </select>
           </div>
         </div>
@@ -287,14 +311,7 @@ export default function ExamMainInfo({
             value={examInfoData?.time || ""}
             onChange={(e) => handleBasicDataChange("time", e.target.value)}
           />
-          <Input
-          min={currentDate}
-            label="التاريخ"
-            type="date"
-            placeholder=""
-            value={examInfoData?.date || ""}
-            onChange={(e) => handleBasicDataChange("date", e.target.value)}
-          />
+         
           </div>}
       </div>
 
@@ -302,7 +319,7 @@ export default function ExamMainInfo({
         className="bg-blue-500 text-white p-3 rounded-md mt-3"
         onClick={handleSubmitBasicData}
       >
-        {add_exam_loading ? "جاري الاضافة...." : "إضافة"}
+        {add_exam_loading ? "جاري الاضافة...." : params["exam-id"] ?"تعديل" :"إضافة"}
       </button>
     </Card>
   );

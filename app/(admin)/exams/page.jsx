@@ -22,16 +22,17 @@ import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
 
 import BreadcrumbsShowcase from "../../../components/ui/BreadCrumbs";
-import { subjects } from "../../../data/subjects";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Button from "../../../components/atoms/Button";
 import PagesHeader from "../../../components/ui/PagesHeader";
-import { Modal, Select, Input, DatePicker } from "antd";
+import { Modal, Select, Input, DatePicker, Spin } from "antd";
 import CustomModal from "../../../components/layout/Modal";
 import PageLayout from "../../../components/layout/PageLayout";
 import ExamCard from "../../../components/ui/Cards/QuestionCard";
-import exams from "../../../data/exams";
+import { useDispatch, useSelector } from "react-redux";
+import { handleDeleteExam, handleGetAllExams } from "../../../lib/features/examSlice";
+import { toast } from "react-toastify";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -53,13 +54,21 @@ const TopicExams = () => {
   const [selectedExam, setSelectedExam] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
 
-
   const [deleteModal, setDeleteModal] = useState(false);
   const [prevModal, setPrevModal] = useState(false);
-   
+
+  const dispatch = useDispatch();
+  const { all_exam_loading, all_exam_list , delete_exam_loading } = useSelector(
+    (state) => state?.exam
+  );
+
   useEffect(() => {
-    console.log(exams);
-  } , [exams])
+    dispatch(handleGetAllExams());
+  }, [dispatch]);
+
+  useEffect(() => {
+    console.log("API exams:", all_exam_list?.data?.message);
+  }, [all_exam_list]);
 
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
@@ -69,9 +78,70 @@ const TopicExams = () => {
   /** Helpers */
   const normalizeDate = (d) => (d ? dayjs(d) : null);
 
+  // Normalize API exam object → one shape used by UI
+  const normalizeExam = (exam) => {
+    // API sample:
+    // {
+    //   id: 1,
+    //   title: "Midterm Math Exam",
+    //   description: "Covers algebra and geometry basics",
+    //   free: "0",
+    //   level: "",
+    //   time: "01:30:00",
+    //   date: "2025-10-20",
+    //   created_at: "2025-10-15T03:00:00.000000Z",
+    //   updated_at: "2025-10-15T03:00:00.000000Z"
+    // }
+
+    const createdAt =
+      exam.createdAt || exam.created_at || exam.date || null;
+    const date = exam.date || null;
+
+    // if object contain time ⇒ mock, else intern
+    const isMock = !!(exam.time || exam.duration);
+    const type = isMock ? "mock" : "intern";
+
+    return {
+      ...exam,
+
+      // unified naming for title used by card
+      name: exam.name || exam.title || "",
+
+      // normalized dates
+      createdAt,
+      startDate: exam.startDate || date,
+      endDate: exam.endDate || date,
+
+      // difficulty + status fallbacks
+      difficulty: exam.difficulty || exam.level || "",
+      status: exam.status || "active",
+
+      // derived type for tabs
+      type,
+
+      // stats fallbacks
+      participantsCount:
+        exam.participantsCount ?? exam.participants_count ?? 0,
+      averageScore: exam.averageScore ?? exam.average_score ?? 0,
+      totalMarks: exam.totalMarks ?? exam.total_marks ?? 0,
+      questionsCount: exam.questionsCount ?? exam.questions_count ?? 0,
+
+      // unify duration (you can format later if needed)
+      duration: exam.duration || exam.time || null,
+
+      // free flag as boolean
+      isFree: exam.free === "1" || exam.free === 1 || exam.free === true,
+    };
+  };
+
+  // All exams from API (normalized)
+  const normalizedExams = (all_exam_list?.data?.message || []).map(
+    normalizeExam
+  );
+
   // Date overlap: an exam is included if any of these is true:
   // - exam period [startDate, endDate] overlaps the picked range
-  // - OR (fallback) createdAt lies inside the picked range
+  // - OR createdAt lies inside the picked range
   const inPickedRange = (exam, range) => {
     if (!range || !Array.isArray(range) || !range[0] || !range[1]) return true;
 
@@ -97,17 +167,17 @@ const TopicExams = () => {
   const filteredExams = useMemo(() => {
     const lower = (v) => String(v || "").toLowerCase().trim();
 
-    const base = exams.filter((exam) => {
-      // Type tabs
+    const base = normalizedExams.filter((exam) => {
+      // Type tabs based on derived type
       const matchesType = !selectedType || exam.type === selectedType;
 
-      // Search (title, description, subjects)
+      // Search (title, description)
       const term = lower(searchTerm);
       const matchesSearch =
         !term ||
-        lower(exam.title).includes(term) ||
-        lower(exam.description).includes(term) ||
-        (exam.subjects || []).some((s) => lower(s).includes(term));
+        lower(exam?.name).includes(term) ||
+        lower(exam?.title).includes(term) ||
+        lower(exam?.description).includes(term);
 
       // Status + Difficulty
       const matchesStatus = !selectedStatus || exam.status === selectedStatus;
@@ -129,7 +199,10 @@ const TopicExams = () => {
     // Sorting
     const sorted = [...base].sort((a, b) => {
       if (sortBy === "title") {
-        return a.title.localeCompare(b.title, "ar");
+        return (a.name || a.title || "").localeCompare(
+          b.name || b.title || "",
+          "ar"
+        );
       }
       if (sortBy === "participantsCount") {
         return (b.participantsCount || 0) - (a.participantsCount || 0);
@@ -148,7 +221,7 @@ const TopicExams = () => {
 
     return sorted;
   }, [
-    exams,
+    normalizedExams,
     searchTerm,
     selectedStatus,
     selectedDifficulty,
@@ -158,12 +231,13 @@ const TopicExams = () => {
   ]);
 
   const getStatusStats = () => {
-    const stats = exams.reduce((acc, exam) => {
-      acc[exam.status] = (acc[exam.status] || 0) + 1;
+    const stats = normalizedExams.reduce((acc, exam) => {
+      const status = exam.status || "active";
+      acc[status] = (acc[status] || 0) + 1;
       return acc;
     }, {});
     return {
-      total: exams.length,
+      total: normalizedExams.length,
       active: stats.active || 0,
       draft: stats.draft || 0,
       completed: stats.completed || 0,
@@ -171,7 +245,34 @@ const TopicExams = () => {
     };
   };
 
-  const stats = getStatusStats();
+  const stats = getStatusStats(); // ready if you want to show counters later
+
+  function handleDelete(id) {
+   const data_send ={
+    id,
+   }
+
+   dispatch(handleDeleteExam({body : data_send}))
+   .unwrap()
+   .then(res => {
+    if(res?.data?.status == "success"){
+      toast.success(res?.data?.message || "تم حذف الاختبار بنجاح");
+      dispatch(handleGetAllExams())
+      setDeleteModal(false);
+    }else {
+      toast.error(res?.data?.message || "هناك خطأ أثناء حذف الاختبار");
+    }
+   }).catch(e => console.log(e))
+   .finally(() => setDeleteModal(false))
+  }
+
+  if (all_exam_loading) {
+    return (
+      <div className="h-screen flex justify-center items-center">
+        <Spin spinning size="large" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -317,7 +418,9 @@ const TopicExams = () => {
               <button
                 key={item.id}
                 onClick={() =>
-                  setSelectedType((prev) => (prev === item.id ? null : item.id))
+                  setSelectedType((prev) =>
+                    prev === item.id ? null : item.id
+                  )
                 }
                 className={`rounded-md px-3 py-2 border transition-all ${
                   active
@@ -329,27 +432,29 @@ const TopicExams = () => {
               </button>
             );
           })}
-          {(
-            <button
-              onClick={() => setSelectedType(null)}
-              className="px-3 py-2 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
-            >
-              الكل
-            </button>
-          )}
+          <button
+            onClick={() => setSelectedType(null)}
+            className="px-3 py-2 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
+          >
+            الكل
+          </button>
         </div>
 
         {/* Results Summary */}
-        {(searchTerm || selectedStatus || selectedDifficulty || dateRange || selectedType) && (
+        {(searchTerm ||
+          selectedStatus ||
+          selectedDifficulty ||
+          dateRange ||
+          selectedType) && (
           <div className="mb-6">
             <div className="flex items-center justify-between bg-blue-50 rounded-xl p-4 border border-blue-100">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-blue-600" />
                 <span className="text-blue-800 font-medium">
-                  عُثر على {filteredExams.length} اختبار من أصل {exams.length}
+                  عُثر على {filteredExams.length} اختبار من أصل{" "}
+                  {normalizedExams.length}
                 </span>
               </div>
-              
             </div>
           </div>
         )}
@@ -387,7 +492,11 @@ const TopicExams = () => {
               لا توجد اختبارات متاحة
             </h3>
             <p className="text-gray-500 mb-6">
-              {searchTerm || selectedStatus || selectedDifficulty || dateRange || selectedType
+              {searchTerm ||
+              selectedStatus ||
+              selectedDifficulty ||
+              dateRange ||
+              selectedType
                 ? "لم يتم العثور على اختبارات تطابق معايير البحث"
                 : "ابدأ بإنشاء اختبار جديد"}
             </p>
@@ -419,7 +528,9 @@ const TopicExams = () => {
                 <h3 className="text-lg font-semibold text-gray-800">
                   معاينة الاختبار
                 </h3>
-                <p className="text-sm text-gray-500">{selectedExam?.title}</p>
+                <p className="text-sm text-gray-500">
+                  {selectedExam?.name || selectedExam?.title}
+                </p>
               </div>
             </div>
           }
@@ -438,7 +549,7 @@ const TopicExams = () => {
                   <Clock className="w-6 h-6 text-green-600 mx-auto mb-2" />
                   <p className="text-sm text-green-600 font-medium">المدة</p>
                   <p className="text-xl font-bold text-green-700">
-                    {selectedExam.duration} د
+                    {selectedExam.duration || "غير محددة"}
                   </p>
                 </div>
                 <div className="text-center p-4 bg-purple-50 rounded-xl">
@@ -452,7 +563,9 @@ const TopicExams = () => {
                 </div>
                 <div className="text-center p-4 bg-orange-50 rounded-xl">
                   <Trophy className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-                  <p className="text-sm text-orange-600 font-medium">الدرجات</p>
+                  <p className="text-sm text-orange-600 font-medium">
+                    الدرجات
+                  </p>
                   <p className="text-xl font-bold text-orange-700">
                     {selectedExam.totalMarks}
                   </p>
@@ -463,7 +576,9 @@ const TopicExams = () => {
                 <h4 className="font-semibold text-gray-800 mb-2">
                   وصف الاختبار
                 </h4>
-                <p className="text-gray-600">{selectedExam.description}</p>
+                <p className="text-gray-600">
+                  {selectedExam.description || "لا يوجد وصف متاح"}
+                </p>
               </div>
 
               <div className="flex justify-end gap-3">
@@ -499,9 +614,11 @@ const TopicExams = () => {
             </div>
 
             <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-2">الاختبار المراد حذفه:</p>
+              <p className="text-sm text-gray-600 mb-2">
+                الاختبار المراد حذفه:
+              </p>
               <p className="font-medium text-[#202938] mb-1">
-                {selectedExam?.title}
+                {selectedExam?.name || selectedExam?.title}
               </p>
               <p className="text-sm text-gray-500">
                 {selectedExam?.participantsCount} مشارك •{" "}
@@ -519,12 +636,13 @@ const TopicExams = () => {
               <button
                 onClick={() => {
                   // TODO: delete logic
-                  setDeleteModal(false);
+                 handleDelete(selectedExam?.id)
                 }}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
               >
-                <Trash2 className="w-4 h-4" />
-                حذف الاختبار
+                {delete_exam_loading ? "جاري الحذف...." :<div className="flex gap-2 items-center">
+                  <Trash2 className="w-4 h-4" />
+                حذف الاختبار</div>}
               </button>
             </div>
           </div>

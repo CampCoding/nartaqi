@@ -76,8 +76,11 @@ export const apiRoutes = {
   assign_page_to_student:'admin/badges/assign_badge_to_student',
 
   //exams
-  get_exams : "admin/exams/GetAllExamsRoundByRoundId",
+  get_exams : "admin/exams/getAllExams",
   add_exam:"admin/exams/store_exam",
+  edit_exam:"admin/exams/edit_exam",
+  delete_exam:"admin/exams/delete_exam",
+
   get_exam_sections:"admin/exams/exam-sections/GetAllExamSectionsByExamId",
   add_exam_sections:"admin/exams/exam-sections/store_exam_section",
   delete_exam_sections:"admin/exams/exam-sections/delete_exam_section",

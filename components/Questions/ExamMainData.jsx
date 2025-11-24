@@ -4,7 +4,6 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { Segmented, Select, Tag } from "antd";
@@ -17,7 +16,6 @@ import {
   ListChecks,
   FlaskConical,
   FileText,
-  Image as ImageIcon,
 } from "lucide-react";
 
 // Quill CSS
@@ -33,7 +31,6 @@ import EssayQuestions from "./EssayQuestions";
 import CompleteQuestions from "./CompleteQuestions";
 import DisplayQuestions from "./DisplayQuestions";
 import QuestionTypeSelector from "./QuestionTypeSelector";
-// import McqSharedPassageEditor from "./McqQuestions";
 import {
   colorMap,
   exam_types,
@@ -41,19 +38,26 @@ import {
   questionTypes,
 } from "./utils";
 
-// Shared Quill config
 import McqSharedPassageEditor from "./McqSharedPassageEditor/McqSharedPassageEditor";
 import LabeledEditor from "./McqSharedPassageEditor/parts/LabeledEditor";
 import { useDispatch, useSelector } from "react-redux";
 import {
   handleCreateExam,
   handleCreateExamSection,
+  handleEditExam,
+  handleEditExamSection,
+  handleGetAllExams,
 } from "../../lib/features/examSlice";
 import { toast } from "react-toastify";
 import AssignExam from "./AssignExam";
+import { useParams } from "next/navigation";
 
 /* ===================== Main: ExamMainData ===================== */
-export default function ExamMainData({ examData: editExamData }) {
+export default function ExamMainData({
+  examData: editExamData,
+  rowData = {},
+  setRowData,
+}) {
   const [examData, setExamData] = useState({
     name: "",
     duration: "",
@@ -100,7 +104,32 @@ export default function ExamMainData({ examData: editExamData }) {
   const [mcqSubType, setMcqSubType] = useState("general");
   const [mcqPassages, setMcqPassages] = useState({ chemical: [], passage: [] });
 
+  const dispatch = useDispatch();
+  const {
+    add_exam_loading,
+    all_exam_loading,
+    all_exam_list,
+    delete_exam_loading,
+  } = useSelector((state) => state?.exam);
+
+  const [exmaInfoData, setExamInfoData] = useState({
+    title: "",
+    description: "",
+    free: 0,
+    time: "",
+    date: "",
+    type: "mock",
+    level: "medium",
+  });
+  const [openExamSection, setOpenExamSection] = useState(false);
+  const [openExamQuestion, setOpenExamQuestion] = useState(false);
+  const [filteredData, setFilteredData] = useState({});
+
+  const params = useParams();
+  const isEditMode = Boolean(params["exam-id"]);
+
   /* Effects */
+
   useEffect(() => {
     if (examData?.type === "intern")
       setFilteredSection(mock_exam_section_Data[1]);
@@ -118,25 +147,53 @@ export default function ExamMainData({ examData: editExamData }) {
       setSelectedSectionId(examData.sections[0].id);
   }, [examData?.sections, selectedSectionId]);
 
+  useEffect(() => {
+    dispatch(handleGetAllExams());
+  }, [dispatch]);
+
+  // Edit mode: load exam info (you can also plug sections here if backend returns them)
+  useEffect(() => {
+    if (params["exam-id"]) {
+      const filteredItem = all_exam_list?.data?.message?.find(
+        (item) => item?.id == params["exam-id"]
+      );
+
+      if (!filteredItem) return;
+
+      setFilteredData(filteredItem);
+
+      setExamInfoData((prev) => ({
+        ...prev,
+        id: filteredItem?.id,
+        title: filteredItem?.title,
+        description: filteredItem?.description,
+        free: filteredItem?.free,
+        level: filteredItem?.level,
+        date: filteredItem?.date,
+        time: filteredItem?.time,
+        type: filteredItem?.time ? "mock" : "intern",
+      }));
+
+      setExamData((prev) => ({
+        ...prev,
+        type: filteredItem?.time ? "mock" : "intern",
+        // if sections come from backend, plug them here:
+        sections: filteredItem?.sections || prev.sections || [],
+      }));
+
+      // in edit mode: open sections & questions by default
+      setOpenExamSection(true);
+      setOpenExamQuestion(true);
+    }
+  }, [params, all_exam_list]);
+
   /* Helpers */
+
   const selectedSection = useMemo(
     () => examData.sections.find((s) => s.id === selectedSectionId),
     [examData.sections, selectedSectionId]
   );
 
-  const dispatch = useDispatch();
-  const { add_exam_loading } = useSelector((state) => state?.exam);
-
-  const [exmaInfoData, setExamInfoData] = useState({
-    title: "",
-    description: "",
-    free: 0,
-    time: "",
-    date: "",
-    type: "mock",
-  });
-  const [openExamSection, setOpenExamSection] = useState(false);
-  const [openExamQuestion, setOpenExamQuestion] = useState(false);
   // Function to handle basic exam data changes
   const handleBasicDataChange = (field, value) => {
     setExamInfoData((prev) => ({ ...prev, [field]: value }));
@@ -166,46 +223,124 @@ export default function ExamMainData({ examData: editExamData }) {
       return;
     }
 
-    if(exmaInfoData?.type =="mock" && !exmaInfoData?.time) {
+    if (exmaInfoData?.type == "mock" && !exmaInfoData?.time) {
       toast.warn("اختر وقت أولا");
-      return
+      return;
     }
 
-     if(exmaInfoData?.type =="mock" && !exmaInfoData?.date) {
+    if (!exmaInfoData?.date) {
       toast.warn("اختر تاريخ أولا");
-      return
+      return;
     }
 
-    const data_send = {
-      title: exmaInfoData.title,
-      description: exmaInfoData.description,
-      free: JSON.stringify(exmaInfoData.free),
-      time: exmaInfoData.time,
-      date: exmaInfoData.date,
-    };
+    if (params["exam-id"]) {
+      const data_send = {
+        id: params["exam-id"],
+        title: exmaInfoData.title,
+        description: exmaInfoData.description,
+        free: exmaInfoData.free,
+        time: exmaInfoData.time,
+        date: exmaInfoData.date,
+        level: exmaInfoData?.level,
+      };
 
-    dispatch(handleCreateExam({ body: data_send }))
-      .unwrap()
-      .then((res) => {
-        console.log(res);
-        if (res?.data?.status == "success") {
-          toast.success("تم إضافة الاختبار بنجاح!");
-          setOpenExamSection(res?.data?.message);
-          setExamData({ ...examData, sections: [] }); // Reset exam data after submission
-        } else {
-          toast.error("هناك خطأ أثناء اضافه الاختبار");
-          setOpenExamSection(false);
-        }
-      })
-      .catch((e) => {
-        console.log(e);
-        toast.error("حدث خطأ أثناء إضافة الاختبار.");
-      });
+      dispatch(handleEditExam({ body: data_send }))
+        .unwrap()
+        .then((res) => {
+          console.log(res);
+          if (res?.data?.status == "success") {
+            toast.success("تم   تعديل الاختبار بنجاح!");
+          } else {
+            toast.error("هناك خطأ أثناء اضافه الاختبار");
+            setOpenExamSection(false);
+          }
+        })
+        .catch((e) => {
+          console.log(e);
+          toast.error("حدث خطأ أثناء إضافة الاختبار.");
+        });
+    } else {
+      const data_send = {
+        title: exmaInfoData.title,
+        description: exmaInfoData.description,
+        free: JSON.stringify(exmaInfoData.free),
+        time: exmaInfoData.time,
+        date: exmaInfoData.date,
+        level: exmaInfoData?.level,
+      };
+
+      dispatch(handleCreateExam({ body: data_send }))
+        .unwrap()
+        .then((res) => {
+          console.log(res);
+          if (res?.data?.status == "success") {
+            toast.success("تم تعديل الاختبار بنجاح!");
+            setOpenExamSection(res?.data?.message);
+            setExamData({ ...examData, sections: [] }); // Reset exam data after submission
+          } else {
+            toast.error("هناك خطأ أثناء اضافه الاختبار");
+            setOpenExamSection(false);
+          }
+        })
+        .catch((e) => {
+          console.log(e);
+          toast.error("حدث خطأ أثناء إضافة الاختبار.");
+        });
+    }
   };
 
   const onAddSection = (section) => {
-    console.log(section);
+    if (params["exam-id"]) {
+      // edit existing section (if section has id)
+      if (section.id) {
+        dispatch(
+          handleEditExamSection({
+            body: { ...section },
+          })
+        )
+          .unwrap()
+          .then((res) => {
+            console.log(res);
+            if (res?.data?.status == "success") {
+              toast.success("تم تعديل القسم بنجاح");
+            } else {
+              toast.error(
+                res?.data?.message || "هناك خطأ أثناء تعديل القسم"
+              );
+            }
+          })
+          .catch((e) => console.log(e));
+        return;
+      }
 
+      // add new section in edit mode
+      dispatch(
+        handleCreateExamSection({
+          body: { ...section, exam_id: params["exam-id"] },
+        })
+      )
+        .unwrap()
+        .then((res) => {
+          console.log(res);
+          if (res?.data?.status == "success") {
+            toast.success("تم إضافة القسم بنجاح");
+            const newSection = res?.data?.message;
+            setOpenExamQuestion(true);
+            if (newSection?.id) {
+              setExamData((prev) => ({
+                ...prev,
+                sections: [...(prev.sections || []), newSection],
+              }));
+            }
+          } else {
+            toast.error(res?.data?.message || "هناك خطأ أثناء اضافة القسم");
+          }
+        })
+        .catch((e) => console.log(e));
+      return;
+    }
+
+    // create-mode: use openExamSection.id
     dispatch(
       handleCreateExamSection({
         body: { ...section, exam_id: openExamSection?.id },
@@ -301,7 +436,7 @@ export default function ExamMainData({ examData: editExamData }) {
   const handleMcqPassagesChange = useCallback(
     (passages) =>
       setMcqPassages((prev) => ({ ...prev, [mcqSubType]: passages })),
-    []
+    [mcqSubType]
   );
 
   /* Add / Update Question */
@@ -528,14 +663,6 @@ export default function ExamMainData({ examData: editExamData }) {
         getTotalQuestions={getTotalQuestions}
       />
 
-      {/* <ExamMainInfo
-        colorMap={colorMap}
-        examData={examData}
-        exam_types={exam_types}
-        getEstimatedDuration={getEstimatedDuration}
-        setExamData={setExamData}
-      /> */}
-
       <ExamMainInfo
         add_exam_loading={add_exam_loading}
         exam_types={exam_types}
@@ -547,17 +674,19 @@ export default function ExamMainData({ examData: editExamData }) {
         handleSubmitBasicData={handleSubmitBasicData}
       />
 
-      {openExamSection && (
+      {(openExamSection || isEditMode) && (
         <QuestionSections
+          editData = {filteredData}
+          data={openExamQuestion}
           examData={examData}
           filteredSection={filteredSection}
           onAddSection={onAddSection}
         />
       )}
 
-      {openExamSection&& <AssignExam exam={openExamSection} />}
+      {(openExamSection && !isEditMode) && <AssignExam exam={openExamSection || filteredData} />}
 
-      {openExamQuestion ? (
+      {openExamQuestion || isEditMode ? (
         <>
           <Card title="إنشاء الأسئلة" icon={Edit3}>
             <div className="space-y-6">
@@ -938,9 +1067,7 @@ export default function ExamMainData({ examData: editExamData }) {
                 console.log("Exam Data:", examData);
               }}
               disabled={
-                !examData.name ||
-                !examData.type ||
-                examData.sections.length === 0
+                !examData.sections.length
               }
             >
               <Save className="h-4 w-4" />
