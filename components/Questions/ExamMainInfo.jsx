@@ -213,7 +213,8 @@ export default function ExamMainInfo({
   handleExamTypeChange,
   handleSubmitBasicData,
   exam_types,
-  add_exam_loading
+  add_exam_loading,
+  edit_exam_loading
 }) {
 
   const currentDate = new Date().toISOString().split("T")[0];
@@ -319,7 +320,7 @@ export default function ExamMainInfo({
         className="bg-blue-500 text-white p-3 rounded-md mt-3"
         onClick={handleSubmitBasicData}
       >
-        {add_exam_loading ? "جاري الاضافة...." : params["exam-id"] ?"تعديل" :"إضافة"}
+        {add_exam_loading || edit_exam_loading ? "جاري الاضافة...." : params["exam-id"] ?"تعديل" :"إضافة"}
       </button>
     </Card>
   );

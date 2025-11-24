@@ -103,13 +103,13 @@ const ExamCard = ({
               <div>
                 <p className="text-xs text-gray-500 mb-1">عدد الأسئلة</p>
                 <p className="text-lg font-bold text-gray-800">
-                  {exam.questionsCount || 0}
+                  {exam?.questions_count || 0}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-gray-100">
+          {/* <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-gray-100">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-100 rounded-lg">
                 <Users className="w-4 h-4 text-green-600" />
@@ -121,7 +121,7 @@ const ExamCard = ({
                 </p>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Action Buttons */}

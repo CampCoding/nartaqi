@@ -80,19 +80,6 @@ const TopicExams = () => {
 
   // Normalize API exam object → one shape used by UI
   const normalizeExam = (exam) => {
-    // API sample:
-    // {
-    //   id: 1,
-    //   title: "Midterm Math Exam",
-    //   description: "Covers algebra and geometry basics",
-    //   free: "0",
-    //   level: "",
-    //   time: "01:30:00",
-    //   date: "2025-10-20",
-    //   created_at: "2025-10-15T03:00:00.000000Z",
-    //   updated_at: "2025-10-15T03:00:00.000000Z"
-    // }
-
     const createdAt =
       exam.createdAt || exam.created_at || exam.date || null;
     const date = exam.date || null;
@@ -106,12 +93,10 @@ const TopicExams = () => {
 
       // unified naming for title used by card
       name: exam.name || exam.title || "",
-
-      // normalized dates
       createdAt,
       startDate: exam.startDate || date,
       endDate: exam.endDate || date,
-
+      questions_count : exam?.questions_count ,
       // difficulty + status fallbacks
       difficulty: exam.difficulty || exam.level || "",
       status: exam.status || "active",
@@ -119,12 +104,11 @@ const TopicExams = () => {
       // derived type for tabs
       type,
 
-      // stats fallbacks
       participantsCount:
         exam.participantsCount ?? exam.participants_count ?? 0,
       averageScore: exam.averageScore ?? exam.average_score ?? 0,
       totalMarks: exam.totalMarks ?? exam.total_marks ?? 0,
-      questionsCount: exam.questionsCount ?? exam.questions_count ?? 0,
+      questionsCount: exam?.questions_count ?? exam?.questions_count ?? 0,
 
       // unify duration (you can format later if needed)
       duration: exam.duration || exam.time || null,
@@ -134,14 +118,10 @@ const TopicExams = () => {
     };
   };
 
-  // All exams from API (normalized)
   const normalizedExams = (all_exam_list?.data?.message || []).map(
     normalizeExam
   );
 
-  // Date overlap: an exam is included if any of these is true:
-  // - exam period [startDate, endDate] overlaps the picked range
-  // - OR createdAt lies inside the picked range
   const inPickedRange = (exam, range) => {
     if (!range || !Array.isArray(range) || !range[0] || !range[1]) return true;
 
@@ -168,10 +148,8 @@ const TopicExams = () => {
     const lower = (v) => String(v || "").toLowerCase().trim();
 
     const base = normalizedExams.filter((exam) => {
-      // Type tabs based on derived type
       const matchesType = !selectedType || exam.type === selectedType;
 
-      // Search (title, description)
       const term = lower(searchTerm);
       const matchesSearch =
         !term ||

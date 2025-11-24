@@ -16,6 +16,11 @@ const initialState = {
   get_exam_sections_list :[ ],
   get_exam_sections_loading : false,
   assign_exam_loading : false,
+
+  get_exam_questions_list : [],
+  get_exam_question_loading : false, 
+
+  add_question_loading : false
 }
 
 export const handleGetAllExams = createAsyncThunk("examSlice/handleGetAllExams", async() => {
@@ -38,6 +43,11 @@ export const handleDeleteExam = createAsyncThunk("examSlice/handleDeleteExam",as
   return response
 })
 
+export const handleGetAllExamSections = createAsyncThunk("examSlice/handleGetAllExamSections",async({body}) => {
+  const response = await api.post(apiRoutes.get_exam_sections , {body});
+  return response
+})
+
 export const handleCreateExamSection = createAsyncThunk("examSlice/handleCreateExamSection",async({body}) => {
   const response = await api.post(apiRoutes.add_exam_sections ,{body});
   return response;
@@ -55,6 +65,16 @@ export const handleDeleteExamSection = createAsyncThunk("examSlice/handleDeleteE
 
 export const handleAssignExam = createAsyncThunk("examSlice/handleAssignExam",async({body}) => {
   const response = await api.post(apiRoutes.assign_exam , {body});
+  return response;
+})
+
+export const handleGetExamQuestions = createAsyncThunk("examSlice/handleGetExamQuestions",async({body}) => {
+  const response = await api.post(apiRoutes.get_questions , {body});
+  return response;
+})
+
+export const handleAddQuestion = createAsyncThunk("examSlice/handleAddQuestion",async({body}) => {
+  const response = await api.post(apiRoutes.store_question , {body});
   return response;
 })
 
@@ -145,6 +165,38 @@ export const examSlice = createSlice({
     })
     .addCase(handleDeleteExamSection.rejected ,(state) => {
       state.delete_exam_section_loading = false;
+    })
+
+      .addCase(handleGetAllExamSections.pending ,(state) => {
+      state.get_exam_sections_loading = true;
+    })
+    .addCase(handleGetAllExamSections.fulfilled ,(state , action) => {
+      state.get_exam_sections_loading = false;
+      state.get_exam_sections_list = action.payload;
+    })
+    .addCase(handleGetAllExamSections.rejected ,(state) => {
+      state.get_exam_sections_loading = false;
+    })
+
+    .addCase(handleGetExamQuestions.pending ,(state) => {
+      state.get_exam_question_loading = true;
+    })
+    .addCase(handleGetExamQuestions.fulfilled ,(state , action) => {
+      state.get_exam_question_loading = false;
+      state.get_exam_questions_list = action.payload;
+    })
+    .addCase(handleGetExamQuestions.rejected ,(state) => {
+      state.get_exam_question_loading = false;
+    })
+
+    .addCase(handleAddQuestion.pending ,(state) => {
+      state.add_question_loading = true;
+    })
+    .addCase(handleAddQuestion.fulfilled ,(state , action) => {
+      state.add_question_loading = false;
+    })
+    .addCase(handleAddQuestion.rejected ,(state) => {
+      state.add_question_loading = false;
     })
   }
 })

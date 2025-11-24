@@ -152,7 +152,7 @@ export const exam_types = [
 export const questionTypes = [
   { id: "mcq", label: "اختيار من متعدد", icon: CheckCircle, color: "green" },
   { id: "trueFalse", label: "صح/خطأ", icon: CheckCircle, color: "blue" },
-  { id: "essay", label: "مقالي", icon: FileText, color: "orange" },
+  // { id: "essay", label: "مقالي", icon: FileText, color: "orange" },
   { id: "complete", label: "أكمل", icon: Edit3, color: "purple" },
 ];
 

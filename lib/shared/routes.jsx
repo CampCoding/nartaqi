@@ -85,5 +85,9 @@ export const apiRoutes = {
   add_exam_sections:"admin/exams/exam-sections/store_exam_section",
   delete_exam_sections:"admin/exams/exam-sections/delete_exam_section",
   update_exam_sections:"admin/exams/exam-sections/edit_exam_section",
-  assign_exam:"admin/exams/assign_exam_round"
+  assign_exam:"admin/exams/assign_exam_round",
+
+  //exam questions
+  get_questions :"admin/questions/get_questions",
+  store_question:"admin/questions/StoreQuestionWithAnswers",
 };

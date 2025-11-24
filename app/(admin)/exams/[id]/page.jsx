@@ -19,6 +19,9 @@ import PageLayout from "../../../../components/layout/PageLayout";
 import ExamOverview from "../../../../components/Exams/ExamOverview";
 import ExamMainDescription from "../../../../components/Exams/ExamMainDescription";
 import EditNewExamModal from "../../../../components/Exams/EditNewExamModal";
+import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "next/navigation";
+import { handleGetAllExams, handleGetAllExamSections, handleGetExamQuestions } from "../../../../lib/features/examSlice";
 
 /* ---------- Small UI helpers ---------- */
 const Pill = ({ children, color = "bg-gray-100 text-gray-700 border-gray-200", className = "" }) => (
@@ -55,14 +58,6 @@ const ActionButton = ({ icon: Icon, children, variant = "secondary", className =
     </button>
   );
 };
-
-/* =============================================================
-   NORMALIZATION
-   This page now accepts either:
-   - An exam in the old/flat (questionsData) or new/flat (questions) shape, OR
-   - The editor payload from <ExamMainData /> with { name, type, duration, sections:[{id,name,questions:[...] }]}.
-   It flattens sections -> questions and maps all types to the viewer schema.
-   ============================================================= */
 
 /** Map an editor MCQ (general/chemical/passage) to viewer MCQ answers[] */
 function mapMcqAnswers(options = [], correctIndex = 0) {
@@ -510,6 +505,23 @@ export default function ExamDetailsPage({ exam: examProp }) {
   const [showCorrectOnly, setShowCorrectOnly] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
+  const dispatch = useDispatch();
+  const {get_exam_questions_list , get_exam_questions_loading , all_exam_loading , all_exam_list} = useSelector(state => state?.exam)
+  const {id} = useParams();
+  const [filteredExam , setFilteredExam] = useState({});
+
+  useEffect(() => {
+    dispatch(handleGetExamQuestions({body : {exam_id : id}}))
+    dispatch(handleGetAllExams())
+  } , [id])
+
+  useEffect(() => {
+    setFilteredExam(all_exam_list?.data?.message?.find(item => item?.id == id))
+  } , [id])
+
+  useEffect(() => {
+    dispatch(handleGetAllExamSections({body : {exam_id : filteredExam?.id}}))
+  } , [filteredExam])
 
   // Optionally pull last saved editor payload from localStorage if no prop passed
   const [incoming, setIncoming] = useState(examProp);

@@ -1,10 +1,12 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { Edit3, Trash2, GripVertical } from "lucide-react";
-import { Collapse, Empty, Tag } from "antd";
+import { Collapse, Empty, Spin, Tag } from "antd";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import Card from "./ExamCard";
 import Button from "../atoms/Button";
+import { useDispatch, useSelector } from "react-redux";
+import { handleGetAllExamSections, handleGetExamQuestions } from "../../lib/features/examSlice";
 
 const { Panel } = Collapse;
 
@@ -25,6 +27,7 @@ export default function DisplayQuestions({
   setTrueFalseExplanation,
   setMcqSubType,
   editMcqPassageQuestion,
+  selectedSectionId
 }) {
   /* ---------- Edit / Delete ---------- */
   const handleEditQuestion = (q, sectionId) => {
@@ -243,7 +246,27 @@ export default function DisplayQuestions({
       </span>
     </div>
   );
+  const dispatch = useDispatch();
+  const {get_exam_sections_list , get_exam_questions_list , get_exam_questions_loading} = useSelector(state => state?.exam);
 
+  useEffect(() => {
+    dispatch(handleGetExamQuestions({body : {
+      exam_section_id : selectedSectionId
+    }}))
+  } , [selectedSectionId])
+
+  useEffect(() => {
+    console.log(get_exam_questions_list?.data?.message)
+  } , [get_exam_questions_list])
+
+  if(get_exam_questions_loading) {
+    return (
+      <div className="h-screen flex justify-center items-center">
+        <Spin spinning size="large"/>
+      </div>
+    )
+  }
+  
   return (
     <Card title="الأسئلة المضافة" icon={Edit3}>
       {examData.sections.length === 0 ? (
