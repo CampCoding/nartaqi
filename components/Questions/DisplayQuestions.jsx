@@ -31,24 +31,25 @@ export default function DisplayQuestions({
   setMcqSubType,
   editMcqPassageQuestion,
   selectedSectionId,
+  get_exam_questions_list
 }) {
   const dispatch = useDispatch();
-  const {
-    get_exam_questions_list,
-    get_exam_questions_loading,
-  } = useSelector((state) => state?.exam);
+  // const {
+  //   get_exam_questions_list,
+  //   get_exam_questions_loading,
+  // } = useSelector((state) => state?.exam);
 
   /* ---------- Load questions from API for selected section ---------- */
-  useEffect(() => {
-    if (!selectedSectionId) return;
-    dispatch(
-      handleGetExamQuestions({
-        body: {
-          exam_section_id: selectedSectionId,
-        },
-      })
-    );
-  }, [selectedSectionId, dispatch]);
+  // useEffect(() => {
+  //   if (!selectedSectionId) return;
+  //   dispatch(
+  //     handleGetExamQuestions({
+  //       body: {
+  //         exam_section_id: selectedSectionId,
+  //       },
+  //     })
+  //   );
+  // }, [selectedSectionId, dispatch]);
 
   /* ---------- Map API response to display format ---------- */
   const apiQuestions = React.useMemo(() => {
@@ -88,6 +89,10 @@ export default function DisplayQuestions({
 
     return [...mcqQuestions];
   }, [get_exam_questions_list]);
+
+  useEffect(() => {
+    console.log(apiQuestions , get_exam_questions_list)
+  }  ,[apiQuestions , get_exam_questions_list])
 
   /* ---------- Edit / Delete ---------- */
   const handleEditQuestion = (q, sectionId) => {

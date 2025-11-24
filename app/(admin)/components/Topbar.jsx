@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { configs } from "../../../configs";
 
 export default function Topbar() {
   const [notifications, setNotifications] = useState(3);
@@ -66,7 +67,13 @@ export default function Topbar() {
             <span className="text-sm font-medium" style={{ color: "#202938" }}>
               المسئول
             </span>
-            <button className="text-sm text-gray-600 hover:text-gray-800">
+            <button 
+            onClick={() => {
+              localStorage.removeItem(configs.tokenKey);
+              localStorage.removeItem(configs.userKey);
+              router.push("/login")
+            }}
+            className="text-sm text-gray-600 hover:text-gray-800">
               تسجيل الخروج
             </button>
           </div>

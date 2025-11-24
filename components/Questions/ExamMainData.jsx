@@ -1315,7 +1315,7 @@ export default function ExamMainData({
 
           {/* Questions list */}
           {/* <DisplayQuestions
-          get_exam_sections_list ={get_exam_sections_list}
+          get_exam_questions_list ={get_exam_questions_list}
             selectedSectionId={selectedSectionId}
             toggleSection={toggleSection}
             examData={examData}

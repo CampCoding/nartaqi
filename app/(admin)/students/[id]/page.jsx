@@ -524,21 +524,20 @@ export default function StudentAccountPage() {
           <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="security" icon={Shield}>
             الأمان والخصوصية
           </TabButton>
-          <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="courses" icon={BookOpen} count={courses.length}>
+          <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="courses" icon={BookOpen}>
             دوراتي
           </TabButton>
-          <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="badges" icon={Award} count={badges.length}>
+          <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="badges" icon={Award}>
             شاراتي
           </TabButton>
           <TabButton
           setActiveTab={setActiveTab} activeTab={activeTab}
             id="certificates"
             icon={FileText}
-            count={certificates.length}
           >
             شهاداتي
           </TabButton>
-          <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="rating" icon={Star} count={rating?.length}>التقييمات</TabButton>
+          <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="rating" icon={Star}>التقييمات</TabButton>
         </div>
 
         {/* -------- Account Tab -------- */}
