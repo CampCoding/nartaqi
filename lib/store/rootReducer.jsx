@@ -11,7 +11,7 @@ import certificateReducer from '../features/certificateSlice';
 import badegReducer from '../features/badgeSlice';
 import resourceReducer from '../features/resourcesSlice';
 import examReducer from '../features/examSlice';
-
+import roundContentReducer from '../features/roundContentSlice';
 
 export const rootReducer = combineReducers({
    auth : authReducer,
@@ -25,5 +25,6 @@ export const rootReducer = combineReducers({
    certificate : certificateReducer,
    badges : badegReducer,
    resource:resourceReducer,
-   exam: examReducer
+   exam: examReducer,
+   content : roundContentReducer
 });

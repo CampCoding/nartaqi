@@ -286,8 +286,8 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
   const tabItems = [
     { key: 1, label: "المعلومات الأساسية", icon: <BookOutlined /> },
     // { key: 2, label: "الجدولة والمواعيد", icon: <CalendarOutlined /> },
-    { key: 3, label: "المحتوى التفصيلي", icon: <FileTextOutlined /> },
-    { key: 4, label: "المصادر والملفات", icon: <FolderOutlined /> },
+    // { key: 3, label: "المحتوى التفصيلي", icon: <FileTextOutlined /> },
+    // { key: 4, label: "المصادر والملفات", icon: <FolderOutlined /> },
   ];
 
   return (
@@ -452,7 +452,7 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
                   )}
                 </div>
 
-                <div className="flex items-center gap-3">
+                {/* <div className="flex items-center gap-3">
                   {activeTab < 4 ? (
                     <Button
                       type="primary"
@@ -475,7 +475,7 @@ const EnhancedCourseForm = ({ open, setOpen }) => {
                       إنشاء الدورة
                     </Button>
                   )}
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

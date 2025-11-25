@@ -35,6 +35,7 @@ import {
 import { handleAddBaiskRound, handleGetSourceRound } from "../../lib/features/roundsSlice";
 import { handleGetAllTeachers } from "../../lib/features/teacherSlice";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 const { Dragger } = Upload;
 const { TextArea } = Input;
@@ -88,6 +89,7 @@ export default function AddCourseSourceBasicInfo({
   const dispatch = useDispatch();
   const { all_courses_categories_list, get_categories_parts_list } =
     useSelector((state) => state?.categories);
+  const {add_round_loading }=  useSelector(state => state?.rounds);
 
   const [categoriesOptions, setCategoriesOptions] = useState([]);
   const [categoriesPartOptions, setCategoriesPartOptions] = useState([]);
@@ -95,6 +97,8 @@ export default function AddCourseSourceBasicInfo({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {teachers_loading , teachers_list} = useSelector(state => state?.teachers)
   const [teacherOptions , setTeacherOptions]  = useState([]);
+  const router = useRouter();
+
   /* ====================== Load categories & parts ====================== */
   useEffect(() => {
     dispatch(handleGetAllTeachers())
@@ -325,13 +329,12 @@ export default function AddCourseSourceBasicInfo({
       formData.append("source", 1);
       formData.append("capacity", values?.capacity);
 
-      if (timeString) formData.append("time_show", timeString);
-
-      if (courseBookFiles[0]) formData.append("round_book", courseBookFiles[0]);
-
+      // if (timeString);
+     formData.append("time_show", timeString || "")
+       formData.append("round_book", courseBookFiles[0] || null)
       formData.append("teacher_id", values?.instructor?.join(","));
 
-      if (extraPdfFile) formData.append("round_road_map_book", extraPdfFile);
+      formData.append("round_road_map_book", extraPdfFile || null)
 
       formData.append("free", values?.free ? 1 : 0);
       formData.append("active", values?.active ? 1 : 0);
@@ -344,7 +347,9 @@ export default function AddCourseSourceBasicInfo({
       dispatch(handleAddBaiskRound({ body: formData })).unwrap()
       .then(res => {
         if(res?.data?.status == "success") {
-          toast.success(res?.data?.message);
+          console.log(res?.data)
+          router.push(`/round_content?id=${res?.data?.message?.round_id}`)
+          toast.success(res?.data?.message?.message);
           dispatch(handleGetSourceRound())
         }else {
           toast.error(res?.data?.message)
@@ -785,10 +790,10 @@ export default function AddCourseSourceBasicInfo({
           type="primary"
           htmlType="submit"
           size="large"
-          loading={isSubmitting}
+          loading={add_round_loading}
           className="!bg-blue-600 mb-4 !me-auto !text-white hover:!bg-blue-700"
         >
-          {isSubmitting ? "جاري الحفظ..." : "حفظ البيانات"}
+          {add_round_loading ? "جاري الحفظ..." : "حفظ البيانات"}
         </Button>
       </Form>
     </div>
