@@ -12,6 +12,8 @@ import badegReducer from '../features/badgeSlice';
 import resourceReducer from '../features/resourcesSlice';
 import examReducer from '../features/examSlice';
 import roundContentReducer from '../features/roundContentSlice';
+import lessonReducer from '../features/lessonSlice';
+import videoReducer from '../features/videoSlice';
 
 export const rootReducer = combineReducers({
    auth : authReducer,
@@ -26,5 +28,7 @@ export const rootReducer = combineReducers({
    badges : badegReducer,
    resource:resourceReducer,
    exam: examReducer,
-   content : roundContentReducer
+   content : roundContentReducer,
+   lesson: lessonReducer,
+   videos: videoReducer
 });

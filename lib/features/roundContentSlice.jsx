@@ -20,6 +20,11 @@ export const handleAddRoundContent = createAsyncThunk("roundContentSlice/handleA
   return response;
 })
 
+export const handleEditRoundContent = createAsyncThunk("roundContentSlice/handleEditRoundContent",async({body}) => {
+  const response = await api.post(`admin/rounds-contents/edit_round_content`,{body});
+  return response;
+})
+
 export const handleDeleteContent = createAsyncThunk("roundContentSlice/handleDeleteContent",async({body}) => {
   const  response = await api.post("admin/rounds-contents/delete_round_content", {body});
   return response;
@@ -49,6 +54,16 @@ export const roundContentSlice = createSlice({
     })
     .addCase(handleAddRoundContent.rejected , (state) => {
       state.store_content_loading = false;
+    })
+
+     .addCase(handleEditRoundContent.pending ,(state) =>{ 
+      state.edit_content_loading = true;
+    })
+    .addCase(handleEditRoundContent.fulfilled ,(state , action) => {
+      state.edit_content_loading = false;
+    })
+    .addCase(handleEditRoundContent.rejected , (state) => {
+      state.edit_content_loading = false;
     })
 
      .addCase(handleDeleteContent.pending ,(state) =>{ 

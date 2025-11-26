@@ -358,7 +358,6 @@ export default function AddCourseSourceBasicInfo({
     } catch (error) {
       console.error("Submission error:", error);
       toast.error({ content: "فشل في إضافة الدورة", key: "save" });
-
       if (error.message) {
         toast.error(`خطأ: ${error.message}`);
       }
@@ -439,7 +438,7 @@ export default function AddCourseSourceBasicInfo({
               ]}
             >
               <Dragger
-                accept="image/*"
+                accept=".jpg,.jpeg,.png,.gif"
                 multiple={false}
                 maxCount={1}
                 beforeUpload={beforeUpload}

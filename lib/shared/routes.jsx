@@ -90,4 +90,16 @@ export const apiRoutes = {
   //exam questions
   get_questions :"admin/questions/get_questions",
   store_question:"admin/questions/StoreQuestionWithAnswers",
+
+  //lessons
+  get_lessons:"admin/contents/lessons/get_all_lessons",
+  add_lesson:"admin/contents/lessons/store_lesson",
+  edit_lesson:"admin/contents/lessons/edit_lesson",
+  delete_lesson:"admin/contents/lessons/delete_lesson",
+
+  //vide
+  get_videos:"admin/contents/lessons/videos/get_all_videos",
+  add_video:"admin/contents/lessons/videos/add_video",
+  delete_video:"admin/contents/lessons/videos/delete_video",
+  edit_video:"admin/contents/lessons/videos/edit_video",
 };

@@ -45,10 +45,11 @@ import {
   handleGetAllExamSections,
   handleAddQuestion,
   handleGetExamQuestions,
+  handleAssignExam,
 } from "../../lib/features/examSlice";
 import { toast } from "react-toastify";
 import AssignExam from "./AssignExam";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 
 /* ===================== Main: ExamMainData ===================== */
 export default function ExamMainData({
@@ -56,6 +57,9 @@ export default function ExamMainData({
   rowData = {},
   setRowData,
 }) {
+  const searchparams = useSearchParams();
+  const lessonId = searchparams?.get("lessonId") ?? null;
+
   const [examData, setExamData] = useState({
     name: "",
     duration: "",
@@ -292,6 +296,14 @@ export default function ExamMainData({
           if (res?.data?.status == "success") {
             toast.success("تم    !ضافة الاختبار بنجاح!");
             setOpenExamSection(res?.data?.message);
+            if (lessonId) {
+              const data_send = {
+                type: "lesson", // 'full_round' or 'lesson'
+                exam_id: res?.data?.message?.id, // Assuming an exam_id
+                lesson_or_round_id: lessonId,
+              };
+              dispatch(handleAssignExam({ body: data_send }));
+            }
             dispatch(
               handleGetAllExamSections({
                 body: { exam_id: res?.data?.message?.id },
@@ -569,7 +581,7 @@ export default function ExamMainData({
             });
           }
 
-          console.log(groupQuestionsForPayload)
+          console.log(groupQuestionsForPayload);
         }
 
         if (!flatQuestions.length) {
@@ -616,8 +628,13 @@ export default function ExamMainData({
                 if (res?.data?.status == "success") {
                   dispatch(
                     handleGetExamQuestions({
-                body: { exam_section_id: res?.data?.message?.exam_section_id || res?.data?.message?.questions[0]?.exam_section_id || res?.data?.message?.paragraph[0]?.exam_section_id},
-              })
+                      body: {
+                        exam_section_id:
+                          res?.data?.message?.exam_section_id ||
+                          res?.data?.message?.questions[0]?.exam_section_id ||
+                          res?.data?.message?.paragraph[0]?.exam_section_id,
+                      },
+                    })
                   );
                 }
               });
@@ -704,7 +721,12 @@ export default function ExamMainData({
             toast.success("تم اضافة السؤال بنجاح");
             dispatch(
               handleGetExamQuestions({
-                body: { exam_section_id: res?.data?.message?.exam_section_id || res?.data?.message?.questions[0]?.exam_section_id || res?.data?.message?.paragraph[0]?.exam_section_id},
+                body: {
+                  exam_section_id:
+                    res?.data?.message?.exam_section_id ||
+                    res?.data?.message?.questions[0]?.exam_section_id ||
+                    res?.data?.message?.paragraph[0]?.exam_section_id,
+                },
               })
             );
           }
@@ -825,7 +847,6 @@ export default function ExamMainData({
     try {
       const result = await dispatch(
         handleAddQuestion({ body: finalQuestion })
-        
       ).unwrap();
 
       if (result?.data?.status === "success") {
@@ -834,8 +855,13 @@ export default function ExamMainData({
         if (exSectionId) {
           dispatch(
             handleGetExamQuestions({
-                body: { exam_section_id: res?.data?.message?.exam_section_id || res?.data?.message?.questions[0]?.exam_section_id || res?.data?.message?.paragraph[0]?.exam_section_id},
-              })
+              body: {
+                exam_section_id:
+                  res?.data?.message?.exam_section_id ||
+                  res?.data?.message?.questions[0]?.exam_section_id ||
+                  res?.data?.message?.paragraph[0]?.exam_section_id,
+              },
+            })
           );
         }
       }
@@ -922,6 +948,7 @@ export default function ExamMainData({
       />
 
       <ExamMainInfo
+        lessonId={lessonId || null}
         add_exam_loading={add_exam_loading}
         exam_types={exam_types}
         examData={examData}
@@ -942,8 +969,11 @@ export default function ExamMainData({
         />
       )}
 
-      {openExamSection && !isEditMode && (
-        <AssignExam exam={openExamSection || filteredData} />
+      {openExamSection && !isEditMode && !lessonId && (
+        <AssignExam
+          lessonId={lessonId}
+          exam={openExamSection || filteredData}
+        />
       )}
 
       {(openExamSection && get_exam_sections_list?.data?.message?.length) ||
@@ -1285,10 +1315,8 @@ export default function ExamMainData({
           </Card>
 
           {/* Questions list */}
-          {(
-            <DisplayQuestions
-              selectedSectionId={selectedSectionId}
-            />
+          {
+            <DisplayQuestions selectedSectionId={selectedSectionId} />
             // <DisplayQuestions
             // get_exam_questions_loading={get_exam_questions_loading}
             //   data={get_exam_questions_list}
@@ -1312,7 +1340,7 @@ export default function ExamMainData({
             //   setMcqSubType={setMcqSubType}
             //   editMcqPassageQuestion={editMcqPassageQuestion}
             // />
-          )}
+          }
         </>
       ) : (
         <div className="text-center py-12">

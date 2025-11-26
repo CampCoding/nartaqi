@@ -1,19 +1,17 @@
 "use client";
 import { Modal, Button, Typography } from 'antd';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { handleDeleteContent } from '../../lib/features/roundContentSlice';
 import { toast } from 'react-toastify';
-// Assuming the correct path for your Redux action:
-// import { handleDeleteContent } from '../../lib/features/roundContentSlice';
+import { handleDeleteRoundLessons, handleGetAllRoundLessons } from '../../../lib/features/lessonSlice';
+
 
 const { Text } = Typography;
 
-export default function DeleteRoundContent({ open, setOpen, rowData , id }) {
+export default function DeleteLessonModal({ open, setOpen, rowData , id }) {
   const dispatch = useDispatch();
-  // Ensure the state path and variable name are correct (e.g., state?.content?.delete_content_loading)
-  const { delete_content_loading } = useSelector(state => state?.content || { delete_content_loading: false });
+  const { delete_lesson_loading } = useSelector(state => state?.lesson);
 
   function handleDelete() {
     // Check if rowData is valid before dispatching
@@ -27,24 +25,28 @@ export default function DeleteRoundContent({ open, setOpen, rowData , id }) {
       id: rowData?.id
     };
 
-    dispatch(handleDeleteContent({ body: data_send }))
+    dispatch(handleDeleteRoundLessons({ body: data_send }))
       .unwrap()
       .then(res => {
         if(res?.data?.status == "success") {
-          toast.success("تم حذف المحتوي بنجاح");
-          dispatch(handleGetAllRoundContent({body : {
-            round_content_id : rowData?.round_content_id
+          toast.success("تم حذف الدرس بنجاح");
+          dispatch(handleGetAllRoundLessons({body : {
+            round_content_id : id
           }}))
         }
         setOpen(false);
       })
       .catch(err => {
-        console.error("Failed to delete content:", err);
+        console.error("Failed to delete lesson:", err);
       });
   }
 
+  useEffect(() => {
+    console.log(rowData);
+  } , [rowData])
+
   // Determine the title of the item being deleted for clarity
-  const contentTitle = rowData?.title || 'هذا المحتوى';
+  const contentTitle = rowData?.title || 'هذا الدرس';
 
   // Custom footer for better control over button design and loading state
   const modalFooter = (
@@ -54,7 +56,7 @@ export default function DeleteRoundContent({ open, setOpen, rowData , id }) {
         type="primary"
         danger // Ant Design style for destructive action
         onClick={handleDelete}
-        loading={delete_content_loading}
+        loading={delete_lesson_loading}
         className='rounded-md px-6'
         icon={<DeleteOutlined />}
       >
@@ -63,7 +65,7 @@ export default function DeleteRoundContent({ open, setOpen, rowData , id }) {
       <Button
         key="back"
         onClick={() => setOpen(false)}
-        disabled={delete_content_loading}
+        disabled={delete_lesson_loading}
         className='rounded-md px-6'
       >
         إلغاء
@@ -87,7 +89,7 @@ export default function DeleteRoundContent({ open, setOpen, rowData , id }) {
     >
       <div className='flex flex-col gap-4 mt-4 text-right'>
         <Text strong style={{ fontSize: '1.1rem' }} className='text-gray-800'>
-          هل أنت متأكد من حذف محتوى الدورة: <Text mark>{contentTitle}</Text>؟
+          هل أنت متأكد من حذف الدرس : <Text mark>{contentTitle}</Text>؟
         </Text>
         <Text type="danger" style={{ fontSize: '0.95rem' }}>
           **تحذير:** لا يمكن التراجع عن هذا الإجراء. سيتم فقدان جميع الدروس والفيديوهات المتعلقة بهذا المحتوى.

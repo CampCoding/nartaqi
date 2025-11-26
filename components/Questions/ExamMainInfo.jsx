@@ -206,6 +206,7 @@ import Card from "./ExamCard";
 import { useParams } from "next/navigation";
 
 export default function ExamMainInfo({
+  lessonId = null,
   examData,
   setExamData,
   examInfoData,

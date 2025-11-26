@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import { Check } from "lucide-react";
 import CourseSourceBasicLevel from "../../../components/SaudiCourseSource/CourseSourceBasicLevel";
+import CourseSourceLecturesContent from "../../../components/SaudiCourseSource/CourseSourceLecturesContent";
 
 // Define the steps data
 const STEPS = [
@@ -82,42 +83,7 @@ export default function Page() {
     if (currentStep === 2) {
       // المحاضرات
       return (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800">
-                الأقسام والمحاضرات
-              </h3>
-              <p className="text-sm text-gray-500">
-                أضف أقسام الدورة ثم أضف داخل كل قسم المحاضرات والفيديوهات.
-              </p>
-            </div>
-            <button className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
-              إضافة قسم جديد
-            </button>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <h4 className="mb-2 text-sm font-semibold text-gray-800">
-                قسم 1: المقدمة
-              </h4>
-              <ul className="space-y-1 text-sm text-gray-600">
-                <li>• ترحيب وتعريف بالدورة</li>
-                <li>• طريقة الاستفادة القصوى من المحتوى</li>
-              </ul>
-              <button className="mt-3 text-sm text-blue-600 hover:underline">
-                إضافة محاضرة
-              </button>
-            </div>
-
-            <div className="rounded-xl border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500">
-              لا توجد أقسام أخرى بعد.
-              <br />
-              اضغط على زر "إضافة قسم جديد" لإنشاء قسم جديد.
-            </div>
-          </div>
-        </div>
+       <CourseSourceLecturesContent id={id}/>
       );
     }
 
@@ -169,7 +135,7 @@ export default function Page() {
           </div>
           <div>
             <h1 className="bg-gradient-to-r from-gray-800 to-blue-800 bg-clip-text text-3xl font-extrabold text-transparent">
-              إضافة دورة جديدة
+              إضافة محتوي الدورة 
             </h1>
             <p className="mt-1 text-gray-600">
               إنشاء وتكوين دورة تعليمية شاملة مع الجدولة والمحتوى.

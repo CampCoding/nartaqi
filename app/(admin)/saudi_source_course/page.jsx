@@ -106,7 +106,7 @@ const SubjectsManagementPage = () => {
 
   // ✅ pagination state (sync with backend)
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(4); // default per_page
+  const [pageSize, setPageSize] = useState(6); // default per_page
 
   const {
     rounds_loading,

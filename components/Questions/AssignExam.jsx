@@ -9,7 +9,7 @@ import Card from './ExamCard';
 import { handleAssignExam } from "../../lib/features/examSlice";
 import { toast } from "react-toastify";
 
-export default function AssignExam({exam}) {
+export default function AssignExam({exam , lessonId}) {
   const { assign_exam_loading } = useSelector((state) => state?.exam);
   const { all_round_lessons, source_round_loading, source_round_list } = useSelector(
     (state) => state?.rounds
@@ -27,6 +27,8 @@ export default function AssignExam({exam}) {
   useEffect(() => {
     dispatch(handleGetSourceRound());
   }, [dispatch]);
+
+
 
 
 
@@ -90,24 +92,10 @@ export default function AssignExam({exam}) {
   return (
     <Card title="تعيين الاختبار لدوره معينه او درس" icon={Book}>
       <div className="flex flex-col gap-4">
-        {/* Type Selection: Full Round or Lesson */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            نوع التعيين
-          </label>
-          <Select
-            value={assignData.type}
-            onChange={handleTypeChange}
-            className="w-full"
-            options={[
-              { label: "دورة كاملة", value: "full_round" },
-              { label: "درس", value: "lesson" },
-            ]}
-          />
-        </div>
+      
 
         {/* Conditional Rendering for Rounds or Lessons */}
-        {assignData.type === "full_round" && (
+        { (
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               اختر الدورة

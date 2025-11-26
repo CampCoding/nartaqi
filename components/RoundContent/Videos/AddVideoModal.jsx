@@ -2,26 +2,28 @@
 import { Modal, Button, Spin } from 'antd' // Import Button and Spin from Ant Design
 import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux' 
-import { PlusOutlined, LoadingOutlined } from '@ant-design/icons'; // Import icons
-import { handleAddRoundContent, handleGetAllRoundContent } from '../../lib/features/roundContentSlice';
+import { PlusOutlined } from '@ant-design/icons'; // Import icons
 import { toast } from 'react-toastify';
+import { handleAddLessonVideo, handleGetAllLessonVideo } from '../../../lib/features/videoSlice';
 
 
 
-export default function AddRoundContent({ open, setOpen, id , type="basic" }) {
-  const [roundContentData, setRoundContentData] = useState({
-    title: "",
-    description: "",
-  });
+export default function AddVideoModal({ open, setOpen, id }) {
+  const [videoData , setVideoData] = useState({
+    title:"",
+    description:"",
+    video:null,
+    time:"",
+  })
   
   const dispatch = useDispatch(); 
-  const { store_content_loading } = useSelector(state => state?.content || { store_content_loading: false });
+  const { add_video_loading } = useSelector(state => state?.videos || { store_content_loading: false });
   
-  const isFormValid = roundContentData.title && roundContentData.description;
+  const isFormValid = videoData.title && videoData.description;
 
   function handleInputChange(e) {
     const { name, value } = e.target;
-    setRoundContentData(prev => ({
+    setVideoData(prev => ({
       ...prev,
       [name]: value
     }));
@@ -31,27 +33,26 @@ export default function AddRoundContent({ open, setOpen, id , type="basic" }) {
     if (!isFormValid) return;
 
     const data_send = {
-      ...roundContentData,
-      type: type ? type : "basic",
-      round_id: id // Ensure 'id' is correctly passed as the parent round ID
+      ...videoData,
+      lesson_id: id // Ensure 'id' is correctly passed as the parent round ID
     };
 
-    dispatch(handleAddRoundContent({ body: data_send }))
+    dispatch(handleAddLessonVideo({ body: data_send }))
       .unwrap()
       .then(res => {
         if(res?.data?.status == "success") {
-          toast.success("تم اضافه المحتوي بنجاح");
-          dispatch(handleGetAllRoundContent({body : {
-            round_id : id
+          toast.success("تم اضافه الفيديو بنجاح");
+          dispatch(handleGetAllLessonVideo({body : {
+            lesson_id : id
           }}))
            setOpen(false);
-        setRoundContentData({ title: "", description: "" });
+        setVideoData({time :"",title:"",description:"",video:""});
         }else {
-          toast.error(res?.data?.message || "هناك خطأ أثناء اضافه المحتوي")
+          toast.error(res?.data?.message || "هناك خطأ أثناء اضافه الفيديو")
         }
       })
       .catch(err => {
-        console.error("Failed to add round content:", err);
+        console.error("Failed to add video:", err);
       })
       .finally(() => setOpen(false))
   }
@@ -63,12 +64,12 @@ export default function AddRoundContent({ open, setOpen, id , type="basic" }) {
         key="submit" 
         type="primary" 
         onClick={handleSubmit} 
-        disabled={!isFormValid || store_content_loading}
-        loading={store_content_loading}
+        disabled={!isFormValid || add_video_loading}
+        loading={add_video_loading}
         className='bg-orange-500 hover:!bg-orange-600 border-none rounded-md px-6'
         icon={<PlusOutlined />}
       >
-        إضافة المحتوى
+        إضافة الفيديو
       </Button>
       <Button 
         key="back" 
@@ -85,7 +86,7 @@ export default function AddRoundContent({ open, setOpen, id , type="basic" }) {
       open={open}
       onCancel={() => setOpen(false)}
       footer={modalFooter} 
-      title="إضافة محتوي الدورة"
+      title="إضافة الفيديو "
       wrapClassName="rtl-modal-wrap"
       style={{ direction: 'rtl' }}
     >
@@ -94,12 +95,12 @@ export default function AddRoundContent({ open, setOpen, id , type="basic" }) {
         {/* Title Input */}
         <div className='flex flex-col gap-2'>
           <label htmlFor='title' className='text-lg font-medium text-gray-700'>
-            عنوان المحتوى
+            عنوان الفيديو
           </label>
           <input 
             id='title'
             name='title'
-            value={roundContentData.title}
+            value={videoData?.title}
             onChange={handleInputChange}
             className='border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400'
             placeholder='مثل: أساسيات برمجة React'
@@ -109,19 +110,45 @@ export default function AddRoundContent({ open, setOpen, id , type="basic" }) {
         {/* Description Input (using textarea for multi-line description) */}
         <div className='flex flex-col gap-2'>
           <label htmlFor='description' className='text-lg font-medium text-gray-700'>
-            وصف المحتوى
+            وصف الفيديو
           </label>
           <textarea 
             id='description'
             name='description'
-            value={roundContentData.description}
+            value={videoData?.description}
             onChange={handleInputChange}
             rows={3} // Allows for a better description entry experience
             className='border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400 resize-none'
             placeholder='شرح موجز لأهداف هذا المحتوى وما سيتم تغطيته'
           />
         </div>
-        
+         
+          <div className='flex flex-col gap-2'>
+          <label htmlFor='video' className='text-lg font-medium text-gray-700'>
+            لينك الفيديو
+          </label>
+          <input 
+            id='video'
+            name='video'
+            value={videoData?.video}
+            onChange={handleInputChange}
+            className='border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400'
+          />
+        </div>
+
+         <div className='flex flex-col gap-2'>
+          <label htmlFor='time' className='text-lg font-medium text-gray-700'>
+            مدة الفيديو
+          </label>
+          <input 
+            id='time'
+            type='time'
+            name='time'
+            value={videoData?.time}
+            onChange={handleInputChange}
+            className='border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400'
+          />
+        </div>
       </div>
     </Modal>
   );
