@@ -14,6 +14,7 @@ import examReducer from '../features/examSlice';
 import roundContentReducer from '../features/roundContentSlice';
 import lessonReducer from '../features/lessonSlice';
 import videoReducer from '../features/videoSlice';
+import featureReducer from '../features/featuresSlice';
 
 export const rootReducer = combineReducers({
    auth : authReducer,
@@ -30,5 +31,6 @@ export const rootReducer = combineReducers({
    exam: examReducer,
    content : roundContentReducer,
    lesson: lessonReducer,
-   videos: videoReducer
+   videos: videoReducer,
+   features : featureReducer
 });

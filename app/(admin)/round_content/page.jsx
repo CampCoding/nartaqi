@@ -18,11 +18,7 @@ const STEPS = [
     title: "المحاضرات",
     description: "إضافة أقسام، دروس، ومواد تعليمية.",
   },
-  {
-    id: 3,
-    title: "المصادر والملفات",
-    description: "رفع الملفات والروابط المساندة ومراجعة الدورة.",
-  },
+
 ];
 
 export default function Page() {

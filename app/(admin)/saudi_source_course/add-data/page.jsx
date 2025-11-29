@@ -101,7 +101,6 @@
 //     reader.onerror = reject;
 //   });
 
-
 // const EnhancedCourseForm = ({ open, setOpen }) => {
 //   const [form] = Form.useForm();
 //   const [loading, setLoading] = useState(false);
@@ -201,9 +200,9 @@
 //     const newSchedules = [...schedules];
 //     newSchedules[index] = {
 //       ...updatedSchedule,
-//       startTime: updatedSchedule.startTime?.format ? 
+//       startTime: updatedSchedule.startTime?.format ?
 //         updatedSchedule.startTime.format("HH:mm") : updatedSchedule.startTime,
-//       endTime: updatedSchedule.endTime?.format ? 
+//       endTime: updatedSchedule.endTime?.format ?
 //         updatedSchedule.endTime.format("HH:mm") : updatedSchedule.endTime,
 //     };
 //     setSchedules(newSchedules);
@@ -235,9 +234,9 @@
 //         genderPolicy: raw.genderPolicy,
 //         capacity: Number(raw.capacity ?? 0),
 //         instructor: raw.instructor,
-//         availableFrom: raw.availableRange?.[0] ? 
+//         availableFrom: raw.availableRange?.[0] ?
 //           dayjs(raw.availableRange[0]).format("YYYY-MM-DD") : undefined,
-//         availableTo: raw.availableRange?.[1] ? 
+//         availableTo: raw.availableRange?.[1] ?
 //           dayjs(raw.availableRange[1]).format("YYYY-MM-DD") : undefined,
 //         summary: raw.summary || "",
 //         schedules: schedules,
@@ -306,15 +305,15 @@
 //                 <p className="text-gray-600 mt-1">إنشاء وتكوين دورة تعليمية شاملة مع الجدولة والمحتوى</p>
 //               </div>
 //             </div>
-            
+
 //             {/* Progress Indicator */}
 //             <div className="flex items-center gap-2 mt-4">
 //               {tabItems.map((tab, index) => (
 //                 <div
 //                   key={tab.key}
 //                   className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer
-//                     ${activeTab === tab.key 
-//                       ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+//                     ${activeTab === tab.key
+//                       ? 'bg-blue-100 text-blue-700 border border-blue-200'
 //                       : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
 //                     }`}
 //                   onClick={() => setActiveTab(tab.key)}
@@ -350,7 +349,7 @@
 //             >
 //               {/* Basic Information Tab */}
 //               {activeTab === 1 && (
-//                 <AddCourseSourceBasicInfo 
+//                 <AddCourseSourceBasicInfo
 //                 all_categories={all_categories}
 //                 availableSections={availableSections}
 //                 beforeUpload={beforeUpload}
@@ -364,7 +363,7 @@
 
 //               {/* Schedule Tab */}
 //               {activeTab === 2 && (
-//                 <AddCourseSourceShedule 
+//                 <AddCourseSourceShedule
 //                 handleAddSchedule={handleAddSchedule}
 //                 handleRemoveSchedule={handleRemoveSchedule}
 //                 handleUpdateSchedule={handleUpdateSchedule}
@@ -431,7 +430,7 @@
 
 //               {/* Resources Tab */}
 //               {activeTab === 4 && (
-//                 <AddCourseSourceResource 
+//                 <AddCourseSourceResource
 //                 setVideos={setVideos}
 //                 videos={videos}
 //                 />
@@ -480,22 +479,20 @@
 //             </div>
 //           </div>
 //         </div>
-    
+
 //   );
 // };
 
 // export default EnhancedCourseForm;
-                                    
 
 "use client";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import { Check } from "lucide-react";
-import CourseSourceBasicLevel from "../../../../components/SaudiCourseSource/CourseSourceBasicLevel";
-import CourseSourceLecturesContent from "../../../../components/SaudiCourseSource/CourseSourceLecturesContent";
 import AddCourseSourceBasicInfo from "../../../../components/SaudiCourseSource/AddCourseSourceBasicInfo";
 import AddCourseSourceResource from "../../../../components/SaudiCourseSource/AddCourseSourceResource";
+import Features from "../../../../components/SaudiCourseSource/Features";
 // Define the steps data
 const STEPS = [
   {
@@ -518,8 +515,12 @@ const STEPS = [
 export default function Page() {
   const params = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
-  const id = params.get("id")
-
+  const [roundId, setRoundId] = useState(null);
+  const [fileList, setFileList] = useState([]);
+  const [fileNames, setFileNames] = useState({});
+  const [videos, setVideos] = useState([{ id: 1, name: "", url: "" }]);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
   // --- Navigation Logic ---
   const goToNextStep = () => {
@@ -535,6 +536,47 @@ export default function Page() {
     if (stepId < currentStep) return "complete";
     if (stepId === currentStep) return "current";
     return "upcoming";
+  };
+
+  const beforeUpload = async (file) => {
+    const isImage = file.type?.startsWith("image/");
+    if (!isImage) {
+      message.error("من فضلك ارفع ملف صورة فقط.");
+      return Upload.LIST_IGNORE;
+    }
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    if (!isLt5M) {
+      message.error("حجم الصورة يجب أن يكون أقل من 5MB.");
+      return Upload.LIST_IGNORE;
+    }
+
+    const preview = await getBase64(file);
+    setImagePreview(preview);
+    setFileList([
+      {
+        uid: file.uid || file.name,
+        name: file.name,
+        status: "done",
+        originFileObj: file,
+      },
+    ]);
+    return false;
+  };
+
+  const onFilesChange = ({ fileList }) => {
+    setFileList(fileList);
+    setFileNames((prev) => {
+      const next = { ...prev };
+      fileList.forEach((f) => {
+        if (f.uid && !next[f.uid])
+          next[f.uid] = f.name?.replace(/\.[^.]+$/, "") || "";
+      });
+      // remove stale uids
+      Object.keys(next).forEach((uid) => {
+        if (!fileList.find((f) => f.uid === uid)) delete next[uid];
+      });
+      return next;
+    });
   };
 
   const getStatusClasses = (status) => {
@@ -566,22 +608,42 @@ export default function Page() {
     if (currentStep === 1) {
       // مرحلة التأسيس
       return (
-       <AddCourseSourceBasicInfo id={id} />
+        <AddCourseSourceBasicInfo
+          beforeUpload={beforeUpload}
+          fileList={fileList}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          setFileList={setFileList}
+          setImagePreview={setImagePreview}
+          currentStep={currentStep}
+          goToNextStep={goToNextStep}
+          goToPrevStep={goToPrevStep}
+          setRoundId={setRoundId}
+        />
       );
     }
 
     if (currentStep === 2) {
       // المحاضرات
       return (
-        <h2>jw</h2>
-      //  <CourseSourceLecturesContent id={id}/>
+       <Features 
+          roundId={roundId}
+          currentStep={currentStep}
+          goToNextStep={goToNextStep}
+          goToPrevStep={goToPrevStep}
+          STEPS={STEPS}
+       />
+        //  <CourseSourceLecturesContent id={id}/>
       );
     }
 
     // المصادر والملفات
-    return (
-     <AddCourseSourceResource />
-    );
+    return <AddCourseSourceResource 
+    currentStep={currentStep}
+    goToPrevStep={goToPrevStep}
+    id={roundId}
+STEPS={STEPS}
+    />;
   };
   // ---------------------------
 
@@ -615,9 +677,7 @@ export default function Page() {
         <div className="mb-10 flex items-start justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-lg">
           {STEPS.map((step, index) => {
             const status = getStepStatus(step.id);
-            const { dot, text, line } = getStatusClasses(
-              status
-            );
+            const { dot, text, line } = getStatusClasses(status);
             const isLast = index === STEPS.length - 1;
 
             return (
@@ -670,7 +730,7 @@ export default function Page() {
           {renderStepContent()}
 
           {/* Navigation buttons */}
-          <div className="mt-8 flex justify-between space-x-4 space-x-reverse">
+          {/* <div className="mt-8 flex justify-between space-x-4 space-x-reverse">
             <button
               onClick={goToPrevStep}
               disabled={currentStep === 1}
@@ -689,7 +749,7 @@ export default function Page() {
             >
               {currentStep === STEPS.length ? "إنهاء ونشر" : "التالي"}
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

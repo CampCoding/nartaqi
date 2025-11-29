@@ -9,16 +9,23 @@ import {
 } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
 import { handleGetAllRoundResources } from "../../lib/features/resourcesSlice";
+import { useRouter } from "next/navigation";
 
 export default function AddCourseSourceResource({
   videos,
   setVideos,
   duplicateTargets = [],              // [{ id, title }]
-  onDuplicateResources,               // async ({ links, files }, targetIds) => {}
+  onDuplicateResources,  
+  goToNextStep,
+  goToPrevStep,
+  currentStep   ,
+  id    ,
+  STEPS
+        // async ({ links, files }, targetIds) => {}
 }) {
   // If this component is rendered inside a <Form>, this gives access to its values
   const form = Form.useFormInstance?.();
-
+  const router =useRouter();
   // ----- Duplicate to other courses (checkbox list) -----
   const [dupOpen, setDupOpen] = useState(false);
   const [dupLoading, setDupLoading] = useState(false);
@@ -285,6 +292,26 @@ export default function AddCourseSourceResource({
           </Button>
         </div>
       </div>
+
+      <div className="mt-8 flex justify-between space-x-4 space-x-reverse">
+            <button
+              onClick={goToPrevStep}
+              disabled={currentStep === 1}
+              className={`rounded-lg border border-gray-300 bg-white px-6 py-2 text-gray-700 transition duration-150 hover:bg-gray-50 ${
+                currentStep === 1 ? "cursor-not-allowed opacity-50" : ""
+              }`}
+            >
+              السابق
+            </button>
+            <button
+              onClick={() => {
+                router.push(`/round_content?id=${id}`)
+              }}
+              className={`rounded-lg bg-blue-600 px-6 py-2 text-white shadow-md transition duration-150 hover:bg-blue-700 `}
+            >
+              {currentStep === STEPS.length ? "إنهاء ونشر" : "التالي"}
+            </button>
+          </div>
 
       {/* Duplicate Modal */}
       <Modal

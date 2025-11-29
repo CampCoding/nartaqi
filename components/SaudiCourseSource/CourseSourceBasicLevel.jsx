@@ -1,528 +1,19 @@
-// "use client";
-// import Button from "@/components/atoms/Button";
-// import {
-//   Card,
-//   Collapse,
-//   Empty,
-//   Tag,
-//   Tooltip,
-//   Badge,
-//   DatePicker,
-//   Divider,
-// } from "antd";
-// import {
-//   Eye,
-//   EyeOff,
-//   FileText,
-//   Target,
-//   Trash2,
-//   Plus,
-//   Video,
-//   ExternalLink,
-//   Upload,
-//   BookOpen,
-// } from "lucide-react";
-// import dayjs from "dayjs";
-// import React from "react";
-
-// const { Panel } = Collapse;
-
-// export default function CourseSourceBasicLevel({
-//   stats,
-//   deleteLesson,
-//   deleteStage,
-//   toggleStageVisibility,
-//   toggleLessonVisibility,
-//   foundationStages,
-//   setOpenAddLesson,
-//   setOpenAddStage,
-//   addTrainingFiles,
-//   removeTrainingFile,
-//   /** جديد */
-//   isReleased,
-//   setLessonReleaseAt,
-//   setStageReleaseAt,
-// }) {
-//   const openPicker = (stageId, lessonId) => {
-//     const input = document.getElementById(`pdf-picker-${stageId}-${lessonId}`);
-//     if (input) input.click();
-//   };
-
-//   const onFilesPicked = (stageId, lessonId, e) => {
-//     const files = Array.from(e.target.files || []);
-//     if (files.length && typeof addTrainingFiles === "function") {
-//       addTrainingFiles(stageId, lessonId, files);
-//     }
-//     e.target.value = "";
-//   };
-
-//   return (
-//     <div className="w-full" dir="rtl">
-//       {/* Header */}
-//       <Card className="mb-6 shadow-lg border-0 bg-gradient-to-r from-blue-50 to-indigo-50">
-//         <div className="flex items-center justify-between flex-wrap gap-4">
-//           <div className="flex items-center gap-4">
-//             <div className="flex items-center gap-2">
-//               <BookOpen className="w-6 h-6 text-blue-600" />
-//               <h2 className="text-xl font-bold text-gray-800 m-0">مرحلة التأسيس</h2>
-//             </div>
-//             <div className="flex items-center gap-3">
-//               <Badge
-//                 count={stats.stageCount}
-//                 showZero
-//                 color="blue"
-//                 className="[&_.ant-badge-count]:bg-blue-500"
-//               >
-//                 <span className="text-sm text-gray-600 font-medium px-3 py-1 bg-white rounded-full">
-//                   الأقسام
-//                 </span>
-//               </Badge>
-//               <Badge
-//                 count={stats.lessonCount}
-//                 showZero
-//                 color="green"
-//                 className="[&_.ant-badge-count]:bg-green-500"
-//               >
-//                 <span className="text-sm text-gray-600 font-medium px-3 py-1 bg-white rounded-full">
-//                   المحاضرات
-//                 </span>
-//               </Badge>
-//             </div>
-//           </div>
-//           <div className="flex items-center gap-3">
-//             <Button
-//               className="!bg-gray-700 hover:!bg-gray-800 !text-white !border-0 shadow-md flex items-center gap-2"
-//               onClick={() => setOpenAddStage(true)}
-//             >
-//               <Plus className="w-4 h-4" /> إضافة قسم
-//             </Button>
-//             <Button
-//               type="primary"
-//               className="!bg-blue-600 hover:!bg-blue-700 !text-white !border-0 shadow-md flex items-center gap-2"
-//               onClick={() => setOpenAddLesson(true)}
-//             >
-//               <Plus className="w-4 h-4" /> إضافة محاضرة
-//             </Button>
-//           </div>
-//         </div>
-//       </Card>
-
-//       {/* Content */}
-//       <Card className="shadow-lg !h-fit border-0" bodyStyle={{ padding: 0 }}>
-//         {foundationStages.length === 0 ? (
-//           <div className="p-12">
-//             <Empty
-//               description={
-//                 <div className="text-center">
-//                   <p className="text-gray-500 text-lg mb-2">لا توجد أقسام بعد</p>
-//                   <p className="text-gray-400 text-sm">
-//                     ابدأ بإضافة أقسام جديدة لتنظيم المحتوى
-//                   </p>
-//                 </div>
-//               }
-//               className="my-8"
-//             />
-//           </div>
-//         ) : (
-//           <Collapse accordion className="border-0 !h-full" expandIconPosition="end">
-//             {foundationStages.map((st, stageIndex) => {
-//               const stageOpened = isReleased?.(st.releaseAt);
-//               const effectiveStageVisible = st.visible && stageOpened;
-
-//               return (
-//                 <Panel
-//                   key={st.id}
-//                   className="!border-0 !mb-2"
-//                   style={{
-//                     backgroundColor: effectiveStageVisible ? "#fafafa" : "#f5f5f5",
-//                     borderRadius: "12px",
-//                     marginBottom: "8px",
-//                     opacity: effectiveStageVisible ? 1 : 0.9,
-//                   }}
-//                   header={
-//                     <div className="flex items-center justify-between w-full pr-4">
-//                       <div className="flex items-center gap-4">
-//                         <div
-//                           className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-//                             effectiveStageVisible
-//                               ? "bg-blue-100 text-blue-700"
-//                               : "bg-gray-100 text-gray-400"
-//                           }`}
-//                         >
-//                           {stageIndex + 1}
-//                         </div>
-//                         <div className="flex items-center gap-3">
-//                           <Tooltip
-//                             title={
-//                               effectiveStageVisible
-//                                 ? "إخفاء القسم"
-//                                 : stageOpened
-//                                 ? "إظهار القسم"
-//                                 : "سيظهر تلقائياً عند موعده"
-//                             }
-//                           >
-//                             <Button
-//                               type="text"
-//                               size="small"
-//                               disabled={!stageOpened}
-//                               className={`!p-1 hover:!bg-gray-100 ${effectiveStageVisible ? "!text-green-600" : "!text-gray-400"}`}
-//                               icon={effectiveStageVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-//                               onClick={(e) => {
-//                                 e.stopPropagation();
-//                                 if (stageOpened) toggleStageVisibility(st.id);
-//                               }}
-//                             />
-//                           </Tooltip>
-
-//                           <h3
-//                             className={`font-semibold text-lg m-0 ${effectiveStageVisible ? "text-gray-800" : "text-gray-400"}`}
-//                           >
-//                             القسم : {st.title}
-//                           </h3>
-
-//                           {/* حالة ظهور القسم */}
-//                           {st.releaseAt ? (
-//                             stageOpened ? (
-//                               <Tag color="green">متاح</Tag>
-//                             ) : (
-//                               <Tag color="red">لم يُفتح بعد</Tag>
-//                             )
-//                           ) : (
-//                             <Tag color="green">متاح الآن</Tag>
-//                           )}
-
-//                           {st.releaseAt && (
-//                             <Tooltip title="موعد الظهور">
-//                               <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-//                                 {dayjs(st.releaseAt).format("YYYY/MM/DD HH:mm")}
-//                               </span>
-//                             </Tooltip>
-//                           )}
-//                         </div>
-//                       </div>
-
-//                       {/* أدوات القسم: جدولة/مسح/عداد/حذف */}
-//                       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-//                         <DatePicker
-//                           showTime
-//                           size="small"
-//                           placeholder="موعد ظهور القسم"
-//                           className="min-w-[190px]"
-//                           value={
-//                             st.releaseAt && dayjs(st.releaseAt).isValid()
-//                               ? dayjs(st.releaseAt)
-//                               : null
-//                           }
-//                           onChange={(v) => setStageReleaseAt?.(st.id, v || null)}
-//                         />
-//                         {st.releaseAt && (
-//                           <Button
-//                             size="small"
-//                             type="text"
-//                             onClick={() => setStageReleaseAt?.(st.id, null)}
-//                           >
-//                             مسح
-//                           </Button>
-//                         )}
-
-//                         <Badge
-//                           count={st.lessons?.length || 0}
-//                           showZero
-//                           size="small"
-//                           className="[&_.ant-badge-count]:bg-indigo-500 [&_.ant-badge-count]:text-xs"
-//                         >
-//                           <span className="text-xs text-gray-500 font-medium">
-//                             المحاضرات
-//                           </span>
-//                         </Badge>
-
-//                         <Tooltip title="حذف القسم">
-//                           <Button
-//                             danger
-//                             type="text"
-//                             size="small"
-//                             className="!p-1 hover:!bg-red-50"
-//                             icon={<Trash2 className="w-4 h-4" />}
-//                             onClick={() => deleteStage(st.id)}
-//                           />
-//                         </Tooltip>
-//                       </div>
-//                     </div>
-//                   }
-//                 >
-//                   <div className="px-2 sm:px-4 md:px-6 pb-4">
-//                     {(st.lessons || []).length === 0 ? (
-//                       <div className="text-center py-8">
-//                         <Empty
-//                           description="لا توجد محاضرات في هذه القسم"
-//                           image={Empty.PRESENTED_IMAGE_SIMPLE}
-//                           className="!text-gray-400"
-//                         />
-//                       </div>
-//                     ) : (
-//                       <Collapse
-//                         accordion
-//                         bordered={false}
-//                         expandIconPosition="end"
-//                         className="bg-transparent"
-//                       >
-//                         {st.lessons.map((l, lessonIndex) => {
-//                           const pdfs = l?.training?.pdfs || [];
-//                           const released = isReleased?.(l.releaseAt);
-
-//                           const header = (
-//                             <div className="flex items-center justify-between w-full">
-//                               <div className="flex items-center gap-3">
-//                                 <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-sm">
-//                                   {lessonIndex + 1}
-//                                 </div>
-//                                 <div className="flex items-center gap-2">
-//                                   <span
-//                                     className={`font-semibold ${l.visible ? "text-gray-800" : "text-gray-500"}`}
-//                                   >
-//                                     المحاضرة : {l.title}
-//                                   </span>
-//                                   <Badge count={pdfs.length} showZero size="small" />
-//                                   {/* حالة الظهور */}
-//                                   {l.releaseAt && !released && (
-//                                     <Tag color="red">لم يُفتح بعد</Tag>
-//                                   )}
-//                                 </div>
-//                               </div>
-
-//                               {/* أدوات الجدولة للدرس */}
-//                               <div
-//                                 className="flex items-center gap-2"
-//                                 onClick={(e) => e.stopPropagation()}
-//                               >
-//                                 <Tooltip title="موعد الظهور">
-//                                   <DatePicker
-//                                     showTime
-//                                     size="small"
-//                                     value={
-//                                       l.releaseAt && dayjs(l.releaseAt).isValid()
-//                                         ? dayjs(l.releaseAt)
-//                                         : null
-//                                     }
-//                                     placeholder="موعد الظهور"
-//                                     className="min-w-[190px]"
-//                                     onChange={(v) =>
-//                                       setLessonReleaseAt(st.id, l.id, v || null)
-//                                     }
-//                                   />
-//                                 </Tooltip>
-//                                 {l.releaseAt && (
-//                                   <Button
-//                                     size="small"
-//                                     type="text"
-//                                     onClick={() =>
-//                                       setLessonReleaseAt(st.id, l.id, null)
-//                                     }
-//                                   >
-//                                     مسح
-//                                   </Button>
-//                                 )}
-//                                 <Tooltip
-//                                   title={l.visible ? "إخفاء المحاضرة" : "إظهار المحاضرة"}
-//                                 >
-//                                   <Button
-//                                     type="text"
-//                                     size="small"
-//                                     className={`!p-1 hover:!bg-gray-100 ${l.visible ? "!text-green-600" : "!text-gray-400"}`}
-//                                     icon={l.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-//                                     onClick={() => toggleLessonVisibility(st.id, l.id)}
-//                                   />
-//                                 </Tooltip>
-//                                 <Tooltip title="حذف المحاضرة">
-//                                   <Button
-//                                     danger
-//                                     size="small"
-//                                     className="!p-1 hover:!bg-red-50"
-//                                     onClick={() => deleteLesson(st.id, l.id)}
-//                                     icon={<Trash2 className="w-4 h-4" />}
-//                                   />
-//                                 </Tooltip>
-//                               </div>
-//                             </div>
-//                           );
-
-//                           return (
-//                             <Panel
-//                               key={l.id}
-//                               header={header}
-//                               className={`!rounded-xl !mb-3 ${
-//                                 l.visible
-//                                   ? "bg-white !border !border-blue-100 hover:!border-blue-200"
-//                                   : "bg-gray-50 !border !border-gray-200 opacity-80"
-//                               }`}
-//                             >
-//                               {/* مدخل رفع PDF المخفي */}
-//                               <input
-//                                 id={`pdf-picker-${st.id}-${l.id}`}
-//                                 type="file"
-//                                 accept="application/pdf"
-//                                 multiple
-//                                 className="hidden"
-//                                 onChange={(e) => onFilesPicked(st.id, l.id, e)}
-//                               />
-
-//                               <div className="space-y-4">
-//                                 {/* فيديو الدرس */}
-//                                 <div className="bg-blue-50 rounded-lg p-4">
-//                                   <div className="flex items-center gap-2 mb-3">
-//                                     <Video className="w-4 h-4 text-blue-600" />
-//                                     <Tag color="blue" className="!mb-0 font-medium">
-//                                       فيديو الدرس
-//                                     </Tag>
-//                                   </div>
-//                                   <div className="flex items-center gap-3 text-sm text-gray-700">
-//                                     <span className="font-medium">
-//                                       {l.lessonVideo?.title || "غير محدد"}
-//                                     </span>
-//                                     {l.lessonVideo?.source === "url" &&
-//                                     l.lessonVideo?.url ? (
-//                                       <a
-//                                         href={l.lessonVideo.url}
-//                                         target="_blank"
-//                                         rel="noreferrer"
-//                                         className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium"
-//                                       >
-//                                         مشاهدة <ExternalLink className="w-3 h-3" />
-//                                       </a>
-//                                     ) : l.lessonVideo ? (
-//                                       <span className="text-gray-500">ملف مرفوع</span>
-//                                     ) : null}
-//                                   </div>
-//                                 </div>
-
-//                                 {/* Training */}
-//                                 <div className="bg-amber-50 rounded-lg p-4">
-//                                   <div className="flex items-center gap-2 mb-3">
-//                                     <Target className="w-4 h-4 text-amber-600" />
-//                                     <Tag color="gold" className="!mb-0 font-medium">
-//                                       تدريب
-//                                       </Tag>
-//                                   </div>
-
-//                                   <Divider className="!my-4" />
-
-//                                   <div>
-//                                     <div className="flex items-center justify-between mb-3">
-//                                       <div className="flex items-center gap-2">
-//                                         <FileText className="w-4 h-4 text-indigo-600" />
-//                                         <Tag color="geekblue" className="!mb-0 font-medium">
-//                                           ملفات PDF
-//                                         </Tag>
-//                                         <Badge count={pdfs.length} showZero size="small" />
-//                                       </div>
-//                                       <Button
-//                                         type="dashed"
-//                                         size="small"
-//                                         className="!border-indigo-300 !text-indigo-600 hover:!border-indigo-400 hover:!text-indigo-700 flex items-center gap-1"
-//                                         onClick={(e) => {
-//                                           e.stopPropagation();
-//                                           openPicker(st.id, l.id);
-//                                         }}
-//                                       >
-//                                         <Upload className="w-3 h-3" /> إضافة ملفات
-//                                       </Button>
-//                                     </div>
-
-//                                     {pdfs.length > 0 && (
-//                                       <div className="space-y-2">
-//                                         {pdfs.map((f, idx) => {
-//                                           const key = f?.id ?? idx;
-//                                           const label =
-//                                             f?.title || f?.name || `ملف ${idx + 1}`;
-//                                           const isUrl = f?.source === "url" && f?.url;
-
-//                                           return (
-//                                             <div
-//                                               key={key}
-//                                               className="flex items-center justify-between rounded-lg border bg-white p-3 hover:shadow-sm transition-shadow"
-//                                             >
-//                                               <div className="flex items-center gap-3">
-//                                                 <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-//                                                   <FileText className="w-4 h-4 text-red-600" />
-//                                                 </div>
-//                                                 <span className="text-gray-800 font-medium">
-//                                                   {label}
-//                                                 </span>
-//                                               </div>
-//                                               <div className="flex items-center gap-2">
-//                                                 {isUrl ? (
-//                                                   <a
-//                                                     href={f.url}
-//                                                     target="_blank"
-//                                                     rel="noreferrer"
-//                                                     className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
-//                                                     onClick={(e) => e.stopPropagation()}
-//                                                   >
-//                                                     عرض <ExternalLink className="w-3 h-3" />
-//                                                   </a>
-//                                                 ) : (
-//                                                   <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-//                                                     ملف مرفوع
-//                                                   </span>
-//                                                 )}
-//                                                 <Tooltip title="حذف الملف">
-//                                                   <Button
-//                                                     danger
-//                                                     type="text"
-//                                                     size="small"
-//                                                     icon={<Trash2 className="w-4 h-4" />}
-//                                                     className="!p-1 hover:!bg-red-50"
-//                                                     onClick={(e) => {
-//                                                       e.stopPropagation();
-//                                                       removeTrainingFile?.(
-//                                                         st.id,
-//                                                         l.id,
-//                                                         f?.id ?? idx
-//                                                       );
-//                                                     }}
-//                                                   />
-//                                                 </Tooltip>
-//                                               </div>
-//                                             </div>
-//                                           );
-//                                         })}
-//                                       </div>
-//                                     )}
-//                                   </div>
-//                                 </div>
-//                               </div>
-//                             </Panel>
-//                           );
-//                         })}
-//                       </Collapse>
-//                     )}
-//                   </div>
-//                 </Panel>
-//               );
-//             })}
-//           </Collapse>
-//         )}
-//       </Card>
-//     </div>
-//   );
-// }
-
 "use client";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   CalendarOutlined,
   CaretDownOutlined,
-  CloseOutlined,
   FileTextOutlined,
   PlayCircleOutlined,
 } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
 import { handleGetAllRoundContent } from "../../lib/features/roundContentSlice";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Spin } from "antd";
+import { useRouter } from "next/navigation";
+import { Spin, DatePicker, Tag, Tooltip } from "antd";
+import dayjs from "dayjs";
 import AddRoundContent from "../RoundContent/AddRoundContent";
 import DeleteRoundContent from "../RoundContent/DeleteRoundContent";
 import EditRoundContent from "../RoundContent/EditRoundContent";
@@ -535,7 +26,6 @@ import { handleGetAllLessonVideo } from "../../lib/features/videoSlice";
 import EditVideoModal from "../RoundContent/Videos/EditVideoModal";
 import DeleteVideoModal from "../RoundContent/Videos/DeleteVideoModal";
 
-
 const initialSchedule = {
   startDate: "2025-12-01",
   endDate: "2025-12-31",
@@ -543,11 +33,14 @@ const initialSchedule = {
   endTime: "11:00",
 };
 
-
 export default function CourseSourceBasicLevel({ id }) {
   const [rowData, setRowData] = useState({});
   const [schedule, setSchedule] = useState(initialSchedule);
   const [isScheduleCollapsed, setIsScheduleCollapsed] = useState(false);
+
+  // per section and per lesson release times (local state, can be synced with backend)
+  const [contentSchedule, setContentSchedule] = useState({});
+  const [lessonSchedule, setLessonSchedule] = useState({});
 
   // Modal states...
   const [addModalContent, setAddModalContent] = useState(false);
@@ -558,18 +51,16 @@ export default function CourseSourceBasicLevel({ id }) {
   const [openDeleteLesson, setOpenDeleteLesson] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState({});
   const [openAddVideo, setOpenAddVideo] = useState(false);
-  const [openEditVideo , setOpenEditVideo] = useState(false);
-  const [openDeleteVideo , setOpenDeleteVideo] = useState(false);
-  const [selectedVideo , setSelectedVideo] = useState({});
-  const router = useRouter();
+  const [openEditVideo, setOpenEditVideo] = useState(false);
+  const [openDeleteVideo, setOpenDeleteVideo] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState({});
 
+  const router = useRouter();
   const dispatch = useDispatch();
-  const { all_content_list} =
-    useSelector((state) => state?.content);
-  const {  all_lessons_list } = useSelector(
-    (state) => state?.lesson
-  );
-  const {  all_videos_list } = useSelector((state) => state?.videos);
+
+  const { all_content_list } = useSelector((state) => state?.content);
+  const { all_lessons_list } = useSelector((state) => state?.lesson);
+  const { all_videos_list } = useSelector((state) => state?.videos);
 
   // Track which content sections are expanded and their loading states
   const [expandedContents, setExpandedContents] = useState({});
@@ -578,6 +69,12 @@ export default function CourseSourceBasicLevel({ id }) {
   const [loadingLessons, setLoadingLessons] = useState({});
 
   const [basicData, setBasicData] = useState([]);
+
+  // helper to know if something is "released" based on its datetime
+  const isReleased = useCallback((releaseAt) => {
+    if (!releaseAt) return true; // if no schedule -> always available
+    return dayjs(releaseAt).isBefore(dayjs());
+  }, []);
 
   useEffect(() => {
     dispatch(
@@ -592,7 +89,7 @@ export default function CourseSourceBasicLevel({ id }) {
   useEffect(() => {
     setBasicData(
       all_content_list?.data?.message?.filter(
-        (item) => item?.type == "basic"
+        (item) => item?.type === "basic"
       ) || []
     );
   }, [all_content_list]);
@@ -609,10 +106,6 @@ export default function CourseSourceBasicLevel({ id }) {
     [all_videos_list]
   );
 
-  function handleScheduleChange() {
-    console.log("");
-  }
-
   // Helper to get lessons for specific content
   const getLessonsByContentId = useCallback(
     (contentId) => {
@@ -625,6 +118,39 @@ export default function CourseSourceBasicLevel({ id }) {
     },
     [all_lessons_list]
   );
+
+  function handleScheduleChange(e) {
+    const { name, value } = e.target;
+    setSchedule((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    // TODO: here you can also call an API to save course-level schedule
+  }
+
+  const handleContentReleaseChange = (contentId, value) => {
+    const release_at = value ? value.toISOString() : null;
+
+    setContentSchedule((prev) => ({
+      ...prev,
+      [contentId]: release_at,
+    }));
+
+    // TODO: call your API / Redux action here to persist:
+    // dispatch(updateRoundContentRelease({ id: contentId, release_at }));
+  };
+
+  const handleLessonReleaseChange = (lessonId, value) => {
+    const release_at = value ? value.toISOString() : null;
+
+    setLessonSchedule((prev) => ({
+      ...prev,
+      [lessonId]: release_at,
+    }));
+
+    // TODO: call your API / Redux action here to persist:
+    // dispatch(updateLessonRelease({ id: lessonId, release_at }));
+  };
 
   // --- Toggle Handlers ---
 
@@ -713,16 +239,18 @@ export default function CourseSourceBasicLevel({ id }) {
   );
 
   // Video Card Renderer
-  const VideoCard = ({ video, lessonId }) => {
+  const VideoCard = ({ video }) => {
     const isFree = video?.free === "1";
-    
+
     return (
       <div className="bg-blue-50/70 p-4 mb-3 rounded-lg border border-blue-100 flex justify-between items-start">
         <div className="flex items-start flex-1 min-w-0">
           <PlayCircleOutlined className="text-blue-600 text-lg mt-1 ml-3 flex-shrink-0" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <p className="font-medium text-gray-800 truncate">{video?.title}</p>
+              <p className="font-medium text-gray-800 truncate">
+                {video?.title}
+              </p>
               {isFree && (
                 <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
                   مجاني
@@ -732,7 +260,16 @@ export default function CourseSourceBasicLevel({ id }) {
             <p className="text-gray-600 text-sm mt-1">{video?.description}</p>
             <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
               <span>⏱️ {video?.time}</span>
-              <a href={video?.video} target="_blank" className="truncate max-w-xs">{video.video}</a>
+              {video?.video && (
+                <a
+                  href={video?.video}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="truncate max-w-xs text-blue-600 hover:text-blue-700"
+                >
+                  {video.video}
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -741,15 +278,16 @@ export default function CourseSourceBasicLevel({ id }) {
             icon={<EditOutlined className="text-blue-600" />}
             onClick={(e) => {
               e.stopPropagation();
-              setSelectedVideo(video)
-              setOpenEditVideo(true)
+              setSelectedVideo(video);
+              setOpenEditVideo(true);
             }}
           />
           <ActionButton
             icon={<DeleteOutlined className="text-red-600" />}
-            onClick={() =>{
-              setSelectedVideo(video)
-              setOpenDeleteVideo(true)
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedVideo(video);
+              setOpenDeleteVideo(true);
             }}
           />
         </div>
@@ -757,7 +295,7 @@ export default function CourseSourceBasicLevel({ id }) {
     );
   };
 
-  // Exam Card Renderer (Placeholder - you can expand this based on your exam data structure)
+  // Exam Card Renderer (placeholder)
   const ExamCard = ({ exam, lessonId }) => (
     <div className="bg-orange-50/70 p-4 mb-3 rounded-lg border border-orange-100 flex justify-between items-start">
       <div className="flex items-start flex-1 min-w-0">
@@ -788,12 +326,17 @@ export default function CourseSourceBasicLevel({ id }) {
   );
 
   // Lesson Card Renderer
-  const LessonCard = ({ lesson, contentId }) => {
+  const LessonCard = ({ lesson }) => {
     const isLessonExpanded = expandedLessons[lesson.id];
     const isLoadingVideos = loadingLessons[lesson.id];
     const lessonVideos = getVideosByLessonId(lesson.id);
+
+    const releaseAt =
+      lessonSchedule[lesson.id] ?? lesson.release_at ?? lesson.releaseAt;
+    const released = isReleased(releaseAt);
+
     // Mock exams data - replace with actual API call
-    const lessonExams = []; // You can add exams data here
+    const lessonExams = [];
 
     return (
       <div className="mb-4 bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
@@ -815,6 +358,26 @@ export default function CourseSourceBasicLevel({ id }) {
               <p className="text-sm text-gray-600 mt-1 truncate">
                 {lesson.description}
               </p>
+
+              <div className="mt-2 flex items-center gap-3 flex-wrap">
+                {releaseAt ? (
+                  released ? (
+                    <Tag color="green">متاح</Tag>
+                  ) : (
+                    <Tag color="red">لم يُفتح بعد</Tag>
+                  )
+                ) : (
+                  <Tag color="green">متاح الآن</Tag>
+                )}
+
+                {releaseAt && (
+                  <Tooltip title="موعد الظهور">
+                    <span className="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
+                      {dayjs(releaseAt).format("YYYY/MM/DD HH:mm")}
+                    </span>
+                  </Tooltip>
+                )}
+              </div>
             </div>
           </div>
 
@@ -823,15 +386,14 @@ export default function CourseSourceBasicLevel({ id }) {
             className="flex space-x-2 space-x-reverse ml-4 flex-shrink-0"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* <ActionButton
-              icon={<PlusOutlined className="text-green-600" />}
-              onClick={() => {
-                setOpenAddVideo(true);
-                setSelectedLesson(lesson);
-              }}
-              className="text-sm border border-green-200"
-              title="إضافة فيديو"
-            /> */}
+            <DatePicker
+              showTime
+              allowClear
+              placeholder="موعد الظهور"
+              value={releaseAt ? dayjs(releaseAt) : null}
+              onChange={(val) => handleLessonReleaseChange(lesson.id, val)}
+              className="w-40"
+            />
             <ActionButton
               icon={<EditOutlined className="text-blue-600" />}
               onClick={() => {
@@ -852,7 +414,11 @@ export default function CourseSourceBasicLevel({ id }) {
         {/* Videos & Exams Section (Conditional Rendering) */}
         {isLessonExpanded && (
           <div className="p-4 pt-3 bg-gray-50 border-t">
-            {isLoadingVideos ? (
+            {!released ? (
+              <p className="text-center text-gray-400">
+                هذا الدرس لم يُفتح بعد طبقاً لجدول الدورة.
+              </p>
+            ) : isLoadingVideos ? (
               <div className="flex justify-center items-center py-4">
                 <Spin spinning size="default" />
               </div>
@@ -876,15 +442,11 @@ export default function CourseSourceBasicLevel({ id }) {
                       إضافة فيديو
                     </button>
                   </div>
-                  
+
                   {lessonVideos.length > 0 ? (
                     <div className="space-y-2">
                       {lessonVideos.map((video) => (
-                        <VideoCard
-                          key={video.id}
-                          video={video}
-                          lessonId={lesson.id}
-                        />
+                        <VideoCard key={video.id} video={video} />
                       ))}
                     </div>
                   ) : (
@@ -903,8 +465,7 @@ export default function CourseSourceBasicLevel({ id }) {
                     </h5>
                     <button
                       onClick={() => {
-                        // Handle add exam
-                        router.push(`/questions/new?lessonId=${lesson?.id}`)
+                        router.push(`/questions/new?lessonId=${lesson?.id}`);
                       }}
                       className="flex items-center text-sm text-orange-600 hover:text-orange-700"
                     >
@@ -912,7 +473,7 @@ export default function CourseSourceBasicLevel({ id }) {
                       إضافة اختبار
                     </button>
                   </div>
-                  
+
                   {lessonExams.length > 0 ? (
                     <div className="space-y-2">
                       {lessonExams.map((exam) => (
@@ -943,6 +504,12 @@ export default function CourseSourceBasicLevel({ id }) {
     const isLoading = loadingContents[contentItem.id];
     const contentLessons = getLessonsByContentId(contentItem.id);
 
+    const releaseAt =
+      contentSchedule[contentItem.id] ??
+      contentItem.release_at ??
+      contentItem.releaseAt;
+    const opened = isReleased(releaseAt);
+
     return (
       <div className="mb-8 bg-gray-50 border border-gray-100 rounded-xl shadow-md overflow-hidden">
         {/* Content Header (Clickable for Collapse) */}
@@ -963,6 +530,26 @@ export default function CourseSourceBasicLevel({ id }) {
               <p className="text-base text-gray-700 mt-1 truncate">
                 {contentItem.description}
               </p>
+
+              <div className="mt-2 flex items-center gap-3 flex-wrap">
+                {releaseAt ? (
+                  opened ? (
+                    <Tag color="green">متاح</Tag>
+                  ) : (
+                    <Tag color="red">لم يُفتح بعد</Tag>
+                  )
+                ) : (
+                  <Tag color="green">متاح الآن</Tag>
+                )}
+
+                {releaseAt && (
+                  <Tooltip title="موعد الظهور">
+                    <span className="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
+                      {dayjs(releaseAt).format("YYYY/MM/DD HH:mm")}
+                    </span>
+                  </Tooltip>
+                )}
+              </div>
             </div>
           </div>
 
@@ -971,6 +558,14 @@ export default function CourseSourceBasicLevel({ id }) {
             className="flex space-x-3 space-x-reverse ml-4 flex-shrink-0"
             onClick={(e) => e.stopPropagation()}
           >
+            <DatePicker
+              showTime
+              allowClear
+              placeholder="موعد ظهور المحتوى"
+              value={releaseAt ? dayjs(releaseAt) : null}
+              onChange={(val) => handleContentReleaseChange(contentItem.id, val)}
+              className="w-44"
+            />
             <ActionButton
               icon={<PlusOutlined className="text-green-600" />}
               onClick={() => {
@@ -1008,11 +603,7 @@ export default function CourseSourceBasicLevel({ id }) {
             ) : contentLessons.length > 0 ? (
               <div className="pr-2 border-r-4 border-blue-300">
                 {contentLessons.map((lesson) => (
-                  <LessonCard
-                    key={lesson.id}
-                    lesson={lesson}
-                    contentId={contentItem.id}
-                  />
+                  <LessonCard key={lesson.id} lesson={lesson} />
                 ))}
               </div>
             ) : (
@@ -1112,19 +703,18 @@ export default function CourseSourceBasicLevel({ id }) {
             />
           </div>
           <p className="text-xs text-gray-500 mt-4 border-t pt-3">
-            **ملاحظة:** سيتم تطبيق هذه الأوقات على جميع دروس هذه الدورة.
+            **ملاحظة:** سيتم تطبيق هذه الأوقات على جميع دروس هذه الدورة (يمكنك
+            لاحقاً تخصيص مواعيد فتح كل قسم ودرس من اليسار).
           </p>
         </div>
       )}
     </div>
   );
 
-
-
   const handleDeleteExam = (lessonId, examId) => {
-    if (window.confirm('هل أنت متأكد من حذف هذا الاختبار؟')) {
+    if (window.confirm("هل أنت متأكد من حذف هذا الاختبار؟")) {
       // Implement delete exam API call
-      console.log('Delete exam:', examId, 'from lesson:', lessonId);
+      console.log("Delete exam:", examId, "from lesson:", lessonId);
     }
   };
 
@@ -1144,9 +734,9 @@ export default function CourseSourceBasicLevel({ id }) {
       </div>
 
       {/* Main Grid Layout */}
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-6xl mx-auto  gap-8">
         {/* Scheduling Panel */}
-        <ScheduleSection />
+        {/* <ScheduleSection /> */}
 
         {/* Course Content Structure */}
         <div className="lg:col-span-2">
@@ -1221,21 +811,20 @@ export default function CourseSourceBasicLevel({ id }) {
         id={selectedLesson?.id}
       />
 
-      <EditVideoModal 
-      open={openEditVideo}
-      setOpen={setOpenEditVideo}
-      rowData={selectedVideo}
-      setRowData={setSelectedVideo}
-      id={selectedLesson?.id}
-      />
-      
-       <DeleteVideoModal 
-      open={openDeleteVideo}
-      setOpen={setOpenDeleteVideo}
-      rowData={selectedVideo}
-      setRowData={setSelectedVideo}
+      <EditVideoModal
+        open={openEditVideo}
+        setOpen={setOpenEditVideo}
+        rowData={selectedVideo}
+        setRowData={setSelectedVideo}
+        id={selectedLesson?.id}
       />
 
+      <DeleteVideoModal
+        open={openDeleteVideo}
+        setOpen={setOpenDeleteVideo}
+        rowData={selectedVideo}
+        setRowData={setSelectedVideo}
+      />
     </div>
   );
 }

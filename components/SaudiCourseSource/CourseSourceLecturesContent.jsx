@@ -1241,9 +1241,9 @@ export default function CourseSourceLecturesContent({ id }) {
       </div>
 
       {/* Main Grid Layout */}
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-6xl mx-auto  gap-8">
         {/* Scheduling Panel */}
-        <ScheduleSection />
+        {/* <ScheduleSection /> */}
 
         {/* Course Content Structure */}
         <div className="lg:col-span-2">

@@ -626,6 +626,7 @@ export default function ExamMainData({
               .unwrap()
               .then((res) => {
                 if (res?.data?.status == "success") {
+                  toast.success("تم اضافة السؤال بنجاح")
                   dispatch(
                     handleGetExamQuestions({
                       body: {
@@ -850,6 +851,7 @@ export default function ExamMainData({
       ).unwrap();
 
       if (result?.data?.status === "success") {
+        toast.success("تم اضافة السؤال بنجاح")
         const exSectionId =
           result?.data?.message?.exam_section_id || selectedSectionId;
         if (exSectionId) {

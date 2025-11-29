@@ -32,7 +32,10 @@ import {
   handleGetAllCoursesCategories,
   handleGetCategoryParts,
 } from "../../lib/features/categoriesSlice";
-import { handleAddBaiskRound, handleGetSourceRound } from "../../lib/features/roundsSlice";
+import {
+  handleAddBaiskRound,
+  handleGetSourceRound,
+} from "../../lib/features/roundsSlice";
 import { handleGetAllTeachers } from "../../lib/features/teacherSlice";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
@@ -76,37 +79,48 @@ const customBeforeUpload = (file) => {
 export default function AddCourseSourceBasicInfo({
   fileList,
   setFileList,
+  availableSections,
   selectedCategory,
   setSelectedCategory,
-  availableSections,
   all_categories,
   beforeUpload = customBeforeUpload,
   setImagePreview,
   rowData,
   setRowData,
+  goToNextStep,
+  setRoundId,
+  goToPrevStep,
+  currentStep,
 }) {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
   const { all_courses_categories_list, get_categories_parts_list } =
     useSelector((state) => state?.categories);
-  const {add_round_loading }=  useSelector(state => state?.rounds);
+  const { add_round_loading } = useSelector((state) => state?.rounds);
 
   const [categoriesOptions, setCategoriesOptions] = useState([]);
   const [categoriesPartOptions, setCategoriesPartOptions] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const {teachers_loading , teachers_list} = useSelector(state => state?.teachers)
-  const [teacherOptions , setTeacherOptions]  = useState([]);
+  const { teachers_loading, teachers_list } = useSelector(
+    (state) => state?.teachers
+  );
+  const [teacherOptions, setTeacherOptions] = useState([]);
   const router = useRouter();
 
   /* ====================== Load categories & parts ====================== */
   useEffect(() => {
-    dispatch(handleGetAllTeachers())
-  } , [dispatch])
+    dispatch(handleGetAllTeachers());
+  }, [dispatch]);
 
   useEffect(() => {
-  setTeacherOptions(teachers_list?.data?.message?.map(item => ({label : item?.name , value : item?.id})))
-  } ,[teachers_list])
+    setTeacherOptions(
+      teachers_list?.data?.message?.map((item) => ({
+        label: item?.name,
+        value: item?.id,
+      }))
+    );
+  }, [teachers_list]);
 
   useEffect(() => {
     dispatch(handleGetAllCoursesCategories({}));
@@ -122,6 +136,7 @@ export default function AddCourseSourceBasicInfo({
   }, [all_courses_categories_list]);
 
   useEffect(() => {
+    console.log(selectedCategory)
     if (!selectedCategory) return;
     const data_send = {
       course_category_id: selectedCategory,
@@ -250,8 +265,126 @@ export default function AddCourseSourceBasicInfo({
 
   /* ====================== Handle Submit (normalize data) ====================== */
 
+  // async function handleSubmit(values) {
+  //   try {
+
+  //     // 🔹 Validate all required fields before submission
+  //     const validationErrors = validateFormBeforeSubmit(values);
+
+  //     if (validationErrors.length > 0) {
+  //       message.error(`الحقول التالية مطلوبة: ${validationErrors.join("، ")}`);
+  //       setIsSubmitting(false);
+  //       return;
+  //     }
+
+  //     // Check if image file is properly uploaded
+  //     if (!fileList || fileList.length === 0) {
+  //       message.error("يجب رفع صورة للدورة");
+  //       setIsSubmitting(false);
+  //       return;
+  //     }
+
+  //     // Safely handle date range
+  //     const [start, end] = values.availableRange || [null, null];
+
+  //     // Safely handle time formatting
+  //     const timeString =
+  //       values.time && values.time.isValid()
+  //         ? values.time.format("HH:mm:ss")
+  //         : null;
+
+  //     // Handle file uploads safely
+  //     const courseBookFiles = (values.courseBook || [])
+  //       .map((f) => f.originFileObj || f)
+  //       .filter(Boolean);
+
+  //     const extraPdfFile =
+  //       values.extraPdf && values.extraPdf[0]
+  //         ? values.extraPdf[0].originFileObj || values.extraPdf[0]
+  //         : null;
+
+  //     // 🔹 FIXED: Better image file handling
+  //     let imageFile = null;
+  //     if (fileList && fileList.length > 0) {
+  //       const file = fileList[0];
+  //       console.log("File object:", file);
+
+  //       // Check different possible file properties
+  //       imageFile = file.originFileObj || file.response || file;
+
+  //       // If it's a fake file from rowData, we might not have the actual file
+  //       if (file.uid === "-1" && file.url && !file.originFileObj) {
+  //         console.log("This is a preview file from existing data");
+  //         imageFile = null;
+  //       }
+  //     }
+
+  //     if (!imageFile) {
+  //       message.error("يجب رفع صورة صالحة للدورة");
+  //       setIsSubmitting(false);
+  //       return;
+  //     }
+  //     const formData = new FormData();
+  //     formData.append("name", values?.name?.trim());
+  //     formData.append("description", values?.description?.trim());
+  //     formData.append("price", values?.price);
+
+  //     if (start) {
+  //       formData.append("start_date", dayjs(start).format("YYYY-MM-DD"));
+  //     }
+  //     if (end) {
+  //       formData.append("end_date", dayjs(end).format("YYYY-MM-DD"));
+  //     }
+
+  //     formData.append("gender", values.genderPolicy || "both");
+  //     formData.append("for", "Beginners");
+  //     formData.append("goal", values?.goal?.trim());
+  //     formData.append("course_category_id", selectedCategory);
+  //     formData.append("category_part_id", selectedOption);
+  //     formData.append("source", 1);
+  //     formData.append("capacity", values?.capacity);
+
+  //     // if (timeString);
+  //    formData.append("time_show", timeString || "")
+  //      formData.append("round_book", courseBookFiles[0] || null)
+  //     formData.append("teacher_id", values?.instructor?.join(","));
+
+  //     formData.append("round_road_map_book", extraPdfFile || null)
+
+  //     formData.append("free", values?.free ? 1 : 0);
+  //     formData.append("active", values?.active ? 1 : 0);
+
+  //     // Append image file
+  //     if (imageFile) {
+  //       formData.append("image", imageFile);
+  //     }
+
+  //     dispatch(handleAddBaiskRound({ body: formData })).unwrap()
+  //     .then(res => {
+  //       if(res?.data?.status == "success") {
+  //         console.log(res?.data);
+  //         setRoundId(res?.data?.message?.round_id)
+  //         // router.push(`/round_content?id=${res?.data?.message?.round_id}`)
+  //         toast.success(res?.data?.message?.message);
+  //         dispatch(handleGetSourceRound())
+  //       }else {
+  //         toast.error(res?.data?.message)
+  //       }
+  //     })
+  //   } catch (error) {
+  //     console.error("Submission error:", error);
+  //     toast.error({ content: "فشل في إضافة الدورة", key: "save" });
+  //     if (error.message) {
+  //       toast.error(`خطأ: ${error.message}`);
+  //     }
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // }
+
   async function handleSubmit(values) {
     try {
+      setIsSubmitting(true);
 
       // 🔹 Validate all required fields before submission
       const validationErrors = validateFormBeforeSubmit(values);
@@ -309,6 +442,7 @@ export default function AddCourseSourceBasicInfo({
         setIsSubmitting(false);
         return;
       }
+
       const formData = new FormData();
       formData.append("name", values?.name?.trim());
       formData.append("description", values?.description?.trim());
@@ -329,13 +463,10 @@ export default function AddCourseSourceBasicInfo({
       formData.append("source", 1);
       formData.append("capacity", values?.capacity);
 
-      // if (timeString);
-     formData.append("time_show", timeString || "")
-       formData.append("round_book", courseBookFiles[0] || null)
+      formData.append("time_show", timeString || "");
+      formData.append("round_book", courseBookFiles[0] || null);
       formData.append("teacher_id", values?.instructor?.join(","));
-
-      formData.append("round_road_map_book", extraPdfFile || null)
-
+      formData.append("round_road_map_book", extraPdfFile || null);
       formData.append("free", values?.free ? 1 : 0);
       formData.append("active", values?.active ? 1 : 0);
 
@@ -344,20 +475,25 @@ export default function AddCourseSourceBasicInfo({
         formData.append("image", imageFile);
       }
 
-      dispatch(handleAddBaiskRound({ body: formData })).unwrap()
-      .then(res => {
-        if(res?.data?.status == "success") {
-          console.log(res?.data)
-          router.push(`/round_content?id=${res?.data?.message?.round_id}`)
-          toast.success(res?.data?.message?.message);
-          dispatch(handleGetSourceRound())
-        }else {
-          toast.error(res?.data?.message)
-        }
-      })
+      // 🔹 استخدام unwrap() مع await للتعامل مع النتيجة
+      const result = await dispatch(
+        handleAddBaiskRound({ body: formData })
+      ).unwrap();
+
+      if (result?.data?.status == "success") {
+        console.log(result?.data);
+        setRoundId(result?.data?.message?.round_id);
+        toast.success(result?.data?.message?.message);
+        dispatch(handleGetSourceRound());
+
+        // 🔹 هنا الانتقال للخطوة التالية بعد النجاح
+        goToNextStep();
+      } else {
+        toast.error(result?.data?.message);
+      }
     } catch (error) {
       console.error("Submission error:", error);
-      toast.error({ content: "فشل في إضافة الدورة", key: "save" });
+      toast.error("فشل في إضافة الدورة");
       if (error.message) {
         toast.error(`خطأ: ${error.message}`);
       }
@@ -785,7 +921,7 @@ export default function AddCourseSourceBasicInfo({
           </Form.Item>
         </div>
 
-        <Button
+        {/* <Button
           type="primary"
           htmlType="submit"
           size="large"
@@ -793,7 +929,43 @@ export default function AddCourseSourceBasicInfo({
           className="!bg-blue-600 mb-4 !me-auto !text-white hover:!bg-blue-700"
         >
           {add_round_loading ? "جاري الحفظ..." : "حفظ البيانات"}
-        </Button>
+        </Button> */}
+
+        <div className="mt-8 flex justify-between space-x-4 space-x-reverse">
+          {/* <button
+              onClick={goToPrevStep}
+              disabled={currentStep === 1}
+              className={`rounded-lg border border-gray-300 bg-white px-6 py-2 text-gray-700 transition duration-150 hover:bg-gray-50 ${
+                currentStep === 1 ? "cursor-not-allowed opacity-50" : ""
+              }`}
+            >
+              السابق
+            </button> */}
+          <div className="mt-8 flex justify-between !ms-auto space-x-4 space-x-reverse">
+            <Button
+              size="large"
+              onClick={goToPrevStep}
+              disabled={currentStep === 1}
+              className={`rounded-lg border border-gray-300 bg-white px-6 py-2 text-gray-700 transition duration-150 hover:bg-gray-50 ${
+                currentStep === 1 ? "cursor-not-allowed opacity-50" : ""
+              }`}
+            >
+              السابق
+            </Button>
+
+            <Button
+              type="primary"
+              htmlType="submit"
+              size="large"
+              // onClick={goToNextStep}
+              onClick={handleSubmit}
+              loading={add_round_loading}
+              className="rounded-lg bg-blue-600 px-6 py-2 text-white shadow-md hover:bg-blue-700"
+            >
+              {add_round_loading ? "جاري الحفظ..." : "التالي"}
+            </Button>
+          </div>
+        </div>
       </Form>
     </div>
   );

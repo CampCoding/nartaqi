@@ -97,9 +97,15 @@ export const apiRoutes = {
   edit_lesson:"admin/contents/lessons/edit_lesson",
   delete_lesson:"admin/contents/lessons/delete_lesson",
 
-  //vide
+  //video
   get_videos:"admin/contents/lessons/videos/get_all_videos",
   add_video:"admin/contents/lessons/videos/add_video",
   delete_video:"admin/contents/lessons/videos/delete_video",
   edit_video:"admin/contents/lessons/videos/edit_video",
+
+  //features
+  get_features:"admin/rounds/features/get_all_round_features",
+  add_feature:"admin/rounds/features/add_round_feature",
+  edit_feature:"admin/rounds/features/edit_round_feature",
+  delete_feature:"admin/rounds/features/delete_round_feature"
 };

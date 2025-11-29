@@ -47,7 +47,7 @@ const CourseSourceSubjectCard = ({
   const handleEdit = (e) => {
     e?.stopPropagation?.();
     setShowDropdown(false);
-    router.push(`/saudi_source_course/edit/${subject?.code}`);
+    router.push(`/saudi_source_course/edit/${subject?.id}`);
     onEdit?.(subject);
   };
 
