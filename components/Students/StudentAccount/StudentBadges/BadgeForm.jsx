@@ -1,7 +1,7 @@
 "use client";
 import { Save, X } from "lucide-react";
 import React, { useState } from "react";
-import { all_categories } from "../../../../app/(admin)/saudi_source_course/add-data/page";
+// import { all_categories } from "../../../../app/(admin)/saudi_source_course/add-data/page";
 // import { all_categories } from "../../../../app/(admin)/categories/page";
 
 /** Gradient palette (Tailwind classes) */
@@ -183,7 +183,7 @@ const BadgeForm = ({ badge, onSubmit, onCancel, isEdit = false }) => {
                 <option value="" disabled>
                   اختر فئة
                 </option>
-                {all_categories?.map((cat) => (
+                {all_categories?.length > 0 && all_categories?.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.title}
                   </option>

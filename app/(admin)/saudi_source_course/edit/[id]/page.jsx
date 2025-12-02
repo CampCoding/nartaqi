@@ -485,14 +485,319 @@
 
 // export default EnhancedCourseForm;
 
+// "use client";
+// import { useParams, useSearchParams } from "next/navigation";
+// import React, { useEffect, useState } from "react";
+// import { PlusOutlined } from "@ant-design/icons";
+// import { Check } from "lucide-react";
+// import AddCourseSourceBasicInfo from "../../../../../components/SaudiCourseSource/AddCourseSourceBasicInfo";
+// import Features from "../../../../../components/SaudiCourseSource/Features";
+// import AddCourseSourceResource from "../../../../../components/SaudiCourseSource/AddCourseSourceResource";
+// import { handleGetSourceRound } from "../../../../../lib/features/roundsSlice";
+// import { useDispatch } from "react-redux";
+
+// // Define the steps data
+// const STEPS = [
+//   {
+//     id: 1,
+//     title: "بيانات الدورة",
+//     description: "إضافة أقسام، دروس، ومواد تعليمية.",
+//   },
+//   {
+//     id: 2,
+//     title: "مميزات الدورة",
+//     description: "إضافة أقسام، دروس، ومواد تعليمية.",
+//   },
+//   {
+//     id: 3,
+//     title: "المصادر والملفات",
+//     description: "رفع الملفات والروابط المساندة ومراجعة الدورة.",
+//   },
+// ];
+
+// export default function Page() {
+//   const {id} = useParams();
+//   const params = useSearchParams();
+//   const [currentStep, setCurrentStep] = useState(1);
+//   const [roundId, setRoundId] = useState(null);
+//   const [fileList, setFileList] = useState([]);
+//   const [fileNames, setFileNames] = useState({});
+//   const [videos, setVideos] = useState([{ id: 1, name: "", url: "" }]);
+//   const [imagePreview, setImagePreview] = useState(null);
+//   const [selectedCategory, setSelectedCategory] = useState(null);
+//   const [rowData , setRowData] = useState({});
+//   const dispatch = useDispatch();
+
+//     useEffect(() => {
+//        dispatch(handleGetSourceRound())
+//        .unwrap()
+//        .then(res => {
+//          if(res?.data?.status == "success") {
+//           setRowData(res?.data?.message?.data?.find(item => item?.id == id));
+//          }
+//        })
+//      } , [id])
+   
+//   // --- Navigation Logic ---
+//   const goToNextStep = () => {
+//     setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
+//   };
+
+//   const goToPrevStep = () => {
+//     setCurrentStep((prev) => Math.max(prev - 1, 1));
+//   };
+//   // -------------------------
+
+//   const getStepStatus = (stepId) => {
+//     if (stepId < currentStep) return "complete";
+//     if (stepId === currentStep) return "current";
+//     return "upcoming";
+//   };
+
+//   const beforeUpload = async (file) => {
+//     const isImage = file.type?.startsWith("image/");
+//     if (!isImage) {
+//       message.error("من فضلك ارفع ملف صورة فقط.");
+//       return Upload.LIST_IGNORE;
+//     }
+//     const isLt5M = file.size / 1024 / 1024 < 5;
+//     if (!isLt5M) {
+//       message.error("حجم الصورة يجب أن يكون أقل من 5MB.");
+//       return Upload.LIST_IGNORE;
+//     }
+
+//     const preview = await getBase64(file);
+//     setImagePreview(preview);
+//     setFileList([
+//       {
+//         uid: file.uid || file.name,
+//         name: file.name,
+//         status: "done",
+//         originFileObj: file,
+//       },
+//     ]);
+//     return false;
+//   };
+
+//   const onFilesChange = ({ fileList }) => {
+//     setFileList(fileList);
+//     setFileNames((prev) => {
+//       const next = { ...prev };
+//       fileList.forEach((f) => {
+//         if (f.uid && !next[f.uid])
+//           next[f.uid] = f.name?.replace(/\.[^.]+$/, "") || "";
+//       });
+//       // remove stale uids
+//       Object.keys(next).forEach((uid) => {
+//         if (!fileList.find((f) => f.uid === uid)) delete next[uid];
+//       });
+//       return next;
+//     });
+//   };
+
+//   const getStatusClasses = (status) => {
+//     switch (status) {
+//       case "complete":
+//         return {
+//           dot: "bg-blue-600 text-white border-blue-600",
+//           text: "text-blue-800 font-semibold",
+//           line: "bg-blue-600",
+//         };
+//       case "current":
+//         return {
+//           dot: "bg-white text-blue-600 border-2 border-blue-600 shadow-md",
+//           text: "text-gray-900 font-bold",
+//           line: "bg-gray-300",
+//         };
+//       case "upcoming":
+//       default:
+//         return {
+//           dot: "bg-gray-200 text-gray-500 border-gray-300",
+//           text: "text-gray-500",
+//           line: "bg-gray-300",
+//         };
+//     }
+//   };
+
+//   // ------- Step content -------
+//   const renderStepContent = () => {
+//     if (currentStep === 1) {
+//       // مرحلة التأسيس
+//       return (
+//         <AddCourseSourceBasicInfo
+//           id={id}
+//           beforeUpload={beforeUpload}
+//           fileList={fileList}
+//           selectedCategory={selectedCategory}
+//           setSelectedCategory={setSelectedCategory}
+//           setFileList={setFileList}
+//           setImagePreview={setImagePreview}
+//           currentStep={currentStep}
+//           goToNextStep={goToNextStep}
+//           goToPrevStep={goToPrevStep}
+//           setRoundId={setRoundId}
+//           rowData={rowData}
+//           setRowData={setRowData}
+//         />
+//       );
+//     }
+
+//     if (currentStep === 2) {
+//       // المحاضرات
+//       return (
+//         <Features
+//           roundId={roundId}
+//           currentStep={currentStep}
+//           goToNextStep={goToNextStep}
+//           goToPrevStep={goToPrevStep}
+//           STEPS={STEPS}
+//         />
+//         //  <CourseSourceLecturesContent id={id}/>
+//       );
+//     }
+
+//     // المصادر والملفات
+//     return (
+//       <AddCourseSourceResource
+//         currentStep={currentStep}
+//         goToPrevStep={goToPrevStep}
+//         id={roundId}
+//         STEPS={STEPS}
+//       />
+//     );
+//   };
+//   // ---------------------------
+
+//   return (
+//     <div
+//       className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 sm:p-8"
+//       dir="rtl"
+//     >
+//       {/* Header */}
+//       <div className="relative mx-auto mb-8 max-w-6xl rounded-2xl border-b-4 border-blue-500 bg-white p-6 shadow-xl">
+//         <div className="absolute top-0 right-0 h-32 w-32 -translate-y-16 translate-x-16 rounded-full bg-gradient-to-br from-blue-400/10 to-purple-400/10 opacity-50" />
+
+//         <div className="relative mb-3 flex items-center gap-4">
+//           <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 shadow-2xl">
+//             <PlusOutlined className="text-xl text-white" />
+//           </div>
+//           <div>
+//             <h1 className="bg-gradient-to-r from-gray-800 to-blue-800 bg-clip-text text-3xl font-extrabold text-transparent">
+//               إضافة دورة جديدة
+//             </h1>
+//             <p className="mt-1 text-gray-600">
+//               إنشاء وتكوين دورة تعليمية شاملة مع الجدولة والمحتوى.
+//             </p>
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Main */}
+//       <div className="mx-auto max-w-6xl">
+//         {/* Stepper */}
+//         <div className="mb-10 flex items-start justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-lg">
+//           {STEPS.map((step, index) => {
+//             const status = getStepStatus(step.id);
+//             const { dot, text, line } = getStatusClasses(status);
+//             const isLast = index === STEPS.length - 1;
+
+//             return (
+//               <React.Fragment key={step.id}>
+//                 <div className="flex w-1/4 min-w-0 flex-shrink-0 flex-col items-center">
+//                   <div
+//                     className={`relative flex h-10 w-10 items-center justify-center rounded-full transition duration-300 ${dot}`}
+//                   >
+//                     {status === "complete" ? (
+//                       <Check className="h-4 w-4" />
+//                     ) : (
+//                       <span className="text-lg">{step.id}</span>
+//                     )}
+//                   </div>
+
+//                   <div className="mt-3 min-w-0 text-center">
+//                     <h3
+//                       className={`overflow-hidden text-ellipsis whitespace-nowrap text-sm md:text-base leading-tight transition duration-300 ${text}`}
+//                     >
+//                       {step.title}
+//                     </h3>
+//                     <p className="mt-0.5 hidden text-xs text-gray-500 md:block">
+//                       {status === "current"
+//                         ? "الخطوة الحالية"
+//                         : step.description.split(",")[0]}
+//                     </p>
+//                   </div>
+//                 </div>
+
+//                 {!isLast && (
+//                   <div className="mx-2 flex flex-grow items-center">
+//                     <div
+//                       className={`h-0.5 w-full transition duration-300 ${
+//                         status === "complete" ? "bg-blue-600" : line
+//                       }`}
+//                     />
+//                   </div>
+//                 )}
+//               </React.Fragment>
+//             );
+//           })}
+//         </div>
+
+//         {/* Content */}
+//         <div className="mt-8 rounded-xl border border-gray-100 bg-white p-8 shadow-lg">
+//           <h2 className="mb-4 border-b pb-2 text-2xl font-bold text-gray-800">
+//             الخطوة {currentStep}: {STEPS[currentStep - 1].title}
+//           </h2>
+
+//           {renderStepContent()}
+
+//           {/* Navigation buttons */}
+//           {/* <div className="mt-8 flex justify-between space-x-4 space-x-reverse">
+//             <button
+//               onClick={goToPrevStep}
+//               disabled={currentStep === 1}
+//               className={`rounded-lg border border-gray-300 bg-white px-6 py-2 text-gray-700 transition duration-150 hover:bg-gray-50 ${
+//                 currentStep === 1 ? "cursor-not-allowed opacity-50" : ""
+//               }`}
+//             >
+//               السابق
+//             </button>
+//             <button
+//               onClick={goToNextStep}
+//               disabled={currentStep === STEPS.length}
+//               className={`rounded-lg bg-blue-600 px-6 py-2 text-white shadow-md transition duration-150 hover:bg-blue-700 ${
+//                 currentStep === STEPS.length ? "cursor-not-allowed opacity-50" : ""
+//               }`}
+//             >
+//               {currentStep === STEPS.length ? "إنهاء ونشر" : "التالي"}
+//             </button>
+//           </div> */}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+
 "use client";
-import { useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import { Check } from "lucide-react";
+import { Upload, message } from "antd";
 import AddCourseSourceBasicInfo from "../../../../../components/SaudiCourseSource/AddCourseSourceBasicInfo";
 import Features from "../../../../../components/SaudiCourseSource/Features";
 import AddCourseSourceResource from "../../../../../components/SaudiCourseSource/AddCourseSourceResource";
+import { handleGetSourceRound } from "../../../../../lib/features/roundsSlice";
+import { useDispatch } from "react-redux";
+
+// Helper لتحويل الصورة لـ base64 (للمعاينة)
+const getBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
 
 // Define the steps data
 const STEPS = [
@@ -514,6 +819,7 @@ const STEPS = [
 ];
 
 export default function Page() {
+  const { id } = useParams();
   const params = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [roundId, setRoundId] = useState(null);
@@ -522,6 +828,24 @@ export default function Page() {
   const [videos, setVideos] = useState([{ id: 1, name: "", url: "" }]);
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [rowData, setRowData] = useState({});
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(handleGetSourceRound())
+      .unwrap()
+      .then((res) => {
+        if (res?.data?.status === "success") {
+          const found = res?.data?.message?.data?.find(
+            (item) => String(item?.id) === String(id)
+          );
+          setRowData(found || null);
+          if (found?.id) {
+            setRoundId(found.id);
+          }
+        }
+      });
+  }, [id, dispatch]);
 
   // --- Navigation Logic ---
   const goToNextStep = () => {
@@ -561,7 +885,7 @@ export default function Page() {
         originFileObj: file,
       },
     ]);
-    return false;
+    return false; // منع الرفع التلقائي
   };
 
   const onFilesChange = ({ fileList }) => {
@@ -572,7 +896,6 @@ export default function Page() {
         if (f.uid && !next[f.uid])
           next[f.uid] = f.name?.replace(/\.[^.]+$/, "") || "";
       });
-      // remove stale uids
       Object.keys(next).forEach((uid) => {
         if (!fileList.find((f) => f.uid === uid)) delete next[uid];
       });
@@ -607,9 +930,9 @@ export default function Page() {
   // ------- Step content -------
   const renderStepContent = () => {
     if (currentStep === 1) {
-      // مرحلة التأسيس
       return (
         <AddCourseSourceBasicInfo
+          id={id}
           beforeUpload={beforeUpload}
           fileList={fileList}
           selectedCategory={selectedCategory}
@@ -620,12 +943,13 @@ export default function Page() {
           goToNextStep={goToNextStep}
           goToPrevStep={goToPrevStep}
           setRoundId={setRoundId}
+          rowData={rowData}
+          setRowData={setRowData}
         />
       );
     }
 
     if (currentStep === 2) {
-      // المحاضرات
       return (
         <Features
           roundId={roundId}
@@ -634,11 +958,9 @@ export default function Page() {
           goToPrevStep={goToPrevStep}
           STEPS={STEPS}
         />
-        //  <CourseSourceLecturesContent id={id}/>
       );
     }
 
-    // المصادر والملفات
     return (
       <AddCourseSourceResource
         currentStep={currentStep}
@@ -649,6 +971,8 @@ export default function Page() {
     );
   };
   // ---------------------------
+
+  const isEditMode = Boolean(id && rowData?.id);
 
   return (
     <div
@@ -665,7 +989,7 @@ export default function Page() {
           </div>
           <div>
             <h1 className="bg-gradient-to-r from-gray-800 to-blue-800 bg-clip-text text-3xl font-extrabold text-transparent">
-              إضافة دورة جديدة
+              {isEditMode ? "تعديل بيانات الدورة" : "إضافة دورة جديدة"}
             </h1>
             <p className="mt-1 text-gray-600">
               إنشاء وتكوين دورة تعليمية شاملة مع الجدولة والمحتوى.
@@ -731,28 +1055,6 @@ export default function Page() {
           </h2>
 
           {renderStepContent()}
-
-          {/* Navigation buttons */}
-          {/* <div className="mt-8 flex justify-between space-x-4 space-x-reverse">
-            <button
-              onClick={goToPrevStep}
-              disabled={currentStep === 1}
-              className={`rounded-lg border border-gray-300 bg-white px-6 py-2 text-gray-700 transition duration-150 hover:bg-gray-50 ${
-                currentStep === 1 ? "cursor-not-allowed opacity-50" : ""
-              }`}
-            >
-              السابق
-            </button>
-            <button
-              onClick={goToNextStep}
-              disabled={currentStep === STEPS.length}
-              className={`rounded-lg bg-blue-600 px-6 py-2 text-white shadow-md transition duration-150 hover:bg-blue-700 ${
-                currentStep === STEPS.length ? "cursor-not-allowed opacity-50" : ""
-              }`}
-            >
-              {currentStep === STEPS.length ? "إنهاء ونشر" : "التالي"}
-            </button>
-          </div> */}
         </div>
       </div>
     </div>

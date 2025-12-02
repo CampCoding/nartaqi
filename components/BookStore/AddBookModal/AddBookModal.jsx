@@ -15,10 +15,16 @@ import {
   message,
 } from "antd";
 import { PlusOutlined, UploadOutlined, SendOutlined } from "@ant-design/icons";
+import { useDispatch , useSelector } from "react-redux";
+// تم إزالة استيراد useDispatch و useSelector لتجنب خطأ "Could not resolve 'react-redux'"
+// واستبدالها بحالة وهمية لتجنب التعطل.
+// import { useDispatch, useSelector } from "react-redux"; 
 
+// 1. UPDATED DEFAULT CATEGORIES: Books, Bags, Accessories
 const DEFAULT_CATEGORIES = [
   { label: "كتب", value: "كتب" },
   { label: "حقائب", value: "حقائب" },
+  { label: "إكسسوارات", value: "إكسسوارات" },
 ];
 
 const LEVEL_OPTIONS = [
@@ -35,8 +41,13 @@ const LANGUAGE_OPTIONS = [
 const BADGE_OPTIONS = ["الأكثر مبيعًا", "خصم", "جديد", "محدود"];
 
 export default function AddBookModal({ open, setOpen, onSubmit, palette }) {
+  // تم إزالة استخدام useDispatch و useSelector، واستبدال حالة التحميل بقيمة ثابتة أو حالة محلية بسيطة
+  const dispatch = useDispatch();
+  const {add_store_loading} = useSelector(state => state?.store || {});
+  
   const [form] = Form.useForm();
-  const [submitting, setSubmitting] = useState(false);
+  // تم تغيير اسم حالة التحميل لتكون أكثر دلالة على الإرسال
+  const [submitting, setSubmitting] = useState(false); 
   const [fileList, setFileList] = useState([]);
 
   // categories state (dynamic)
@@ -44,7 +55,7 @@ export default function AddBookModal({ open, setOpen, onSubmit, palette }) {
   const [addNewCategModal, setAddNewCategModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
 
-  // Load saved categories once
+  // Load saved categories once (using localStorage is kept as per original logic)
   useEffect(() => {
     try {
       const raw = localStorage.getItem("bookstore.categories");
@@ -57,7 +68,7 @@ export default function AddBookModal({ open, setOpen, onSubmit, palette }) {
     } catch {}
   }, []);
 
-  // Persist categories on change
+  // Persist categories on change (using localStorage is kept as per original logic)
   useEffect(() => {
     try {
       localStorage.setItem("bookstore.categories", JSON.stringify(categories));
@@ -82,9 +93,11 @@ export default function AddBookModal({ open, setOpen, onSubmit, palette }) {
   const normalizeUpload = ({ fileList: fl }) => fl;
 
   const onFinish = async (values) => {
+    const formData = new FormData();
+    formData.append("title" , values?.title?.trim())
+    setSubmitting(true); // Start loading state
+  
     try {
-      setSubmitting(true);
-
       const payload = {
         id: `p-${Date.now()}`,
         title: values.title?.trim(),
@@ -110,19 +123,26 @@ export default function AddBookModal({ open, setOpen, onSubmit, palette }) {
           ? values.createdAt.format("YYYY-MM-DD")
           : undefined,
         tags: values.tags || [],
+        // Data for preview (if used)
         image: fileList?.[0]?.thumbUrl || "",
+        // The actual file object for backend submission
         imageFile: fileList?.[0]?.originFileObj,
       };
 
       if (typeof onSubmit === "function") {
         await onSubmit(payload);
+        message.success("تم إرسال بيانات الكتاب بنجاح ✅");
       } else {
-        message.success("تم إضافة الكتاب بنجاح ✅");
+        console.log("Book Data Payload (ready for API):", payload);
+        message.success("تم تجهيز بيانات الكتاب بنجاح (يرجى مراجعة الـ console) ✅");
       }
 
       handleClose();
+    } catch (error) {
+        console.error("Submission failed:", error);
+        message.error("فشل في معالجة بيانات الكتاب.");
     } finally {
-      setSubmitting(false);
+      setSubmitting(false); // End loading state
     }
   };
 
@@ -186,20 +206,12 @@ export default function AddBookModal({ open, setOpen, onSubmit, palette }) {
 
           <Divider className="my-4" />
 
-          {/* Add Category button */}
-          {/* <Button
-            onClick={() => setAddNewCategModal(true)}
-            type="primary"
-            className="bg-primary text-white mb-3"
-          >
-            إضافة فئة
-          </Button> */}
-
           <Form
             form={form}
             layout="vertical"
             onFinish={onFinish}
             initialValues={{
+              // Use the first category dynamically
               category: categories[0]?.value || "كتب",
               currency: "ر.س",
               inStock: true,
@@ -279,7 +291,7 @@ export default function AddBookModal({ open, setOpen, onSubmit, palette }) {
               name="image"
               valuePropName="fileList"
               getValueFromEvent={normalizeUpload}
-              extra="لن يتم الرفع فعلياً هنا — أرسل الملف في onSubmit."
+              extra="لن يتم الرفع فعلياً هنا — سيتم إرسال الملف في دالة الإرسال (onSubmit)."
               rules={[{ required: true, message: "أضف صورة الغلاف" }]}
             >
               <Upload.Dragger
@@ -319,7 +331,7 @@ export default function AddBookModal({ open, setOpen, onSubmit, palette }) {
         </div>
       </Modal>
 
-      {/* Add Category Modal */}
+      {/* Add Category Modal (used within Select now, but kept in case needed standalone) */}
       <Modal
         open={addNewCategModal}
         onCancel={() => setAddNewCategModal(false)}

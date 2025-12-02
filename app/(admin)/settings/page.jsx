@@ -12,9 +12,11 @@ import {
   Mail,
   MapPin,
   LocateFixed,
+  CreditCard,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import PaymentGatewayManager from "../../../components/Settings/PaymentGateway";
 
 // ✅ نحمّل الماب ديناميكياً بدون SSR (عشان Next)
 const MapPicker = dynamic(() => import("@/components/Settings/MapPicker"), {
@@ -210,9 +212,10 @@ const SystemSettings = () => {
       { id: "home", name: "الصفحة الرئيسية", icon: Home, color: "from-green-500 to-blue-500" },
       { id: "footer", name: "محتوى الفوتر", icon: Layout, color: "from-purple-500 to-pink-500" },
       { id: "contact", name: "تواصل معنا", icon: MapPin, color: "from-sky-500 to-indigo-500" },
+      {id :"payment_gateway" ,name:"بوابة الدفع",icon: CreditCard , color:"from-blue-500 to-indigo-500"}
     ],
     []
-  );
+  ); 
 
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
@@ -372,6 +375,8 @@ const SystemSettings = () => {
             </div>
           </div>
         )}
+
+        {activeTab ==="payment_gateway" && <PaymentGatewayManager />}
 
         {/* Save Button */}
         <div className="mt-8 flex justify-end">

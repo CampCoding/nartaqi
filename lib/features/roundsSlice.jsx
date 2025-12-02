@@ -10,6 +10,7 @@ const initialState = {
   source_round_loading : false,
 
   add_round_loading: false,
+  edit_round_loading: false,
   active_round_loading : false,
   copy_round_loading : false,
   delet_round_loading :false,
@@ -59,6 +60,17 @@ export const handleAddBaiskRound = createAsyncThunk(
   "roundesSlice/handleAddBaiskRound",
   async ({ body }) => {
     const response = await api.post(apiRoutes.add_basic_round, {
+      body,
+      isFile: true,
+    });
+    return response;
+  }
+);
+
+export const handleEditBaiskRound = createAsyncThunk(
+  "roundesSlice/handleEditBaiskRound",
+  async ({ body }) => {
+    const response = await api.post(apiRoutes.edit_basic_round, {
       body,
       isFile: true,
     });
@@ -163,6 +175,16 @@ export const roundsSlice = createSlice({
       })
       .addCase(handleGetRoundLessons.rejected, (state) => {
         state.all_round_lessons_loading = false;
+      })
+
+       .addCase(handleEditBaiskRound.pending, (state) => {
+        state.edit_round_loading = true;
+      })
+      .addCase(handleEditBaiskRound.fulfilled, (state, action) => {
+        state.edit_round_loading = false;
+      })
+      .addCase(handleEditBaiskRound.rejected, (state) => {
+        state.edit_round_loading = false;
       })
   },
 });

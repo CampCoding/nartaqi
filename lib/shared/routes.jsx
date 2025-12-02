@@ -31,6 +31,7 @@ export const apiRoutes = {
   get_rounds:"admin/rounds/get_all_rounds",
   get_source_rounds:"admin/rounds/getsourceRound",
   add_basic_round :"admin/rounds/store_round",
+  edit_basic_round:"admin/rounds/edit_round",
   active_round :"admin/rounds/active_round",
   copy_round:"admin/rounds/makeCopyRoundWithAllData",
   delete_round:"admin/rounds/delete_round",
@@ -107,5 +108,11 @@ export const apiRoutes = {
   get_features:"admin/rounds/features/get_all_round_features",
   add_feature:"admin/rounds/features/add_round_feature",
   edit_feature:"admin/rounds/features/edit_round_feature",
-  delete_feature:"admin/rounds/features/delete_round_feature"
+  delete_feature:"admin/rounds/features/delete_round_feature",
+
+  //store
+  get_store:"",
+  add_store:"user/store/addStoreItem",
+  edit_store:"",
+  delete_store:""
 };
