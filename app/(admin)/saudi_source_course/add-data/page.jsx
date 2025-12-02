@@ -521,6 +521,7 @@ export default function Page() {
   const [videos, setVideos] = useState([{ id: 1, name: "", url: "" }]);
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const isSource = params?.get("source");
 
   // --- Navigation Logic ---
   const goToNextStep = () => {
@@ -609,7 +610,8 @@ export default function Page() {
       // مرحلة التأسيس
       return (
         <AddCourseSourceBasicInfo
-          beforeUpload={beforeUpload}
+        isSource={isSource}
+        beforeUpload={beforeUpload}
           fileList={fileList}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}

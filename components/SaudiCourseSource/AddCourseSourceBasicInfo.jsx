@@ -1059,6 +1059,7 @@ const customBeforeUpload = () => {
 };
 
 export default function AddCourseSourceBasicInfo({
+isSource,
   fileList,
   setFileList,
   availableSections,
@@ -1153,6 +1154,17 @@ const quillFormats = [
   "align",
   "link",
 ];
+
+
+const isQuillEmpty = (value) => {
+  if (!value) return true;
+  // شيل الـ HTML tags و الـ &nbsp; وسيب بس النص العادي
+  const plain = value
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .trim();
+  return plain.length === 0;
+};
 
 
   useEffect(() => {
@@ -1273,7 +1285,9 @@ const quillFormats = [
       errors.push("المدربين");
     if (!values.availableRange || values.availableRange.length !== 2)
       errors.push("فترة إتاحة الدورة");
-    if (!values.goal?.trim()) errors.push("الهدف");
+    if (isQuillEmpty(values.goal)) {
+      errors.push("الهدف");
+    }
 
     // صورة الدورة:
     // في الإضافة: مطلوبة
@@ -1349,10 +1363,10 @@ const quillFormats = [
 
       formData.append("gender", values.genderPolicy || "both");
       formData.append("for", "Beginners");
-      formData.append("goal", values?.goal?.trim());
+      formData.append("goal", values?.goal);
       formData.append("course_category_id", selectedCategory);
       formData.append("category_part_id", selectedOption);
-      formData.append("source", 1);
+      formData.append("source", isSource ? 0 : 1);
       formData.append("capacity", values?.capacity);
       formData.append("time_show", timeString || "");
       formData.append("round_book", courseBookFiles[0] || null);
@@ -1387,20 +1401,17 @@ const quillFormats = [
           );
         } else {
           toast.success(
-            result?.data?.message?.message || "تم إضافة الدورة بنجاح"
+            result?.data?.message || "تم إضافة الدورة بنجاح"
           );
         }
 
         goToNextStep();
       } else {
-        toast.error(result?.data?.message || "حدث خطأ أثناء حفظ البيانات");
+        console.log("errorrrr" , result)
+        toast.error(result?.error?.response?.data?.message|| "حدث خطأ أثناء حفظ البيانات");
       }
     } catch (error) {
       console.error("Submission error:", error);
-      toast.error("فشل في حفظ بيانات الدورة");
-      if (error.message) {
-        toast.error(`خطأ: ${error.message}`);
-      }
     } finally {
       setIsSubmitting(false);
     }
@@ -1742,8 +1753,16 @@ const quillFormats = [
         </span>
       }
       name="goal"
-      // ممكن تضيفي هنا Validator مخصص لو حبيتي تمنعي الهدف الفاضي فعلياً
-      rules={[{ required: true, message: "أدخل الهدف" }]}
+      rules={[
+        {
+          validator: (_, value) => {
+            if (isQuillEmpty(value)) {
+              return Promise.reject(new Error("أدخل الهدف"));
+            }
+            return Promise.resolve();
+          },
+        },
+      ]}
     >
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <ReactQuill
@@ -1752,11 +1771,16 @@ const quillFormats = [
           formats={quillFormats}
           placeholder="اكتب الهدف من الدورة بالتفصيل (مثلاً: ماذا يتعلم الطالب، النتائج المتوقعة، الجمهور المستهدف)..."
           className="min-h-[180px]"
+          value={form.getFieldValue("goal")}           // ← ربط القيمة بالـ form
+          onChange={(value) => form.setFieldsValue({   // ← تحديث الـ form لما المستخدم يكتب
+            goal: value,
+          })}
         />
       </div>
     </Form.Item>
   </Col>
 </Row>
+
 
 
           <Row gutter={24}>

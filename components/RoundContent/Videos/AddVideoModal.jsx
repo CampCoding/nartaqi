@@ -34,7 +34,7 @@ export default function AddVideoModal({ open, setOpen, id }) {
 
     const data_send = {
       ...videoData,
-      lesson_id: id // Ensure 'id' is correctly passed as the parent round ID
+      round_content_id: id // Ensure 'id' is correctly passed as the parent round ID
     };
 
     dispatch(handleAddLessonVideo({ body: data_send }))
@@ -43,7 +43,7 @@ export default function AddVideoModal({ open, setOpen, id }) {
         if(res?.data?.status == "success") {
           toast.success("تم اضافه الفيديو بنجاح");
           dispatch(handleGetAllLessonVideo({body : {
-            lesson_id : id
+            round_content_id : id
           }}))
            setOpen(false);
         setVideoData({time :"",title:"",description:"",video:""});

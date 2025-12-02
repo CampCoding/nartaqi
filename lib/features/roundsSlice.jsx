@@ -25,13 +25,21 @@ const initialState = {
 
 export const handleGetAllRounds = createAsyncThunk(
   "roundesSlice/handleGetAllRounds",
-  async ({ course_category_id, per_page, page }) => {
-    const response = await api.get(
-      `${apiRoutes.get_rounds}?course_category_id=${course_category_id}&per_page=${per_page}&page=${page}`
-    );
-    return response;
+  async ({ course_category_id, per_page, page } = {}) => {
+    if (page && per_page) {
+      const response = await api.get(
+        `${apiRoutes.get_rounds}?course_category_id=${course_category_id}&per_page=${per_page}&page=${page}`
+      );
+      return response;
+    } else {
+      const response = await api.get(
+        `${apiRoutes.get_rounds}?course_category_id=${course_category_id}`
+      );
+      return response;
+    }
   }
 );
+
 
 export const handleGetSourceRound = createAsyncThunk(
   "roundesSlice/handleGetSourceRound",
@@ -59,7 +67,7 @@ export const handleGetRoundLessons = createAsyncThunk("roundesSlice/handleGetRou
 export const handleAddBaiskRound = createAsyncThunk(
   "roundesSlice/handleAddBaiskRound",
   async ({ body }) => {
-    const response = await api.post(apiRoutes.add_basic_round, {
+    const response = await api.post(apiRoutes?.add_basic_round, {
       body,
       isFile: true,
     });

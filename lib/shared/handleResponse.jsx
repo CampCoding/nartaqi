@@ -3,7 +3,7 @@ export const handleRespons = (response) => {
       status: response?.status,
       data: response?.data,
       message: response?.message,
-      error: response?.error,
+      error: response,
       pagination: response?.pagination
     };
   };

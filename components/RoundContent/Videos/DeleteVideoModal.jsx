@@ -31,7 +31,7 @@ export default function DeleteVideoModal({ open, setOpen, rowData , id }) {
         if(res?.data?.status == "success") {
           toast.success("تم حذف الفيديو بنجاح");
           dispatch(handleGetAllLessonVideo({body : {
-            lesson_id : rowData?.lesson_id
+            round_content_id : rowData?.round_content_id
           }}))
         }
         setOpen(false);

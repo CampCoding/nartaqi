@@ -54,14 +54,14 @@ const SearchAndFilters = ({
         </div>
         {noMode ? null : (
           <div className="flex items-center gap-2 ml-4">
-            <Button
+            {/* <Button
               type={viewMode === "table" ? "primary" : "default"}
               size="small"
               onClick={() => setViewMode("table")}
               icon={<List className="w-4 h-4" />}
             >
               جدول
-            </Button>
+            </Button> */}
             <Button
               type={viewMode === "grid" ? "primary" : "default"}
               size="small"

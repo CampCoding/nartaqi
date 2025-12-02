@@ -39,12 +39,8 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Base items (translated)
   const baseMenuItems = [
     { name: "نظرة عامة", icon: BarChart3, path: "/" },
-    // { name: "إدارة دورات المتدربين", icon: BookOpen, path: "/subjects" },
-    
-    // { name: "إدارة مواد المتدربين", icon: Users, path: "/students-courses" },
   ];
 
   // Subject items (translated)
@@ -110,6 +106,11 @@ export default function Sidebar() {
       icon:Files,
       path:"/saudi_source_course"
     },
+    // {
+    //   name:"محتوي الدورة",
+    //   icon: Files,
+    //   path:"/round_content"
+    // },
     { name: "المتدربين", icon: GraduationCap, path: "/students" },
     // { name: "أقسام الاختبارات", icon: BookCopy , path: "/exam_sections" },
     { name: "الاختبارات", icon: FileText, path: "/exams" },

@@ -34,7 +34,7 @@ axios.interceptors.response.use(
       safeRedirectToLogin();
     }
     // Keep the rejection so Redux thunks / callers still see an error
-    return Promise.reject(error);
+    return (error);
   }
 );
 

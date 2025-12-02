@@ -38,7 +38,7 @@ export default function EditVideoModal({ open, setOpen, id , rowData , setRowDat
         if(res?.data?.status == "success") {
           toast.success("تم تعديل الفيديو بنجاح");
           dispatch(handleGetAllLessonVideo({body : {
-            lesson_id : rowData?.lesson_id
+            round_content_id : rowData?.round_content_id
           }}))
            setOpen(false);
         setRowData({time :"",title:"",description:"",video:""});

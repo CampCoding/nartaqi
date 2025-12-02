@@ -1,10 +1,11 @@
 "use client";
-import { Modal, Button, Spin } from 'antd' // Import Button and Spin from Ant Design
-import React, { useState } from 'react'
+import { Modal, Button, Spin, Select } from 'antd' // Import Button and Spin from Ant Design
+import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux' 
 import { PlusOutlined, LoadingOutlined } from '@ant-design/icons'; // Import icons
 import { handleAddRoundContent, handleGetAllRoundContent } from '../../lib/features/roundContentSlice';
 import { toast } from 'react-toastify';
+import { handleGetSourceRound } from '@/lib/features/roundsSlice';
 
 
 
@@ -12,12 +13,25 @@ export default function AddRoundContent({ open, setOpen, id , type="basic" }) {
   const [roundContentData, setRoundContentData] = useState({
     title: "",
     description: "",
+    round_id: null,
   });
   
   const dispatch = useDispatch(); 
   const { store_content_loading } = useSelector(state => state?.content || { store_content_loading: false });
-  
+  const {source_round_list , source_round_loading} = useSelector(state => state?.rounds);
+
   const isFormValid = roundContentData.title && roundContentData.description;
+
+  useEffect(() =>{
+    if(!id) {
+      dispatch(handleGetSourceRound())
+    }
+  }  ,[id])
+
+  useEffect(() => {
+    console.log("source_round_list" , source_round_list?.data?.message?.data)
+  }  ,[source_round_list])
+
 
   function handleInputChange(e) {
     const { name, value } = e.target;
@@ -27,14 +41,23 @@ export default function AddRoundContent({ open, setOpen, id , type="basic" }) {
     }));
   }
 
+
+  useEffect(() => {
+    if(id){
+      setRoundContentData(prev => ({...prev , round_id : id}))
+    }
+  } , [id])
+
   function handleSubmit() {
     if (!isFormValid) return;
 
     const data_send = {
       ...roundContentData,
       type: type ? type : "basic",
-      round_id: id // Ensure 'id' is correctly passed as the parent round ID
+      round_id: roundContentData?.round_id // Ensure 'id' is correctly passed as the parent round ID
     };
+
+
 
     dispatch(handleAddRoundContent({ body: data_send }))
       .unwrap()
@@ -42,7 +65,7 @@ export default function AddRoundContent({ open, setOpen, id , type="basic" }) {
         if(res?.data?.status == "success") {
           toast.success("تم اضافه المحتوي بنجاح");
           dispatch(handleGetAllRoundContent({body : {
-            round_id : id
+            round_id : id || roundContentData?.round_id
           }}))
            setOpen(false);
         setRoundContentData({ title: "", description: "" });
@@ -90,7 +113,21 @@ export default function AddRoundContent({ open, setOpen, id , type="basic" }) {
       style={{ direction: 'rtl' }}
     >
       <div className='flex flex-col gap-4 mt-4'>
+          
+        {!id && source_round_list?.data?.message?.data && 
         
+        <div className='flex flex-col gap-2'>
+          <label htmlFor='title' className='text-lg font-medium text-gray-700'>
+            الدورة 
+          </label>
+          <Select value={roundContentData?.round_id} onChange={(value) => setRoundContentData(prev => ({...prev , round_id : value}))}>
+            {source_round_list?.data?.message?.data?.map((round) => (
+              <Select.Option key={round?.id} value={round?.id}>
+                {round?.name}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>}
         {/* Title Input */}
         <div className='flex flex-col gap-2'>
           <label htmlFor='title' className='text-lg font-medium text-gray-700'>
