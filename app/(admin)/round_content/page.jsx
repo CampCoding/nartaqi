@@ -18,14 +18,12 @@ const STEPS = [
     title: "المحاضرات",
     description: "إضافة أقسام، دروس، ومواد تعليمية.",
   },
-
 ];
 
 export default function Page() {
   const params = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
-  const id = params.get("id")
-
+  const id = params.get("id");
 
   // --- Navigation Logic ---
   const goToNextStep = () => {
@@ -71,16 +69,12 @@ export default function Page() {
   const renderStepContent = () => {
     if (currentStep === 1) {
       // مرحلة التأسيس
-      return (
-       <CourseSourceBasicLevel id={id} />
-      );
+      return <CourseSourceBasicLevel id={id} />;
     }
 
     if (currentStep === 2) {
       // المحاضرات
-      return (
-       <CourseSourceLecturesContent id={id}/>
-      );
+      return <CourseSourceLecturesContent id={id} />;
     }
 
     // المصادر والملفات
@@ -108,8 +102,8 @@ export default function Page() {
         <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
           لم يتم رفع ملفات بعد.
           <br />
-          بعد اختيار الملفات ستظهر هنا قائمة بالمصادر المرفوعة مع إمكانية
-          الحذف أو التعديل.
+          بعد اختيار الملفات ستظهر هنا قائمة بالمصادر المرفوعة مع إمكانية الحذف
+          أو التعديل.
         </div>
       </div>
     );
@@ -131,7 +125,7 @@ export default function Page() {
           </div>
           <div>
             <h1 className="bg-gradient-to-r from-gray-800 to-blue-800 bg-clip-text text-3xl font-extrabold text-transparent">
-              إضافة محتوي الدورة 
+              إضافة محتوي الدورة
             </h1>
             <p className="mt-1 text-gray-600">
               إنشاء وتكوين دورة تعليمية شاملة مع الجدولة والمحتوى.
@@ -146,9 +140,7 @@ export default function Page() {
         <div className="mb-10 flex items-start justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-lg">
           {STEPS.map((step, index) => {
             const status = getStepStatus(step.id);
-            const { dot, text, line } = getStatusClasses(
-              status
-            );
+            const { dot, text, line } = getStatusClasses(status);
             const isLast = index === STEPS.length - 1;
 
             return (
@@ -215,7 +207,9 @@ export default function Page() {
               onClick={goToNextStep}
               disabled={currentStep === STEPS.length}
               className={`rounded-lg bg-blue-600 px-6 py-2 text-white shadow-md transition duration-150 hover:bg-blue-700 ${
-                currentStep === STEPS.length ? "cursor-not-allowed opacity-50" : ""
+                currentStep === STEPS.length
+                  ? "cursor-not-allowed opacity-50"
+                  : ""
               }`}
             >
               {currentStep === STEPS.length ? "إنهاء ونشر" : "التالي"}

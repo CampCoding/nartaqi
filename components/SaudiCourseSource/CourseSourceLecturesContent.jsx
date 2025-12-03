@@ -603,8 +603,6 @@
 //   );
 // }
 
-
-
 "use client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -633,14 +631,12 @@ import { handleGetAllLessonVideo } from "../../lib/features/videoSlice";
 import EditVideoModal from "../RoundContent/Videos/EditVideoModal";
 import DeleteVideoModal from "../RoundContent/Videos/DeleteVideoModal";
 
-
 const initialSchedule = {
   startDate: "2025-12-01",
   endDate: "2025-12-31",
   startTime: "09:00",
   endTime: "11:00",
 };
-
 
 export default function CourseSourceLecturesContent({ id }) {
   const [rowData, setRowData] = useState({});
@@ -656,18 +652,15 @@ export default function CourseSourceLecturesContent({ id }) {
   const [openDeleteLesson, setOpenDeleteLesson] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState({});
   const [openAddVideo, setOpenAddVideo] = useState(false);
-  const [openEditVideo , setOpenEditVideo] = useState(false);
-  const [openDeleteVideo , setOpenDeleteVideo] = useState(false);
-  const [selectedVideo , setSelectedVideo] = useState({});
+  const [openEditVideo, setOpenEditVideo] = useState(false);
+  const [openDeleteVideo, setOpenDeleteVideo] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState({});
   const router = useRouter();
 
   const dispatch = useDispatch();
-  const { all_content_list} =
-    useSelector((state) => state?.content);
-  const {  all_lessons_list } = useSelector(
-    (state) => state?.lesson
-  );
-  const {  all_videos_list } = useSelector((state) => state?.videos);
+  const { all_content_list } = useSelector((state) => state?.content);
+  const { all_lessons_list } = useSelector((state) => state?.lesson);
+  const { all_videos_list } = useSelector((state) => state?.videos);
 
   // Track which content sections are expanded and their loading states
   const [expandedContents, setExpandedContents] = useState({});
@@ -688,8 +681,10 @@ export default function CourseSourceLecturesContent({ id }) {
   }, [id, dispatch]);
 
   useEffect(() => {
+    console.log(all_content_list?.data?.message);
+
     setBasicData(
-      all_content_list?.data?.message?.filter(
+      all_content_list?.data?.message?.contents?.filter(
         (item) => item?.type == "lecture"
       ) || []
     );
@@ -813,14 +808,16 @@ export default function CourseSourceLecturesContent({ id }) {
   // Video Card Renderer
   const VideoCard = ({ video, lessonId }) => {
     const isFree = video?.free === "1";
-    
+
     return (
       <div className="bg-blue-50/70 p-4 mb-3 rounded-lg border border-blue-100 flex justify-between items-start">
         <div className="flex items-start flex-1 min-w-0">
           <PlayCircleOutlined className="text-blue-600 text-lg mt-1 ml-3 flex-shrink-0" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <p className="font-medium text-gray-800 truncate">{video?.title}</p>
+              <p className="font-medium text-gray-800 truncate">
+                {video?.title}
+              </p>
               {isFree && (
                 <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
                   مجاني
@@ -830,7 +827,13 @@ export default function CourseSourceLecturesContent({ id }) {
             <p className="text-gray-600 text-sm mt-1">{video?.description}</p>
             <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
               <span>⏱️ {video?.time}</span>
-              <a href={video?.video} target="_blank" className="truncate max-w-xs">{video.video}</a>
+              <a
+                href={video?.video}
+                target="_blank"
+                className="truncate max-w-xs"
+              >
+                {video.video}
+              </a>
             </div>
           </div>
         </div>
@@ -839,15 +842,15 @@ export default function CourseSourceLecturesContent({ id }) {
             icon={<EditOutlined className="text-blue-600" />}
             onClick={(e) => {
               e.stopPropagation();
-              setSelectedVideo(video)
-              setOpenEditVideo(true)
+              setSelectedVideo(video);
+              setOpenEditVideo(true);
             }}
           />
           <ActionButton
             icon={<DeleteOutlined className="text-red-600" />}
-            onClick={() =>{
-              setSelectedVideo(video)
-              setOpenDeleteVideo(true)
+            onClick={() => {
+              setSelectedVideo(video);
+              setOpenDeleteVideo(true);
             }}
           />
         </div>
@@ -974,7 +977,7 @@ export default function CourseSourceLecturesContent({ id }) {
                       إضافة فيديو
                     </button>
                   </div>
-                  
+
                   {lessonVideos.length > 0 ? (
                     <div className="space-y-2">
                       {lessonVideos.map((video) => (
@@ -1009,7 +1012,7 @@ export default function CourseSourceLecturesContent({ id }) {
                       إضافة اختبار
                     </button>
                   </div>
-                  
+
                   {lessonExams.length > 0 ? (
                     <div className="space-y-2">
                       {lessonExams.map((exam) => (
@@ -1216,12 +1219,10 @@ export default function CourseSourceLecturesContent({ id }) {
     </div>
   );
 
-
-
   const handleDeleteExam = (lessonId, examId) => {
-    if (window.confirm('هل أنت متأكد من حذف هذا الاختبار؟')) {
+    if (window.confirm("هل أنت متأكد من حذف هذا الاختبار؟")) {
       // Implement delete exam API call
-      console.log('Delete exam:', examId, 'from lesson:', lessonId);
+      console.log("Delete exam:", examId, "from lesson:", lessonId);
     }
   };
 
@@ -1319,21 +1320,20 @@ export default function CourseSourceLecturesContent({ id }) {
         id={selectedLesson?.id}
       />
 
-      <EditVideoModal 
-      open={openEditVideo}
-      setOpen={setOpenEditVideo}
-      rowData={selectedVideo}
-      setRowData={setSelectedVideo}
-      id={selectedLesson?.id}
-      />
-      
-       <DeleteVideoModal 
-      open={openDeleteVideo}
-      setOpen={setOpenDeleteVideo}
-      rowData={selectedVideo}
-      setRowData={setSelectedVideo}
+      <EditVideoModal
+        open={openEditVideo}
+        setOpen={setOpenEditVideo}
+        rowData={selectedVideo}
+        setRowData={setSelectedVideo}
+        id={selectedLesson?.id}
       />
 
+      <DeleteVideoModal
+        open={openDeleteVideo}
+        setOpen={setOpenDeleteVideo}
+        rowData={selectedVideo}
+        setRowData={setSelectedVideo}
+      />
     </div>
   );
 }
