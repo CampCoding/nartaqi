@@ -1,0 +1,75 @@
+/* import "mathlive/core.css";
+import "mathlive/static.css"; */
+@import 'mathlive/static.css';
+@import 'mathlive/fonts.css';
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+:where(.MLK__rows > .MLK__row div).vk-log {
+  background: linear-gradient(180deg, #14532d, #166534);
+  color: #fff;
+  width: 210px !important;
+  border-color: #064e3b;
+}
+:where(.MLK__rows > .MLK__row div).vk-log:hover,
+:where(.MLK__rows > .MLK__row div).vk-log.is-active,
+:where(.MLK__rows > .MLK__row div).vk-log.is-pressed {
+  background: linear-gradient(180deg, #166534, #15803d);
+  color: #fff;
+  border-color: #065f46;
+}
+
+:where(.MLK__rows > .MLK__row div).vk-log .ML__latex,
+:where(.MLK__rows > .MLK__row div).vk-log span {
+  font-weight: 600;
+}
+
+
+/* RTL افتراضي داخل هذا المحرر */
+.ql-rtl .ql-editor {
+  direction: rtl;
+  text-align: right;
+}
+
+/* خلي الـ placeholder يبدأ من اليمين */
+.ql-rtl .ql-editor.ql-blank::before {
+  left: auto;
+  right: 12px; /* عدّل المسافة حسب ذوقك */
+  text-align: right;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+  border-radius: 10px;
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #0F7490; 
+    border-radius: 10px;
+}
+
+
+.PhoneInputInput:focus ,
+.PhoneInputInput {
+  border: 0px !important;
+  outline: none !important;
+}
+
+.PhoneInputInput {
+  padding: 0px 10px ;
+}
+
+.ant-tabs-nav-list {
+  gap:15px !important;
+}
