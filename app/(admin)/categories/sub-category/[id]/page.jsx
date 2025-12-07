@@ -26,9 +26,10 @@ import {
   handleEditCategoryPart,
   handleGetCategoryParts,
 } from "../../../../../lib/features/categoriesSlice";
-import { all_categories } from "../../../saudi_source_course/add-data/page";
+// import { all_categories } from "../../../saudi_source_course/add-data/page";
 import { toast } from "react-toastify";
 import { configs } from "../../../../../configs";
+import { all_categories } from "@/app/(admin)/teachers-courses/add-course/page";
 
 /* ===================== Utils ===================== */
 const fileToDataUrl = (file) =>
