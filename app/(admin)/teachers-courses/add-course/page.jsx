@@ -55,7 +55,7 @@ const { TextArea } = Input;
 const { RangePicker } = DatePicker;
 
 // Mock data for categories with sections
-const all_categories = [
+ export const all_categories = [
   {
     id: 1,
     title: "دورات عامة",

@@ -1,5 +1,4 @@
 "use client";
-import "@ant-design/v5-patch-for-react-19";
 import PageLayout from "@/components/layout/PageLayout";
 import BreadcrumbsShowcase from "@/components/ui/BreadCrumbs";
 import PagesHeader from "@/components/ui/PagesHeader";

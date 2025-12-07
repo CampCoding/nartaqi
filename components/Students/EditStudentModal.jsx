@@ -14,7 +14,7 @@ import {
   Tooltip,
   Divider,
 } from "antd";
-import "@ant-design/v5-patch-for-react-19";
+// import "@ant-design/v5-patch-for-react-19";
 import {
   EditOutlined,
   InboxOutlined,

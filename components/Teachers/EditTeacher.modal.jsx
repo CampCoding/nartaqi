@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import '@ant-design/v5-patch-for-react-19';
 import dayjs from "dayjs";
 import {
   Modal,

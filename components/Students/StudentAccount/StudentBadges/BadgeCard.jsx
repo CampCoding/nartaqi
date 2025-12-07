@@ -1,6 +1,7 @@
 "ise client";
 import { Edit, Trash2 } from "lucide-react";
 import React from "react";
+import { all_categories } from "../../../../app/(admin)/teachers-courses/add-course/page";
 
 const BadgeCard = ({
   badge,

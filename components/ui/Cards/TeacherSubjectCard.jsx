@@ -26,7 +26,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import Button from "../../atoms/Button";
 import PreserveSubjectLink from "../../PreserveSubjectLink";
 import { Dropdown, Button as AntdButton, Modal } from "antd";
-import '@ant-design/v5-patch-for-react-19';
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 

@@ -30,7 +30,8 @@ import dayjs from "dayjs";
 import "react-quill-new/dist/quill.snow.css";
 import dynamic from "next/dynamic";
 import AddTeacherCourseContent from "../AddTeacherCourseContent/AddTeacherCourseContent";
-import { all_categories } from "@/app/(admin)/categories/page";
+import { all_categories } from "../../../app/(admin)/teachers-courses/add-course/page";
+// import { all_categories } from "@/app/(admin)/categories/page";
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 const { Dragger } = Upload;

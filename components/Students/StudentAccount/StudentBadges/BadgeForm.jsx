@@ -1,6 +1,7 @@
 "use client";
 import { Save, X } from "lucide-react";
 import React, { useState } from "react";
+import { all_categories } from "../../../../app/(admin)/teachers-courses/add-course/page";
 // import { all_categories } from "../../../../app/(admin)/saudi_source_course/add-data/page";
 // import { all_categories } from "../../../../app/(admin)/categories/page";
 
