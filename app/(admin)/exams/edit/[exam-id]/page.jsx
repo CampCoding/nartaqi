@@ -1,5 +1,5 @@
 "use client";
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BarChart3 } from "lucide-react";
 import { useParams } from "next/navigation";
 import PageLayout from "../../../../../components/layout/PageLayout";
@@ -13,73 +13,102 @@ const breadcrumbs = [
   { label: "الاختبارات", href: "#", current: true },
 ];
 
-export default function page() {
+export default function Page() {
+  // شكل مبدئي فيه sections array عشان أي .find / .map تشتغل بأمان
   const [examData, setExamData] = useState({
+    id: null,
+    name: "",
+    duration: "",
+    type: "intern", // intern أو mock
+    sections: [],
+  });
+
+  const [rowData, setRowData] = useState({
+    id: null,
     name: "",
     duration: "",
     type: "intern",
     sections: [],
   });
-  const params = useParams();
-  const [activeTab, setActiveTab] = useState("info"); // "info" or "questions"
-  const [rowData , setRowData] = useState({});
-  
-  // Fetch the exam data if editing
-  useEffect(() => {
-    if (params["exam-id"]) {
-      console.log(exams?.find(item => item?.id == params["exam-id"]))
-      setRowData(exams?.find(item => item?.id == params["exam-id"]))
-    }
-  }, [params["exam-id"]]);
 
+  const params = useParams();
+  const [activeTab, setActiveTab] = useState("info");
+
+  // Load exam if exam-id موجود
   useEffect(() => {
-    setExamData(rowData)
-    console.log(rowData);
-  } , [rowData])
+    const examId = params["exam-id"];
+    if (!examId) return;
+
+    // تأكد إن exams Array
+    if (!Array.isArray(exams)) {
+      console.warn("exams is not an array:", exams);
+      return;
+    }
+
+    const found = exams.find(
+      (item) => String(item?.id) === String(examId)
+    );
+
+    if (found) {
+      // نضمن وجود sections كـ array
+      const normalized = {
+        ...found,
+        sections: Array.isArray(found.sections) ? found.sections : [],
+      };
+
+      setRowData(normalized);
+      setExamData(normalized);
+      console.log("Found exam:", normalized);
+    } else {
+      console.warn("Exam not found for id:", examId);
+    }
+  }, [params]);
 
   const addSection = (section) => {
-    const isAlreadyAdded = examData?.sections?.some((s) => s.id === section.id);
-    if (!isAlreadyAdded) {
-      // للاختبار المحاكي: نأخذ فقط 24 سؤال من كل قسم
-      const questionsToAdd =
-        examData.type === "mock"
-          ? section?.questions?.slice(0, 24) // 24 سؤال فقط للاختبار المحاكي
-          : section?.questions; // جميع الأسئلة للتدريب
+    if (!section) return;
 
-      // للاختبار المحاكي: مدة كل قسم ثابتة (25 دقيقة)
-      const sectionDuration =
-        examData.type === "mock"
-          ? 25 // 25 دقيقة للاختبار المحاكي
-          : section.time; // المدة الأصلية للتدريب
+    const isAlreadyAdded = examData?.sections?.some(
+      (s) => s.id === section.id
+    );
+    if (isAlreadyAdded) return;
 
-      setExamData({
-        ...examData,
-        sections: [
-          ...examData.sections,
-          {
-            ...section,
-            questions: questionsToAdd,
-            duration: sectionDuration,
-            originalQuestionsCount: section.questions?.length || 0, // حفظ العدد الأصلي للأسئلة
-          },
-        ],
-      });
-    }
+    const questionsToAdd =
+      examData.type === "mock"
+        ? section?.questions?.slice(0, 24) || []
+        : section?.questions || [];
+
+    const sectionDuration =
+      examData.type === "mock" ? 25 : section.time;
+
+    setExamData((prev) => ({
+      ...prev,
+      sections: [
+        ...(prev.sections || []),
+        {
+          ...section,
+          questions: questionsToAdd,
+          duration: sectionDuration,
+          originalQuestionsCount: section.questions?.length || 0,
+        },
+      ],
+    }));
   };
 
   return (
     <PageLayout>
-      <div style={{ dir: "rtl" }}>
+      {/* direction يتكتب كـ attribute مش style */}
+      <div dir="rtl">
         <BreadcrumbsShowcase variant="pill" items={breadcrumbs} />
 
         <PagesHeader
           title="تعديل اختبار"
-          subtitle={"عدل تفاصيل الاختبار الحالي"}
+          subtitle="عدل تفاصيل الاختبار الحالي"
         />
 
         <ExamMainData
-        rowData={rowData}
-        setRowData={setRowData}
+          examid={params["exam-id"] || null}
+          rowData={rowData}
+          setRowData={setRowData}
           examData={examData}
           setExamData={setExamData}
           onAddSection={addSection}

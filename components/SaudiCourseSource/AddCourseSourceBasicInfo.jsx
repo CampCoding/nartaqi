@@ -1010,14 +1010,13 @@ import {
 import {
   handleAddBaiskRound,
   handleGetSourceRound,
-  // غير الاسم هنا لو عندك thunk باسم مختلف
   handleEditBaiskRound,
 } from "../../lib/features/roundsSlice";
 import { handleGetAllTeachers } from "../../lib/features/teacherSlice";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-  import dynamic from "next/dynamic";
-  import "react-quill-new/dist/quill.snow.css";
+import dynamic from "next/dynamic";
+import "react-quill-new/dist/quill.snow.css";
 
 // 👇 ReactQuill بتحميل ديناميكي عشان الـ SSR في Next
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
@@ -1059,7 +1058,7 @@ const customBeforeUpload = () => {
 };
 
 export default function AddCourseSourceBasicInfo({
-isSource,
+  isSource,
   fileList,
   setFileList,
   availableSections,
@@ -1082,7 +1081,7 @@ isSource,
     all_courses_categories_list,
     get_categories_parts_list,
   } = useSelector((state) => state?.categories);
-  const { add_round_loading , edit_round_loading } = useSelector((state) => state?.rounds);
+  const { add_round_loading, edit_round_loading } = useSelector((state) => state?.rounds);
   const { teachers_list } = useSelector((state) => state?.teachers);
 
   const [categoriesOptions, setCategoriesOptions] = useState([]);
@@ -1090,9 +1089,30 @@ isSource,
   const [selectedOption, setSelectedOption] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [teacherOptions, setTeacherOptions] = useState([]);
+  const [validationErrors, setValidationErrors] = useState([]);
+  const [touchedFields, setTouchedFields] = useState({});
   const router = useRouter();
 
   const isEditMode = Boolean(id && rowData?.id);
+
+  // Helper function to get field labels
+  const getFieldLabel = (fieldName) => {
+    const labels = {
+      name: "اسم الدورة",
+      price: "السعر",
+      category: "الفئة",
+      section: "القسم",
+      description: "وصف الدورة",
+      genderPolicy: "سياسة النوع",
+      capacity: "السعة القصوى",
+      instructor: "المدربين",
+      availableRange: "فترة إتاحة الدورة",
+      goal: "الهدف",
+      image: "صورة الدورة",
+      time: "وقت الدورة",
+    };
+    return labels[fieldName] || fieldName;
+  };
 
   /* ====================== Load teachers / categories ====================== */
   useEffect(() => {
@@ -1129,43 +1149,36 @@ isSource,
     dispatch(handleGetCategoryParts({ body: data_send }));
   }, [selectedCategory, dispatch]);
 
+  const quillModules = {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ["bold", "italic", "underline"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      [{ align: [] }],
+      ["link"],
+      ["clean"],
+    ],
+  };
 
-// مهم: حط السطر ده في `_app.js` أو `app/layout.js` (مش هنا)
-// import "react-quill/dist/quill.snow.css";
+  const quillFormats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "list",
+    "bullet",
+    "align",
+    "link",
+  ];
 
-const quillModules = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ["bold", "italic", "underline"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    [{ align: [] }],
-    ["link"],
-    ["clean"],
-  ],
-};
-
-const quillFormats = [
-  "header",
-  "bold",
-  "italic",
-  "underline",
-  "list",
-  "bullet",
-  "align",
-  "link",
-];
-
-
-const isQuillEmpty = (value) => {
-  if (!value) return true;
-  // شيل الـ HTML tags و الـ &nbsp; وسيب بس النص العادي
-  const plain = value
-    .replace(/<[^>]+>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .trim();
-  return plain.length === 0;
-};
-
+  const isQuillEmpty = (value) => {
+    if (!value) return true;
+    const plain = value
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .trim();
+    return plain.length === 0;
+  };
 
   useEffect(() => {
     setCategoriesPartOptions(
@@ -1182,7 +1195,6 @@ const isQuillEmpty = (value) => {
   }, [get_categories_parts_list, selectedCategory]);
 
   /* ====================== Handle file changes ====================== */
-
   const handleFileChange = ({ fileList: newFileList }) => {
     setFileList(newFileList);
 
@@ -1197,15 +1209,50 @@ const isQuillEmpty = (value) => {
     } else {
       setImagePreview(null);
     }
+
+    // Validate image when changed
+    validateImageField(newFileList);
   };
 
   const handleRemoveFile = () => {
     setFileList([]);
     setImagePreview(null);
+    validateImageField([]);
+  };
+
+  const validateImageField = (files) => {
+    if (!files || files.length === 0) {
+      if (!isEditMode || !rowData?.image_url) {
+        if (!touchedFields.image) {
+          setTouchedFields(prev => ({ ...prev, image: true }));
+        }
+        return false;
+      }
+    }
+    return true;
+  };
+
+  /* ====================== Field change handlers ====================== */
+  const handleFieldChange = (fieldName, value) => {
+    setTouchedFields(prev => ({ ...prev, [fieldName]: true }));
+    
+    // Special handling for Quill editor
+    if (fieldName === "goal") {
+      validateQuillField(value);
+    }
+  };
+
+  const validateQuillField = (value) => {
+    if (isQuillEmpty(value)) {
+      if (!validationErrors.includes("goal") && touchedFields.goal) {
+        setValidationErrors(prev => [...prev, "goal"]);
+      }
+    } else {
+      setValidationErrors(prev => prev.filter(err => err !== "goal"));
+    }
   };
 
   /* ====================== Prefill when editing ====================== */
-
   useEffect(() => {
     if (!rowData) return;
 
@@ -1260,6 +1307,11 @@ const isQuillEmpty = (value) => {
       setFileList([fakeFile]);
       setImagePreview(rowData.image_url);
     }
+
+    // Validate prefilled fields
+    if (formValues.goal) {
+      validateQuillField(formValues.goal);
+    }
   }, [
     rowData,
     form,
@@ -1270,49 +1322,87 @@ const isQuillEmpty = (value) => {
   ]);
 
   /* ====================== Validation ====================== */
-
   const validateFormBeforeSubmit = (values) => {
     const errors = [];
 
-    if (!values.name?.trim()) errors.push("اسم الدورة");
-    if (!values.price && values.price !== 0) errors.push("السعر");
-    if (!values.category) errors.push("الفئة");
-    if (!values.section) errors.push("القسم");
-    if (!values.description?.trim()) errors.push("وصف الدورة");
-    if (!values.genderPolicy) errors.push("سياسة النوع");
-    if (!values.capacity) errors.push("السعة القصوى");
-    if (!values.instructor || values.instructor.length === 0)
-      errors.push("المدربين");
-    if (!values.availableRange || values.availableRange.length !== 2)
-      errors.push("فترة إتاحة الدورة");
+    // Required fields validation
+    if (!values.name?.trim()) errors.push("name");
+    if (!values.price && values.price !== 0) errors.push("price");
+    if (!values.category) errors.push("category");
+    if (!values.section) errors.push("section");
+    if (!values.description?.trim()) errors.push("description");
+    if (!values.genderPolicy) errors.push("genderPolicy");
+    if (!values.capacity) errors.push("capacity");
+    if (!values.instructor || values.instructor.length === 0) errors.push("instructor");
+    if (!values.availableRange || values.availableRange.length !== 2) errors.push("availableRange");
+    
+    // Quill field validation
     if (isQuillEmpty(values.goal)) {
-      errors.push("الهدف");
+      errors.push("goal");
     }
 
-    // صورة الدورة:
-    // في الإضافة: مطلوبة
-    // في التعديل: يمشي لو ما فيش صورة جديدة بس عندنا image_url قديم
+    // Image validation
     if (!fileList || fileList.length === 0) {
       if (!isEditMode || !rowData?.image_url) {
-        errors.push("صورة الدورة");
+        errors.push("image");
       }
     }
 
     return errors;
   };
 
-  /* ====================== Submit ====================== */
+  const showValidationToast = (errors) => {
+    if (errors.length === 0) return;
+    
+    const errorMessages = errors.map(err => getFieldLabel(err));
+    const errorText = `الحقول التالية مطلوبة: ${errorMessages.join("، ")}`;
+    
+    toast.error(errorText, {
+      position: "top-center",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+  };
 
+  /* ====================== Submit ====================== */
   async function handleSubmit(values) {
     try {
       setIsSubmitting(true);
+      
+      // Mark all fields as touched
+      const allFields = [
+        'name', 'price', 'category', 'section', 'description', 
+        'genderPolicy', 'capacity', 'instructor', 'availableRange', 
+        'goal', 'image'
+      ];
+      const touchedAll = {};
+      allFields.forEach(field => touchedAll[field] = true);
+      setTouchedFields(touchedAll);
 
+      // Validate all fields
       const validationErrors = validateFormBeforeSubmit(values);
+      
       if (validationErrors.length > 0) {
-        message.error(`الحقول التالية مطلوبة: ${validationErrors.join("، ")}`);
+        setValidationErrors(validationErrors);
+        showValidationToast(validationErrors);
         setIsSubmitting(false);
+        
+        // Scroll to first error
+        const firstError = validationErrors[0];
+        const element = document.querySelector(`[data-field="${firstError}"]`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
         return;
       }
+
+      // Clear any previous errors
+      setValidationErrors([]);
 
       const [start, end] = values.availableRange || [null, null];
 
@@ -1344,7 +1434,7 @@ const isQuillEmpty = (value) => {
       }
 
       if (!imageFile && !isEditMode) {
-        message.error("يجب رفع صورة صالحة للدورة");
+        toast.error("يجب رفع صورة صالحة للدورة");
         setIsSubmitting(false);
         return;
       }
@@ -1375,7 +1465,7 @@ const isQuillEmpty = (value) => {
       formData.append("free", values?.free ? 1 : 0);
       formData.append("active", values?.active ? 1 : 0);
       if(rowData) {
-        formData.append("id" , rowData?.id)
+        formData.append("id", rowData?.id);
       }
 
       if (imageFile) {
@@ -1407,11 +1497,12 @@ const isQuillEmpty = (value) => {
 
         goToNextStep();
       } else {
-        console.log("errorrrr" , result)
-        toast.error(result?.error?.response?.data?.message|| "حدث خطأ أثناء حفظ البيانات");
+        console.log("errorrrr", result);
+        toast.error(result?.error?.response?.data?.message || "حدث خطأ أثناء حفظ البيانات");
       }
     } catch (error) {
       console.error("Submission error:", error);
+      toast.error("حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى");
     } finally {
       setIsSubmitting(false);
     }
@@ -1429,17 +1520,31 @@ const isQuillEmpty = (value) => {
       .flat();
     const uniqueErrors = [...new Set(errorFields)];
 
-    message.error(`يرجى مراجعة الحقول التالية: ${uniqueErrors.join("، ")}`);
+    const errorMessages = uniqueErrors.map(field => getFieldLabel(field));
+    const errorText = `يرجى مراجعة الحقول التالية: ${errorMessages.join("، ")}`;
+    
+    toast.error(errorText, {
+      position: "top-center",
+      autoClose: 5000,
+    });
+
+    // Mark these fields as touched
+    const touched = {};
+    uniqueErrors.forEach(field => touched[field] = true);
+    setTouchedFields(prev => ({ ...prev, ...touched }));
   }
 
-  /* ====================== Render ====================== */
+  // Helper function to check if a field has error
+  const hasError = (fieldName) => {
+    return validationErrors.includes(fieldName) && touchedFields[fieldName];
+  };
 
+  /* ====================== Render ====================== */
   return (
     <div className="space-y-8">
       <Form
         form={form}
         layout="vertical"
-        // onFinish={goToNextStep}
         onFinish={handleSubmit}
         onFinishFailed={handleSubmitFailed}
         className="space-y-8"
@@ -1466,7 +1571,7 @@ const isQuillEmpty = (value) => {
       >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Image Upload */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1" data-field="image">
             <Form.Item
               label={
                 <span className="font-semibold text-gray-700 flex items-center gap-2">
@@ -1475,20 +1580,8 @@ const isQuillEmpty = (value) => {
                 </span>
               }
               required
-              rules={[
-                {
-                  validator: () => {
-                    if (!fileList || fileList.length === 0) {
-                      if (!isEditMode || !rowData?.image_url) {
-                        return Promise.reject(
-                          new Error("صورة الدورة مطلوبة")
-                        );
-                      }
-                    }
-                    return Promise.resolve();
-                  },
-                },
-              ]}
+              validateStatus={hasError("image") ? "error" : ""}
+              help={hasError("image") ? "صورة الدورة مطلوبة" : null}
             >
               <Dragger
                 accept=".jpg,.jpeg,.png,.gif,.webp"
@@ -1499,10 +1592,14 @@ const isQuillEmpty = (value) => {
                 onChange={handleFileChange}
                 onRemove={handleRemoveFile}
                 listType="picture"
-                className="border-2 border-dashed border-blue-300 hover:border-blue-400 rounded-xl bg-blue-50/50"
+                className={`border-2 border-dashed rounded-xl ${
+                  hasError("image") 
+                    ? "border-red-400 bg-red-50/50" 
+                    : "border-blue-300 hover:border-blue-400 bg-blue-50/50"
+                }`}
               >
                 <p className="ant-upload-drag-icon">
-                  <InboxOutlined className="text-blue-500 text-4xl" />
+                  <InboxOutlined className={`text-4xl ${hasError("image") ? "text-red-500" : "text-blue-500"}`} />
                 </p>
                 <p className="ant-upload-text font-medium text-gray-700">
                   اسحب الصورة هنا أو اضغط للاختيار
@@ -1517,7 +1614,7 @@ const isQuillEmpty = (value) => {
           {/* Basic Details */}
           <div className="lg:col-span-2 space-y-6">
             <Row gutter={16}>
-              <Col span={12}>
+              <Col span={12} data-field="name">
                 <Form.Item
                   label={
                     <span className="font-semibold text-gray-700 flex items-center gap-2">
@@ -1531,14 +1628,20 @@ const isQuillEmpty = (value) => {
                     { min: 3, message: "الاسم لا يقل عن 3 أحرف" },
                     { max: 100, message: "الاسم لا يزيد عن 100 حرف" },
                   ]}
+                  validateStatus={hasError("name") ? "error" : ""}
                 >
                   <Input
                     placeholder="مثال: دورة البرمجة المتقدمة"
-                    className="rounded-xl border-gray-300 hover:border-blue-400 focus:border-blue-500"
+                    className={`rounded-xl ${
+                      hasError("name") 
+                        ? "border-red-400" 
+                        : "border-gray-300 hover:border-blue-400 focus:border-blue-500"
+                    }`}
+                    onChange={(e) => handleFieldChange("name", e.target.value)}
                   />
                 </Form.Item>
               </Col>
-              <Col span={12}>
+              <Col span={12} data-field="price">
                 <Form.Item
                   label={
                     <span className="font-semibold text-gray-700 flex items-center gap-2">
@@ -1551,9 +1654,12 @@ const isQuillEmpty = (value) => {
                     { required: true, message: "أدخل السعر" },
                     { type: "number", min: 0, message: "السعر لا يقل عن 0" },
                   ]}
+                  validateStatus={hasError("price") ? "error" : ""}
                 >
                   <InputNumber
-                    className="w-full rounded-xl"
+                    className={`w-full rounded-xl ${
+                      hasError("price") ? "border-red-400" : ""
+                    }`}
                     placeholder="499"
                     min={0}
                     step={1}
@@ -1561,13 +1667,14 @@ const isQuillEmpty = (value) => {
                       `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                     }
                     parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+                    onChange={(value) => handleFieldChange("price", value)}
                   />
                 </Form.Item>
               </Col>
             </Row>
 
             <Row gutter={16}>
-              <Col span={12}>
+              <Col span={12} data-field="category">
                 <Form.Item
                   label={
                     <span className="font-semibold text-gray-700 flex items-center gap-2">
@@ -1577,16 +1684,22 @@ const isQuillEmpty = (value) => {
                   }
                   name="category"
                   rules={[{ required: true, message: "اختر الفئة" }]}
+                  validateStatus={hasError("category") ? "error" : ""}
                 >
                   <Select
                     placeholder="اختر فئة الدورة"
-                    className="rounded-xl"
-                    onChange={setSelectedCategory}
+                    className={`rounded-xl ${
+                      hasError("category") ? "border-red-400" : ""
+                    }`}
+                    onChange={(value) => {
+                      setSelectedCategory(value);
+                      handleFieldChange("category", value);
+                    }}
                     options={categoriesOptions}
                   />
                 </Form.Item>
               </Col>
-              <Col span={12}>
+              <Col span={12} data-field="section">
                 <Form.Item
                   label={
                     <span className="font-semibold text-gray-700 flex items-center gap-2">
@@ -1596,12 +1709,18 @@ const isQuillEmpty = (value) => {
                   }
                   name="section"
                   rules={[{ required: true, message: "اختر القسم" }]}
+                  validateStatus={hasError("section") ? "error" : ""}
                 >
                   <Select
                     placeholder="اختر قسم من الفئة"
-                    className="rounded-xl"
+                    className={`rounded-xl ${
+                      hasError("section") ? "border-red-400" : ""
+                    }`}
                     disabled={!selectedCategory}
-                    onChange={setSelectedOption}
+                    onChange={(value) => {
+                      setSelectedOption(value);
+                      handleFieldChange("section", value);
+                    }}
                     options={categoriesPartOptions}
                   />
                 </Form.Item>
@@ -1620,13 +1739,20 @@ const isQuillEmpty = (value) => {
                 { min: 10, message: "الوصف لا يقل عن 10 أحرف" },
                 { max: 1000, message: "الوصف لا يزيد عن 1000 حرف" },
               ]}
+              validateStatus={hasError("description") ? "error" : ""}
+              data-field="description"
             >
               <TextArea
                 rows={4}
                 placeholder="اكتب وصفاً شاملاً للدورة وأهدافها التعليمية..."
-                className="rounded-xl border-gray-300 hover:border-blue-400 focus:border-blue-500"
+                className={`rounded-xl ${
+                  hasError("description") 
+                    ? "border-red-400" 
+                    : "border-gray-300 hover:border-blue-400 focus:border-blue-500"
+                }`}
                 showCount
                 maxLength={1000}
+                onChange={(e) => handleFieldChange("description", e.target.value)}
               />
             </Form.Item>
           </div>
@@ -1640,7 +1766,7 @@ const isQuillEmpty = (value) => {
           </h3>
 
           <Row gutter={24}>
-            <Col span={8}>
+            <Col span={8} data-field="genderPolicy">
               <Form.Item
                 label={
                   <span className="font-semibold text-gray-700 flex items-center gap-2">
@@ -1650,18 +1776,20 @@ const isQuillEmpty = (value) => {
                 }
                 name="genderPolicy"
                 rules={[{ required: true, message: "اختر السياسة" }]}
+                validateStatus={hasError("genderPolicy") ? "error" : ""}
               >
                 <Select
-                  className="rounded-xl"
+                  className={`rounded-xl ${hasError("genderPolicy") ? "border-red-400" : ""}`}
                   options={[
                     { label: "👨 للذكور فقط", value: "male" },
                     { label: "👩 للإناث فقط", value: "female" },
                     { label: "👥 للجميع", value: "both" },
                   ]}
+                  onChange={(value) => handleFieldChange("genderPolicy", value)}
                 />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col span={8} data-field="capacity">
               <Form.Item
                 label={
                   <span className="font-semibold text-gray-700 flex items-center gap-2">
@@ -1670,14 +1798,17 @@ const isQuillEmpty = (value) => {
                   </span>
                 }
                 name="capacity"
+                rules={[{ required: true, message: "أدخل السعة القصوى" }]}
+                validateStatus={hasError("capacity") ? "error" : ""}
               >
                 <InputNumber
-                  className="w-full rounded-xl"
+                  className={`w-full rounded-xl ${hasError("capacity") ? "border-red-400" : ""}`}
                   placeholder="50"
+                  onChange={(value) => handleFieldChange("capacity", value)}
                 />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col span={8} data-field="instructor">
               <Form.Item
                 label={
                   <span className="font-semibold text-gray-700 flex items-center gap-2">
@@ -1687,12 +1818,14 @@ const isQuillEmpty = (value) => {
                 }
                 name="instructor"
                 rules={[{ required: true, message: "اختر المدربين" }]}
+                validateStatus={hasError("instructor") ? "error" : ""}
               >
                 <Select
                   mode="multiple"
-                  className="rounded-xl"
+                  className={`rounded-xl ${hasError("instructor") ? "border-red-400" : ""}`}
                   placeholder="اختر المدربين"
                   options={teacherOptions}
+                  onChange={(value) => handleFieldChange("instructor", value)}
                 />
               </Form.Item>
             </Col>
@@ -1707,12 +1840,15 @@ const isQuillEmpty = (value) => {
             }
             name="availableRange"
             rules={[{ required: true, message: "حدد فترة الإتاحة" }]}
+            validateStatus={hasError("availableRange") ? "error" : ""}
+            data-field="availableRange"
           >
             <RangePicker
-              className="w-full rounded-xl"
+              className={`w-full rounded-xl ${hasError("availableRange") ? "border-red-400" : ""}`}
               placeholder={["تاريخ البداية", "تاريخ النهاية"]}
               format="DD/MM/YYYY"
               disabledDate={disabledDate}
+              onChange={(dates) => handleFieldChange("availableRange", dates)}
             />
           </Form.Item>
 
@@ -1746,46 +1882,40 @@ const isQuillEmpty = (value) => {
           </Row>
 
           <Row gutter={24}>
-  <Col span={24}>
-    <Form.Item
-      label={
-        <span className="font-semibold text-gray-700 flex items-center gap-2">
-          الهدف *
-        </span>
-      }
-      name="goal"
-      rules={[
-        {
-          validator: (_, value) => {
-            if (isQuillEmpty(value)) {
-              return Promise.reject(new Error("أدخل الهدف"));
-            }
-            return Promise.resolve();
-          },
-        },
-      ]}
-    >
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <ReactQuill
-          theme="snow"
-          modules={quillModules}
-          formats={quillFormats}
-          placeholder="اكتب الهدف من الدورة بالتفصيل (مثلاً: ماذا يتعلم الطالب، النتائج المتوقعة، الجمهور المستهدف)..."
-          className="min-h-[180px]"
-          value={form.getFieldValue("goal")}           // ← ربط القيمة بالـ form
-          onChange={(value) => form.setFieldsValue({   // ← تحديث الـ form لما المستخدم يكتب
-            goal: value,
-          })}
-        />
-      </div>
-    </Form.Item>
-  </Col>
-</Row>
-
-
+            <Col span={24} data-field="goal">
+              <Form.Item
+                label={
+                  <span className="font-semibold text-gray-700 flex items-center gap-2">
+                    الهدف *
+                  </span>
+                }
+                name="goal"
+                validateStatus={hasError("goal") ? "error" : ""}
+                help={hasError("goal") ? "أدخل الهدف" : null}
+              >
+                <div className={`bg-white border rounded-xl overflow-hidden ${
+                  hasError("goal") ? "border-red-400" : "border-gray-200"
+                }`}>
+                  <ReactQuill
+                    theme="snow"
+                    modules={quillModules}
+                    formats={quillFormats}
+                    placeholder="اكتب الهدف من الدورة بالتفصيل (مثلاً: ماذا يتعلم الطالب، النتائج المتوقعة، الجمهور المستهدف)..."
+                    className="min-h-[180px]"
+                    value={form.getFieldValue("goal")}
+                    onChange={(value) => {
+                      form.setFieldsValue({ goal: value });
+                      handleFieldChange("goal", value);
+                      validateQuillField(value);
+                    }}
+                  />
+                </div>
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Row gutter={24}>
-            <Col span={12}>
+            <Col span={12} data-field="time">
               <Form.Item
                 label={
                   <span className="font-semibold text-gray-700 flex items-center gap-2">
@@ -1799,6 +1929,7 @@ const isQuillEmpty = (value) => {
                   className="w-full rounded-xl"
                   format="HH:mm:ss"
                   placeholder="اختر وقت الدورة"
+                  onChange={(value) => handleFieldChange("time", value)}
                 />
               </Form.Item>
             </Col>
@@ -1876,7 +2007,7 @@ const isQuillEmpty = (value) => {
               loading={add_round_loading || edit_round_loading || isSubmitting}
               className="rounded-lg bg-blue-600 px-6 py-2 text-white shadow-md hover:bg-blue-700"
             >
-              {add_round_loading  || edit_round_loading || isSubmitting
+              {add_round_loading || edit_round_loading || isSubmitting
                 ? "جاري الحفظ..."
                 : isEditMode
                 ? "حفظ التعديلات"

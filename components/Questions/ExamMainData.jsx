@@ -209,6 +209,7 @@ export default function ExamMainData({
   examData: editExamData,
   rowData = {},
   setRowData,
+  examid
 }) {
   const dispatch = useDispatch();
   const { all_exam_data_loading, all_exam_data_list } = useSelector(
@@ -484,7 +485,7 @@ export default function ExamMainData({
             }
             dispatch(
               handleGetAllExamSections({
-                body: { exam_id: res?.data?.message?.id },
+                body: { exam_id: examid ||  res?.data?.message?.id },
               })
             );
             setExamData({ ...examData, sections: [] });
@@ -524,7 +525,7 @@ export default function ExamMainData({
               toast.success("تم تعديل القسم بنجاح");
               dispatch(
                 handleGetAllExamSections({
-                  body: { exam_id: res?.data?.message?.section?.id },
+                  body: { exam_id: examid || res?.data?.message?.section?.id },
                 })
               );
             } else {
@@ -548,7 +549,7 @@ export default function ExamMainData({
             const newSection = res?.data?.message;
             dispatch(
               handleGetAllExamSections({
-                body: { exam_id: newSection?.id },
+                body: { exam_id: examid ||  newSection?.id },
               })
             );
             setOpenExamQuestion(newSection);
@@ -579,7 +580,7 @@ export default function ExamMainData({
           setOpenExamQuestion(res?.data?.message);
           dispatch(
             handleGetAllExamSections({
-              body: { exam_id: res?.data?.message?.section?.id },
+              body: { exam_id: examid || res?.data?.message?.section?.id },
             })
           );
         } else {
@@ -1109,7 +1110,7 @@ export default function ExamMainData({
     dispatch(
       handleGetAllExamSections({
         body: {
-          exam_id: openExamSection?.id || openExamQuestion?.section?.id,
+          exam_id: examid || openExamSection?.id || openExamQuestion?.section?.id,
         },
       })
     );
@@ -1119,10 +1120,10 @@ export default function ExamMainData({
   useEffect(() => {
     dispatch(handleGetAllExamData({
       body: {
-        id: examId
+        id: examid || examId
       }
     }))
-  }, [examId])
+  }, [examId , examid])
 
   /* ===================== UI ===================== */
   return (
@@ -1611,14 +1612,14 @@ export default function ExamMainData({
       <AddExamVideoModal
         open={openExamVideoModal}
         setOpen={setOpenExamVideoModal}
-        exam_id={examId || openExamSection?.id}
+        exam_id={examid || examId || openExamSection?.id}
         type="exam"
       />
 
       <AddExamPdfModal
         open={openExamPdfModal}
         setOpen={setOpenExamPdfModal}
-        exam_id={examId || openExamSection?.id}
+        exam_id={examid || examId || openExamSection?.id}
         type="exam"
       />
 
@@ -1628,7 +1629,7 @@ export default function ExamMainData({
         setOpen={setOpenEditExamVideo}
         rowData={videoRowData}
         setRowData={setVideoRowData}
-        exam_id={examId || openExamSection?.id}
+        exam_id={examid || examId || openExamSection?.id}
       />
 
       <EditExamPdfModal
@@ -1637,14 +1638,14 @@ export default function ExamMainData({
         setOpen={setOpenEditExamPdf}
         rowData={pdfRowData}
         setRowData={setPdfRowData}
-        exam_id={examId || openExamSection?.id}
+        exam_id={examid || examId || openExamSection?.id}
       />
 
       {/* Delete video / pdf */}
       <DeleteExamPdfModal
         open={openDeleteExamPdf}
         setOpen={setOpenDeleteExamPdf}
-        id={examId || openExamSection?.id}
+        id={ examid || examId || openExamSection?.id}
         rowData={pdfRowData}
         setRowData={setPdfRowData}
       />
@@ -1654,7 +1655,7 @@ export default function ExamMainData({
         setOpen={setOpenDeleteExamVideo}
         rowData={videoRowData}
         setRowData={setVideoRowData}
-        id={examId || openExamSection?.id}
+        id={examid || examId || openExamSection?.id}
       />
     </div>
   );
