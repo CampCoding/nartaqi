@@ -85,10 +85,10 @@ export default function LayoutProvider({ children }) {
     }
     
     // If logged in and on a public auth page (like /login) -> redirect to home
-    if (isLoggedIn && isPublic) {
-      router.replace("/");
-      return;
-    }
+    // if (isLoggedIn && isPublic) {
+    //   router.replace("/");
+    //   return;
+    // }
   }, [isLoggedIn, isPublic, pathname, router]);
 
 
