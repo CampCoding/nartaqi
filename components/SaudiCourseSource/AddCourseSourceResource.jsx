@@ -430,6 +430,7 @@ export default function AddCourseSourceResource({
 
       if (saveLinksResult?.data?.status === "success") {
         toast.success("تم حفظ الروابط بنجاح");
+        localStorage.removeItem("courseBasicInfo")
       } else {
         toast.error("فشل في حفظ الروابط");
       }
@@ -614,7 +615,7 @@ export default function AddCourseSourceResource({
                       </div>
 
                       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Tooltip title="عرض التفاصيل">
+                        {/* <Tooltip title="عرض التفاصيل">
                           <Button
                             type="text"
                             size="small"
@@ -622,7 +623,7 @@ export default function AddCourseSourceResource({
                             onClick={() => viewFileDetails(resource)}
                             className="text-blue-500 hover:text-blue-700"
                           />
-                        </Tooltip>
+                        </Tooltip> */}
 
                         <Tooltip title="تحميل الملف">
                           <a
@@ -735,10 +736,11 @@ export default function AddCourseSourceResource({
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              الوصف (اختياري)
+              الوصف 
             </label>
             <Input.TextArea
               rows={3}
+              required
               placeholder="وصف مختصر عن محتوى الملف..."
               value={newFileData.description}
               onChange={(e) => setNewFileData({ ...newFileData, description: e.target.value })}

@@ -183,7 +183,6 @@
 //     setImagePreview(null);
 //   };
 
-
 //   /* ====================== Prefill when editing ====================== */
 
 //   useEffect(() => {
@@ -973,7 +972,7 @@
 //   );
 // }
 
-
+"use client";
 import {
   Col,
   DatePicker,
@@ -988,7 +987,7 @@ import {
   TimePicker,
   Switch,
 } from "antd";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   BookOutlined,
   FileTextOutlined,
@@ -1057,6 +1056,26 @@ const customBeforeUpload = () => {
   return false;
 };
 
+// Helper function to convert string/object to dayjs
+const convertToDayjs = (value) => {
+  if (!value) return null;
+  if (dayjs.isDayjs(value)) return value;
+  if (typeof value === "string" || typeof value === "number") {
+    return dayjs(value);
+  }
+  if (value && value._isAMomentObject) {
+    return dayjs(value);
+  }
+  return null;
+};
+
+// Helper function to safely check if a value is a valid dayjs object
+const isDayjsValid = (value) => {
+  if (!value) return false;
+  if (dayjs.isDayjs(value)) return value.isValid();
+  return false;
+};
+
 export default function AddCourseSourceBasicInfo({
   isSource,
   fileList,
@@ -1077,11 +1096,11 @@ export default function AddCourseSourceBasicInfo({
 }) {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
-  const {
-    all_courses_categories_list,
-    get_categories_parts_list,
-  } = useSelector((state) => state?.categories);
-  const { add_round_loading, edit_round_loading } = useSelector((state) => state?.rounds);
+  const { all_courses_categories_list, get_categories_parts_list } =
+    useSelector((state) => state?.categories);
+  const { add_round_loading, edit_round_loading } = useSelector(
+    (state) => state?.rounds
+  );
   const { teachers_list } = useSelector((state) => state?.teachers);
 
   const [categoriesOptions, setCategoriesOptions] = useState([]);
@@ -1091,6 +1110,8 @@ export default function AddCourseSourceBasicInfo({
   const [teacherOptions, setTeacherOptions] = useState([]);
   const [validationErrors, setValidationErrors] = useState([]);
   const [touchedFields, setTouchedFields] = useState({});
+  const [courseBookFileList, setCourseBookFileList] = useState([]);
+  const [extraPdfFileList, setExtraPdfFileList] = useState([]);
   const router = useRouter();
 
   const isEditMode = Boolean(id && rowData?.id);
@@ -1142,7 +1163,6 @@ export default function AddCourseSourceBasicInfo({
   }, [all_courses_categories_list]);
 
   useEffect(() => {
-    if (!selectedCategory) return;
     const data_send = {
       course_category_id: selectedCategory,
     };
@@ -1220,11 +1240,21 @@ export default function AddCourseSourceBasicInfo({
     validateImageField([]);
   };
 
+  const handleCourseBookChange = ({ fileList: newFileList }) => {
+    setCourseBookFileList(newFileList);
+    form.setFieldsValue({ courseBook: newFileList });
+  };
+
+  const handleExtraPdfChange = ({ fileList: newFileList }) => {
+    setExtraPdfFileList(newFileList);
+    form.setFieldsValue({ extraPdf: newFileList });
+  };
+
   const validateImageField = (files) => {
     if (!files || files.length === 0) {
       if (!isEditMode || !rowData?.image_url) {
         if (!touchedFields.image) {
-          setTouchedFields(prev => ({ ...prev, image: true }));
+          setTouchedFields((prev) => ({ ...prev, image: true }));
         }
         return false;
       }
@@ -1234,8 +1264,8 @@ export default function AddCourseSourceBasicInfo({
 
   /* ====================== Field change handlers ====================== */
   const handleFieldChange = (fieldName, value) => {
-    setTouchedFields(prev => ({ ...prev, [fieldName]: true }));
-    
+    setTouchedFields((prev) => ({ ...prev, [fieldName]: true }));
+
     // Special handling for Quill editor
     if (fieldName === "goal") {
       validateQuillField(value);
@@ -1245,10 +1275,10 @@ export default function AddCourseSourceBasicInfo({
   const validateQuillField = (value) => {
     if (isQuillEmpty(value)) {
       if (!validationErrors.includes("goal") && touchedFields.goal) {
-        setValidationErrors(prev => [...prev, "goal"]);
+        setValidationErrors((prev) => [...prev, "goal"]);
       }
     } else {
-      setValidationErrors(prev => prev.filter(err => err !== "goal"));
+      setValidationErrors((prev) => prev.filter((err) => err !== "goal"));
     }
   };
 
@@ -1321,6 +1351,126 @@ export default function AddCourseSourceBasicInfo({
     setSelectedCategory,
   ]);
 
+  /* ====================== Load from localStorage ====================== */
+  const loadFromLocalStorage = useCallback(() => {
+    try {
+      const savedData = localStorage.getItem("courseBasicInfo");
+      if (savedData && !rowData) {
+        const formData = JSON.parse(savedData);
+
+        // Convert date values to dayjs objects
+        const formattedData = { ...formData };
+
+        // Handle availableRange (date picker)
+        if (
+          formattedData.availableRange &&
+          Array.isArray(formattedData.availableRange)
+        ) {
+          formattedData.availableRange = formattedData.availableRange
+            .map((date) => convertToDayjs(date))
+            .filter((date) => date && date.isValid());
+        }
+
+        // Handle time (time picker)
+        if (formattedData.time) {
+          formattedData.time = convertToDayjs(formattedData.time);
+        }
+
+        // Note: We cannot restore file objects from localStorage
+        // Users will need to re-upload files
+        delete formattedData.courseBook;
+        delete formattedData.extraPdf;
+
+        form.setFieldsValue(formattedData);
+
+        // Set category and section if they exist
+        if (formattedData.category) {
+          setSelectedCategory(formattedData.category);
+        }
+        if (formattedData.category_part_id) {
+          setSelectedOption(formattedData.category_part_id);
+        }
+
+        console.log("Loaded data from localStorage:", formattedData);
+
+        // Show notification about files
+        if (formattedData.hasCourseBook || formattedData.hasExtraPdf) {
+          toast.info("يرجى إعادة رفع ملفات الدورة والملفات الإضافية", {
+            position: "top-right",
+            autoClose: 5000,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error loading from localStorage:", error);
+    }
+  }, [form, rowData, setSelectedCategory]);
+
+  useEffect(() => {
+    loadFromLocalStorage();
+  }, [loadFromLocalStorage]);
+
+  /* ====================== Save to localStorage on form change ====================== */
+  const saveToLocalStorage = useCallback(() => {
+    if (isEditMode) return; // Don't save in edit mode
+
+    try {
+      const formValues = form.getFieldsValue();
+
+      // Convert dayjs objects to serializable format
+      const dataToSave = { ...formValues };
+
+      // Convert availableRange dates
+      if (
+        dataToSave.availableRange &&
+        Array.isArray(dataToSave.availableRange)
+      ) {
+        dataToSave.availableRange = dataToSave.availableRange.map((date) =>
+          isDayjsValid(date) ? date.toISOString() : date
+        );
+      }
+
+      // Convert time
+      if (dataToSave.time && isDayjsValid(dataToSave.time)) {
+        dataToSave.time = dataToSave.time.toISOString();
+      }
+
+      // Add category and section
+      dataToSave.category = selectedCategory;
+      dataToSave.category_part_id = selectedOption;
+
+      // Track if we have files (but don't store the actual files)
+      dataToSave.hasCourseBook = courseBookFileList.length > 0;
+      dataToSave.hasExtraPdf = extraPdfFileList.length > 0;
+      dataToSave.hasImage = fileList.length > 0;
+
+      // Remove file objects from localStorage (they can't be properly serialized)
+      delete dataToSave.courseBook;
+      delete dataToSave.extraPdf;
+
+      localStorage.setItem("courseBasicInfo", JSON.stringify(dataToSave));
+    } catch (error) {
+      console.error("Error saving to localStorage:", error);
+    }
+  }, [
+    form,
+    isEditMode,
+    selectedCategory,
+    selectedOption,
+    courseBookFileList,
+    extraPdfFileList,
+    fileList,
+  ]);
+
+  // Save to localStorage when form values change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      saveToLocalStorage();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [saveToLocalStorage]);
+
   /* ====================== Validation ====================== */
   const validateFormBeforeSubmit = (values) => {
     const errors = [];
@@ -1333,9 +1483,20 @@ export default function AddCourseSourceBasicInfo({
     if (!values.description?.trim()) errors.push("description");
     if (!values.genderPolicy) errors.push("genderPolicy");
     if (!values.capacity) errors.push("capacity");
-    if (!values.instructor || values.instructor.length === 0) errors.push("instructor");
-    if (!values.availableRange || values.availableRange.length !== 2) errors.push("availableRange");
-    
+    if (!values.instructor || values.instructor.length === 0)
+      errors.push("instructor");
+
+    // Validate availableRange
+    if (!values.availableRange || values.availableRange.length !== 2) {
+      errors.push("availableRange");
+    } else {
+      // Check if dates are valid dayjs objects
+      const [start, end] = values.availableRange;
+      if (!isDayjsValid(start) || !isDayjsValid(end)) {
+        errors.push("availableRange");
+      }
+    }
+
     // Quill field validation
     if (isQuillEmpty(values.goal)) {
       errors.push("goal");
@@ -1353,10 +1514,10 @@ export default function AddCourseSourceBasicInfo({
 
   const showValidationToast = (errors) => {
     if (errors.length === 0) return;
-    
-    const errorMessages = errors.map(err => getFieldLabel(err));
+
+    const errorMessages = errors.map((err) => getFieldLabel(err));
     const errorText = `الحقول التالية مطلوبة: ${errorMessages.join("، ")}`;
-    
+
     toast.error(errorText, {
       position: "top-center",
       autoClose: 5000,
@@ -1368,36 +1529,55 @@ export default function AddCourseSourceBasicInfo({
     });
   };
 
+  /* ====================== Get actual File objects ====================== */
+  const getFileObject = (fileItem) => {
+    if (fileItem.originFileObj) {
+      return fileItem.originFileObj;
+    }
+    if (fileItem.response) {
+      return fileItem.response;
+    }
+    return null;
+  };
+
   /* ====================== Submit ====================== */
   async function handleSubmit(values) {
     try {
       setIsSubmitting(true);
-      
+
       // Mark all fields as touched
       const allFields = [
-        'name', 'price', 'category', 'section', 'description', 
-        'genderPolicy', 'capacity', 'instructor', 'availableRange', 
-        'goal', 'image'
+        "name",
+        "price",
+        "category",
+        "section",
+        "description",
+        "genderPolicy",
+        "capacity",
+        "instructor",
+        "availableRange",
+        "goal",
+        "image",
       ];
       const touchedAll = {};
-      allFields.forEach(field => touchedAll[field] = true);
+      allFields.forEach((field) => (touchedAll[field] = true));
       setTouchedFields(touchedAll);
 
       // Validate all fields
       const validationErrors = validateFormBeforeSubmit(values);
-      
+
       if (validationErrors.length > 0) {
         setValidationErrors(validationErrors);
         showValidationToast(validationErrors);
         setIsSubmitting(false);
-        
+
         // Scroll to first error
         const firstError = validationErrors[0];
         const element = document.querySelector(`[data-field="${firstError}"]`);
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-        
+
         return;
       }
 
@@ -1407,30 +1587,27 @@ export default function AddCourseSourceBasicInfo({
       const [start, end] = values.availableRange || [null, null];
 
       const timeString =
-        values.time && values.time.isValid()
+        values.time && isDayjsValid(values.time)
           ? values.time.format("HH:mm:ss")
           : null;
 
-      const courseBookFiles = (values.courseBook || [])
-        .map((f) => f.originFileObj || f)
-        .filter(Boolean);
+      // Get actual File objects from file lists
+      let courseBookFile = null;
+      if (courseBookFileList.length > 0) {
+        const fileItem = courseBookFileList[0];
+        courseBookFile = getFileObject(fileItem);
+      }
 
-      const extraPdfFile =
-        values.extraPdf && values.extraPdf[0]
-          ? values.extraPdf[0].originFileObj || values.extraPdf[0]
-          : null;
+      let extraPdfFile = null;
+      if (extraPdfFileList.length > 0) {
+        const fileItem = extraPdfFileList[0];
+        extraPdfFile = getFileObject(fileItem);
+      }
 
       let imageFile = null;
       if (fileList && fileList.length > 0) {
         const file = fileList[0];
-
-        if (file.originFileObj) {
-          imageFile = file.originFileObj;
-        } else if (file.response) {
-          imageFile = file.response;
-        } else if (file.uid === "-1" && file.url && !file.originFileObj) {
-          imageFile = null;
-        }
+        imageFile = getFileObject(file);
       }
 
       if (!imageFile && !isEditMode) {
@@ -1444,10 +1621,10 @@ export default function AddCourseSourceBasicInfo({
       formData.append("description", values?.description?.trim());
       formData.append("price", values?.price);
 
-      if (start) {
+      if (start && isDayjsValid(start)) {
         formData.append("start_date", dayjs(start).format("YYYY-MM-DD"));
       }
-      if (end) {
+      if (end && isDayjsValid(end)) {
         formData.append("end_date", dayjs(end).format("YYYY-MM-DD"));
       }
 
@@ -1459,17 +1636,42 @@ export default function AddCourseSourceBasicInfo({
       formData.append("source", isSource ? 0 : 1);
       formData.append("capacity", values?.capacity);
       formData.append("time_show", timeString || "");
-      formData.append("round_book", courseBookFiles[0] || null);
+
+      formData.append("round_book", courseBookFile || null);
+
       formData.append("teacher_id", values?.instructor?.join(","));
+
       formData.append("round_road_map_book", extraPdfFile || null);
       formData.append("free", values?.free ? 1 : 0);
       formData.append("active", values?.active ? 1 : 0);
-      if(rowData) {
+
+      if (rowData) {
         formData.append("id", rowData?.id);
       }
 
       if (imageFile) {
         formData.append("image", imageFile);
+      }
+
+      // Log form data for debugging
+      console.log("Submitting form data:");
+      console.log("Name:", values?.name);
+      console.log("Course Book File:", courseBookFile ? "Exists" : "None");
+      console.log("Extra PDF File:", extraPdfFile ? "Exists" : "None");
+      console.log("Image File:", imageFile ? "Exists" : "None");
+
+      // Don't save file objects to localStorage (they can't be serialized)
+      if (!rowData) {
+        const dataToSave = {
+          ...values,
+          category_part_id: selectedOption,
+          category: selectedCategory,
+          // Don't save file objects
+          courseBook: undefined,
+          extraPdf: undefined,
+          image: undefined,
+        };
+        // localStorage.setItem("courseBasicInfo", JSON.stringify(dataToSave));
       }
 
       const result = await dispatch(
@@ -1490,15 +1692,18 @@ export default function AddCourseSourceBasicInfo({
             result?.data?.message?.message || "تم تحديث الدورة بنجاح"
           );
         } else {
-          toast.success(
-            result?.data?.message || "تم إضافة الدورة بنجاح"
-          );
+          toast.success(result?.data?.message || "تم إضافة الدورة بنجاح");
         }
+
+        // Clear localStorage after successful submission
+        // localStorage.removeItem("courseBasicInfo");
 
         goToNextStep();
       } else {
         console.log("errorrrr", result);
-        toast.error(result?.error?.response?.data?.message || "حدث خطأ أثناء حفظ البيانات");
+        toast.error(
+          result?.error?.response?.data?.message || "حدث خطأ أثناء حفظ البيانات"
+        );
       }
     } catch (error) {
       console.error("Submission error:", error);
@@ -1520,9 +1725,9 @@ export default function AddCourseSourceBasicInfo({
       .flat();
     const uniqueErrors = [...new Set(errorFields)];
 
-    const errorMessages = uniqueErrors.map(field => getFieldLabel(field));
+    const errorMessages = uniqueErrors.map((field) => getFieldLabel(field));
     const errorText = `يرجى مراجعة الحقول التالية: ${errorMessages.join("، ")}`;
-    
+
     toast.error(errorText, {
       position: "top-center",
       autoClose: 5000,
@@ -1530,8 +1735,8 @@ export default function AddCourseSourceBasicInfo({
 
     // Mark these fields as touched
     const touched = {};
-    uniqueErrors.forEach(field => touched[field] = true);
-    setTouchedFields(prev => ({ ...prev, ...touched }));
+    uniqueErrors.forEach((field) => (touched[field] = true));
+    setTouchedFields((prev) => ({ ...prev, ...touched }));
   }
 
   // Helper function to check if a field has error
@@ -1593,13 +1798,17 @@ export default function AddCourseSourceBasicInfo({
                 onRemove={handleRemoveFile}
                 listType="picture"
                 className={`border-2 border-dashed rounded-xl ${
-                  hasError("image") 
-                    ? "border-red-400 bg-red-50/50" 
+                  hasError("image")
+                    ? "border-red-400 bg-red-50/50"
                     : "border-blue-300 hover:border-blue-400 bg-blue-50/50"
                 }`}
               >
                 <p className="ant-upload-drag-icon">
-                  <InboxOutlined className={`text-4xl ${hasError("image") ? "text-red-500" : "text-blue-500"}`} />
+                  <InboxOutlined
+                    className={`text-4xl ${
+                      hasError("image") ? "text-red-500" : "text-blue-500"
+                    }`}
+                  />
                 </p>
                 <p className="ant-upload-text font-medium text-gray-700">
                   اسحب الصورة هنا أو اضغط للاختيار
@@ -1626,15 +1835,14 @@ export default function AddCourseSourceBasicInfo({
                   rules={[
                     { required: true, message: "أدخل اسم الدورة" },
                     { min: 3, message: "الاسم لا يقل عن 3 أحرف" },
-                    { max: 100, message: "الاسم لا يزيد عن 100 حرف" },
                   ]}
                   validateStatus={hasError("name") ? "error" : ""}
                 >
                   <Input
                     placeholder="مثال: دورة البرمجة المتقدمة"
                     className={`rounded-xl ${
-                      hasError("name") 
-                        ? "border-red-400" 
+                      hasError("name")
+                        ? "border-red-400"
                         : "border-gray-300 hover:border-blue-400 focus:border-blue-500"
                     }`}
                     onChange={(e) => handleFieldChange("name", e.target.value)}
@@ -1694,6 +1902,13 @@ export default function AddCourseSourceBasicInfo({
                     onChange={(value) => {
                       setSelectedCategory(value);
                       handleFieldChange("category", value);
+
+                      // Reset section when category changes
+                      form.setFieldsValue({ section: undefined });
+                      setSelectedOption(null);
+                      setValidationErrors((prev) =>
+                        prev.filter((err) => err !== "section")
+                      );
                     }}
                     options={categoriesOptions}
                   />
@@ -1717,11 +1932,17 @@ export default function AddCourseSourceBasicInfo({
                       hasError("section") ? "border-red-400" : ""
                     }`}
                     disabled={!selectedCategory}
+                    value={selectedOption}
                     onChange={(value) => {
                       setSelectedOption(value);
                       handleFieldChange("section", value);
                     }}
                     options={categoriesPartOptions}
+                    notFoundContent={
+                      !selectedCategory
+                        ? "يرجى اختيار الفئة أولاً"
+                        : "لا توجد أقسام لهذه الفئة"
+                    }
                   />
                 </Form.Item>
               </Col>
@@ -1736,8 +1957,6 @@ export default function AddCourseSourceBasicInfo({
               name="description"
               rules={[
                 { required: true, message: "أدخل وصفًا للدورة" },
-                { min: 10, message: "الوصف لا يقل عن 10 أحرف" },
-                { max: 1000, message: "الوصف لا يزيد عن 1000 حرف" },
               ]}
               validateStatus={hasError("description") ? "error" : ""}
               data-field="description"
@@ -1746,13 +1965,14 @@ export default function AddCourseSourceBasicInfo({
                 rows={4}
                 placeholder="اكتب وصفاً شاملاً للدورة وأهدافها التعليمية..."
                 className={`rounded-xl ${
-                  hasError("description") 
-                    ? "border-red-400" 
+                  hasError("description")
+                    ? "border-red-400"
                     : "border-gray-300 hover:border-blue-400 focus:border-blue-500"
                 }`}
                 showCount
-                maxLength={1000}
-                onChange={(e) => handleFieldChange("description", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange("description", e.target.value)
+                }
               />
             </Form.Item>
           </div>
@@ -1779,7 +1999,9 @@ export default function AddCourseSourceBasicInfo({
                 validateStatus={hasError("genderPolicy") ? "error" : ""}
               >
                 <Select
-                  className={`rounded-xl ${hasError("genderPolicy") ? "border-red-400" : ""}`}
+                  className={`rounded-xl ${
+                    hasError("genderPolicy") ? "border-red-400" : ""
+                  }`}
                   options={[
                     { label: "👨 للذكور فقط", value: "male" },
                     { label: "👩 للإناث فقط", value: "female" },
@@ -1802,7 +2024,9 @@ export default function AddCourseSourceBasicInfo({
                 validateStatus={hasError("capacity") ? "error" : ""}
               >
                 <InputNumber
-                  className={`w-full rounded-xl ${hasError("capacity") ? "border-red-400" : ""}`}
+                  className={`w-full rounded-xl ${
+                    hasError("capacity") ? "border-red-400" : ""
+                  }`}
                   placeholder="50"
                   onChange={(value) => handleFieldChange("capacity", value)}
                 />
@@ -1822,7 +2046,9 @@ export default function AddCourseSourceBasicInfo({
               >
                 <Select
                   mode="multiple"
-                  className={`rounded-xl ${hasError("instructor") ? "border-red-400" : ""}`}
+                  className={`rounded-xl ${
+                    hasError("instructor") ? "border-red-400" : ""
+                  }`}
                   placeholder="اختر المدربين"
                   options={teacherOptions}
                   onChange={(value) => handleFieldChange("instructor", value)}
@@ -1844,7 +2070,9 @@ export default function AddCourseSourceBasicInfo({
             data-field="availableRange"
           >
             <RangePicker
-              className={`w-full rounded-xl ${hasError("availableRange") ? "border-red-400" : ""}`}
+              className={`w-full rounded-xl ${
+                hasError("availableRange") ? "border-red-400" : ""
+              }`}
               placeholder={["تاريخ البداية", "تاريخ النهاية"]}
               format="DD/MM/YYYY"
               disabledDate={disabledDate}
@@ -1893,15 +2121,17 @@ export default function AddCourseSourceBasicInfo({
                 validateStatus={hasError("goal") ? "error" : ""}
                 help={hasError("goal") ? "أدخل الهدف" : null}
               >
-                <div className={`bg-white border rounded-xl overflow-hidden ${
-                  hasError("goal") ? "border-red-400" : "border-gray-200"
-                }`}>
+                <div
+                  className={`bg-white border rounded-xl ${
+                    hasError("goal") ? "border-red-400" : "border-gray-200"
+                  }`}
+                >
                   <ReactQuill
                     theme="snow"
                     modules={quillModules}
                     formats={quillFormats}
                     placeholder="اكتب الهدف من الدورة بالتفصيل (مثلاً: ماذا يتعلم الطالب، النتائج المتوقعة، الجمهور المستهدف)..."
-                    className="min-h-[180px]"
+                    className="h-full"
                     value={form.getFieldValue("goal")}
                     onChange={(value) => {
                       form.setFieldsValue({ goal: value });
@@ -1947,16 +2177,21 @@ export default function AddCourseSourceBasicInfo({
             valuePropName="fileList"
             getValueFromEvent={normFile}
           >
-            <Dragger multiple {...uploadProps}>
+            <Dragger
+              multiple={false}
+              accept=".pdf,.doc,.docx,.txt"
+              beforeUpload={customBeforeUpload}
+              fileList={courseBookFileList}
+              onChange={handleCourseBookChange}
+            >
               <p className="ant-upload-drag-icon">
                 <InboxOutlined />
               </p>
               <p className="ant-upload-text">
-                Click or drag file to this area to upload
+                اسحب ملف كتاب الدورة هنا أو اضغط للاختيار
               </p>
               <p className="ant-upload-hint">
-                Support for a single or bulk upload. Strictly prohibited from
-                uploading company data or other banned files.
+                ملف واحد فقط بصيغة PDF, DOC, DOCX, TXT
               </p>
             </Dragger>
           </Form.Item>
@@ -1973,7 +2208,13 @@ export default function AddCourseSourceBasicInfo({
             valuePropName="fileList"
             getValueFromEvent={normFile}
           >
-            <Dragger multiple={false} accept=".pdf">
+            <Dragger
+              multiple={false}
+               accept=".pdf,.doc,.docx,.txt"
+              beforeUpload={customBeforeUpload}
+              fileList={extraPdfFileList}
+              onChange={handleExtraPdfChange}
+            >
               <p className="ant-upload-drag-icon">
                 <InboxOutlined />
               </p>

@@ -3,7 +3,7 @@ import { Modal, Button, Typography } from 'antd';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { handleDeleteContent } from '../../lib/features/roundContentSlice';
+import { handleDeleteContent, handleGetAllRoundContent } from '../../lib/features/roundContentSlice';
 import { toast } from 'react-toastify';
 // Assuming the correct path for your Redux action:
 // import { handleDeleteContent } from '../../lib/features/roundContentSlice';
@@ -30,6 +30,7 @@ export default function DeleteRoundContent({ open, setOpen, rowData , id }) {
     dispatch(handleDeleteContent({ body: data_send }))
       .unwrap()
       .then(res => {
+        console.log("res",res)
         if(res?.data?.status == "success") {
           toast.success("تم حذف المحتوي بنجاح");
           dispatch(handleGetAllRoundContent({body : {

@@ -69,6 +69,7 @@ export default function AddRoundContent({ open, setOpen, id, type = "basic" }) {
     dispatch(handleAddRoundContent({ body: data_send }))
       .unwrap()
       .then((res) => {
+        console.log(res);
         if (res?.data?.status == "success") {
           toast.success("تم اضافه المحتوي بنجاح");
           dispatch(
@@ -80,8 +81,10 @@ export default function AddRoundContent({ open, setOpen, id, type = "basic" }) {
           );
           setOpen(false);
           setRoundContentData({ title: "", description: "" });
+          setDate(null);
+          setDateStr("");
         } else {
-          toast.error(res?.data?.message || "هناك خطأ أثناء اضافه المحتوي");
+          toast.error(res?.err?.response?.data?.message || "هناك خطأ أثناء اضافه المحتوي");
         }
       })
       .catch((err) => {
@@ -158,14 +161,7 @@ export default function AddRoundContent({ open, setOpen, id, type = "basic" }) {
             </label>
             <div className="">
               {" "}
-              <DatePicker
-                onChange={(value, stringValue) => {
-                  setDate(value); // value ده dayjs أو null
-                  setDateStr(stringValue); // string formatted
-                  console.log("string:", stringValue);
-                  console.log("ISO:", value ? value.toISOString() : null);
-                }}
-              />
+            
             </div>
           </div>
           <input
@@ -195,6 +191,19 @@ export default function AddRoundContent({ open, setOpen, id, type = "basic" }) {
             className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400 resize-none"
             placeholder="شرح موجز لأهداف هذا المحتوى وما سيتم تغطيته"
           />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label>التاريخ</label>
+            <DatePicker
+             required
+                onChange={(value, stringValue) => {
+                  setDate(value); // value ده dayjs أو null
+                  setDateStr(stringValue); // string formatted
+                  console.log("string:", stringValue);
+                  console.log("ISO:", value ? value.toISOString() : null);
+                }}
+              />
         </div>
       </div>
     </Modal>

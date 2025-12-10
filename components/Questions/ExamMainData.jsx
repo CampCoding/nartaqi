@@ -60,6 +60,7 @@ import {
   handleGetExamQuestions,
   handleAssignExam,
   handleGetAllExamData,
+  handleUpdateExamQuestions,
 } from "../../lib/features/examSlice";
 import { toast } from "react-toastify";
 import AssignExam from "./AssignExam";
@@ -232,6 +233,8 @@ export default function ExamMainData({
   const [pdfRowData, setPdfRowData] = useState({});
 
   // const [openEditExamPdf, setOpenEditExamPdf] = useState(false);
+
+  
 
   const searchparams = useSearchParams();
   const lessonId = searchparams?.get("lessonId") ?? null;
@@ -411,6 +414,10 @@ export default function ExamMainData({
   };
 
   const [examId, setExamId] = useState(null);
+  
+  useEffect(() => {
+    console.log('editingQuestion' , editingQuestion)
+  } , [editingQuestion])
 
   const handleSubmitBasicData = () => {
     if (!exmaInfoData.title) {
@@ -675,282 +682,608 @@ export default function ExamMainData({
     [mcqSubType]
   );
 
-  /* ===================== Add / Update Question ===================== */
-  const addOrUpdateQuestion = async () => {
-    if (!selectedSectionId) {
-      toast.error("يرجى اختيار قسم أولاً");
-      return;
-    }
 
-    if (questionType !== "mcq" && !currentQuestion.trim()) {
-      toast.error("يرجى كتابة نص السؤال");
-      return;
-    }
+  // أضف هذه الوظيفة في ExamMainData component
 
-    const section = examData?.sections.find((s) => s.id === selectedSectionId);
-    const currentCount = section?.questions?.length || 0;
-    const isMock = examData.type === "mock";
-    const maxPerSection = 24;
+const editQuestion = async (question) => {
+  // تحضير البيانات حسب نوع السؤال
+  let updatedQuestionData = {
+    id: question.id,
+    question_text: question.question_text || currentQuestion,
+    instructions: question.instructions || "Instructions",
+  };
 
-    const canAdd = (count = 1) =>
-      !isMock || currentCount + count <= maxPerSection;
-
-    /* ========== 1) MCQ with subtypes (chemical / passage) ========== */
-    if (questionType === "mcq" && mcqSubType !== "general") {
-      const groups = mcqPassages[mcqSubType] || [];
-
-      /* ----- 1A) Paragraph MCQ → paragraph_mcq payload ----- */
-      if (mcqSubType === "passage") {
-        const flatQuestions = [];
-        const paragraphPayloads = [];
-
-        for (const group of groups) {
-          if (!group?.content?.trim()) continue;
-
-          const groupQuestionsForPayload = [];
-
-          for (const q of group.questions || []) {
-            if (!q.text?.trim()) continue;
-
-            // Normalize options and mark correct
-            const normalizedOptions = (q.options || []).map((opt, idx) => {
-              const base = normalizeOption(opt);
-              return {
-                ...base,
-                correct_or_not: q.correctIndex === idx ? "1" : "0",
-              };
-            });
-
-            if (normalizedOptions.length < 2) {
-              toast.error(
-                "كل سؤال في الفقرة يجب أن يحتوي على خيارين على الأقل"
-              );
-              return;
-            }
-
-            // UI-level question (flat for DisplayQuestions)
-            const flatQuestion = {
-              id: editingQuestion?.id || Date.now() + Math.random(),
-              question_type: "paragraph_mcq",
-              question_text: q.text,
-              exam_section_id: selectedSectionId,
-              mcqSubType,
-              mcq_array: normalizedOptions,
-              correctAnswer: q.correctIndex ?? 0,
-              paragraph_content: group.content,
-              instructions: "اختر الإجابة الصحيحة",
-            };
-
-            flatQuestions.push(flatQuestion);
-
-            // API payload inner question
-            groupQuestionsForPayload.push({
-              question_text: q.text,
-              instructions: "اختر الإجابة الصحيحة",
-              mcq_array: normalizedOptions,
-            });
-          }
-
-          if (groupQuestionsForPayload.length) {
-            paragraphPayloads.push({
-              exam_section_id: selectedSectionId,
-              question_type: "paragraph_mcq",
-              paragraph_content: group.content,
-              questions: groupQuestionsForPayload,
-            });
-          }
-
-          console.log(groupQuestionsForPayload);
-        }
-
-        if (!flatQuestions.length) {
-          toast.error("لم يتم إنشاء أي سؤال صالح للفقرة");
-          return;
-        }
-
-        const totalNewQuestions = flatQuestions.length;
-
-        if (!canAdd(totalNewQuestions)) {
-          toast.error(`الحد الأقصى 24 سؤال لكل قسم في الاختبار المحاكي`);
-          return;
-        }
-
-        // Optimistic UI update (flat questions)
-        const updatedSections = examData.sections.map((s) => {
-          if (s.id !== selectedSectionId) return s;
-
-          if (editingQuestion) {
-            // simple replace by id for edit mode
-            return {
-              ...s,
-              questions: s.questions.map((q) =>
-                q.id === editingQuestion.id ? flatQuestions[0] : q
-              ),
-            };
-          }
-
-          return {
-            ...s,
-            questions: [...(s.questions || []), ...flatQuestions],
-          };
-        });
-
-        setExamData((prev) => ({ ...prev, sections: updatedSections }));
-        resetQuestionForm();
-
-        try {
-          // API: send grouped paragraph_mcq payloads
-          for (const payload of paragraphPayloads) {
-            await dispatch(handleAddQuestion({ body: payload }))
-              .unwrap()
-              .then((res) => {
-                if (res?.data?.status == "success") {
-                  toast.success("تم اضافة السؤال بنجاح");
-                  dispatch(
-                    handleGetExamQuestions({
-                      body: {
-                        exam_section_id:
-                          res?.data?.message?.exam_section_id ||
-                          res?.data?.message?.questions[0]?.exam_section_id ||
-                          res?.data?.message?.paragraph[0]?.exam_section_id,
-                      },
-                    })
-                  );
-                }
-              });
-          }
-          toast.success("تم حفظ أسئلة الفقرة بنجاح");
-        } catch (err) {
-          toast.error("فشل حفظ أسئلة الفقرة");
-        }
-
-        return;
-      }
-
-      /* ----- 1B) Chemical equations → behave as normal MCQ ----- */
-      const questionsToAdd = [];
-
-      for (const group of groups) {
-        for (const q of group.questions || []) {
-          // Either a specific question text or fallback to the equation content
-          if (!q.text?.trim() && !group?.content?.trim()) continue;
-
-          const normalizedOptions = (q.options || []).map((opt, idx) => {
-            const base = normalizeOption(opt);
-            return {
-              ...base,
-              correct_or_not: q.correctIndex === idx ? "1" : "0",
-            };
-          });
-
-          if (normalizedOptions.length < 2) {
-            toast.error("كل سؤال يجب أن يحتوي على خيارين على الأقل");
-            return;
-          }
-
-          questionsToAdd.push({
-            id: editingQuestion?.id || Date.now() + Math.random(),
-            question_type: "mcq",
-            question_text: q.text || group.content || "",
-            exam_section_id: selectedSectionId,
-            mcqSubType,
-            mcq_array: normalizedOptions,
-            correctAnswer: q.correctIndex ?? 0,
-            instructions: "اختر الاجابة الصحيحه",
-          });
-        }
-      }
-
-      if (!questionsToAdd.length) {
-        toast.error("لم يتم إنشاء أي سؤال صالح");
-        return;
-      }
-
-      if (!canAdd(questionsToAdd.length)) {
-        toast.error(`الحد الأقصى 24 سؤال لكل قسم في الاختبار المحاكي`);
-        return;
-      }
-
-      const updatedSections = examData.sections.map((s) =>
-        s.id === selectedSectionId
-          ? {
-            ...s,
-            questions: editingQuestion
-              ? s.questions.map((q) =>
-                q.id === editingQuestion.id ? questionsToAdd[0] : q
-              )
-              : [...(s.questions || []), ...questionsToAdd],
-          }
-          : s
-      );
-
-      setExamData((prev) => ({ ...prev, sections: updatedSections }));
-      resetQuestionForm();
-      // toast.success(
-      //   editingQuestion
-      //     ? "تم تحديث الأسئلة بنجاح"
-      //     : "تم إضافة الأسئلة بنجاح"
-      // );
-
-      // Send each chemical question as normal MCQ to API
-      for (const q of questionsToAdd) {
-        try {
-          const res = await dispatch(handleAddQuestion({ body: q })).unwrap();
-          console.log(res);
-          if (res?.data?.status == "success") {
-            toast.success("تم اضافة السؤال بنجاح");
-            dispatch(
-              handleGetExamQuestions({
-                body: {
-                  exam_section_id:
-                    res?.data?.message?.exam_section_id ||
-                    res?.data?.message?.questions[0]?.exam_section_id ||
-                    res?.data?.message?.paragraph[0]?.exam_section_id,
-                },
-              })
-            );
-          }
-        } catch (err) {
-          toast.error(`فشل حفظ سؤال: ${err}`);
-        }
-      }
-
-      return;
-    }
-
-    /* ========== 2) Normal questions (general MCQ, True/False, Essay, Complete) ========== */
-
-    if (isMock && !canAdd()) {
-      toast.error("تم الوصول للحد الأقصى (24 سؤال) في هذا القسم");
-      return;
-    }
-
-    const baseQuestion = {
-      id: editingQuestion?.id || Date.now() + Math.random(),
-      question_type: questionType,
-      question_text: currentQuestion,
-      exam_section_id: selectedSectionId,
-      instructions: "Instructions",
-    };
-
-    let finalQuestion = { ...baseQuestion };
-
-    switch (questionType) {
-      case "mcq":
-        if (mcqOptions?.filter((o) => o?.answer?.trim())?.length < 2) {
-          toast.error("يجب إضافة خيارين على الأقل");
-          return;
-        }
-        finalQuestion = {
-          ...finalQuestion,
-          question_type: "mcq",
-          mcqSubType: "general",
+  // إضافة البيانات حسب نوع السؤال
+  switch (questionType) {
+    case "mcq":
+      if (mcqSubType === "general") {
+        updatedQuestionData = {
+          ...updatedQuestionData,
           mcq_array: mcqOptions.map((opt, idx) => ({
             ...normalizeOption(opt),
             correct_or_not: mcqCorrectAnswer === idx ? "1" : "0",
           })),
-          correctAnswer: mcqCorrectAnswer,
         };
+      }
+      break;
+      
+    case "trueFalse":
+      updatedQuestionData = {
+        ...updatedQuestionData,
+        question_type: "mcq", // True/False يتم معالجته كـ MCQ
+        mcq_array: [
+          {
+            answer: "صحيح",
+            correct_or_not: trueFalseAnswer === true ? "1" : "0",
+            question_explanation: trueFalseExplanation || "",
+          },
+          {
+            answer: "خطأ",
+            correct_or_not: trueFalseAnswer === false ? "1" : "0",
+            question_explanation: trueFalseExplanation || "",
+          },
+        ],
+      };
+      break;
+      
+    case "essay":
+      updatedQuestionData = {
+        ...updatedQuestionData,
+        model_answer: modalAnswer,
+      };
+      break;
+      
+    case "complete":
+      updatedQuestionData = {
+        ...updatedQuestionData,
+        text: completeText,
+        answers: completeAnswers.map((a) => a.answer).filter(Boolean),
+      };
+      break;
+  }
+
+  try {
+    const result = await dispatch(
+      handleUpdateExamQuestions({ body: updatedQuestionData })
+    ).unwrap();
+
+    if (result?.data?.status === "success") {
+      toast.success("تم تحديث السؤال بنجاح");
+      
+      // تحديث UI بشكل فوري
+      const updatedSections = examData.sections.map((section) => {
+        if (section.id !== selectedSectionId) return section;
+        
+        return {
+          ...section,
+          questions: section.questions.map((q) => 
+            q.id === question.id ? { ...q, ...updatedQuestionData } : q
+          ),
+        };
+      });
+      
+      setExamData((prev) => ({ ...prev, sections: updatedSections }));
+      resetQuestionForm();
+      
+      // إعادة تحميل الأسئلة من API
+      dispatch(
+        handleGetExamQuestions({
+          body: { exam_section_id: selectedSectionId },
+        })
+      );
+    }
+  } catch (error) {
+    toast.error("فشل تحديث السؤال");
+  }
+};
+
+// دالة لتحميل بيانات السؤال للتحرير
+// const loadQuestionForEdit = (question) => {
+//   setEditingQuestion(question);
+//   setCurrentQuestion(question.question_text || "");
+  
+//   switch (question.question_type) {
+//     case "mcq":
+//       setQuestionType("mcq");
+      
+//       // تحقق إذا كان سؤال فقرة (paragraph)
+//       if (question.paragraph_content) {
+//         setMcqSubType("passage");
+//         setMcqPassages({
+//           ...mcqPassages,
+//           passage: [{
+//             content: question.paragraph_content,
+//             questions: [{
+//               id: question.id,
+//               text: question.question_text,
+//               options: question.mcq_array || [],
+//               correctIndex: question.correctAnswer || 0,
+//             }]
+//           }]
+//         });
+//       } else if (question.mcqSubType === "chemical") {
+//         setMcqSubType("chemical");
+//         // معالجة معادلات كيميائية
+//       } else {
+//         setMcqSubType("general");
+//         setMcqOptions(question.mcq_array?.map(opt => normalizeOption(opt)) || [
+//           emptyOption(), emptyOption(), emptyOption(), emptyOption()
+//         ]);
+//         setMcqCorrectAnswer(
+//           question.mcq_array?.findIndex(opt => opt.correct_or_not === "1") || 0
+//         );
+//       }
+//       break;
+      
+//     case "essay":
+//       setQuestionType("essay");
+//       setModalAnswer(question.model_answer || "");
+//       break;
+      
+//     case "complete":
+//       setQuestionType("complete");
+//       setCompleteText(question.text || "");
+//       setCompleteAnswers(
+//         question.answers?.map(answer => ({ answer })) || [{ answer: "" }]
+//       );
+//       break;
+//   }
+  
+//   // True/False يتم معالجته كـ MCQ خاص
+//   if (question.mcq_array?.length === 2 && 
+//       question.mcq_array[0].answer === "صحيح") {
+//     setQuestionType("trueFalse");
+//     setTrueFalseAnswer(question.mcq_array[0].correct_or_not === "1");
+//     setTrueFalseExplanation(
+//       question.mcq_array[0].question_explanation || ""
+//     );
+//   }
+// };
+
+  /* ===================== Add / Update Question ===================== */
+  // const addOrUpdateQuestion = async () => {
+  //   if (!selectedSectionId) {
+  //     toast.error("يرجى اختيار قسم أولاً");
+  //     return;
+  //   }
+
+  //   if (questionType !== "mcq" && !currentQuestion.trim()) {
+  //     toast.error("يرجى كتابة نص السؤال");
+  //     return;
+  //   }
+
+  //   const section = examData?.sections.find((s) => s.id === selectedSectionId);
+  //   const currentCount = section?.questions?.length || 0;
+  //   const isMock = examData.type === "mock";
+  //   const maxPerSection = 24;
+
+  //   const canAdd = (count = 1) =>
+  //     !isMock || currentCount + count <= maxPerSection;
+
+  //   /* ========== 1) MCQ with subtypes (chemical / passage) ========== */
+  //   if (questionType === "mcq" && mcqSubType !== "general") {
+  //     const groups = mcqPassages[mcqSubType] || [];
+
+  //     /* ----- 1A) Paragraph MCQ → paragraph_mcq payload ----- */
+  //     if (mcqSubType === "passage") {
+  //       const flatQuestions = [];
+  //       const paragraphPayloads = [];
+
+  //       for (const group of groups) {
+  //         if (!group?.content?.trim()) continue;
+
+  //         const groupQuestionsForPayload = [];
+
+  //         for (const q of group.questions || []) {
+  //           if (!q.text?.trim()) continue;
+
+  //           // Normalize options and mark correct
+  //           const normalizedOptions = (q.options || []).map((opt, idx) => {
+  //             const base = normalizeOption(opt);
+  //             return {
+  //               ...base,
+  //               correct_or_not: q.correctIndex === idx ? "1" : "0",
+  //             };
+  //           });
+
+  //           if (normalizedOptions.length < 2) {
+  //             toast.error(
+  //               "كل سؤال في الفقرة يجب أن يحتوي على خيارين على الأقل"
+  //             );
+  //             return;
+  //           }
+
+  //           // UI-level question (flat for DisplayQuestions)
+  //           const flatQuestion = {
+  //             id: editingQuestion?.id || Date.now() + Math.random(),
+  //             question_type: "paragraph_mcq",
+  //             question_text: q.text,
+  //             exam_section_id: selectedSectionId,
+  //             mcqSubType,
+  //             mcq_array: normalizedOptions,
+  //             correctAnswer: q.correctIndex ?? 0,
+  //             paragraph_content: group.content,
+  //             instructions: "اختر الإجابة الصحيحة",
+  //           };
+
+  //           flatQuestions.push(flatQuestion);
+
+  //           // API payload inner question
+  //           groupQuestionsForPayload.push({
+  //             question_text: q.text,
+  //             instructions: "اختر الإجابة الصحيحة",
+  //             mcq_array: normalizedOptions,
+  //           });
+  //         }
+
+  //         if (groupQuestionsForPayload.length) {
+  //           paragraphPayloads.push({
+  //             exam_section_id: selectedSectionId,
+  //             question_type: "paragraph_mcq",
+  //             paragraph_content: group.content,
+  //             questions: groupQuestionsForPayload,
+  //           });
+  //         }
+
+  //         console.log(groupQuestionsForPayload);
+  //       }
+
+  //       if (!flatQuestions.length) {
+  //         toast.error("لم يتم إنشاء أي سؤال صالح للفقرة");
+  //         return;
+  //       }
+
+  //       const totalNewQuestions = flatQuestions.length;
+
+  //       if (!canAdd(totalNewQuestions)) {
+  //         toast.error(`الحد الأقصى 24 سؤال لكل قسم في الاختبار المحاكي`);
+  //         return;
+  //       }
+
+  //       // Optimistic UI update (flat questions)
+  //       const updatedSections = examData.sections.map((s) => {
+  //         if (s.id !== selectedSectionId) return s;
+
+  //         if (editingQuestion) {
+  //           editQuestion();
+  //           return;
+  //           // simple replace by id for edit mode
+  //           // return {
+  //           //   ...s,
+  //           //   questions: s.questions.map((q) =>
+  //           //     q.id === editingQuestion.id ? flatQuestions[0] : q
+  //           //   ),
+  //           // };
+  //         }
+
+  //         return {
+  //           ...s,
+  //           questions: [...(s.questions || []), ...flatQuestions],
+  //         };
+  //       });
+
+  //       setExamData((prev) => ({ ...prev, sections: updatedSections }));
+  //       resetQuestionForm();
+
+  //       try {
+  //         // API: send grouped paragraph_mcq payloads
+  //         for (const payload of paragraphPayloads) {
+  //           await dispatch(handleAddQuestion({ body: payload }))
+  //             .unwrap()
+  //             .then((res) => {
+  //               if (res?.data?.status == "success") {
+  //                 toast.success("تم اضافة السؤال بنجاح");
+  //                 dispatch(
+  //                   handleGetExamQuestions({
+  //                     body: {
+  //                       exam_section_id:
+  //                         res?.data?.message?.exam_section_id ||
+  //                         res?.data?.message?.questions[0]?.exam_section_id ||
+  //                         res?.data?.message?.paragraph[0]?.exam_section_id,
+  //                     },
+  //                   })
+  //                 );
+  //               }
+  //             });
+  //         }
+  //         toast.success("تم حفظ أسئلة الفقرة بنجاح");
+  //       } catch (err) {
+  //         toast.error("فشل حفظ أسئلة الفقرة");
+  //       }
+
+  //       return;
+  //     }
+
+  //     /* ----- 1B) Chemical equations → behave as normal MCQ ----- */
+  //     const questionsToAdd = [];
+
+  //     for (const group of groups) {
+  //       for (const q of group.questions || []) {
+  //         // Either a specific question text or fallback to the equation content
+  //         if (!q.text?.trim() && !group?.content?.trim()) continue;
+
+  //         const normalizedOptions = (q.options || []).map((opt, idx) => {
+  //           const base = normalizeOption(opt);
+  //           return {
+  //             ...base,
+  //             correct_or_not: q.correctIndex === idx ? "1" : "0",
+  //           };
+  //         });
+
+  //         if (normalizedOptions.length < 2) {
+  //           toast.error("كل سؤال يجب أن يحتوي على خيارين على الأقل");
+  //           return;
+  //         }
+
+  //         questionsToAdd.push({
+  //           id: editingQuestion?.id || Date.now() + Math.random(),
+  //           question_type: "mcq",
+  //           question_text: q.text || group.content || "",
+  //           exam_section_id: selectedSectionId,
+  //           mcqSubType,
+  //           mcq_array: normalizedOptions,
+  //           correctAnswer: q.correctIndex ?? 0,
+  //           instructions: "اختر الاجابة الصحيحه",
+  //         });
+  //       }
+  //     }
+
+  //     if (!questionsToAdd.length) {
+  //       toast.error("لم يتم إنشاء أي سؤال صالح");
+  //       return;
+  //     }
+
+  //     if (!canAdd(questionsToAdd.length)) {
+  //       toast.error(`الحد الأقصى 24 سؤال لكل قسم في الاختبار المحاكي`);
+  //       return;
+  //     }
+
+  //     const updatedSections = examData.sections.map((s) =>
+  //       s.id === selectedSectionId
+  //         ? {
+  //           ...s,
+  //           questions: editingQuestion
+  //             ? s.questions.map((q) =>
+  //               q.id === editingQuestion.id ? questionsToAdd[0] : q
+  //             )
+  //             : [...(s.questions || []), ...questionsToAdd],
+  //         }
+  //         : s
+  //     );
+
+  //     setExamData((prev) => ({ ...prev, sections: updatedSections }));
+  //     resetQuestionForm();
+  //     // toast.success(
+  //     //   editingQuestion
+  //     //     ? "تم تحديث الأسئلة بنجاح"
+  //     //     : "تم إضافة الأسئلة بنجاح"
+  //     // );
+
+  //     // Send each chemical question as normal MCQ to API
+  //     for (const q of questionsToAdd) {
+  //       try {
+  //         const res = await dispatch(handleAddQuestion({ body: q })).unwrap();
+  //         console.log(res);
+  //         if (res?.data?.status == "success") {
+  //           toast.success("تم اضافة السؤال بنجاح");
+  //           dispatch(
+  //             handleGetExamQuestions({
+  //               body: {
+  //                 exam_section_id:
+  //                   res?.data?.message?.exam_section_id ||
+  //                   res?.data?.message?.questions[0]?.exam_section_id ||
+  //                   res?.data?.message?.paragraph[0]?.exam_section_id,
+  //               },
+  //             })
+  //           );
+  //         }
+  //       } catch (err) {
+  //         toast.error(`فشل حفظ سؤال: ${err}`);
+  //       }
+  //     }
+
+  //     return;
+  //   }
+
+  //   /* ========== 2) Normal questions (general MCQ, True/False, Essay, Complete) ========== */
+
+  //   if (isMock && !canAdd()) {
+  //     toast.error("تم الوصول للحد الأقصى (24 سؤال) في هذا القسم");
+  //     return;
+  //   }
+
+  //   const baseQuestion = {
+  //     id: editingQuestion?.id || Date.now() + Math.random(),
+  //     question_type: questionType,
+  //     question_text: currentQuestion,
+  //     exam_section_id: selectedSectionId,
+  //     instructions: "Instructions",
+  //   };
+
+  //   let finalQuestion = { ...baseQuestion };
+
+  //   switch (questionType) {
+  //     case "mcq":
+  //       if (mcqOptions?.filter((o) => o?.answer?.trim())?.length < 2) {
+  //         toast.error("يجب إضافة خيارين على الأقل");
+  //         return;
+  //       }
+  //       finalQuestion = {
+  //         ...finalQuestion,
+  //         question_type: "mcq",
+  //         mcqSubType: "general",
+  //         mcq_array: mcqOptions.map((opt, idx) => ({
+  //           ...normalizeOption(opt),
+  //           correct_or_not: mcqCorrectAnswer === idx ? "1" : "0",
+  //         })),
+  //         correctAnswer: mcqCorrectAnswer,
+  //       };
+  //       break;
+
+  //     case "trueFalse":
+  //       if (trueFalseAnswer === null) {
+  //         toast.error("اختر إجابة صحيحة");
+  //         return;
+  //       }
+  //       // Treat True/False as MCQ type with 2 options
+  //       finalQuestion = {
+  //         ...finalQuestion,
+  //         question_type: "mcq",
+  //         correctAnswer: trueFalseAnswer,
+  //         explanation: trueFalseExplanation,
+  //         mcq_array: [
+  //           {
+  //             answer: "صحيح",
+  //             correct_or_not: trueFalseAnswer === true ? "1" : "0",
+  //             question_explanation: trueFalseExplanation || "",
+  //           },
+  //           {
+  //             answer: "خطأ",
+  //             correct_or_not: trueFalseAnswer === false ? "1" : "0",
+  //             question_explanation: trueFalseExplanation || "",
+  //           },
+  //         ],
+  //       };
+  //       break;
+
+  //     case "essay":
+  //       finalQuestion = {
+  //         ...finalQuestion,
+  //         model_answer: modalAnswer,
+  //       };
+  //       break;
+
+  //     case "complete":
+  //       if (!completeText.trim()) {
+  //         toast.error("اكتب نص الجملة");
+  //         return;
+  //       }
+  //       if (completeAnswers.filter((a) => a.answer.trim()).length === 0) {
+  //         toast.error("أضف إجابة واحدة على الأقل");
+  //         return;
+  //       }
+  //       finalQuestion = {
+  //         ...finalQuestion,
+  //         text: completeText,
+  //         answers: completeAnswers.map((a) => a.answer).filter(Boolean),
+  //       };
+  //       break;
+  //   }
+
+  //   // Optimistic UI update
+  //   const newSections = examData.sections.map((s) => {
+  //     if (s.id !== selectedSectionId) return s;
+
+  //     if (editingQuestion) {
+  //       return {
+  //         ...s,
+  //         questions: s.questions.map((q) =>
+  //           q.id === editingQuestion.id ? finalQuestion : q
+  //         ),
+  //       };
+  //     }
+  //     return {
+  //       ...s,
+  //       questions: [...(s.questions || []), finalQuestion],
+  //     };
+  //   });
+
+  //   setExamData((prev) => ({ ...prev, sections: newSections }));
+  //   resetQuestionForm();
+
+  //   try {
+  //     const result = await dispatch(
+  //       handleAddQuestion({ body: finalQuestion })
+  //     ).unwrap();
+
+  //     if (result?.data?.status === "success") {
+  //       toast.success("تم اضافة السؤال بنجاح");
+  //       const exSectionId =
+  //         result?.data?.message?.exam_section_id || selectedSectionId;
+  //       if (exSectionId) {
+  //         dispatch(
+  //           handleGetExamQuestions({
+  //             body: {
+  //               exam_section_id:
+  //                 res?.data?.message?.exam_section_id ||
+  //                 res?.data?.message?.questions[0]?.exam_section_id ||
+  //                 res?.data?.message?.paragraph[0]?.exam_section_id,
+  //             },
+  //           })
+  //         );
+  //       }
+  //     }
+
+  //     toast.success(
+  //       editingQuestion ? "تم تحديث السؤال بنجاح" : "تم إضافة السؤال بنجاح"
+  //     );
+  //   } catch (error) {
+  //     toast.error(error || "فشل حفظ السؤال");
+  //   }
+  // };
+
+  /* ===================== Add / Update Question ===================== */
+const addOrUpdateQuestion = async () => {
+  if (!selectedSectionId) {
+    toast.error("يرجى اختيار قسم أولاً");
+    return;
+  }
+
+  if (questionType !== "mcq" && !currentQuestion.trim()) {
+    toast.error("يرجى كتابة نص السؤال");
+    return;
+  }
+
+  const section = examData?.sections.find((s) => s.id === selectedSectionId);
+  const currentCount = section?.questions?.length || 0;
+  const isMock = examData.type === "mock";
+  const maxPerSection = 24;
+
+  const canAdd = (count = 1) =>
+    !isMock || currentCount + count <= maxPerSection;
+
+  // ========== إذا كان في وضع تحرير ==========
+  if (editingQuestion) {
+    let payload;
+
+    switch (questionType) {
+      case "mcq":
+        if (mcqSubType === "general") {
+          if (mcqOptions?.filter((o) => o?.answer?.trim())?.length < 2) {
+            toast.error("يجب إضافة خيارين على الأقل");
+            return;
+          }
+          payload = {
+            id: editingQuestion.id,
+            question_text: currentQuestion,
+            instructions: "اختر الإجابة الصحيحة",
+            exam_section_id: selectedSectionId,
+            mcq_array: mcqOptions.map((opt, idx) => ({
+              ...normalizeOption(opt),
+              correct_or_not: mcqCorrectAnswer === idx ? "1" : "0",
+            })),
+          };
+        } else if (mcqSubType === "passage" || mcqSubType === "chemical") {
+          // معالجة تحرير أسئلة الفقرة والمعادلات
+          const groups = mcqPassages[mcqSubType] || [];
+          if (groups.length === 0) {
+            toast.error("يجب إضافة محتوى الفقرة/المعادلة");
+            return;
+          }
+          
+          payload = {
+            id: editingQuestion.id,
+            question_type: mcqSubType === "passage" ? "paragraph_mcq" : "mcq",
+            paragraph_content: mcqSubType === "passage" ? groups[0]?.content : "",
+            question_text: groups[0]?.questions?.[0]?.text || currentQuestion,
+            instructions: "اختر الإجابة الصحيحة",
+            exam_section_id: selectedSectionId,
+            mcq_array: groups[0]?.questions?.[0]?.options?.map((opt, idx) => ({
+              ...normalizeOption(opt),
+              correct_or_not: groups[0]?.questions?.[0]?.correctIndex === idx ? "1" : "0",
+            })) || [],
+          };
+        }
         break;
 
       case "trueFalse":
@@ -958,12 +1291,11 @@ export default function ExamMainData({
           toast.error("اختر إجابة صحيحة");
           return;
         }
-        // Treat True/False as MCQ type with 2 options
-        finalQuestion = {
-          ...finalQuestion,
-          question_type: "mcq",
-          correctAnswer: trueFalseAnswer,
-          explanation: trueFalseExplanation,
+        payload = {
+          id: editingQuestion.id,
+          question_text: currentQuestion,
+          instructions: "اختر الإجابة الصحيحة",
+          exam_section_id: selectedSectionId,
           mcq_array: [
             {
               answer: "صحيح",
@@ -980,8 +1312,11 @@ export default function ExamMainData({
         break;
 
       case "essay":
-        finalQuestion = {
-          ...finalQuestion,
+        payload = {
+          id: editingQuestion.id,
+          question_text: currentQuestion,
+          instructions: "أجب عن السؤال التالي",
+          exam_section_id: selectedSectionId,
           model_answer: modalAnswer,
         };
         break;
@@ -995,45 +1330,234 @@ export default function ExamMainData({
           toast.error("أضف إجابة واحدة على الأقل");
           return;
         }
-        finalQuestion = {
-          ...finalQuestion,
-          text: completeText,
+        payload = {
+          id: editingQuestion.id,
+          question_text: completeText,
+          instructions: "أكمل الجملة التالية",
+          exam_section_id: selectedSectionId,
           answers: completeAnswers.map((a) => a.answer).filter(Boolean),
         };
         break;
     }
 
-    // Optimistic UI update
-    const newSections = examData.sections.map((s) => {
-      if (s.id !== selectedSectionId) return s;
-
-      if (editingQuestion) {
-        return {
-          ...s,
-          questions: s.questions.map((q) =>
-            q.id === editingQuestion.id ? finalQuestion : q
-          ),
-        };
-      }
-      return {
-        ...s,
-        questions: [...(s.questions || []), finalQuestion],
-      };
-    });
-
-    setExamData((prev) => ({ ...prev, sections: newSections }));
-    resetQuestionForm();
-
     try {
       const result = await dispatch(
-        handleAddQuestion({ body: finalQuestion })
+        handleUpdateExamQuestions({ body: payload })
       ).unwrap();
 
       if (result?.data?.status === "success") {
-        toast.success("تم اضافة السؤال بنجاح");
-        const exSectionId =
-          result?.data?.message?.exam_section_id || selectedSectionId;
-        if (exSectionId) {
+        toast.success("تم تحديث السؤال بنجاح");
+        
+        // تحديث واجهة المستخدم فورياً
+        const updatedSections = examData.sections.map((s) => {
+          if (s.id !== selectedSectionId) return s;
+          
+          return {
+            ...s,
+            questions: s.questions.map((q) =>
+              q.id === editingQuestion.id ? { ...q, ...payload } : q
+            ),
+          };
+        });
+
+        setExamData((prev) => ({ ...prev, sections: updatedSections }));
+        resetQuestionForm();
+        
+        // إعادة تحميل الأسئلة من API
+        dispatch(
+          handleGetExamQuestions({
+            body: { exam_section_id: selectedSectionId },
+          })
+        );
+      }
+    } catch (error) {
+      toast.error(error?.message || "فشل تحديث السؤال");
+    }
+    return; // انتهاء الدالة في وضع التحرير
+  }
+
+  /* ========== 1) MCQ with subtypes (chemical / passage) ========== */
+  if (questionType === "mcq" && mcqSubType !== "general") {
+    const groups = mcqPassages[mcqSubType] || [];
+
+    /* ----- 1A) Paragraph MCQ → paragraph_mcq payload ----- */
+    if (mcqSubType === "passage") {
+      const flatQuestions = [];
+      const paragraphPayloads = [];
+
+      for (const group of groups) {
+        if (!group?.content?.trim()) continue;
+
+        const groupQuestionsForPayload = [];
+
+        for (const q of group.questions || []) {
+          if (!q.text?.trim()) continue;
+
+          // Normalize options and mark correct
+          const normalizedOptions = (q.options || []).map((opt, idx) => {
+            const base = normalizeOption(opt);
+            return {
+              ...base,
+              correct_or_not: q.correctIndex === idx ? "1" : "0",
+            };
+          });
+
+          if (normalizedOptions.length < 2) {
+            toast.error(
+              "كل سؤال في الفقرة يجب أن يحتوي على خيارين على الأقل"
+            );
+            return;
+          }
+
+          // UI-level question (flat for DisplayQuestions)
+          const flatQuestion = {
+            id: Date.now() + Math.random(),
+            question_type: "paragraph_mcq",
+            question_text: q.text,
+            exam_section_id: selectedSectionId,
+            mcqSubType,
+            mcq_array: normalizedOptions,
+            correctAnswer: q.correctIndex ?? 0,
+            paragraph_content: group.content,
+            instructions: "اختر الإجابة الصحيحة",
+          };
+
+          flatQuestions.push(flatQuestion);
+
+          // API payload inner question
+          groupQuestionsForPayload.push({
+            question_text: q.text,
+            instructions: "اختر الإجابة الصحيحة",
+            mcq_array: normalizedOptions,
+          });
+        }
+
+        if (groupQuestionsForPayload.length) {
+          paragraphPayloads.push({
+            exam_section_id: selectedSectionId,
+            question_type: "paragraph_mcq",
+            paragraph_content: group.content,
+            questions: groupQuestionsForPayload,
+          });
+        }
+      }
+
+      if (!flatQuestions.length) {
+        toast.error("لم يتم إنشاء أي سؤال صالح للفقرة");
+        return;
+      }
+
+      const totalNewQuestions = flatQuestions.length;
+
+      if (!canAdd(totalNewQuestions)) {
+        toast.error(`الحد الأقصى 24 سؤال لكل قسم في الاختبار المحاكي`);
+        return;
+      }
+
+      // Optimistic UI update (flat questions)
+      const updatedSections = examData.sections.map((s) => {
+        if (s.id !== selectedSectionId) return s;
+        
+        return {
+          ...s,
+          questions: [...(s.questions || []), ...flatQuestions],
+        };
+      });
+
+      setExamData((prev) => ({ ...prev, sections: updatedSections }));
+      resetQuestionForm();
+
+      try {
+        // API: send grouped paragraph_mcq payloads
+        for (const payload of paragraphPayloads) {
+          await dispatch(handleAddQuestion({ body: payload }))
+            .unwrap()
+            .then((res) => {
+              if (res?.data?.status == "success") {
+                toast.success("تم اضافة السؤال بنجاح");
+                dispatch(
+                  handleGetExamQuestions({
+                    body: {
+                      exam_section_id:
+                        res?.data?.message?.exam_section_id ||
+                        res?.data?.message?.questions[0]?.exam_section_id ||
+                        res?.data?.message?.paragraph[0]?.exam_section_id,
+                    },
+                  })
+                );
+              }
+            });
+        }
+        toast.success("تم حفظ أسئلة الفقرة بنجاح");
+      } catch (err) {
+        toast.error("فشل حفظ أسئلة الفقرة");
+      }
+
+      return;
+    }
+
+    /* ----- 1B) Chemical equations → behave as normal MCQ ----- */
+    const questionsToAdd = [];
+
+    for (const group of groups) {
+      for (const q of group.questions || []) {
+        // Either a specific question text or fallback to the equation content
+        if (!q.text?.trim() && !group?.content?.trim()) continue;
+
+        const normalizedOptions = (q.options || []).map((opt, idx) => {
+          const base = normalizeOption(opt);
+          return {
+            ...base,
+            correct_or_not: q.correctIndex === idx ? "1" : "0",
+          };
+        });
+
+        if (normalizedOptions.length < 2) {
+          toast.error("كل سؤال يجب أن يحتوي على خيارين على الأقل");
+          return;
+        }
+
+        questionsToAdd.push({
+          id: Date.now() + Math.random(),
+          question_type: "mcq",
+          question_text: q.text || group.content || "",
+          exam_section_id: selectedSectionId,
+          mcqSubType,
+          mcq_array: normalizedOptions,
+          correctAnswer: q.correctIndex ?? 0,
+          instructions: "اختر الاجابة الصحيحه",
+        });
+      }
+    }
+
+    if (!questionsToAdd.length) {
+      toast.error("لم يتم إنشاء أي سؤال صالح");
+      return;
+    }
+
+    if (!canAdd(questionsToAdd.length)) {
+      toast.error(`الحد الأقصى 24 سؤال لكل قسم في الاختبار المحاكي`);
+      return;
+    }
+
+    const updatedSections = examData.sections.map((s) =>
+      s.id === selectedSectionId
+        ? {
+          ...s,
+          questions: [...(s.questions || []), ...questionsToAdd],
+        }
+        : s
+    );
+
+    setExamData((prev) => ({ ...prev, sections: updatedSections }));
+    resetQuestionForm();
+
+    // Send each chemical question as normal MCQ to API
+    for (const q of questionsToAdd) {
+      try {
+        const res = await dispatch(handleAddQuestion({ body: q })).unwrap();
+        if (res?.data?.status == "success") {
+          toast.success("تم اضافة السؤال بنجاح");
           dispatch(
             handleGetExamQuestions({
               body: {
@@ -1045,15 +1569,171 @@ export default function ExamMainData({
             })
           );
         }
+      } catch (err) {
+        toast.error(`فشل حفظ سؤال: ${err}`);
       }
-
-      toast.success(
-        editingQuestion ? "تم تحديث السؤال بنجاح" : "تم إضافة السؤال بنجاح"
-      );
-    } catch (error) {
-      toast.error(error || "فشل حفظ السؤال");
     }
+
+    return;
+  }
+
+  /* ========== 2) Normal questions (general MCQ, True/False, Essay, Complete) ========== */
+
+  if (isMock && !canAdd()) {
+    toast.error("تم الوصول للحد الأقصى (24 سؤال) في هذا القسم");
+    return;
+  }
+
+  const baseQuestion = {
+    id: Date.now() + Math.random(),
+    question_type: questionType,
+    question_text: currentQuestion,
+    exam_section_id: selectedSectionId,
+    instructions: "Instructions",
   };
+
+  let finalQuestion = { ...baseQuestion };
+
+  switch (questionType) {
+    case "mcq":
+      if (mcqOptions?.filter((o) => o?.answer?.trim())?.length < 2) {
+        toast.error("يجب إضافة خيارين على الأقل");
+        return;
+      }
+      finalQuestion = {
+        ...finalQuestion,
+        question_type: "mcq",
+        mcqSubType: "general",
+        mcq_array: mcqOptions.map((opt, idx) => ({
+          ...normalizeOption(opt),
+          correct_or_not: mcqCorrectAnswer === idx ? "1" : "0",
+        })),
+        correctAnswer: mcqCorrectAnswer,
+      };
+      break;
+
+    case "trueFalse":
+      if (trueFalseAnswer === null) {
+        toast.error("اختر إجابة صحيحة");
+        return;
+      }
+      // Treat True/False as MCQ type with 2 options
+      finalQuestion = {
+        ...finalQuestion,
+        question_type: "mcq",
+        correctAnswer: trueFalseAnswer,
+        explanation: trueFalseExplanation,
+        mcq_array: [
+          {
+            answer: "صحيح",
+            correct_or_not: trueFalseAnswer === true ? "1" : "0",
+            question_explanation: trueFalseExplanation || "",
+          },
+          {
+            answer: "خطأ",
+            correct_or_not: trueFalseAnswer === false ? "1" : "0",
+            question_explanation: trueFalseExplanation || "",
+          },
+        ],
+      };
+      break;
+
+    case "essay":
+      finalQuestion = {
+        ...finalQuestion,
+        model_answer: modalAnswer,
+      };
+      break;
+
+    case "complete":
+      if (!completeText.trim()) {
+        toast.error("اكتب نص الجملة");
+        return;
+      }
+      if (completeAnswers.filter((a) => a.answer.trim()).length === 0) {
+        toast.error("أضف إجابة واحدة على الأقل");
+        return;
+      }
+      finalQuestion = {
+        ...finalQuestion,
+        text: completeText,
+        answers: completeAnswers.map((a) => a.answer).filter(Boolean),
+      };
+      break;
+  }
+
+  // Optimistic UI update
+  const newSections = examData.sections.map((s) => {
+    if (s.id !== selectedSectionId) return s;
+    
+    return {
+      ...s,
+      questions: [...(s.questions || []), finalQuestion],
+    };
+  });
+
+  setExamData((prev) => ({ ...prev, sections: newSections }));
+  resetQuestionForm();
+
+  try {
+    const result = await dispatch(
+      handleAddQuestion({ body: finalQuestion })
+    ).unwrap();
+
+    if (result?.data?.status === "success") {
+      toast.success("تم اضافة السؤال بنجاح");
+      const exSectionId =
+        result?.data?.message?.exam_section_id || selectedSectionId;
+      if (exSectionId) {
+        dispatch(
+          handleGetExamQuestions({
+            body: { exam_section_id: exSectionId },
+          })
+        );
+      }
+    }
+
+    toast.success("تم إضافة السؤال بنجاح");
+  } catch (error) {
+    toast.error(error || "فشل حفظ السؤال");
+  }
+};
+
+const loadQuestionForEdit = (question) => {
+  setEditingQuestion(question);
+  setCurrentQuestion(question.question_text || "");
+  
+  // تحديد نوع السؤال
+  if (question.paragraph_content) {
+    setQuestionType("mcq");
+    setMcqSubType("passage");
+    // معالجة أسئلة الفقرة
+  } else if (question.question_type === "mcq") {
+    setQuestionType("mcq");
+    setMcqSubType("general");
+    setMcqOptions(question.mcq_array || []);
+    setMcqCorrectAnswer(
+      question.mcq_array?.findIndex(opt => opt.correct_or_not === "1") || 0
+    );
+  } else if (question.question_type === "essay") {
+    setQuestionType("essay");
+    setModalAnswer(question.model_answer || "");
+  } else if (question.question_type === "complete") {
+    setQuestionType("complete");
+    setCompleteText(question.text || "");
+    setCompleteAnswers(
+      question.answers?.map(ans => ({ answer: ans })) || [{ answer: "" }]
+    );
+  }
+  
+  // معالجة True/False
+  if (question.mcq_array?.length === 2 && 
+      question.mcq_array[0].answer === "صحيح") {
+    setQuestionType("trueFalse");
+    setTrueFalseAnswer(question.mcq_array[0].correct_or_not === "1");
+    setTrueFalseExplanation(question.mcq_array[0].question_explanation || "");
+  }
+};
 
   const editMcqPassageQuestion = (question) => {
     setQuestionType("mcq");
@@ -1124,6 +1804,46 @@ export default function ExamMainData({
       }
     }))
   }, [examId , examid])
+
+  // In ExamMainData component, add this useEffect to populate form when editingQuestion changes:
+useEffect(() => {
+  if (editingQuestion) {
+    console.log("Editing question loaded:", editingQuestion);
+    
+    // Determine question type from the editingQuestion object
+    if (editingQuestion.type === "mcq") {
+      setQuestionType("mcq");
+      setCurrentQuestion(editingQuestion.question || "");
+      
+      // Set MCQ options
+      if (editingQuestion.options && editingQuestion.options.length > 0) {
+        // Convert options to the format expected by mcqOptions
+        const normalizedOptions = editingQuestion.options.map(opt => ({
+          answer: opt.text || "",
+          question_explanation: opt.explanation || "",
+          correct_or_not: opt.is_correct?.toString() || "0"
+        }));
+        
+        // Ensure we have at least 4 options
+        while (normalizedOptions.length < 4) {
+          normalizedOptions.push(emptyOption());
+        }
+        
+        setMcqOptions(normalizedOptions);
+        
+        // Set correct answer
+        const correctIndex = editingQuestion.correctAnswer || 0;
+        setMcqCorrectAnswer(correctIndex);
+      }
+    } else if (editingQuestion.type === "paragraph_mcq") {
+      // Handle paragraph questions
+      setQuestionType("mcq");
+      setMcqSubType("passage");
+      // You'll need to set up passage data here
+    }
+  }
+}, [editingQuestion]);
+
 
   /* ===================== UI ===================== */
   return (
@@ -1508,7 +2228,8 @@ export default function ExamMainData({
                       </div>
                     </div>
                   ) : (
-                    <McqSharedPassageEditor
+                    <McqSharedPassageEditor 
+                      
                       key={`${mcqSubType}:${editingQuestion?.id ?? "new"}`}
                       mcqSubType={mcqSubType}
                       initialData={mcqPassages[mcqSubType] || []}
@@ -1592,7 +2313,7 @@ export default function ExamMainData({
           </Card>
 
           {/* Questions list */}
-          {<DisplayQuestions selectedSectionId={selectedSectionId} />}
+          {<DisplayQuestions setEditingQuestion={setEditingQuestion} editingQuestion={editQuestion} selectedSectionId={selectedSectionId} />}
         </>
       ) : (
         <div className="text-center py-12">

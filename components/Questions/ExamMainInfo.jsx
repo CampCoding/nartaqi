@@ -309,7 +309,7 @@ export default function ExamMainInfo({
           <Input
             label="الوقت"
             placeholder=""
-            type="time"
+            type=""
             value={examInfoData?.time || ""}
             onChange={(e) => handleBasicDataChange("time", e.target.value)}
           />

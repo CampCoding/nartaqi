@@ -484,7 +484,6 @@
 // };
 
 // export default EnhancedCourseForm;
-
 "use client";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -493,6 +492,7 @@ import { Check } from "lucide-react";
 import AddCourseSourceBasicInfo from "../../../../components/SaudiCourseSource/AddCourseSourceBasicInfo";
 import AddCourseSourceResource from "../../../../components/SaudiCourseSource/AddCourseSourceResource";
 import Features from "../../../../components/SaudiCourseSource/Features";
+
 // Define the steps data
 const STEPS = [
   {
@@ -516,6 +516,14 @@ export default function Page() {
   const params = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [roundId, setRoundId] = useState(null);
+  
+  // --- Shared state for all steps ---
+  const [formData, setFormData] = useState({
+    step1: {}, // Data for step 1 (basic info)
+    step2: {}, // Data for step 2 (features)
+    step3: {}, // Data for step 3 (resources)
+  });
+  
   const [fileList, setFileList] = useState([]);
   const [fileNames, setFileNames] = useState({});
   const [videos, setVideos] = useState([{ id: 1, name: "", url: "" }]);
@@ -523,13 +531,53 @@ export default function Page() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const isSource = params?.get("source");
 
+  // Save form data when navigating away from a step
+  const saveStepData = (stepNumber, data) => {
+    setFormData(prev => ({
+      ...prev,
+      [`step${stepNumber}`]: data
+    }));
+    console.log(`Saved step ${stepNumber} data:`, data);
+  };
+
+  // Get saved data for a step
+  const getStepData = (stepNumber) => {
+    return formData[`step${stepNumber}`];
+  };
+
   // --- Navigation Logic ---
   const goToNextStep = () => {
+    // Save current step data before moving
+    // This should be called from each child component before navigation
     setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
   };
 
   const goToPrevStep = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
+  };
+
+  // Clear all form data (if needed)
+  const clearFormData = () => {
+    setFormData({
+      step1: {},
+      step2: {},
+      step3: {},
+    });
+    setFileList([]);
+    setImagePreview(null);
+    setSelectedCategory(null);
+  };
+
+  // Handle final submission
+  const handleFinalSubmit = () => {
+    console.log("Final form data:", formData);
+    // Here you can combine all step data and submit
+    // const finalData = {
+    //   basicInfo: formData.step1,
+    //   features: formData.step2,
+    //   resources: formData.step3,
+    // };
+    // Submit to API...
   };
   // -------------------------
 
@@ -607,11 +655,10 @@ export default function Page() {
   // ------- Step content -------
   const renderStepContent = () => {
     if (currentStep === 1) {
-      // مرحلة التأسيس
       return (
         <AddCourseSourceBasicInfo
-        isSource={isSource}
-        beforeUpload={beforeUpload}
+          isSource={isSource}
+          beforeUpload={beforeUpload}
           fileList={fileList}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
@@ -621,31 +668,40 @@ export default function Page() {
           goToNextStep={goToNextStep}
           goToPrevStep={goToPrevStep}
           setRoundId={setRoundId}
+          // Pass save function and initial data
+          saveStepData={saveStepData}
+          initialData={getStepData(1)}
         />
       );
     }
 
     if (currentStep === 2) {
-      // المحاضرات
       return (
-       <Features 
+        <Features 
           roundId={roundId}
           currentStep={currentStep}
           goToNextStep={goToNextStep}
           goToPrevStep={goToPrevStep}
           STEPS={STEPS}
-       />
-        //  <CourseSourceLecturesContent id={id}/>
+          // Pass save function and initial data
+          saveStepData={saveStepData}
+          initialData={getStepData(2)}
+        />
       );
     }
 
-    // المصادر والملفات
-    return <AddCourseSourceResource 
-    currentStep={currentStep}
-    goToPrevStep={goToPrevStep}
-    id={roundId}
-STEPS={STEPS}
-    />;
+    return (
+      <AddCourseSourceResource 
+        currentStep={currentStep}
+        goToPrevStep={goToPrevStep}
+        id={roundId}
+        STEPS={STEPS}
+        // Pass save function and initial data
+        saveStepData={saveStepData}
+        initialData={getStepData(3)}
+        handleFinalSubmit={handleFinalSubmit}
+      />
+    );
   };
   // ---------------------------
 
@@ -730,28 +786,6 @@ STEPS={STEPS}
           </h2>
 
           {renderStepContent()}
-
-          {/* Navigation buttons */}
-          {/* <div className="mt-8 flex justify-between space-x-4 space-x-reverse">
-            <button
-              onClick={goToPrevStep}
-              disabled={currentStep === 1}
-              className={`rounded-lg border border-gray-300 bg-white px-6 py-2 text-gray-700 transition duration-150 hover:bg-gray-50 ${
-                currentStep === 1 ? "cursor-not-allowed opacity-50" : ""
-              }`}
-            >
-              السابق
-            </button>
-            <button
-              onClick={goToNextStep}
-              disabled={currentStep === STEPS.length}
-              className={`rounded-lg bg-blue-600 px-6 py-2 text-white shadow-md transition duration-150 hover:bg-blue-700 ${
-                currentStep === STEPS.length ? "cursor-not-allowed opacity-50" : ""
-              }`}
-            >
-              {currentStep === STEPS.length ? "إنهاء ونشر" : "التالي"}
-            </button>
-          </div> */}
         </div>
       </div>
     </div>

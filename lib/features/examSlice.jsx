@@ -22,6 +22,8 @@ const initialState = {
 
   add_question_loading : false,
   get_exam_details_loading: false,
+  edit_question_loading : false,
+  delete_question_loading : false,
   exam_details: [],
 
   add_exam_video_loading: false,
@@ -83,6 +85,16 @@ export const handleAssignExam = createAsyncThunk("examSlice/handleAssignExam",as
 
 export const handleGetExamQuestions = createAsyncThunk("examSlice/handleGetExamQuestions",async({body}) => {
   const response = await api.post(apiRoutes.get_questions , {body});
+  return response;
+})
+
+export const handleUpdateExamQuestions = createAsyncThunk("examSlice/handleUpdateExamQuestions",async({body}) =>{
+  const response = await api.post(`admin/questions/edit_question`,{body});
+  return response;
+})
+
+export const handleDeleteExamQuestions = createAsyncThunk("examSlice/handleDeleteExamQuestions",async({body}) =>{
+  const response = await api.post(`admin/questions/delete_question`,{body});
   return response;
 })
 
@@ -259,6 +271,26 @@ export const examSlice = createSlice({
     })
     .addCase(handleAddQuestion.rejected ,(state) => {
       state.add_question_loading = false;
+    })
+
+    .addCase(handleUpdateExamQuestions.pending ,(state) => {
+      state.edit_question_loading = true;
+    })
+    .addCase(handleUpdateExamQuestions.fulfilled ,(state , action) => {
+      state.edit_question_loading = false;
+    })
+    .addCase(handleUpdateExamQuestions.rejected ,(state) => {
+      state.edit_question_loading = false;
+    })
+
+    .addCase(handleDeleteExamQuestions.pending ,(state) => {
+      state.delete_question_loading = true;
+    })
+    .addCase(handleDeleteExamQuestions.fulfilled ,(state , action) => {
+      state.delete_question_loading = false;
+    })
+    .addCase(handleDeleteExamQuestions.rejected ,(state) => {
+      state.delete_question_loading = false;
     })
 
      .addCase(handleGetExamDetails.pending, (state) => {

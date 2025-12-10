@@ -28,7 +28,7 @@ import { handleDeleteRound, handleGetAllRounds } from "@/lib/features/roundsSlic
 import Table from "../../../components/ui/Table";
 import CourseSubjectCard from "../../../components/ui/Cards/CourseSubjectCard";
 import { toast } from "react-toastify";
-import { Pagination } from "antd";
+import { Pagination, Spin } from "antd";
 
 /* ===== Helpers ===== */
 
@@ -379,6 +379,14 @@ const SubjectsManagementPage = () => {
   ];
 
   const isLoadingRounds = rounds_loading && normalizedSubjects.length === 0;
+
+  if(rounds_loading) {
+     return (
+          <div className="h-screen flex justify-center items-center">
+            <Spin size="large" spinning />
+          </div>
+        );
+  }
 
   return (
     <PageLayout>

@@ -33,10 +33,10 @@ import { toast } from "react-toastify";
 const arDate = (iso) =>
   iso
     ? new Date(iso).toLocaleDateString("ar-EG", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      })
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
     : "--";
 
 /* ===================== Grid Card ===================== */
@@ -65,9 +65,8 @@ const CategoryCard = ({
 
   return (
     <div
-      className={`bg-white relative rounded-xl overflow-hidden shadow-md border border-gray-100 p-6 transition-all ${
-        mappedCategory.visible ? "hover:shadow-lg" : "opacity-60"
-      }`}
+      className={`bg-white relative rounded-xl overflow-hidden shadow-md border border-gray-100 p-6 transition-all ${mappedCategory.visible ? "hover:shadow-lg" : "opacity-60"
+        }`}
     >
       {/* Soft blobs */}
       <div className="absolute w-20 h-20 top-0 right-0 rounded-full blur-3xl bg-[#3B82F6]/40 pointer-events-none" />
@@ -98,11 +97,10 @@ const CategoryCard = ({
               </span>
             )}
             <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                mappedCategory.status === "active"
+              className={`px-2 py-1 rounded-full text-xs font-medium ${mappedCategory.status === "active"
                   ? "bg-green-100 text-green-800"
                   : "bg-red-100 text-red-800"
-              }`}
+                }`}
             >
               {mappedCategory.status === "active" ? "نشط" : "غير نشط"}
             </span>
@@ -165,7 +163,7 @@ const CategoryCard = ({
             </button>
           </Tooltip>
 
-          <Tooltip title={mappedCategory.visible ? "إخفاء" : "إظهار"}>
+          <Tooltip title={mappedCategory.visible ? "غير نشط" : "نشط"}>
             <button
               onClick={() => onToggleVisibility(category)}
               className="p-2 hover:bg-gray-50 rounded-lg text-gray-700"
@@ -208,8 +206,8 @@ const MobileCategoryRow = ({
     description: category.description,
     coursesCount: category.courses_count || 0,
     createdAt: category.created_at,
-    status: category.active === "1" ? "active" : "inactive",
-    visible: category.visible !== false,
+    status: category.active == "1" ? "active" : "inactive",
+    visible: category.active !== false,
     sections: category.sections || [],
   };
 
@@ -222,22 +220,20 @@ const MobileCategoryRow = ({
           </h3>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
             <span
-              className={`inline-flex px-2 py-1 rounded-full ${
-                mappedCategory.status === "active"
+              className={`inline-flex px-2 py-1 rounded-full ${mappedCategory.status === "active"
                   ? "bg-green-100 text-green-800"
                   : "bg-red-100 text-red-800"
-              }`}
+                }`}
             >
               {mappedCategory.status === "active" ? "نشط" : "غير نشط"}
             </span>
             <span
-              className={`inline-flex px-2 py-1 rounded-full ${
-                mappedCategory.visible
+              className={`inline-flex px-2 py-1 rounded-full ${mappedCategory.active
                   ? "bg-blue-100 text-blue-800"
                   : "bg-gray-200 text-gray-700"
-              }`}
+                }`}
             >
-              {mappedCategory.visible ? "ظاهر" : "مخفي"}
+              {mappedCategory.active ? "نشط" : "غير نشط"}
             </span>
           </div>
         </div>
@@ -407,22 +403,20 @@ const CategoriesTable = ({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap w-[140px]">
                     <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        mappedCategory.status === "active"
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${mappedCategory.status === "active"
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
-                      }`}
+                        }`}
                     >
                       {mappedCategory.status === "active" ? "نشط" : "غير نشط"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap w-[140px]">
                     <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        mappedCategory.visible
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${mappedCategory.visible
                           ? "bg-blue-100 text-blue-800"
                           : "bg-gray-200 text-gray-700"
-                      }`}
+                        }`}
                     >
                       {mappedCategory.visible ? "ظاهر" : "مخفي"}
                     </span>
@@ -507,10 +501,10 @@ export default function Page() {
     new Set()
   );
   const [visibilityFilter, setVisibilityFilter] =
-    useState("visible");
+    useState("active");
 
   const dispatch = useDispatch();
-  const { all_courses_categories_loading, all_courses_categories_list  , active_course_category_loading} =
+  const { all_courses_categories_loading, all_courses_categories_list, active_course_category_loading } =
     useSelector((state) => state?.categories);
 
   // API message structure: { current_page, data, total, per_page, last_page, ... }
@@ -557,13 +551,13 @@ export default function Page() {
           c.name?.toLowerCase().includes(term) ||
           c.description?.toLowerCase().includes(term);
 
-        const isVisible = c.active === "1";
+        const isVisible = c.active == "1";
         const matchesVisibility =
           visibilityFilter === "all"
             ? true
-            : visibilityFilter === "visible"
-            ? isVisible
-            : !isVisible;
+            : visibilityFilter === "active"
+              ? isVisible
+              : !isVisible;
 
         return matchesTerm && matchesVisibility;
       })
@@ -602,13 +596,10 @@ export default function Page() {
           setNewModal(false);
           setSelectedCategory(null);
           dispatch(
-            handleGetAllCoursesCategories({
-              per_page: pageSize,
-              page: currentPage,
-            })
+            handleGetAllCoursesCategories()
           );
         } else {
-          toast.error(res?.data?.message || "حدث خطأ أثناء إضافة الفئة");
+          toast.error(res?.err?.response?.data?.message || "حدث خطأ أثناء إضافة الفئة");
         }
       })
       .catch((err) => {
@@ -642,7 +633,7 @@ export default function Page() {
             })
           );
         } else {
-          toast.error(res?.data?.message || "حدث خطأ أثناء تعديل الفئة");
+          toast.error(res?.err?.response?.data?.message || "حدث خطأ أثناء تعديل الفئة");
         }
       })
       .catch((err) => {
@@ -682,22 +673,24 @@ export default function Page() {
   const toggleVisibility = (category) => {
     console.log(category)
     const formData = new FormData();
-    formData.append("id" , category?.id);
-    formData.append("active" , category?.active ? 0 : 1);
+    formData.append("id", category?.id);
+    formData.append("active", category?.active == "0" ? 1 : 0);
 
-    dispatch(handleShowHideCategory({body : formData}))
-    .unwrap()
-    .then(res => {
-      console.log(res);
-    })
-    // message.success(category.visible ? "تم إخفاء الفئة" : "تم إظهار الفئة");
-    // // TODO: استدعي API لتغيير حالة الظهور
-    // dispatch(
-    //   handleGetAllCoursesCategories({
-    //     per_page: pageSize,
-    //     page: currentPage,
-    //   })
-    // );
+    dispatch(handleShowHideCategory({ body: formData }))
+      .unwrap()
+      .then(res => {
+        console.log(res);
+        if (res?.data?.status == "success") {
+          toast.success(res?.data?.message || "تم تعديل حالة الفئة");
+          handleGetAllCoursesCategories({
+            per_page: pageSize,
+            page: currentPage,
+          })
+
+        } else {
+          toast.error(res?.err?.response?.data?.message || "هناك مشكله في تعديل حالة الفية")
+        }
+      })
   };
 
   const handleExport = () => {
@@ -756,33 +749,30 @@ export default function Page() {
           <span className="text-sm text-gray-600">الظهور:</span>
           <button
             onClick={() => setVisibilityFilter("all")}
-            className={`px-3 py-1.5 rounded-lg text-sm border ${
-              visibilityFilter === "all"
+            className={`px-3 py-1.5 rounded-lg text-sm border ${visibilityFilter === "all"
                 ? "bg-gray-900 text-white border-gray-900"
                 : "bg-white text-gray-700 border-gray-300"
-            }`}
+              }`}
           >
             الكل
           </button>
           <button
-            onClick={() => setVisibilityFilter("visible")}
-            className={`px-3 py-1.5 rounded-lg text-sm border ${
-              visibilityFilter === "visible"
+            onClick={() => setVisibilityFilter("active")}
+            className={`px-3 py-1.5 rounded-lg text-sm border ${visibilityFilter === "active"
                 ? "bg-gray-900 text-white border-gray-900"
                 : "bg-white text-gray-700 border-gray-300"
-            }`}
+              }`}
           >
-            ظاهر فقط
+            نشط فقط
           </button>
           <button
-            onClick={() => setVisibilityFilter("hidden")}
-            className={`px-3 py-1.5 rounded-lg text-sm border ${
-              visibilityFilter === "hidden"
+            onClick={() => setVisibilityFilter("inactive")}
+            className={`px-3 py-1.5 rounded-lg text-sm border ${visibilityFilter === "inactive"
                 ? "bg-gray-900 text-white border-gray-900"
                 : "bg-white text-gray-700 border-gray-300"
-            }`}
+              }`}
           >
-            مخفي فقط
+            غير نشط فقط
           </button>
         </div>
 

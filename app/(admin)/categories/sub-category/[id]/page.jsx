@@ -162,7 +162,8 @@ function SectionFormModal({
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <label className="block text-sm font-medium text-gray-700">
-              صورة القسم
+             <span> صورة القسم</span>
+             <span className="text-red-500">*</span>
             </label>
             {preview && (
               <button
@@ -182,9 +183,10 @@ function SectionFormModal({
               className="inline-flex items-center gap-3 px-6 py-3 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 text-gray-600 hover:text-blue-600"
             >
               <Upload size={20} />
-              اختيار صورة من الجهاز
+            اختيار صورة من الجهاز
             </button>
-            <input
+            <input 
+            required
               ref={fileInputRef}
               type="file"
               accept="image/*"

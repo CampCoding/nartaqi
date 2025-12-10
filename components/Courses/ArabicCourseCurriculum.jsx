@@ -586,7 +586,7 @@ export default function ArabicCourseCurriculum({ id }) {
                 : "bg-gray-50 text-gray-700 hover:bg-gray-100"
             }`}
           >
-            المحاضرات (lecture)
+            مرحلة المحاضرات
           </button>
           <button
             onClick={() => setActiveTab("basic")}
@@ -596,7 +596,7 @@ export default function ArabicCourseCurriculum({ id }) {
                 : "bg-gray-50 text-gray-700 hover:bg-gray-100"
             }`}
           >
-            الأساسيات (basic)
+            مرحلة التأسيس
           </button>
           <button
             onClick={() => setActiveTab("exams")}
@@ -606,7 +606,7 @@ export default function ArabicCourseCurriculum({ id }) {
                 : "bg-gray-50 text-gray-700 hover:bg-gray-100"
             }`}
           >
-            الامتحانات (exams)
+           الاختبارات التجريبية
           </button>
         </div>
 

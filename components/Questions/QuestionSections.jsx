@@ -122,6 +122,10 @@ export default function QuestionSections({
     resetEditors();
   };
 
+  useEffect(() => {
+    console.log(isEditing , editingSection)
+  } , [isEditing , editingSection])
+
   // Add or Update section
   const handleSaveSection = () => {
     const trimmedName = nameHtml?.replace(/<p>|<\/p>/g, "")?.trim();

@@ -134,7 +134,7 @@ export default function Features({
           subtitle={"قم بإدارة وتنظيم مميزات الدورة وإمكانياتها"}
           extra={
             <Button
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors"
+              className="!bg-indigo-600 hover:!bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors"
               onClick={() => {
                 console.log("setOpenAddModal(true)")
                 setOpenAddModal(true)
@@ -149,7 +149,9 @@ export default function Features({
         <p className="text-gray-500 text-lg mb-4">
           لا تتوفر مميزات حالياً لهذه الدورة.
         </p>
-        <Button onClick={() => {
+        <Button
+        className="!bg-indigo-600 hover:!bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors"
+        onClick={() => {
           console.log("jello")
           setOpenAddModal(true)
         }}>إضافة مميزة جديدة</Button>

@@ -21,7 +21,6 @@ const initialState = {
 export const handleGetAllCoursesCategories = createAsyncThunk(
   "categoriesSlice/handleGetAllCoursesCategories",
   async ({ per_page, page  } = {}) => {
-    console.log("tesss");
     if (page && per_page) {
       const response = await api.get(
         `${apiRoutes.get_categories}?per_page=${per_page}&page=${page}`
@@ -52,7 +51,7 @@ export const handleDeleteCategory = createAsyncThunk("categoriesSlice/handleDele
 })
 
 export const handleShowHideCategory = createAsyncThunk("categoriesSlice/handleShowHideCategory", async({body}) => {
-    const response = await api.post(apiRoutes.show_hide_blog , {body , isFile : true});
+    const response = await api.post(apiRoutes.active_category , {body , isFile : true});
     return response;
 })
 

@@ -13,6 +13,7 @@ import {
   Dropdown,
   Segmented,
   Badge,
+  Modal,
 } from "antd";
 import {
   EyeOutlined,
@@ -30,8 +31,13 @@ import {
 import { subjects } from "../../data/subjects";
 import EditStudentModal from "./EditStudentModal";
 import DeleteStudentModal from "./DeleteStudentModal";
-import { Globe } from "lucide-react";
+import { Globe, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { handleInrollStudentRound } from "../../lib/features/studentSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
+import { handleGetAllCoursesCategories } from "../../lib/features/categoriesSlice";
+import { handleGetAllRounds } from "../../lib/features/roundsSlice";
 
 const PALETTE = {
   primary: "#0F7490",
@@ -72,6 +78,10 @@ function StudentsGrid({
   const [statusFilter, setStatusFilter] = useState("all"); // all | approved | pending | rejected
   const [deleteModal, setDeleteModal] = useState(false);
   const router = useRouter();
+  const { all_courses_categories_list, all_courses_categories_loading } = useSelector(
+    (state) => state?.categories
+  );
+  const {rounds_list} = useSelector(state => state?.rounds);
   
   const normalizedData = useMemo(
     () =>
@@ -112,6 +122,68 @@ function StudentsGrid({
     if (page > maxPage) setPage(1);
   }, [total, ps, page]);
 
+  const [enrollModalOpen , setEnrollModalOpen] = useState(false);
+  const [selectedStudent , setSelectedStudent] = useState({});
+  const [selectedRound , setSelectedRound] = useState({});
+  const [selectedCategory , setSelectedCategory] = useState({});
+
+  const dispatch = useDispatch();
+
+
+    useEffect(() => {
+    dispatch(handleGetAllCoursesCategories());
+  }, []);
+
+  useEffect(() => {
+    if (selectedCategory) {
+      dispatch(handleGetAllRounds({ course_category_id: selectedCategory }));
+    }
+  }, [selectedCategory]);
+
+  const openEnrollModal = (student) => {
+    setSelectedStudent(student);
+    setEnrollModalOpen(true);
+  };
+
+  const closeEnrollModal = () => {
+    setEnrollModalOpen(false);
+    setSelectedStudent(null);
+    setSelectedCategory(null);
+    setSelectedRound(null);
+  };
+
+  const handleConfirmEnroll = () => {
+    if (!selectedRound) {
+      notification.error({
+        message: "خطأ",
+        description: "يجب عليك اختيار دورة لتسجيل الطالب.",
+      });
+      return;
+    }
+
+    // Dispatch the enrollment action
+    dispatch(
+      handleInrollStudentRound({
+        body: {
+          student_id: selectedStudent.id,
+          round_id: selectedRound,
+        },
+      })
+    ).unwrap().then((res) => {
+      console.log(res);
+      if (res?.data?.status == "success") {
+        setEnrollModalOpen(false);
+        toast.success("تم تسجيل الطالب ف الدورة بنجاح");
+      }else {
+        toast.error("حدث خطأ أثناء محاولة تسجيل الطالب في الدورة.")
+      }
+    }).catch(() => {
+      toast.error("حدث خطأ أثناء محاولة تسجيل الطالب في الدورة.")
+    });
+  };
+
+
+
   const moreMenu = (teacher) => ({
     items: [
       { type: "divider" },
@@ -121,6 +193,12 @@ function StudentsGrid({
         icon: <DeleteOutlined />,
         label: "حذف",
       },
+       {
+        key: "assign",
+        danger: false,
+        icon: "",
+        label: "تسجيل في دورة",
+      },
     ],
     onClick: ({ key }) => {
       if (key === "edit") {
@@ -128,6 +206,9 @@ function StudentsGrid({
         setSelectedTeacher(teacher);
         onEdit?.(teacher);
         return;
+      }
+      if(key == "assign") {
+        openEnrollModal(teacher)
       }
       if (key.startsWith("status:")) {
         const newStatus = key.split(":")[1]; // approved | pending | rejected
@@ -268,6 +349,10 @@ function StudentsGrid({
                       </Tag>
                     </div>
                     <p className="text-gray-500 text-sm m-0">{t.email}</p>
+                    <div className="text-gray-500 flex gap-1 items-center text-sm mt-2 m-0">
+                      <Phone className="w-4 h-4 text-green-500"/>
+                      <span>{t.phone}</span>
+                    </div>
                     <p className="text-gray-400 text-sm m-0">
                       {t?.description}
                     </p>
@@ -365,6 +450,13 @@ function StudentsGrid({
                       </Button>
                     </Tooltip>
 
+                     {/* <button
+                  onClick={() => openEnrollModal(t)}
+                  className="flex-1 px-3 py-2 rounded-lg bg-emerald-600 text-white text-xs hover:bg-emerald-700 transition"
+                >
+                  تسجيل في دورة
+                </button> */}
+
                     <div className="flex items-center gap-2">
                       <Dropdown
                         trigger={["click"]}
@@ -416,6 +508,51 @@ function StudentsGrid({
         setOpen={setDeleteModal}
         rowData={selectedTeacher}
       />
+
+       <Modal
+        open={enrollModalOpen}
+        onCancel={closeEnrollModal}
+        onOk={handleConfirmEnroll}
+        okText="تأكيد التسجيل"
+        cancelText="إلغاء"
+        centered
+        title="تسجيل الطالب في دورة"
+      >
+        {selectedStudent && (
+          <div className="space-y-3 text-right">
+            <p>
+              سيتم تسجيل الطالب:{" "}
+              <b className="text-emerald-700">{selectedStudent.name}</b> في أحد
+              الدورات.
+            </p>
+            <div className="flex flex-col gap-2">
+              <label>فئات الدورات</label>
+              <Select
+                loading={all_courses_categories_loading}
+                onChange={(e) => setSelectedCategory(e)}
+                options={all_courses_categories_list?.data?.message?.data?.map(item => ({
+                  label: item?.name,
+                  value: item?.id,
+                }))}
+              />
+            </div>
+
+            {/* Show rounds after selecting category */}
+            {selectedCategory && rounds_list?.data?.message?.data && (
+              <div className="flex flex-col gap-2 mt-2">
+                <label>اختر الدورة</label>
+                <Select
+                  onChange={(value) => setSelectedRound(value)}
+                  options={rounds_list?.data?.message?.data?.map(round => ({
+                    label: round?.name,
+                    value: round?.id,
+                  }))}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </ConfigProvider>
   );
 }
