@@ -78,13 +78,14 @@ export default function AddCategoryModal({
   };
 
   const handleSubmit = async () => {
+    console.log(selectedCategory);
     try {
       const values = await form.validateFields(); // سيُرمي خطأ إذا فشل التحقق
 
       const formData = new FormData();
 
       if (selectedCategory?.id) {
-        formData.append("id", selectedCategory.id);
+        formData.append("id", selectedCategory?.id);
       }
 
       formData.append("name", values.title);
@@ -192,13 +193,13 @@ export default function AddCategoryModal({
           </Upload>
         </Form.Item>
 
-        <Form.Item name="status" label="حالة الفئة" valuePropName="checked">
+        {/* <Form.Item name="status" label="حالة الفئة" valuePropName="checked">
           <Switch
             checkedChildren="نشط"
             unCheckedChildren="غير نشط"
             defaultChecked
           />
-        </Form.Item>
+        </Form.Item> */}
 
         <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
           <Button

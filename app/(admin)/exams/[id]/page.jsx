@@ -581,22 +581,22 @@ export default function ExamDetailsPage({ exam: examProp }) {
                     >
                       {exam.examType === "mock" ? "اختبار محاكي" : "تـدريب"}
                     </Pill>
-                    {exam.subject && (
+                    {/* {exam.subject && (
                       <Pill className="bg-gray-100 text-gray-700 border-gray-200">
                         <Target className="w-3.5 h-3.5" />
                         الدورة: {exam.subject}
                       </Pill>
-                    )}
+                    )} */}
                   </div>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                  {/* <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                     <span className="inline-flex items-center gap-1.5">
                       <Award className="w-4 h-4" /> معدل الوقت: {avgPerQuestion} دقيقة/سؤال
                     </span>
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              {/* <div className="flex flex-wrap items-center gap-2">
                 <ActionButton
                   icon={Edit3}
                   variant="primary"
@@ -607,7 +607,7 @@ export default function ExamDetailsPage({ exam: examProp }) {
                 >
                   تعديل
                 </ActionButton>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

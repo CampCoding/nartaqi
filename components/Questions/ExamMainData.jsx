@@ -61,6 +61,7 @@ import {
   handleAssignExam,
   handleGetAllExamData,
   handleUpdateExamQuestions,
+  handleDeleteExamSection,
 } from "../../lib/features/examSlice";
 import { toast } from "react-toastify";
 import AssignExam from "./AssignExam";
@@ -1844,6 +1845,18 @@ useEffect(() => {
   }
 }, [editingQuestion]);
 
+const examIdForSections =
+  examid || params["exam-id"] || params.examId || openExamSection?.id;
+
+const onSectionDeleted = (deletedSectionId) => {
+  console.log(deletedSectionId);
+  // refresh redux list
+  if (deletedSectionId) {
+    dispatch(handleGetAllExamSections({ body: { exam_id: examIdForSections } }));
+  }
+};
+
+
 
   /* ===================== UI ===================== */
   return (
@@ -1871,6 +1884,7 @@ useEffect(() => {
 
       {(openExamSection || isEditMode) && (
         <QuestionSections
+        onDeleteSection={onSectionDeleted}
           editData={filteredData}
           data={openExamQuestion}
           examData={examData}

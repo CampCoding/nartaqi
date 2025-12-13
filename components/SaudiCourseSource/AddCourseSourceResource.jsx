@@ -442,6 +442,8 @@ export default function AddCourseSourceResource({
     finally {
       if (currentStep == STEPS.length) {
         router.push(`/round_content?id=${id}`);
+        localStorage.removeItem("courseBasicInfo");
+        
       } else {
         goToNextStep();
       }

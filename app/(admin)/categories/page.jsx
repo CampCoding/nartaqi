@@ -163,7 +163,7 @@ const CategoryCard = ({
             </button>
           </Tooltip>
 
-          <Tooltip title={mappedCategory.visible ? "غير نشط" : "نشط"}>
+          {/* <Tooltip title={mappedCategory.visible ? "غير نشط" : "نشط"}>
             <button
               onClick={() => onToggleVisibility(category)}
               className="p-2 hover:bg-gray-50 rounded-lg text-gray-700"
@@ -174,7 +174,7 @@ const CategoryCard = ({
                 <Eye className="w-4 h-4" />
               )}
             </button>
-          </Tooltip>
+          </Tooltip> */}
 
           <Tooltip title="حذف">
             <button
@@ -575,6 +575,7 @@ export default function Page() {
   };
 
   const handleEdit = (category) => {
+    console.log(category)
     setSelectedCategory(category);
     setEditModal(true);
   };
@@ -612,13 +613,10 @@ export default function Page() {
   // ✅ Edit (from modal)
   const handleEditFinish = ({ formData }) => {
     if (!selectedCategory?.id) return;
+    console.log(selectedCategory , formData);
     setConfirmLoading(true);
-
     dispatch(
-      handleEditCategory({
-        id: selectedCategory.id,
-        body: formData,
-      })
+      handleEditCategory({body :formData})
     )
       .unwrap()
       .then((res) => {
@@ -839,6 +837,7 @@ export default function Page() {
 
         {/* Add Category Modal */}
         <AddCategoryModal
+        selectedCategory={selectedCategory}
           visible={newModal}
           onCancel={() => setNewModal(false)}
           onFinish={handleAddFinish}
@@ -848,6 +847,7 @@ export default function Page() {
 
         {/* Edit Category Modal */}
         <AddCategoryModal
+        selectedCategory={selectedCategory}
           visible={editModal}
           onCancel={() => {
             setEditModal(false);

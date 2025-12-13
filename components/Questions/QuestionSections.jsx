@@ -243,45 +243,39 @@ export default function QuestionSections({
 
   // Confirm delete from modal
   const confirmDeleteSection = () => {
-    if (!sectionToDelete) return;
+    console.log(sectionToDelete);
+  if (!sectionToDelete) return;
 
-    const section = sectionToDelete;
+  const sectionId = sectionToDelete?.id;
+  const examId =
+  sectionToDelete?.exam_id || 
+    params["exam-id"] || params.examId || data?.sections?.exam_id || data?.id;
 
-    if (params["exam-id"] && section?.id) {
-      // Delete via API for existing exam
-      dispatch(handleDeleteExamSection({ body: { id: section?.id } }))
-        .unwrap()
-        .then((res) => {
-          if (res?.data?.status === "success") {
-            toast.success("تم حذف القسم بنجاح");
-            if (onDeleteSection) {
-              onDeleteSection(section.id);
-            }
-            // Refresh sections list
-            dispatch(
-              handleGetAllExamSections({
-                body: { exam_id: params["exam-id"] },
-              })
-            );
-          } else {
-            toast.error("فشل في حذف القسم");
-          }
-        })
-        .catch((error) => {
-          console.error("Error deleting section:", error);
-          toast.error("حدث خطأ أثناء حذف القسم");
-        })
-        .finally(() => {
-          closeDeleteModal();
-        });
-    } else {
-      // Delete locally for new exam
-      if (onDeleteSection) {
-        onDeleteSection(section.id);
-      }
-      closeDeleteModal();
-    }
-  };
+  if (examId && sectionId) {
+    dispatch(handleDeleteExamSection({ body: { id: sectionId } }))
+      .unwrap()
+      .then((res) => {
+        if (res?.data?.status === "success") {
+          toast.success("تم حذف القسم بنجاح");
+          dispatch(handleGetAllExamSections({ body: { exam_id: examId } })); // ✅ refresh
+        } else {
+          toast.error("فشل في حذف القسم");
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting section:", error);
+        toast.error("حدث خطأ أثناء حذف القسم");
+      })
+      .finally(() => {
+        closeDeleteModal();
+      });
+  } else {
+    // local-only delete
+    removeLocally();
+    closeDeleteModal();
+  }
+};
+
 
   // Get the appropriate button text
   const getButtonText = () => {
@@ -460,8 +454,9 @@ export default function QuestionSections({
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         disabled={delete_exam_section_loading}
                         title="حذف القسم"
+                      
                       >
-                        <Trash2 className="w-4 h-4" />
+                       {delete_exam_section_loading ? "loading..." : <Trash2 className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
@@ -487,7 +482,7 @@ export default function QuestionSections({
 
         {/* Delete confirmation modal */}
         {isDeleteModalOpen && sectionToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="fixed inset-0 !z-[999999] flex items-center justify-center bg-black/40">
             <div className="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 تأكيد حذف القسم
