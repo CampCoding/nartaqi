@@ -27,10 +27,13 @@ export default function DeleteCategoryModal({
     .then(res => {
       console.log(res)
       if(res?.data?.status == "success") {
+        cancelDelete();
         toast.success(res?.data?.message);
         dispatch(handleGetAllCoursesCategories({per_page}))
+      }else {
+         toast.error(res?.error?.response?.data?.message || "هناك خطأ اثناء حذف  الفئة")
       }
-    })
+    }).catch(e => console.log(e))
   }
 
   return (
@@ -48,7 +51,7 @@ export default function DeleteCategoryModal({
           loading={delete_course_category_loading}
           onClick={handleSubmit}
         >
-          حذف
+          {delete_course_category_loading ? "جاري الحذف....." : "حذف"}
         </Button>,
       ]}
       closeIcon={<X className="w-5 h-5" />}

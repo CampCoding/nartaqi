@@ -31,7 +31,7 @@ const DeleteExamPdfModal = ({ open, setOpen, rowData, setRowData ,id }) => {
         setOpen(false);
         setRowData({});
       } else {
-        toast.error("فشل في حذف الملف");
+        toast.error(res?.error?.response?.data?.message || "فشل في حذف الملف");
       }
     } catch (error) {
       console.error('Error deleting exam PDF:', error);

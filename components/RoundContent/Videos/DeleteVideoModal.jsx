@@ -5,10 +5,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { toast } from 'react-toastify';
 import { handleDeleteLessonVideo, handleGetAllLessonVideo } from '../../../lib/features/videoSlice';
+import { handleGetAllRoundContent } from '../../../lib/features/roundContentSlice';
 
 const { Text } = Typography;
 
-export default function DeleteVideoModal({ open, setOpen, rowData , id }) {
+export default function DeleteVideoModal({ open, round_id,setOpen, rowData, id }) {
   const dispatch = useDispatch();
   // Ensure the state path and variable name are correct (e.g., state?.content?.delete_content_loading)
   const { delete_video_loading } = useSelector(state => state?.videos);
@@ -28,11 +29,20 @@ export default function DeleteVideoModal({ open, setOpen, rowData , id }) {
     dispatch(handleDeleteLessonVideo({ body: data_send }))
       .unwrap()
       .then(res => {
-        if(res?.data?.status == "success") {
+        if (res?.data?.status == "success") {
           toast.success("تم حذف الفيديو بنجاح");
-          dispatch(handleGetAllLessonVideo({body : {
-            round_content_id : rowData?.round_content_id
-          }}))
+          dispatch(handleGetAllLessonVideo({
+            body: {
+              round_content_id: rowData?.round_content_id
+            }
+          }))
+          dispatch(
+            handleGetAllRoundContent({
+              body: {
+                round_id, // parent round id
+              },
+            })
+          );
         }
         setOpen(false);
       })

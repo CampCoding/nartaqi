@@ -204,6 +204,8 @@ import { FileText } from "lucide-react";
 import { toast } from "react-toastify";
 import Card from "./ExamCard";
 import { useParams } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { handleGetAllExams } from "../../lib/features/examSlice";
 
 export default function ExamMainInfo({
   lessonId = null,
@@ -217,6 +219,14 @@ export default function ExamMainInfo({
   add_exam_loading,
   edit_exam_loading
 }) {
+
+  const dispatch = useDispatch();
+
+  const {all_exam_list} = useSelector(state => state?.exam);
+
+  useEffect(() => {
+    dispatch(handleGetAllExams({}))
+  } ,[dispatch])
 
   const currentDate = new Date().toISOString().split("T")[0];
   const params = useParams();
@@ -273,14 +283,15 @@ export default function ExamMainInfo({
           </div>
         </div>
 
-        <div>
+       {!lessonId &&  <div>
           <label className="block text-sm font-medium text-gray-700 mb-4">نوع الاختبار</label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Looping through exam types */}
             {exam_types?.map((type) => {
               const isSelected = examInfoData?.type == type.value;
+              
               return (
-                <button
+                  <button
                   key={type.id}
                   type="button"
                   onClick={() => handleExamTypeChange(type)}
@@ -303,13 +314,14 @@ export default function ExamMainInfo({
               );
             })}
           </div>
-        </div>
+        </div>}
 
-        {examInfoData?.type =="mock" && <div className="grid grid-cols-2 gap-3">
+        {<div className="grid grid-cols-2 gap-3">
           <Input
             label="الوقت"
             placeholder=""
             type=""
+            name="time"
             value={examInfoData?.time || ""}
             onChange={(e) => handleBasicDataChange("time", e.target.value)}
           />

@@ -17,6 +17,8 @@ const CourseSourceSubjectCard = ({
   onDuplicate,
   onRequestDuplicate, // يفتح مودال النسخ في الأب
   onActive, // يستدعي مودال التفعيل في الأب
+  page,
+  page_size
 }) => {
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -46,7 +48,7 @@ const CourseSourceSubjectCard = ({
   const handleEdit = (e) => {
     e?.stopPropagation?.();
     setShowDropdown(false);
-    router.push(`/saudi_source_course/edit/${subject?.id}`);
+    router.push(`/saudi_source_course/edit/${subject?.id}?page=${page}&pageSize=${page_size}`);
     onEdit?.(subject);
   };
 
@@ -137,6 +139,13 @@ const CourseSourceSubjectCard = ({
                     <span>تعديل</span>
                   </button>
 
+<button
+                    onClick={() => router.push(`/round_content?id=${subject?.id}`)}
+                    className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Edit size={14} className="text-blue-600" />
+                    <span>تعديل المحتوي</span>
+                  </button>
                   <button
                     onClick={handleDelete}
                     className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2 text-red-600"

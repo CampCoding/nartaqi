@@ -623,13 +623,15 @@ const { confirm } = Modal;
 export default function DisplayQuestions({
   selectedSectionId,
   setEditingQuestion,
-  editingQuestion
+  editingQuestion,
+  selectedSection
 }) {
   const dispatch = useDispatch();
   const { get_exam_questions_list, get_exam_questions_loading, delete_question_loading } = useSelector(state => state?.exam);
 
   // State for collapsable panels
   const [expandedQuestions, setExpandedQuestions] = useState({});
+
   
   // State for editing
   const [editingQuestionId, setEditingQuestionId] = useState(null);
@@ -641,12 +643,25 @@ export default function DisplayQuestions({
 
   const [deleteModal, setDeleteModal] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState(null);
-
+  const [sectionName , setSectionName] = useState("");
   // Log to verify if selectedSectionId is set correctly
+  
+  useEffect(() => {
+    console.log("selectedSection" , selectedSection)
+  } ,[selectedSection])
+
   useEffect(() => {
     if (selectedSectionId) {
       console.log("Fetching questions for section ID:", selectedSectionId);
-      dispatch(handleGetExamQuestions({ body: { exam_section_id: selectedSectionId } }));
+      dispatch(handleGetExamQuestions({ body: { exam_section_id: selectedSectionId } }))
+      .unwrap()
+      .then(res => {
+        console.log(res);
+        if(res?.data?.status == "success") {
+          const filtered = res?.data?.message?.filter(item=> item?.id == selectedSectionId)
+          setSectionName(filtered?.title)
+        }
+      })
     }
   }, [selectedSectionId, dispatch]);
 
@@ -1212,7 +1227,9 @@ export default function DisplayQuestions({
           <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-blue-800">Section {selectedSectionId}</h3>
+                <h3 
+                dangerouslySetInnerHTML={{__html : `Section ${sectionName}`}}
+                className="font-semibold text-blue-800"></h3>
                 <p className="text-sm text-blue-600">Total Questions: {apiQuestions.length}</p>
               </div>
               <Tag color="blue" className="!m-0">

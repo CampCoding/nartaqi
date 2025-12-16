@@ -62,7 +62,7 @@ export default function EditLivesModal({
           );
           setOpen(false);
         } else {
-          toast.error(res?.data?.message || "هناك خطأ أثناء تعديل البث");
+          toast.error(res?.error?.response?.data?.message || "هناك خطأ أثناء تعديل البث");
         }
       })
       .catch((err) => {
@@ -120,7 +120,6 @@ export default function EditLivesModal({
             value={rowData?.title || ""}
             onChange={handleInputChange}
             className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
-            placeholder="مثل: أساسيات برمجة React"
           />
         </div>
 
@@ -171,7 +170,7 @@ export default function EditLivesModal({
           <input
             id="time"
             name="time"
-            type="time"
+            // type="time"
             value={rowData?.time || ""}
             onChange={handleInputChange}
             className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"

@@ -38,10 +38,24 @@ const initialState = {
   all_exam_data_loading : false,
 }
 
-export const handleGetAllExams = createAsyncThunk("examSlice/handleGetAllExams", async() => {
-  const response = await api.get(apiRoutes.get_exams);
-  return response;
-})
+export const handleGetAllExams = createAsyncThunk(
+  "examSlice/handleGetAllExams", 
+  async ({ page, per_page }) => {  // Destructure here
+    if (page && per_page) {
+      const response = await api.post(apiRoutes.get_exams, {
+        body: {
+          page,
+          per_page
+        }
+      });
+      return response;
+    } else {
+      const response = await api.post(apiRoutes.get_exams);
+      return response;
+    }
+  }
+);
+
 
 export const handleCreateExam = createAsyncThunk("examSlice/handleCreateExam",async({body}) => {
   const response = await api.post(apiRoutes.add_exam , {body});
@@ -121,7 +135,7 @@ export const handleAddExamPdf = createAsyncThunk("examSlice/handleAddExamPdf",as
 })
 
 export const handleEditExamPdf = createAsyncThunk("examSlice/handleEditExamPdf",async({body}) => {
-  const response = await api.post(apiRoutes.edit_exam_pdf , {body});
+  const response = await api.post(apiRoutes.edit_exam_pdf , {body , isFile : true});
   return response;
 })
 
@@ -130,7 +144,16 @@ export const handleDeleteExamPdf = createAsyncThunk("examSlice/handleDeleteExamP
   const response = await api.post(apiRoutes.delete_exam_pdf , {body});
   return response;
 })
-
+export const handleEditExamPdfFile = createAsyncThunk(
+  "examSlice/handleEditExamPdfFile",
+  async ({ body }) => {
+    const response = await api.post(apiRoutes.edit_exam_pdf, {
+      body,
+      isFile: true
+    });
+    return response;
+  }
+);
 
 export const handleAddExamVideo = createAsyncThunk("examSlice/handleAddExamVideo",async({body}) => {
   const response = await api.post(apiRoutes.add_exam_video , {body});

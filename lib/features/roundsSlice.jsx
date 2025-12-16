@@ -8,8 +8,10 @@ const initialState = {
 
   source_round_list : [],
   source_round_loading : false,
-
+  
+  
   add_round_loading: false,
+  store_round : [],
   edit_round_loading: false,
   active_round_loading : false,
   copy_round_loading : false,
@@ -110,6 +112,11 @@ export const handleGetRoundResources = createAsyncThunk("roundesSlice/handleGetR
 export const roundsSlice = createSlice({
   name: "roundesSlice",
   initialState,
+  reducers:{
+    add_round_data:(state, action) => {
+      state.store_round = action.payload
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(handleGetAllRounds.pending, (state) => {
@@ -139,6 +146,7 @@ export const roundsSlice = createSlice({
       })
       .addCase(handleAddBaiskRound.fulfilled, (state, action) => {
         state.add_round_loading = false;
+       
       })
       .addCase(handleAddBaiskRound.rejected, (state) => {
         state.add_round_loading = false;
@@ -197,4 +205,5 @@ export const roundsSlice = createSlice({
   },
 });
 
+export const {add_round_data} = roundsSlice.actions
 export default roundsSlice.reducer;

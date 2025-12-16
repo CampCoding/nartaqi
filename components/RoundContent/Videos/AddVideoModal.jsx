@@ -13,7 +13,8 @@ export default function AddVideoModal({ open, setOpen, id , content_id }) {
   const [videoData , setVideoData] = useState({
     title:"",
     description:"",
-    video:null,
+    youtube_link:null,
+    vimeo_link:null,
     time:"",
   })
   
@@ -130,13 +131,26 @@ export default function AddVideoModal({ open, setOpen, id , content_id }) {
         </div>
          
           <div className='flex flex-col gap-2'>
-          <label htmlFor='video' className='text-lg font-medium text-gray-700'>
-            لينك الفيديو
+          <label htmlFor='youtube_link' className='text-lg font-medium text-gray-700'>
+          (Youtube)  لينك الفيديو
           </label>
           <input 
-            id='video'
-            name='video'
-            value={videoData?.video}
+            id='youtube_link'
+            name='youtube_link'
+            value={videoData?.youtube_link}
+            onChange={handleInputChange}
+            className='border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400'
+          />
+        </div>
+
+          <div className='flex flex-col gap-2'>
+          <label htmlFor='vimeo_link' className='text-lg font-medium text-gray-700'>
+          (Vimeo)  لينك الفيديو
+          </label>
+          <input 
+            id='vimeo_link'
+            name='vimeo_link'
+            value={videoData?.vimeo_link}
             onChange={handleInputChange}
             className='border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400'
           />
@@ -148,7 +162,6 @@ export default function AddVideoModal({ open, setOpen, id , content_id }) {
           </label>
           <input 
             id='time'
-            type='time'
             name='time'
             value={videoData?.time}
             onChange={handleInputChange}

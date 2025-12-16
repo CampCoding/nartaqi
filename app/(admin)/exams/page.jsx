@@ -26,13 +26,14 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Button from "../../../components/atoms/Button";
 import PagesHeader from "../../../components/ui/PagesHeader";
-import { Modal, Select, Input, DatePicker, Spin } from "antd";
+import { Modal, Select, Input, DatePicker, Spin, Pagination } from "antd";
 import CustomModal from "../../../components/layout/Modal";
 import PageLayout from "../../../components/layout/PageLayout";
 import ExamCard from "../../../components/ui/Cards/QuestionCard";
 import { useDispatch, useSelector } from "react-redux";
 import { handleDeleteExam, handleGetAllExams } from "../../../lib/features/examSlice";
 import { toast } from "react-toastify";
+import DeleteExamModal from "../../../components/Exams/DeleteExamModal";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -58,16 +59,29 @@ const TopicExams = () => {
   const [prevModal, setPrevModal] = useState(false);
 
   const dispatch = useDispatch();
-  const { all_exam_loading, all_exam_list , delete_exam_loading } = useSelector(
+  const { all_exam_loading, all_exam_list, delete_exam_loading } = useSelector(
     (state) => state?.exam
   );
 
-  useEffect(() => {
-    dispatch(handleGetAllExams());
-  }, [dispatch]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6); // default per_page
+
+  const metaData = all_exam_list?.data?.message;
+  const total = metaData?.total || 0;
+  const backendCurrentPage = metaData?.current_page || page;
+  const backendPageSize = metaData?.per_page || pageSize;
+  const lastPage = metaData?.last_page || 1;
 
   useEffect(() => {
-    console.log("API exams:", all_exam_list?.data?.message);
+      dispatch(
+        handleGetAllExams({
+          page,
+          per_page: pageSize,
+        })
+      );
+    }, [dispatch, page, pageSize]);
+  useEffect(() => {
+    console.log("API exams:", all_exam_list?.data?.message?.data);
   }, [all_exam_list]);
 
   const breadcrumbs = [
@@ -78,49 +92,40 @@ const TopicExams = () => {
   /** Helpers */
   const normalizeDate = (d) => (d ? dayjs(d) : null);
 
-  // Normalize API exam object → one shape used by UI
   const normalizeExam = (exam) => {
     const createdAt =
       exam.createdAt || exam.created_at || exam.date || null;
     const date = exam.date || null;
 
-    // if object contain time ⇒ mock, else intern
     const isMock = !!(exam.time || exam.duration);
     const type = isMock ? "mock" : "intern";
 
     return {
       ...exam,
-
-      // unified naming for title used by card
       name: exam.name || exam.title || "",
       createdAt,
       startDate: exam.startDate || date,
       endDate: exam.endDate || date,
-      questions_count : exam?.questions_count ,
-      // difficulty + status fallbacks
+      questions_count: exam?.questions_count,
       difficulty: exam.difficulty || exam.level || "",
       status: exam.status || "active",
-
-      // derived type for tabs
       type,
-
-      participantsCount:
-        exam.participantsCount ?? exam.participants_count ?? 0,
+      participantsCount: exam.participantsCount ?? exam.participants_count ?? 0,
       averageScore: exam.averageScore ?? exam.average_score ?? 0,
       totalMarks: exam.totalMarks ?? exam.total_marks ?? 0,
       questionsCount: exam?.questions_count ?? exam?.questions_count ?? 0,
-
-      // unify duration (you can format later if needed)
       duration: exam.duration || exam.time || null,
-
-      // free flag as boolean
       isFree: exam.free === "1" || exam.free === 1 || exam.free === true,
     };
   };
 
-  const normalizedExams = (all_exam_list?.data?.message || []).map(
-    normalizeExam
-  );
+  useEffect(() => {
+    console.log(all_exam_list?.data?.message?.data);
+  }, [all_exam_list])
+
+  const normalizedExams = useMemo(() => {
+    return  (all_exam_list?.data?.message?.data || []).map(normalizeExam)
+  } ,[all_exam_list])
 
   const inPickedRange = (exam, range) => {
     if (!range || !Array.isArray(range) || !range[0] || !range[1]) return true;
@@ -130,7 +135,6 @@ const TopicExams = () => {
     const end = normalizeDate(exam.endDate);
     const created = normalizeDate(exam.createdAt);
 
-    // overlap check (inclusive)
     const overlaps =
       start &&
       end &&
@@ -157,12 +161,10 @@ const TopicExams = () => {
         lower(exam?.title).includes(term) ||
         lower(exam?.description).includes(term);
 
-      // Status + Difficulty
       const matchesStatus = !selectedStatus || exam.status === selectedStatus;
       const matchesDifficulty =
         !selectedDifficulty || exam.difficulty === selectedDifficulty;
 
-      // Date range
       const matchesDates = inPickedRange(exam, dateRange);
 
       return (
@@ -174,7 +176,6 @@ const TopicExams = () => {
       );
     });
 
-    // Sorting
     const sorted = [...base].sort((a, b) => {
       if (sortBy === "title") {
         return (a.name || a.title || "").localeCompare(
@@ -188,7 +189,7 @@ const TopicExams = () => {
       if (sortBy === "averageScore") {
         return (b.averageScore || 0) - (a.averageScore || 0);
       }
-      // Default: createdAt (descending)
+
       const da = normalizeDate(a.createdAt);
       const db = normalizeDate(b.createdAt);
       if (!da && !db) return 0;
@@ -207,42 +208,44 @@ const TopicExams = () => {
     sortBy,
     selectedType,
   ]);
+  
+  useEffect(() => {
+    console.log(filteredExams);
+  } ,[filteredExams])
 
-  const getStatusStats = () => {
-    const stats = normalizedExams.reduce((acc, exam) => {
-      const status = exam.status || "active";
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    }, {});
-    return {
-      total: normalizedExams.length,
-      active: stats.active || 0,
-      draft: stats.draft || 0,
-      completed: stats.completed || 0,
-      expired: stats.expired || 0,
+  const paginatedExams = filteredExams.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
+
+  const handleDelete = (id) => {
+    const data_send = {
+      id,
     };
+
+    dispatch(handleDeleteExam({ body: data_send }))
+      .unwrap()
+      .then((res) => {
+        if (res?.data?.status === "success") {
+          toast.success(res?.data?.message || "تم حذف الاختبار بنجاح");
+          dispatch(handleGetAllExams({ page, per_page: pageSize }));
+          setDeleteModal(false);
+        } else {
+          toast.error(res?.data?.message || "هناك خطأ أثناء حذف الاختبار");
+        }
+      })
+      .catch((e) => console.log(e))
+      .finally(() => setDeleteModal(false));
   };
 
-  const stats = getStatusStats(); // ready if you want to show counters later
-
-  function handleDelete(id) {
-   const data_send ={
-    id,
-   }
-
-   dispatch(handleDeleteExam({body : data_send}))
-   .unwrap()
-   .then(res => {
-    if(res?.data?.status == "success"){
-      toast.success(res?.data?.message || "تم حذف الاختبار بنجاح");
-      dispatch(handleGetAllExams())
-      setDeleteModal(false);
-    }else {
-      toast.error(res?.data?.message || "هناك خطأ أثناء حذف الاختبار");
+  const handlePageChange = (newPage, newPageSize) => {
+    if (newPageSize !== pageSize) {
+      setPage(1);
+      setPageSize(newPageSize);
+    } else {
+      setPage(newPage);
     }
-   }).catch(e => console.log(e))
-   .finally(() => setDeleteModal(false))
-  }
+  };
 
   if (all_exam_loading) {
     return (
@@ -304,30 +307,6 @@ const TopicExams = () => {
                 <Filter className="w-4 h-4 mr-2" />
                 تصفية
               </Button>
-
-              {/* View Toggle */}
-              <div className="flex bg-gray-100 rounded-lg p-1">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded-md transition-all duration-200 ${
-                    viewMode === "grid"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  <Grid3X3 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`p-2 rounded-md transition-all duration-200 ${
-                    viewMode === "list"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  <List className="w-4 h-4" />
-                </button>
-              </div>
             </div>
           </div>
 
@@ -388,55 +367,6 @@ const TopicExams = () => {
           )}
         </div>
 
-        {/* Type Tabs */}
-        <div className="flex gap-2 items-center my-3 !mb-5">
-          {tabs.map((item) => {
-            const active = selectedType === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() =>
-                  setSelectedType((prev) =>
-                    prev === item.id ? null : item.id
-                  )
-                }
-                className={`rounded-md px-3 py-2 border transition-all ${
-                  active
-                    ? "border-blue-600 text-blue-700 bg-blue-50"
-                    : "border-gray-200 text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                {item.title}
-              </button>
-            );
-          })}
-          <button
-            onClick={() => setSelectedType(null)}
-            className="px-3 py-2 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
-          >
-            الكل
-          </button>
-        </div>
-
-        {/* Results Summary */}
-        {(searchTerm ||
-          selectedStatus ||
-          selectedDifficulty ||
-          dateRange ||
-          selectedType) && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between bg-blue-50 rounded-xl p-4 border border-blue-100">
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" />
-                <span className="text-blue-800 font-medium">
-                  عُثر على {filteredExams.length} اختبار من أصل{" "}
-                  {normalizedExams.length}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Exams Grid/List */}
         <div
           className={`${
@@ -445,7 +375,7 @@ const TopicExams = () => {
               : "space-y-6"
           } transition-all duration-500`}
         >
-          {filteredExams.map((exam) => (
+          {filteredExams?.map((exam) => (
             <ExamCard
               selectedExam={selectedExam}
               setSelectedExam={setSelectedExam}
@@ -491,140 +421,20 @@ const TopicExams = () => {
           </div>
         )}
 
-        {/* Preview Modal */}
-        <Modal
-          footer={null}
-          open={prevModal}
-          className="!w-[90%] !max-w-4xl"
-          onCancel={() => setPrevModal(false)}
-          title={
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <BookOpen className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">
-                  معاينة الاختبار
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {selectedExam?.name || selectedExam?.title}
-                </p>
-              </div>
-            </div>
-          }
-        >
-          {selectedExam && (
-            <div className="space-y-6 p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-blue-50 rounded-xl">
-                  <FileText className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                  <p className="text-sm text-blue-600 font-medium">الأسئلة</p>
-                  <p className="text-xl font-bold text-blue-700">
-                    {selectedExam.questionsCount}
-                  </p>
-                </div>
-                <div className="text-center p-4 bg-green-50 rounded-xl">
-                  <Clock className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                  <p className="text-sm text-green-600 font-medium">المدة</p>
-                  <p className="text-xl font-bold text-green-700">
-                    {selectedExam.duration || "غير محددة"}
-                  </p>
-                </div>
-                <div className="text-center p-4 bg-purple-50 rounded-xl">
-                  <Users className="w-6 h-6 text-purple-600 mx-auto mb-2" />
-                  <p className="text-sm text-purple-600 font-medium">
-                    المشاركون
-                  </p>
-                  <p className="text-xl font-bold text-purple-700">
-                    {selectedExam.participantsCount}
-                  </p>
-                </div>
-                <div className="text-center p-4 bg-orange-50 rounded-xl">
-                  <Trophy className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-                  <p className="text-sm text-orange-600 font-medium">
-                    الدرجات
-                  </p>
-                  <p className="text-xl font-bold text-orange-700">
-                    {selectedExam.totalMarks}
-                  </p>
-                </div>
-              </div>
+        {/* Pagination */}
+       {metaData &&  <div className="flex justify-center mt-8">
+          <Pagination
+           current={backendCurrentPage}
+                  pageSize={backendPageSize}
+                  total={total}
+                  onChange={handlePageChange}
+            showSizeChanger
+            pageSizeOptions={["6", "10", "20"]}
+            onShowSizeChange={(current, size) => setPageSize(size)}
+          />
+        </div>}
 
-              <div className="bg-gray-50 rounded-xl p-4">
-                <h4 className="font-semibold text-gray-800 mb-2">
-                  وصف الاختبار
-                </h4>
-                <p className="text-gray-600">
-                  {selectedExam.description || "لا يوجد وصف متاح"}
-                </p>
-              </div>
-
-              <div className="flex justify-end gap-3">
-                <Button onClick={() => setPrevModal(false)}>إغلاق</Button>
-                <Button
-                  type="primary"
-                  className="bg-gradient-to-r from-green-500 to-emerald-500 border-0"
-                >
-                  <Play className="w-4 h-4 mr-2" />
-                  بدء الاختبار
-                </Button>
-              </div>
-            </div>
-          )}
-        </Modal>
-
-        {/* Delete Modal */}
-        <CustomModal
-          isOpen={deleteModal}
-          onClose={() => setDeleteModal(false)}
-          title="حذف الاختبار"
-          size="sm"
-        >
-          <div className="space-y-4" dir="rtl">
-            <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0" />
-              <div>
-                <h4 className="font-medium text-red-900">هل أنت متأكد؟</h4>
-                <p className="text-sm text-red-700">
-                  سيتم حذف الاختبار نهائياً ولا يمكن التراجع عن هذا الإجراء.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-2">
-                الاختبار المراد حذفه:
-              </p>
-              <p className="font-medium text-[#202938] mb-1">
-                {selectedExam?.name || selectedExam?.title}
-              </p>
-              <p className="text-sm text-gray-500">
-                {selectedExam?.participantsCount} مشارك •{" "}
-                {selectedExam?.questionsCount} سؤال
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-              <button
-                onClick={() => setDeleteModal(false)}
-                className="px-4 py-2 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                إلغاء
-              </button>
-              <button
-                onClick={() => {
-                  // TODO: delete logic
-                 handleDelete(selectedExam?.id)
-                }}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
-              >
-                {delete_exam_loading ? "جاري الحذف...." :<div className="flex gap-2 items-center">
-                  <Trash2 className="w-4 h-4" />
-                حذف الاختبار</div>}
-              </button>
-            </div>
-          </div>
-        </CustomModal>
+        <DeleteExamModal page={page} per_page={pageSize} open={deleteModal} setOpen={setDeleteModal}  selectedExam={selectedExam} rowData={selectedExam}/>
       </PageLayout>
     </>
   );

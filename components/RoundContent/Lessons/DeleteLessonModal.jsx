@@ -5,18 +5,18 @@ import { useDispatch, useSelector } from 'react-redux';
 import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { toast } from 'react-toastify';
 import { handleDeleteRoundLessons, handleGetAllRoundLessons } from '../../../lib/features/lessonSlice';
+import { handleGetAllRoundContent } from '../../../lib/features/roundContentSlice';
 
 
 const { Text } = Typography;
 
-export default function DeleteLessonModal({ open, round_id,setOpen, rowData , id }) {
+export default function DeleteLessonModal({ open, round_id, setOpen, rowData, id }) {
   const dispatch = useDispatch();
   const { delete_lesson_loading } = useSelector(state => state?.lesson);
 
   function handleDelete() {
     // Check if rowData is valid before dispatching
     if (!rowData || !rowData.id) {
-      console.error("rowData or rowData.id is missing.");
       setOpen(false); // Close modal if data is invalid
       return;
     }
@@ -28,12 +28,21 @@ export default function DeleteLessonModal({ open, round_id,setOpen, rowData , id
     dispatch(handleDeleteRoundLessons({ body: data_send }))
       .unwrap()
       .then(res => {
-        if(res?.data?.status == "success") {
+        if (res?.data?.status == "success") {
           toast.success("تم حذف الدرس بنجاح");
-          
-          dispatch(handleGetAllRoundLessons({body : {
-            round_content_id : id
-          }}))
+
+          dispatch(handleGetAllRoundLessons({
+            body: {
+              round_content_id: id
+            }
+          }))
+          dispatch(
+            handleGetAllRoundContent({
+              body: {
+                round_id: id, // parent round id
+              },
+            })
+          );
         }
         setOpen(false);
       })
@@ -42,9 +51,6 @@ export default function DeleteLessonModal({ open, round_id,setOpen, rowData , id
       });
   }
 
-  useEffect(() => {
-    console.log(rowData);
-  } , [rowData])
 
   // Determine the title of the item being deleted for clarity
   const contentTitle = rowData?.title || 'هذا الدرس';

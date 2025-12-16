@@ -30,19 +30,6 @@ export default function AddCategoryModal({
           description: initialValues.description,
           status: initialValues.status === true || initialValues.status === "active" || initialValues.active === "1",
         });
-
-        // إذا كان هناك صورة موجودة في التعديل (للتعديل)
-        if (initialValues.image_url) {
-          setFileList([
-            {
-              uid: "-1",
-              name: "image.png",
-              status: "done",
-              url: initialValues.image_url,
-              thumbUrl: initialValues.image_url,
-            },
-          ]);
-        }
       }
     }
   }, [visible, initialValues, form]);
@@ -51,30 +38,6 @@ export default function AddCategoryModal({
     form.resetFields();
     setFileList([]);
     onCancel?.();
-  };
-
-  const beforeUpload = (file) => {
-    const isImage = file.type.startsWith("image/");
-    if (!isImage) {
-      toast.error("يمكنك رفع ملفات الصور فقط!");
-      return Upload.LIST_IGNORE;
-    }
-
-    const isLt5M = file.size / 1024 / 1024 < 5;
-    if (!isLt5M) {
-      toast.error("حجم الصورة يجب أن يكون أقل من 5 ميغابايت!");
-      return Upload.LIST_IGNORE;
-    }
-
-    return false; // منع الرفع التلقائي
-  };
-
-  const handleFileChange = ({ fileList: newFileList }) => {
-    setFileList(newFileList.slice(-1)); // فقط صورة واحدة
-  };
-
-  const handleRemove = () => {
-    setFileList([]);
   };
 
   const handleSubmit = async () => {
@@ -92,15 +55,6 @@ export default function AddCategoryModal({
       formData.append("description", values.description);
       formData.append("active", values.status ? "1" : "0");
 
-      // إذا تم رفع صورة جديدة
-      if (fileList.length > 0 && fileList[0]?.originFileObj) {
-        formData.append("image", fileList[0].originFileObj);
-      }
-
-      // إذا تم حذف الصورة القديمة (fileList فارغ لكن كان في صورة قبلًا)
-      if (fileList.length === 0 && initialValues?.image_url) {
-        formData.append("remove_image", "1"); // أخبر الباك إند بحذف الصورة
-      }
 
       onFinish?.({ formData });
 
@@ -166,7 +120,7 @@ export default function AddCategoryModal({
           />
         </Form.Item>
 
-        <Form.Item label="صورة الغلاف">
+        {/* <Form.Item label="صورة الغلاف">
           <Upload
              rules={[
             { required: true, message: "الصورة مطلوب" },
@@ -191,7 +145,7 @@ export default function AddCategoryModal({
               </div>
             )}
           </Upload>
-        </Form.Item>
+        </Form.Item> */}
 
         {/* <Form.Item name="status" label="حالة الفئة" valuePropName="checked">
           <Switch

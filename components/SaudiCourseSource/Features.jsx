@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { handleGetAllRoundFeatures } from "../../lib/features/featuresSlice";
-import { Spin } from "antd";
+import { Spin, Tooltip } from "antd";
 import PagesHeader from "../ui/PagesHeader";
 import Button from "../atoms/Button";
 import AddFeatureModal from "../RoundContent/Features/AddFeatureModal";
@@ -63,65 +63,72 @@ export default function Features({
 
   // --- Card Render Logic ---
   const renderFeatureCard = (feature) => (
-    <div
-      key={feature.id}
-      className="bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden 
-                 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300"
-    >
-      {/* Feature Image Area */}
-      <div className="relative h-48">
-        <img
-          src={feature.image_url}
-          alt={feature.title}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.target.src =
-              "https://via.placeholder.com/400x300?text=صورة+غير+متوفرة";
-            e.target.className = "w-full h-full object-contain bg-gray-100 p-8"; // Adjust styling for placeholder
+   <div
+  key={feature.id}
+  className="bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden 
+             hover:shadow-2xl hover:scale-[1.05] transition-all duration-300"
+>
+  {/* Feature Image Area */}
+  <div className="relative w-full h-[250px]">
+    <img
+      src={feature.image_url}
+      alt={feature.title}
+      className="w-full h-full object-cover rounded-t-xl"
+      onError={(e) => {
+        e.target.src =
+          "https://via.placeholder.com/400x300?text=صورة+غير+متوفرة";
+        e.target.className =
+          "w-full h-full object-contain bg-gray-100 p-8 opacity-80"; // Adjust styling for placeholder
+      }}
+    />
+  </div>
+
+  {/* Feature Content */}
+  <div className="px-6 py-4">
+    <h2 className="text-xl font-semibold text-gray-900 mb-2 truncate">
+      {feature.title}
+    </h2>
+
+    <p className="text-gray-600 text-sm overflow-hidden mb-4 line-clamp-3">
+      {feature.description}
+    </p>
+  </div>
+
+  {/* Feature Actions Footer */}
+  <div className="flex justify-end px-6 py-4 border-t border-gray-100 bg-gray-50">
+    <div className="flex gap-4 text-gray-500">
+      <Tooltip title="Edit">
+        <Edit
+          size={20}
+          className="cursor-pointer hover:text-blue-600 transition-colors"
+          onClick={() => {
+            setRowData({
+              ...feature,
+              feature_id: feature.id, // Ensure the feature ID is correctly mapped for editing
+              image: feature.image_url, // Pass the image URL for the edit modal
+            });
+            setOpenEditModal(true);
           }}
         />
-      </div>
+      </Tooltip>
 
-      {/* Feature Content */}
-      <div className="p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">
-          {feature.title}
-        </h2>
-
-        <p className="text-gray-600 text-sm min-h-12 overflow-hidden mb-4 line-clamp-3">
-          {feature.description}
-        </p>
-      </div>
-
-      {/* Feature Actions Footer */}
-      <div className="flex justify-end p-4 border-t border-gray-100 bg-gray-50">
-        <div className="flex gap-3 text-gray-500">
-          <Edit
-            size={20}
-            className="cursor-pointer hover:text-blue-600 transition-colors"
-            onClick={() => {
-              setRowData({
-                ...feature,
-                feature_id: feature.id, // Ensure the feature ID is correctly mapped for editing
-                image: feature.image_url, // Pass the image URL for the edit modal
-              });
-              setOpenEditModal(true);
-            }}
-          />
-          <Trash
-            size={20}
-            className="cursor-pointer hover:text-red-600 transition-colors"
-            onClick={() => {
-              setRowData({
-                ...feature,
-                feature_id: feature.id, // Ensure ID is mapped for deletion
-              });
-              setOpenDeleteModal(true);
-            }}
-          />
-        </div>
-      </div>
+      <Tooltip title="Delete">
+        <Trash
+          size={20}
+          className="cursor-pointer hover:text-red-600 transition-colors"
+          onClick={() => {
+            setRowData({
+              ...feature,
+              feature_id: feature.id, // Ensure ID is mapped for deletion
+            });
+            setOpenDeleteModal(true);
+          }}
+        />
+      </Tooltip>
     </div>
+  </div>
+</div>
+
   );
 
   // --- Main Component Render ---

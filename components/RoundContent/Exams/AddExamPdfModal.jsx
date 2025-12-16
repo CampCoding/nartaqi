@@ -53,7 +53,7 @@ const AddExamPdfModal = ({ open, setOpen, exam_id, lesson_id, id }) => {
 
       // Build FormData to match your Postman request
       const formData = new FormData();
-      formData.append("exam_id", exam_id?.id || exam_id); // same as Postman
+      formData.append("lesson_id",lesson_id || exam_id?.id || exam_id); // same as Postman
       formData.append("title", values.title);
       formData.append("description", values.description || "");
       formData.append("type", values?.type || "question");
@@ -74,7 +74,7 @@ const AddExamPdfModal = ({ open, setOpen, exam_id, lesson_id, id }) => {
         setFileList([]);
         setOpen(false);
       } else {
-        toast.error( "فشل في إضافة الملف PDF");
+        toast.error(res?.error?.response?.data?.message ||"فشل في إضافة الملف PDF");
       }
     } catch (error) {
       console.error("Error adding exam PDF:", error);
@@ -152,9 +152,7 @@ const AddExamPdfModal = ({ open, setOpen, exam_id, lesson_id, id }) => {
           >
             <Button icon={<UploadOutlined />}>اختر ملف PDF</Button>
           </Upload>
-          <p className="text-xs text-gray-500 mt-2">
-            يمكنك رفع ملف PDF واحد فقط (حتى 5MB)
-          </p>
+          
           {fileList.length > 0 && (
             <p className="text-xs text-green-600 mt-1">
               ✓ تم اختيار ملف: {fileList[0].name}

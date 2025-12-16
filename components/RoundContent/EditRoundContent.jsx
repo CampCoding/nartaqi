@@ -16,6 +16,7 @@ export default function EditRoundContent({
   id,
   rowData,
   setRowData,
+  type="basic"
 }) {
   const dispatch = useDispatch();
   const [errors, setErrors] = useState({});
@@ -53,59 +54,57 @@ export default function EditRoundContent({
     console.log("Selected date object:", date);
     
     // Clear date error
-    if (errors.show_date) {
-      setErrors(prev => ({ ...prev, show_date: null }));
+    if (errors.content_show_date) {
+      setErrors(prev => ({ ...prev, content_show_date: null }));
     }
     
     setRowData((prev) => ({
       ...prev,
-      show_date: dateString, // Store the date string in YYYY-MM-DD format
+      content_show_date: dateString, // Store the date string in YYYY-MM-DD format
     }));
   }
 
   // Validate form
   const validateForm = () => {
-    const newErrors = {};
-    
-    // Validate title
-    if (!rowData?.content_title?.trim()) {
-      newErrors.content_title = "يرجى إدخال عنوان المحتوى";
-    } else if (rowData.content_title.trim().length < 3) {
-      newErrors.content_title = "يجب أن يكون العنوان 3 أحرف على الأقل";
+  const newErrors = {};
+
+  // Validate title
+  if (!rowData?.content_title?.trim()) {
+    newErrors.content_title = "يرجى إدخال عنوان المحتوى";
+  } else if (rowData.content_title.trim().length < 3) {
+    newErrors.content_title = "يجب أن يكون العنوان 3 أحرف على الأقل";
+  }
+
+  // Validate description
+  if (!rowData?.content_description?.trim()) {
+    newErrors.content_description = "يرجى إدخال وصف المحتوى";
+  }
+  // Validate date
+  if (!rowData?.content_show_date) {
+    newErrors.content_show_date = "يرجى اختيار التاريخ";
+  } else {
+    const dateObj = dayjs(rowData?.content_show_date);
+    if (!dateObj.isValid()) {
+      newErrors.content_show_date = "يرجى اختيار تاريخ صحيح";
     }
-    
-    // Validate description
-    if (!rowData?.content_description?.trim()) {
-      newErrors.content_description = "يرجى إدخال وصف المحتوى";
-    } else if (rowData.content_description.trim().length < 10) {
-      newErrors.content_description = "يجب أن يكون الوصف 10 أحرف على الأقل";
-    }
-    
-    // Validate date
-    if (!rowData?.show_date) {
-      newErrors.show_date = "يرجى اختيار التاريخ";
-    } else {
-      const dateObj = dayjs(rowData.show_date);
-      if (!dateObj.isValid()) {
-        newErrors.show_date = "يرجى اختيار تاريخ صحيح";
-      }
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  }
+
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+
 
   function handleSubmit() {
     if (!validateForm() || edit_content_loading) return;
 
     // Format the date properly for API
     let formattedDate = null;
-    if (rowData?.show_date) {
-      const dateObj = dayjs(rowData.show_date);
+    if (rowData?.content_show_date) {
+      const dateObj = dayjs(rowData?.content_show_date);
       if (dateObj.isValid()) {
         formattedDate = dateObj.format('YYYY-MM-DD');
       } else {
-        formattedDate = rowData.show_date;
+        formattedDate = rowData?.content_show_date;
       }
     }
 
@@ -131,7 +130,7 @@ export default function EditRoundContent({
           setOpen(false);
           setErrors({});
         } else {
-          toast.error(res?.data?.message || "هناك خطأ أثناء تعديل المحتوى");
+          toast.error(res?.error?.response?.data?.message || "هناك خطأ أثناء تعديل المحتوى");
         }
       })
       .catch((err) => {
@@ -167,7 +166,7 @@ export default function EditRoundContent({
   );
 
   // Get dayjs object for DatePicker
-  const dateValue = rowData?.show_date ? dayjs(rowData.show_date) : null;
+  const dateValue = rowData?.content_show_date ? dayjs(rowData?.content_show_date) : null;
 
   return (
     <Modal
@@ -243,17 +242,17 @@ export default function EditRoundContent({
             onChange={handleDateChange}
             format="YYYY-MM-DD"
             className={`w-full ${
-              errors?.show_date ? "border-red-500" : ""
+              errors?.content_show_date ? "border-red-500" : ""
             }`}
             placeholder="اختر التاريخ"
-            status={errors?.show_date ? "error" : ""}
+            status={errors?.content_show_date ? "error" : ""}
           />
-          {errors?.show_date && (
-            <p className="text-red-500 text-sm mt-1">{errors?.show_date}</p>
+          {errors?.content_show_date && (
+            <p className="text-red-500 text-sm mt-1">{errors?.content_show_date}</p>
           )}
-          {rowData?.show_date && !errors.show_date && (
+          {rowData?.content_show_date && !errors.content_show_date && (
             <p className="text-sm text-gray-500 mt-1">
-              التاريخ الحالي: {dateValue?.format('YYYY-MM-DD') || rowData?.show_date}
+              التاريخ الحالي: {dateValue?.format('YYYY-MM-DD') || rowData?.content_show_date}
             </p>
           )}
         </div>

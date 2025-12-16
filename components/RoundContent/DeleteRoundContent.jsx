@@ -36,8 +36,10 @@ export default function DeleteRoundContent({ open, setOpen, rowData , id }) {
           dispatch(handleGetAllRoundContent({body : {
             round_content_id : rowData?.round_content_id
           }}))
+          setOpen(false);
+        }else {
+          toast.error(res?.error?.response?.data?.message || "هناك مشكله أثناء حذف المحتوي")
         }
-        setOpen(false);
       })
       .catch(err => {
         console.error("Failed to delete content:", err);
@@ -45,7 +47,7 @@ export default function DeleteRoundContent({ open, setOpen, rowData , id }) {
   }
 
   // Determine the title of the item being deleted for clarity
-  const contentTitle = rowData?.title || 'هذا المحتوى';
+  const contentTitle = rowData?.title || rowData?.content_title || 'هذا المحتوى';
 
   // Custom footer for better control over button design and loading state
   const modalFooter = (

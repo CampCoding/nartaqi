@@ -51,7 +51,7 @@ export default function AddLivesModal({
       .then((res) => {
         console.log(res)
         if (res?.data?.status === "success") {
-          toast.success("تم إضافة الدرس بنجاح");
+          toast.success( "تم إضافة البث المباشر بنجاح");
           dispatch(handleGetAllLives({body : {
                 lesson_id : selectedLesson
               }}))
@@ -69,12 +69,12 @@ export default function AddLivesModal({
           );
           setOpen(false);
         } else {
-          toast.error(res?.data?.message || "هناك خطأ أثناء إضافة الدرس");
+          toast.error(res?.error?.response?.data?.message || "هناك خطأ أثناء إضافة البث ");
         }
       })
       .catch((err) => {
         console.error("Failed to add round lesson:", err);
-        toast.error("حدث خطأ غير متوقع أثناء إضافة الدرس");
+        toast.error("حدث خطأ غير متوقع أثناء إضافة البث");
       });
   }
 
@@ -89,7 +89,7 @@ export default function AddLivesModal({
         className="bg-orange-500 hover:!bg-orange-600 border-none rounded-md px-6"
         icon={<PlusOutlined />}
       >
-        حفظ الدرس
+        حفظ البث
       </Button>
       <Button
         key="back"
@@ -106,7 +106,7 @@ export default function AddLivesModal({
       open={open}
       onCancel={() => setOpen(false)}
       footer={modalFooter}
-      title="إضافة درس"
+      title="إضافة بث مباشر"
       wrapClassName="rtl-modal-wrap"
       style={{ direction: "rtl" }}
     >
@@ -118,7 +118,7 @@ export default function AddLivesModal({
               htmlFor="title"
               className="text-lg font-medium text-gray-700"
             >
-              عنوان الدرس
+              عنوان البث المباشر
             </label>
 
           </div>
@@ -128,7 +128,6 @@ export default function AddLivesModal({
             value={lessonData?.title || ""}
             onChange={handleInputChange}
             className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
-            placeholder="مثل: أساسيات برمجة React"
           />
         </div>
 
@@ -138,7 +137,7 @@ export default function AddLivesModal({
             htmlFor="link"
             className="text-lg font-medium text-gray-700"
           >
-            رابط الدرس (رابط مباشر)
+            رابط البث المباشر (رابط مباشر)
           </label>
           <input
             id="link"
@@ -156,7 +155,7 @@ export default function AddLivesModal({
             htmlFor="date"
             className="text-lg font-medium text-gray-700"
           >
-            تاريخ الدرس
+            تاريخ البث المباشر
           </label>
           <DatePicker
             onChange={(value, stringValue) => {
@@ -173,12 +172,12 @@ export default function AddLivesModal({
             htmlFor="time"
             className="text-lg font-medium text-gray-700"
           >
-            وقت الدرس
+            وقت البث المباشر
           </label>
           <input
             id="time"
             name="time"
-            type="time"
+            // type="time"
             value={lessonData?.time || ""}
             onChange={handleInputChange}
             className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
@@ -194,7 +193,7 @@ export default function AddLivesModal({
             onChange={(e) => setLessonData((prev) => ({ ...prev, active: e.target.checked ? "1" : "0" }))}
             className="form-checkbox"
           />
-          <label className="text-gray-700 text-sm">تنشيط الدرس</label>
+          <label className="text-gray-700 text-sm">تنشيط البث المباشر</label>
         </div>
       </div>
     </Modal>

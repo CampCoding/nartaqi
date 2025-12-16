@@ -15,6 +15,8 @@ const CourseSourceSubjectCard = ({
   onEdit,
   onDelete,
   onDuplicate,
+  page,
+  cat_id,
   onRequestDuplicate,
 }) => {
   const router = useRouter();
@@ -29,14 +31,14 @@ const CourseSourceSubjectCard = ({
   }, [subject]);
 
   const goToCourse = () => {
-      router.push(`/subjects/${subject?.id}/units?category_id=${subject?.category_part_id}`);
+      router.push(`/subjects/${subject?.id}/units?category_id=${subject?.category_part_id}&page=${page}`);
     
   };
 
   const handleEdit = (e) => {
     e?.stopPropagation?.();
     setShowDropdown(false);
-    router.push(`/teachers-courses/edit/${subject?.code}`);
+    router.push(`/saudi_source_course/edit/${subject?.id}?isSource=0&category_id=${cat_id}&page=${page}`);
     onEdit?.(subject);
   };
 
@@ -129,6 +131,14 @@ const CourseSourceSubjectCard = ({
                   >
                     <Edit size={14} className="text-blue-600" />
                     <span>تعديل</span>
+                  </button>
+
+                  <button
+                    onClick={() => router.push(`/round_content?id=${subject?.id}`)}
+                    className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Edit size={14} className="text-blue-600" />
+                    <span>تعديل المحتوي</span>
                   </button>
 
                   <button

@@ -267,7 +267,7 @@ const SubjectsManagementPage = () => {
     } catch (e) {
       console.error(e);
       setDupError(
-        e?.response?.data?.message || "تعذّر نسخ الدورة، جرّب مرة أخرى."
+        e?.error?.response?.data?.message || "تعذّر نسخ الدورة، جرّب مرة أخرى."
       );
     } finally {
       setDupLoading(false);
@@ -564,6 +564,8 @@ const SubjectsManagementPage = () => {
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredSubjects?.map((subject) => (
                 <CourseSourceSubjectCard
+                  page={page}
+                  pageSize={backendPageSize}
                   key={subject.code || subject.id}
                   subject={subject}
                   course_type="egyptian"
@@ -664,7 +666,7 @@ const SubjectsManagementPage = () => {
                     </div>
                     <div className="md:col-span-2">
                       <label className="block mb-1 text-[11px] font-semibold">
-                        وقت ظهور المحتوى اليومي
+                        وقت ظهور المحتوى 
                       </label>
                       <input
                         type="time"

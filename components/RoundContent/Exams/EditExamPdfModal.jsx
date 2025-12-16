@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { handleEditExamPdf, handleGetAllExamData } from "../../../lib/features/examSlice";
 import { handleGetAllRoundContent } from "../../../lib/features/roundContentSlice";
 
-const EditExamPdfModal = ({ open, setOpen, pdfData, exam_id, id }) => {
+const EditExamPdfModal = ({ open, setOpen, pdfData, exam_id, id , lesson_id }) => {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
 
@@ -40,11 +40,6 @@ const EditExamPdfModal = ({ open, setOpen, pdfData, exam_id, id }) => {
       return Upload.LIST_IGNORE;
     }
 
-    if (!isLt5M) {
-      message.error("حجم الملف يجب أن يكون أقل من 5MB!");
-      return Upload.LIST_IGNORE;
-    }
-
     // نمنع الرفع التلقائي، هنرفع مع الفورم
     return false;
   };
@@ -60,7 +55,7 @@ const EditExamPdfModal = ({ open, setOpen, pdfData, exam_id, id }) => {
 
       const formData = new FormData();
       formData.append("id", pdfData.id);
-      formData.append("exam_id", exam_id || pdfData.exam_id);
+      formData.append("lesson_id", exam_id || pdfData?.exam_id);
       formData.append("title", values.title);
       formData.append("description", values.description || "");
       formData.append("type", values?.type || "question");
@@ -83,7 +78,7 @@ const EditExamPdfModal = ({ open, setOpen, pdfData, exam_id, id }) => {
         setFileList([]);
         setOpen(false);
       } else {
-        toast.error("فشل في تعديل ملف PDF");
+        toast.error(res?.error?.response?.data?.message ||"فشل في تعديل ملف PDF");
       }
     } catch (error) {
       console.error("Error editing exam PDF:", error);

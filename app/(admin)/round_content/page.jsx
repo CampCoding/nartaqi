@@ -1,5 +1,5 @@
 "use client";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import { Check } from "lucide-react";
@@ -24,14 +24,26 @@ export default function Page() {
   const params = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const id = params.get("id");
+  const router = useRouter();
 
   // --- Navigation Logic ---
   const goToNextStep = () => {
     setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
+      // router.push(`/saudi_source_course`)
+    if(currentStep == STEPS.length) {
+      router.push(`/saudi_source_course`)
+    
+    }
   };
 
   const goToPrevStep = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
+  };
+
+  // Function to handle step click
+  const handleStepClick = (stepId) => {
+    setCurrentStep(stepId);
+
   };
   // -------------------------
 
@@ -48,12 +60,14 @@ export default function Page() {
           dot: "bg-blue-600 text-white border-blue-600",
           text: "text-blue-800 font-semibold",
           line: "bg-blue-600",
+          container: "cursor-pointer",
         };
       case "current":
         return {
           dot: "bg-white text-blue-600 border-2 border-blue-600 shadow-md",
           text: "text-gray-900 font-bold",
           line: "bg-gray-300",
+          container: "cursor-pointer",
         };
       case "upcoming":
       default:
@@ -61,6 +75,7 @@ export default function Page() {
           dot: "bg-gray-200 text-gray-500 border-gray-300",
           text: "text-gray-500",
           line: "bg-gray-300",
+          container: "cursor-not-allowed opacity-70",
         };
     }
   };
@@ -140,14 +155,18 @@ export default function Page() {
         <div className="mb-10 flex items-start justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-lg">
           {STEPS.map((step, index) => {
             const status = getStepStatus(step.id);
-            const { dot, text, line } = getStatusClasses(status);
+            const { dot, text, line, container } = getStatusClasses(status);
             const isLast = index === STEPS.length - 1;
-
+            const isClickable = step.id <= currentStep;
             return (
               <React.Fragment key={step.id}>
-                <div className="flex w-1/4 min-w-0 flex-shrink-0 flex-col items-center">
+                <div 
+                  className={`flex w-1/4 min-w-0 flex-shrink-0 flex-col items-center ${container}`}
+                  onClick={() =>  handleStepClick(step.id)}
+                  // style={{ cursor: isClickable ? 'pointer' : 'not-allowed' }}
+                >
                   <div
-                    className={`relative flex h-10 w-10 items-center justify-center rounded-full transition duration-300 ${dot}`}
+                    className={`relative flex h-10 w-10 items-center justify-center rounded-full transition duration-300 ${dot} ${isClickable ? 'hover:scale-110 hover:shadow-md' : ''}`}
                   >
                     {status === "complete" ? (
                       <Check className="h-4 w-4" />
@@ -158,7 +177,7 @@ export default function Page() {
 
                   <div className="mt-3 min-w-0 text-center">
                     <h3
-                      className={`overflow-hidden text-ellipsis whitespace-nowrap text-sm md:text-base leading-tight transition duration-300 ${text}`}
+                      className={`overflow-hidden text-ellipsis whitespace-nowrap text-sm md:text-base leading-tight transition duration-300 ${text} ${isClickable ? 'hover:text-blue-700' : ''}`}
                     >
                       {step.title}
                     </h3>
@@ -205,12 +224,8 @@ export default function Page() {
             </button>
             <button
               onClick={goToNextStep}
-              disabled={currentStep === STEPS.length}
-              className={`rounded-lg bg-blue-600 px-6 py-2 text-white shadow-md transition duration-150 hover:bg-blue-700 ${
-                currentStep === STEPS.length
-                  ? "cursor-not-allowed opacity-50"
-                  : ""
-              }`}
+              // disabled={currentStep === STEPS.length}
+              className={`rounded-lg bg-blue-600 px-6 py-2 text-white shadow-md transition duration-150 hover:bg-blue-700`}
             >
               {currentStep === STEPS.length ? "إنهاء ونشر" : "التالي"}
             </button>

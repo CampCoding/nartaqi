@@ -48,9 +48,9 @@ const SearchAndFilters = ({
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button type="default" icon={<Filter className="w-4 h-4" />}>
+          {/* <Button type="default" icon={<Filter className="w-4 h-4" />}>
             فلاتر
-          </Button>
+          </Button> */}
         </div>
         {noMode ? null : (
           <div className="flex items-center gap-2 ml-4">

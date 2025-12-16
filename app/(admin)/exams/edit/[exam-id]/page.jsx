@@ -7,6 +7,7 @@ import BreadcrumbsShowcase from "../../../../../components/ui/BreadCrumbs";
 import PagesHeader from "../../../../../components/ui/PagesHeader";
 import ExamMainData from "../../../../../components/Questions/ExamMainData";
 import exams from "../../../../../data/exams";
+import { useDispatch, useSelector } from "react-redux";
 
 const breadcrumbs = [
   { label: "الرئيسية", href: "/", icon: BarChart3 },
@@ -33,7 +34,8 @@ export default function Page() {
 
   const params = useParams();
   const [activeTab, setActiveTab] = useState("info");
-
+  const dispatch = useDispatch();
+  // const  {} = useSelector(state => state?.exams)
   // Load exam if exam-id موجود
   useEffect(() => {
     const examId = params["exam-id"];
@@ -105,7 +107,7 @@ export default function Page() {
           subtitle="عدل تفاصيل الاختبار الحالي"
         />
 
-        <ExamMainData
+        <ExamMainData 
           examid={params["exam-id"] || null}
           rowData={rowData}
           setRowData={setRowData}

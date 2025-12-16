@@ -28,7 +28,7 @@ export default function AddRoundContent({ open, setOpen, id, type = "basic" }) {
     (state) => state?.rounds
   );
 
-  const isFormValid = roundContentData.title && roundContentData.description;
+  const isFormValid = roundContentData.title && roundContentData.description && dateStr;
 
   useEffect(() => {
     if (!id) {
@@ -56,7 +56,20 @@ export default function AddRoundContent({ open, setOpen, id, type = "basic" }) {
   }, [id]);
 
   function handleSubmit() {
-    if (!isFormValid) return;
+    if(!roundContentData?.title) {
+      toast.warn("برجاء ادخال عنوان أولا!");
+      return
+    }
+
+    if(!roundContentData?.description) {
+      toast.warn("برجاء ادخال وصف أولا!");
+      return
+    }
+
+    if(!dateStr) {
+      toast.warn("برجاء اختيار تاريخ أولا!");
+      return
+    }
 
     const data_send = {
       ...roundContentData,
@@ -84,7 +97,7 @@ export default function AddRoundContent({ open, setOpen, id, type = "basic" }) {
           setDate(null);
           setDateStr("");
         } else {
-          toast.error(res?.err?.response?.data?.message || "هناك خطأ أثناء اضافه المحتوي");
+          toast.error(res?.error?.response?.data?.message || "هناك خطأ أثناء اضافه المحتوي");
         }
       })
       .catch((err) => {

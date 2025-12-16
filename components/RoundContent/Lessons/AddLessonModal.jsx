@@ -26,7 +26,7 @@ export default function AddLessonModal({
   const [dateStr, setDateStr] = useState(""); // string
   const { add_lesson_loading } = useSelector((state) => state?.lesson);
 
-  const isFormValid = Boolean(lessonData?.title && lessonData?.description);
+  const isFormValid = Boolean(lessonData?.title && lessonData?.description && dateStr);
 
   function handleInputChange(e) {
     const { name, value } = e.target;
@@ -49,11 +49,11 @@ export default function AddLessonModal({
       .then((res) => {
         if (res?.data?.status === "success") {
           toast.success("تم اضافة الدرس بنجاح");
-           dispatch(handleGetAllRoundContent({
-        body: {
-          round_id: id,
-        },
-      }))
+          dispatch(handleGetAllRoundContent({
+            body: {
+              round_id: id,
+            },
+          }))
           dispatch(
             handleGetAllRoundLessons({
               body: {
@@ -63,7 +63,8 @@ export default function AddLessonModal({
           );
           setOpen(false);
         } else {
-          toast.error(res?.data?.message || "هناك خطأ أثناء اضافة الدرس");
+          console.log(res);
+          toast.error(res?.error?.response?.data?.message || "هناك خطأ أثناء اضافة الدرس");
         }
       })
       .catch((err) => {
@@ -114,15 +115,7 @@ export default function AddLessonModal({
             >
               عنوان الدرس
             </label>
-            <DatePicker
-              onChange={(value, stringValue) => {
-                setDate(value); // value ده dayjs أو null
-                setDateStr(stringValue); // string formatted
-                console.log("dayjs:", value);
-                console.log("string:", stringValue);
-                console.log("ISO:", value ? value.toISOString() : null);
-              }}
-            />
+
           </div>
           <input
             id="title"
@@ -131,6 +124,22 @@ export default function AddLessonModal({
             onChange={handleInputChange}
             className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
             placeholder="مثل: أساسيات برمجة React"
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="date"
+            className="text-lg font-medium text-gray-700"
+          >جدولة الدرس</label>
+          <DatePicker
+            onChange={(value, stringValue) => {
+              setDate(value); // value ده dayjs أو null
+              setDateStr(stringValue); // string formatted
+              console.log("dayjs:", value);
+              console.log("string:", stringValue);
+              console.log("ISO:", value ? value.toISOString() : null);
+            }}
           />
         </div>
 

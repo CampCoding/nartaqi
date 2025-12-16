@@ -100,31 +100,6 @@ function SectionFormModal({
 
   const handleFinish = (values) => {
     onSubmit(values, imgFile);
-    // const formData = new FormData();
-    // formData.append("course_category_id" , id);
-    // formData.append("name" , values?.name?.trim())
-    // if(imgFile) {
-    //   formData.append("image" , imgFile )
-    // }
-
-    // dispatch(handleAddCategoryPart({body : formData}))
-    // .unwrap()
-    // .then(res => {
-    //   console.log(res);
-    //   if(res?.data?.status == "success") {
-    //     toast.success(res?.data?.message);
-    //     onCancel();
-    //     dispatch(handleGetCategoryParts({body : {
-    //       course_category_id : id
-    //     }}))
-    //   }else if(res?.data?.statusCode == 401) {
-    //     localStorage.removeItem(configs.tokenKey)
-    //     localStorage.removeItem(configs.userKey)
-    //     router.push("/login");
-    //   }else {
-    //     toast.error(res?.data?.message)
-    //   }
-    // }).catch(e => console.log(e))
   };
 
   return (
@@ -186,7 +161,7 @@ function SectionFormModal({
             اختيار صورة من الجهاز
             </button>
             <input 
-            required
+              
               ref={fileInputRef}
               type="file"
               accept="image/*"
@@ -223,10 +198,10 @@ function SectionFormModal({
           </button>
           <button
             type="submit"
-            disabled={add_categories_parts}
+            disabled={add_categories_parts || edit_categories_parts || confirmLoading}
             className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 disabled:opacity-60 disabled:cursor-not-allowed font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
           >
-            {add_categories_parts ? (
+            {(add_categories_parts || edit_categories_parts || confirmLoading) ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 جارٍ الحفظ...
@@ -298,14 +273,14 @@ function SectionCard({ section, onEdit, onToggleVisibility, onDelete }) {
         {/* Image header with enhanced styling */}
         <div className="relative h-48 bg-gradient-to-br from-gray-100 via-gray-50 to-white overflow-hidden">
           {section?.image_url ? (
-            <>
+            <div className="flex gap-2 items-center">
               <img
                 src={section?.image_url}
                 alt={section?.name}
                 className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </>
+            </div>
           ) : (
             <div className="w-full h-full grid place-items-center">
               <div className="text-center">
@@ -507,12 +482,20 @@ export default function Page() {
   );
 
   const handleAdd = (payload, imgFile) => {
+    if(!payload?.name?.trim()) {
+      toast.error("برجاء  اخال الاسم أولا!");
+      return;
+    }
+    
+    if(!imgFile) {
+      toast.error("برجاء رفع صورة أولا!");
+      return;
+    }
     const formData = new FormData();
     formData.append("course_category_id", id);
     formData.append("name", payload?.name?.trim());
-    if (imgFile) {
       formData.append("image", imgFile);
-    }
+    
 
     dispatch(handleAddCategoryPart({ body: formData }))
       .unwrap()
@@ -550,16 +533,24 @@ export default function Page() {
     if (!selected) return;
 
     const formData = new FormData();
+    
+    if(!imgFile || !selected?.image_url) {
+      toast.error("برجاء رفع صورة أولا!");
+      return;
+    }
 
+    if(!payload?.name?.trim()) {
+       toast.error("برجاء  ادخال الاسم أولا!");
+      return;
+    }
     // backend field names – adjust if needed
     formData.append("id", selected?.id); // 👈 the part id you are editing
     formData.append("course_category_id", id); // 👈 keep category context
     formData.append("name", payload?.name?.trim() || "");
 
-    // only send image if user picked a new one
-    if (imgFile) {
-      formData.append("image", imgFile);
-    }
+
+      formData.append("image", imgFile || selected?.image_url);
+    
 
     dispatch(handleEditCategoryPart({ body: formData }))
       .unwrap()
@@ -584,7 +575,7 @@ export default function Page() {
           localStorage.removeItem(configs.userKey);
           router.push("/login");
         } else {
-          toast.error(res?.data?.message || "خطأ أثناء تعديل القسم");
+          toast.error(res?.error?.response?.data?.message || "خطأ أثناء تعديل القسم");
         }
       })
       .catch((e) => {

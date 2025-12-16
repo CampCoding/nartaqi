@@ -5,26 +5,27 @@ import { toast } from 'react-toastify';
 import { handleGetAllRoundContent } from '../../../lib/features/roundContentSlice';
 import { handleAddExamVideo, handleGetAllExamData } from '../../../lib/features/examSlice';
 
-const AddExamVideoModal = ({ open, id, type="exam", setOpen, exam_id, lesson_id }) => {
+const AddExamVideoModal = ({ open, id, setOpen, exam_id , lesson_id }) => {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
 
   const { add_exam_video_loading } = useSelector((state) => state?.exam);
 
-   useEffect(() => {
-    console.log(exam_id)
-   } , [exam_id])
+   
+  useEffect(() => {
+    console.log(open, "exam_id" , exam_id , "lesson_id" , lesson_id);
+  } ,[exam_id , open , lesson_id])
 
   const handleSubmit = async (values) => {
     try {
       setLoading(true);
 
       const body = {
-        exam_id: exam_id,
         title: values.title,
         description: values.description || "",
         video_url: values.video_url,
+        lesson_id : exam_id?.id || lesson_id || "",
       };
 
       const result = await dispatch(handleAddExamVideo({ body })).unwrap();

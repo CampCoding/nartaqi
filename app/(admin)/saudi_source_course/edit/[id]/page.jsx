@@ -787,7 +787,7 @@ import { Upload, message } from "antd";
 import AddCourseSourceBasicInfo from "../../../../../components/SaudiCourseSource/AddCourseSourceBasicInfo";
 import Features from "../../../../../components/SaudiCourseSource/Features";
 import AddCourseSourceResource from "../../../../../components/SaudiCourseSource/AddCourseSourceResource";
-import { handleGetSourceRound } from "../../../../../lib/features/roundsSlice";
+import { handleGetAllRounds, handleGetSourceRound } from "../../../../../lib/features/roundsSlice";
 import { useDispatch } from "react-redux";
 
 // Helper لتحويل الصورة لـ base64 (للمعاينة)
@@ -831,8 +831,14 @@ export default function Page() {
   const [rowData, setRowData] = useState({});
   const dispatch = useDispatch();
 
+  const page = params.get("page")
+  const pageSize = params.get("pageSize")
+  const isSource = params.get("isSource")
+  const Cat_id = params.get("category_id");
+
   useEffect(() => {
-    dispatch(handleGetSourceRound())
+    if(!isSource) {
+      dispatch(handleGetSourceRound({page , per_page: 6}))
       .unwrap()
       .then((res) => {
         if (res?.data?.status === "success") {
@@ -845,7 +851,30 @@ export default function Page() {
           }
         }
       });
-  }, [id, dispatch]);
+    }else {
+       dispatch(
+            handleGetAllRounds({
+              course_category_id: Cat_id,
+              page,
+              per_page: 6
+            })
+          )
+          .unwrap()
+          .then(res =>
+          {
+             if (res?.data?.status === "success") {
+          const found = res?.data?.message?.data?.find(
+            (item) => String(item?.id) === String(id)
+          );
+          setRowData(found || null);
+          if (found?.id) {
+            setRoundId(found.id);
+          }
+        }
+          }
+           )
+    }
+  }, [id, dispatch , page,pageSize]);
 
   // --- Navigation Logic ---
   const goToNextStep = () => {
@@ -944,7 +973,11 @@ export default function Page() {
           goToPrevStep={goToPrevStep}
           setRoundId={setRoundId}
           rowData={rowData}
+          page={page}
+          pageSize={pageSize}
           setRowData={setRowData}
+          isSource={isSource}
+          Cat_id={Cat_id}
         />
       );
     }
@@ -972,7 +1005,7 @@ export default function Page() {
   };
   // ---------------------------
 
-  const isEditMode = Boolean(id && rowData?.id);
+  const isEditMode = Boolean(id);
 
   return (
     <div

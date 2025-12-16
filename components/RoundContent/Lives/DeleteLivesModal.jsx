@@ -14,6 +14,7 @@ const { Text } = Typography;
 export default function DeleteLivesModal({ open, setOpen, rowData , id  , round_id , selectedLesson}) {
   const dispatch = useDispatch();
   const { delete_lesson_loading } = useSelector(state => state?.lesson);
+  const {delete_live_loading} = useSelector(state => state?.lives);
 
   function handleDelete() {
     // Check if rowData is valid before dispatching
@@ -39,6 +40,9 @@ export default function DeleteLivesModal({ open, setOpen, rowData , id  , round_
           dispatch(handleGetAllRoundLessons({body : {
             round_content_id : id
           }}))
+           dispatch(handleGetAllRoundContent({body : {
+            round_id 
+          }}))
           setOpen(false);
         }
       })
@@ -62,7 +66,7 @@ export default function DeleteLivesModal({ open, setOpen, rowData , id  , round_
         type="primary"
         danger // Ant Design style for destructive action
         onClick={handleDelete}
-        loading={delete_lesson_loading}
+        loading={delete_live_loading}
         className='rounded-md px-6'
         icon={<DeleteOutlined />}
       >
@@ -95,7 +99,7 @@ export default function DeleteLivesModal({ open, setOpen, rowData , id  , round_
     >
       <div className='flex flex-col gap-4 mt-4 text-right'>
         <Text strong style={{ fontSize: '1.1rem' }} className='text-gray-800'>
-          هل أنت متأكد من حذف الدرس : <Text mark>{contentTitle}</Text>؟
+          هل أنت متأكد من حذف البث المباشر : <Text mark>{contentTitle}</Text>؟
         </Text>
         <Text type="danger" style={{ fontSize: '0.95rem' }}>
           **تحذير:** لا يمكن التراجع عن هذا الإجراء. سيتم فقدان جميع الدروس والفيديوهات المتعلقة بهذا المحتوى.

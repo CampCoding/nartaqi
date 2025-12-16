@@ -476,6 +476,8 @@ const SubjectsManagementPage = () => {
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredSubjects?.map((subject) => (
                 <CourseSubjectCard
+                page={page}
+                 cat_id={activeTab}
                   activationModal={activationModal}
                   setActivationModal={setActivationModal}
                   deleteModal={deleteModal}
