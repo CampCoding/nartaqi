@@ -40,7 +40,7 @@ import {
   message,
 } from "antd";
 import dayjs from "dayjs";
-import { DollarSign, Star } from "lucide-react";
+import { CheckCircle2, DollarSign, Star } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { handleGetAllRounds, handleGetSourceRound } from "../../lib/features/roundsSlice";
 import { handleGetAllRoundFeatures } from "../../lib/features/featuresSlice";
@@ -48,7 +48,7 @@ import { useSearchParams } from "next/navigation";
 
 const { Title, Text, Paragraph } = Typography;
 
-const SubjectDetails = ({ subjectId }) => {
+const SubjectDetails = ({ subjectId , setSelectedUnit }) => {
   const params = useSearchParams();
   const [subject, setSubject] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -66,10 +66,14 @@ const SubjectDetails = ({ subjectId }) => {
   useEffect(() => {
     if(catId) {
       // When category_id exists, fetch rounds by category
-      dispatch(handleGetAllRounds({course_category_id: catId}));
+      dispatch(handleGetAllRounds({course_category_id: catId , page:1,
+        per_page:100000000
+      }));
     } else {
       // When no category_id, fetch all source rounds
-      dispatch(handleGetSourceRound());
+      dispatch(handleGetSourceRound({page:1, 
+        per_page: 1000000,
+      }));
     }
     
     if (subjectId) {
@@ -161,10 +165,12 @@ const SubjectDetails = ({ subjectId }) => {
             <li>الدورة ${filteredRound.free === "1" ? "مجانية" : "مدفوعة"}</li>
             <li>مخصصة ${filteredRound.gender === "male" ? "للذكور" : filteredRound.gender === "female" ? "للإناث" : "للجميع"}</li>
           </ul>
-        `
+        `,
+        round_terms: filteredRound?.round_terms
       };
 
       setSubject(formattedSubject);
+      setSelectedUnit(formattedSubject?.name)
       setLoading(false);
     } else if (source_round_loading || rounds_loading || all_features_loading) {
       setLoading(true);
@@ -312,10 +318,21 @@ const SubjectDetails = ({ subjectId }) => {
                   }
                   className="shadow-sm"
                 >
-                  <div
-                    className="prose prose-lg max-w-none"
-                    dangerouslySetInnerHTML={{ __html: subject.terms }}
-                  />
+                  <div className="flex flex-col gap-2">
+                    {subject?.round_terms?.map(item => 
+                      <div className="flex flex-col gap-1">
+                        <h3 className="text-2xl font-bold text-gray-900">{item?.title}</h3>
+                        <div className="space-y-4">
+                                              {item?.points?.map((point, idx) => (
+                                                <div key={idx} className="flex items-start gap-4 p-4 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-2xl">
+                                                  <CheckCircle2 className="w-6 h-6 text-indigo-600 mt-0.5 flex-shrink-0" />
+                                                  <p className="text-gray-700 leading-relaxed">{point}</p>
+                                                </div>
+                                              ))}
+                                            </div>
+                      </div>
+                    )}
+                  </div>
                 </Card>
               </div>
             </Col>
@@ -410,6 +427,10 @@ const SubjectDetails = ({ subjectId }) => {
                       </span>
                       <Text>{getGenderPolicyText(subject.genderPolicy)}</Text>
                     </div>
+                     <div
+                    className="prose prose-lg max-w-none"
+                    dangerouslySetInnerHTML={{ __html: subject?.terms }}
+                  />
                     {subject.attachment && (
                       <>
                         <Divider className="my-3" />

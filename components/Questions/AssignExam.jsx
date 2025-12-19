@@ -25,7 +25,7 @@ export default function AssignExam({exam , lessonId}) {
 
   // Fetch rounds and lessons
   useEffect(() => {
-    dispatch(handleGetSourceRound());
+    dispatch(handleGetSourceRound({page : 1, per_page: 1000000}));
   }, [dispatch]);
 
 

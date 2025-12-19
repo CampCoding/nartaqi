@@ -377,6 +377,8 @@ const TopicExams = () => {
         >
           {filteredExams?.map((exam) => (
             <ExamCard
+            page={page}
+            pageSize={pageSize}
               selectedExam={selectedExam}
               setSelectedExam={setSelectedExam}
               prevModal={prevModal}

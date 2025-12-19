@@ -16,7 +16,8 @@ export default function EditContent({
   open,
   setOpen,
   isEditing,
-  setIsEditing
+  setIsEditing,
+  source
 }) {
   const [formData, setFormData] = useState({});
   const dispatch = useDispatch();

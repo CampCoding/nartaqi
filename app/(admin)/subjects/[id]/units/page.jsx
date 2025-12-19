@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PageLayout from "../../../../../components/layout/PageLayout";
 import {
   BarChart3,
@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import BreadcrumbsShowcase from "../../../../../components/ui/BreadCrumbs";
 import PagesHeader from "../../../../../components/ui/PagesHeader";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { subjects } from "../../../../../data/subjects";
 import UnitsStats from "../../../../../components/Units/UnitStats";
 import SearchAndFilters from "../../../../../components/ui/SearchAndFilters";
@@ -193,6 +193,13 @@ const Units = () => {
   const [deleteModal, setDeleteModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [expandedReviews, setExpandedReviews] = useState({});
+  const params = useSearchParams();
+  
+  useEffect(() => {
+    console.log(params.get("source"))
+  } , [params])
+
+  const source = params.get("source");
 
   const selectedSubject = useMemo(() => {
     const subject = subjects.find((subject) => subject.code === id);
@@ -202,7 +209,7 @@ const Units = () => {
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
     { label: "الدورات", href: "/teachers-courses", icon: Book },
-    { label: selectedSubject?.name, href: "#", current: true },
+    { label: selectedUnit, href: "#", current: true },
   ];
 
   const toggleReviewExpansion = (reviewId) => {
@@ -392,14 +399,14 @@ const Units = () => {
       label: "نظرة عامة",
       icon: Eye,
       gradient: "from-purple-500 to-pink-500",
-      content: <SubjectDetails subjectId={id}/>,
+      content: <SubjectDetails setSelectedUnit={setSelectedUnit} subjectId={id}/>,
     },
     {
       id: 1,
       label: "مراحل الدورة",
       icon: Layers,
       gradient: "from-blue-500 to-cyan-500",
-      content: <ArabicCourseCurriculum id={id} />,
+      content: <ArabicCourseCurriculum source={source} id={id} />,
     },
     // {
     //   id: 2,
@@ -551,14 +558,14 @@ const Units = () => {
       <PagesHeader
         title={
           <>
-            الدورة:{" "}
-            <span className="text-primary">{selectedSubject?.name}</span>
+            تفاصيل الدورة:{" "}
+            <span className="text-primary">{selectedUnit}</span>
           </>
         }
         subtitle={"نظّم وأدر موادك التعليمية"}
       />
 
-      <UnitsStats units={selectedSubject?.units || []} />
+      {/* <UnitsStats units={selectedSubject?.units || []} /> */}
       <HorizontalTabs tabs={tabs} />
 
       <AddUnitForm

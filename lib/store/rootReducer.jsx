@@ -18,6 +18,7 @@ import featureReducer from '../features/featuresSlice';
 import storeReducer from '../features/storeSlice';
 import studentReducer from  '../features/studentSlice';
 import livesReducer from '../features/livesSlice';
+import termsConditionReducer from '../features/termsConditionSlice';
 
 export const rootReducer = combineReducers({
    auth : authReducer,
@@ -38,5 +39,6 @@ export const rootReducer = combineReducers({
    features : featureReducer,
    store: storeReducer,
    students: studentReducer,
-   lives: livesReducer
+   lives: livesReducer,
+   terms : termsConditionReducer
 });

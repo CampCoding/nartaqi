@@ -54,6 +54,7 @@ export default function AddCourseSourceResource({
   currentStep,
   id, // round_id
   STEPS,
+  source
 }) {
   const [form] = Form.useForm(); // Add form instance
   const router = useRouter();
@@ -441,8 +442,11 @@ export default function AddCourseSourceResource({
     }
     finally {
       if (currentStep == STEPS.length) {
-        router.push(`/round_content?id=${id}`);
-        localStorage.removeItem("courseBasicInfo");
+        if(!source) {
+         router.push(`/round_content?id=${id}&source=${1}`);
+        }else {
+          router.push(`/round_content?id=${id}`);
+        }
         
       } else {
         goToNextStep();

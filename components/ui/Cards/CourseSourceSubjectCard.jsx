@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreVertical, Edit, Trash2, Copy, Eye, EyeOff } from "lucide-react";
+import { MoreVertical, Edit, Trash2, Copy, Eye, EyeOff, File } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { handleGetAllCoursesCategories } from "../../../lib/features/categoriesSlice";
 import { Badge } from "antd";
@@ -42,7 +42,7 @@ const CourseSourceSubjectCard = ({
   }, [all_courses_categories_list, subject?.course_category_id]);
 
   const goToCourse = () => {
-    router.push(`/subjects/${subject?.id}/units`);
+    router.push(`/subjects/${subject?.id}/units?source=${1}`);
   };
 
   const handleEdit = (e) => {
@@ -75,11 +75,11 @@ const CourseSourceSubjectCard = ({
     subject?.active === 1 ||
     subject?.active === true;
 
-  const {teachers_loading , teachers_list} = useSelector(state => state?.teachers)
-  const [selectedTeacher , setSelectedTeacher] = useState({});
+  const { teachers_loading, teachers_list } = useSelector(state => state?.teachers)
+  const [selectedTeacher, setSelectedTeacher] = useState({});
 
 
-  
+
 
   return (
     <div
@@ -132,6 +132,13 @@ const CourseSourceSubjectCard = ({
                   </button>
 
                   <button
+                    onClick={() => router.push(`/termsCondition?roundId=${subject?.id}&page=${page}&pageSize=${6}`)}
+                    className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <File size={14} className="text-blue-600" />
+                    <span>الشروط والأحكام</span>
+                  </button>
+                  <button
                     onClick={handleEdit}
                     className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
                   >
@@ -139,8 +146,8 @@ const CourseSourceSubjectCard = ({
                     <span>تعديل</span>
                   </button>
 
-<button
-                    onClick={() => router.push(`/round_content?id=${subject?.id}`)}
+                  <button
+                    onClick={() => router.push(`/round_content?id=${subject?.id}&source=${1}`)}
                     className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
                   >
                     <Edit size={14} className="text-blue-600" />
@@ -240,7 +247,7 @@ const CourseSourceSubjectCard = ({
             </div>
 
             <div className="flex items-center gap-[5px]">
-             {subject?.teachers[0]?.image &&  <img
+              {subject?.teachers[0]?.image && <img
                 className="w-6 h-6 rounded-xl"
                 src={subject?.teachers[0]?.image}
                 alt="instructor"
@@ -250,8 +257,8 @@ const CourseSourceSubjectCard = ({
               </div>
 
               {subject?.teachers?.length > 1 && <div className="w-7 h-7 !text-sm font-bold rounded-full flex justify-center items-center bg-orange-400/50 text-orange-600">
-                  {subject?.teachers?.length - 1}+
-                </div>}
+                {subject?.teachers?.length - 1}+
+              </div>}
             </div>
           </div>
 

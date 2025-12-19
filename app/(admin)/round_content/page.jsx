@@ -24,17 +24,18 @@ export default function Page() {
   const params = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const id = params.get("id");
+  const isSource = params.get("source");
   const router = useRouter();
 
   // --- Navigation Logic ---
   const goToNextStep = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
-      // router.push(`/saudi_source_course`)
-    if(currentStep == STEPS.length) {
-      router.push(`/saudi_source_course`)
-    
-    }
-  };
+  if (currentStep >= STEPS.length) {
+    router.push("/saudi_source_course");
+    return;
+  }
+  setCurrentStep((prev) => prev + 1);
+};
+
 
   const goToPrevStep = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
@@ -84,12 +85,12 @@ export default function Page() {
   const renderStepContent = () => {
     if (currentStep === 1) {
       // مرحلة التأسيس
-      return <CourseSourceBasicLevel id={id} />;
+      return <CourseSourceBasicLevel isSource={isSource} id={id} />;
     }
 
     if (currentStep === 2) {
       // المحاضرات
-      return <CourseSourceLecturesContent id={id} />;
+      return <CourseSourceLecturesContent isSource={isSource} id={id} />;
     }
 
     // المصادر والملفات

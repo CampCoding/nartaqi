@@ -254,7 +254,7 @@ export default function AddCourseBasicInfo({
             name="description"
             rules={[
               { required: true, message: "أدخل وصفًا للدورة" },
-              { min: 20, message: "الوصف لا يقل عن 20 حرف" },
+              // { min: 20, message: "الوصف لا يقل عن 20 حرف" },
             ]}
           >
             <TextArea
@@ -353,7 +353,7 @@ export default function AddCourseBasicInfo({
             </span>
           }
           name="availableRange"
-          rules={[{ required: true, message: "حدد فترة الإتاحة" }]}
+          // rules={[{ required: true, message: "حدد فترة الإتاحة" }]}
         >
           <RangePicker
             className="w-full rounded-xl"

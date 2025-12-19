@@ -56,7 +56,7 @@ const AddExamPdfModal = ({ open, setOpen, exam_id, lesson_id, id }) => {
       formData.append("lesson_id",lesson_id || exam_id?.id || exam_id); // same as Postman
       formData.append("title", values.title);
       formData.append("description", values.description || "");
-      formData.append("type", values?.type || "question");
+      formData.append("type", values?.type || "");
       formData.append("pdf_url", fileObj); // the actual file
 
       console.log("Sending FormData for add_exam_pdf");
@@ -128,7 +128,7 @@ const AddExamPdfModal = ({ open, setOpen, exam_id, lesson_id, id }) => {
         <Form.Item
           name="type"
           label="نوع الملف"
-          rules={[{ required: true, message: "يرجى اختيار نوع الملف" }]}
+          // rules={[{ required: true, message: "يرجى اختيار نوع الملف" }]}
         >
           <Select
             placeholder="اختر نوع الملف"

@@ -19,11 +19,12 @@ export default function EditLessonModal({
   setRowData,
   round_content_id,
   round_id,
+  isSource
 }) {
   const dispatch = useDispatch();
   const { edit_lesson_loading } = useSelector((state) => state?.lesson);
 
-  const isFormValid = Boolean(rowData?.lesson_title&& rowData?.lesson_description);
+  const isFormValid = isSource ? Boolean(rowData?.lesson_title) : Boolean(rowData?.title && dateStr);
   const [date, setDate] = useState(null); // dayjs | null
   const [dateStr, setDateStr] = useState("");
 
@@ -45,7 +46,7 @@ export default function EditLessonModal({
     const data_send = {
       id: rowData?.id,
       title:  rowData?.lesson_title,
-      description : rowData?.lesson_description,
+      description : rowData?.lesson_description || "",
       show_date :dateStr
     };
 
@@ -130,7 +131,7 @@ export default function EditLessonModal({
         {/* Date Input - Setting value from the state */}
         <div className="flex flex-col gap-2">
           <label htmlFor="lesson_show_date" className="text-lg font-medium text-gray-700">
-            جدولة الدرس
+         (تحديد تاريخ ظهور الدرس)   جدولة الدرس 
           </label>
           <DatePicker
             value={date} // Directly pass the dayjs date value here

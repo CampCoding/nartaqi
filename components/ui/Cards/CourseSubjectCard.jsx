@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreVertical, Edit, Trash2, Copy } from "lucide-react";
+import { MoreVertical, Edit, Trash2, Copy, File } from "lucide-react";
 import { Modal, Typography, Button } from "antd";
 import { ExclamationCircleOutlined, DeleteOutlined } from "@ant-design/icons";
 
@@ -125,6 +125,13 @@ const CourseSourceSubjectCard = ({
                   className="absolute top-10 right-0 bg-white rounded-lg shadow-lg border py-1 min-w-[220px] z-20"
                   onClick={(e) => e.stopPropagation()}
                 >
+                  <button
+                    onClick={() => router.push(`/termsCondition?roundId=${subject?.id}&category=${cat_id}&page=${page}&pageSize=${6}`)}
+                    className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <File size={14} className="text-blue-600" />
+                    <span>الشروط والأحكام</span>
+                  </button>
                   <button
                     onClick={handleEdit}
                     className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"

@@ -7,6 +7,7 @@ import {
   BookOpen,
   Users,
   FileText,
+  SquareCheck,
 } from "lucide-react";
 import Card from "../../atoms/Card";
 import { useRouter } from "next/navigation";
@@ -20,6 +21,8 @@ const ExamCard = ({
   deleteModal,
   setDeleteModal,
   viewMode,
+  page,
+  pageSize
 }) => {
   const router = useRouter();
 
@@ -109,19 +112,19 @@ const ExamCard = ({
             </div>
           </div>
 
-          {/* <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-gray-100">
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-gray-100">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-100 rounded-lg">
-                <Users className="w-4 h-4 text-green-600" />
+                <SquareCheck className="w-4 h-4 text-green-600" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-1">المشاركون</p>
+                <p className="text-xs text-gray-500 mb-1">نسبة النجاح</p>
                 <p className="text-lg font-bold text-gray-800">
-                  {exam.participantsCount || 0}
+                  {exam?.success_percentage || 0}
                 </p>
               </div>
             </div>
-          </div> */}
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -140,7 +143,7 @@ const ExamCard = ({
 
           <div className="flex items-center gap-1">
             <Button
-              onClick={() => router.push(`/exams/edit/${exam?.id}`)}
+              onClick={() => router.push(`/exams/edit/${exam?.id}?page=${page}&pageSize=${pageSize}`)}
               className="text-indigo-600 hover:bg-indigo-50 border border-indigo-200 rounded-lg p-2 transition-all duration-300 transform hover:scale-105"
               aria-label="تعديل"
             >

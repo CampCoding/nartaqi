@@ -50,7 +50,7 @@ const initialSchedule = {
   endTime: "11:00",
 };
 
-export default function CourseSourceLecturesContent({ id }) {
+export default function CourseSourceLecturesContent({ id  , isSource}) {
   const [rowData, setRowData] = useState({});
   const [contentSchedule, setContentSchedule] = useState({});
   const [lessonSchedule, setLessonSchedule] = useState({});
@@ -190,7 +190,7 @@ export default function CourseSourceLecturesContent({ id }) {
       disabled={disabled}
       title={title || ""}
       onClick={onClick}
-      className={`p-1 text-sm rounded-full transition duration-150 hover:bg-gray-200 ${className}`}
+      className={`p-1 text-sm rounded-full transition duration-150  ${className}`}
     >
       {icon}
       {children}
@@ -253,8 +253,9 @@ export default function CourseSourceLecturesContent({ id }) {
         </div>
         <div className="flex space-x-2 space-x-reverse ml-4 flex-shrink-0">
           <ActionButton
-            title="تعديل الفيديو"
-            icon={<EditOutlined className="text-blue-600" />}
+            className="bg-blue-500 text-white p-2 rounded-md"
+            // title="تعديل الفيديو"
+            // icon={<EditOutlined className="text-blue-600" />}
             onClick={(e) => {
               e.stopPropagation();
               if (isExamVideo) {
@@ -265,10 +266,13 @@ export default function CourseSourceLecturesContent({ id }) {
                 setOpenEditVideo(true);
               }
             }}
-          />
+          >
+            تعديل الفيديو
+          </ActionButton>
           <ActionButton
-            title="حذف الفيديو"
-            icon={<DeleteOutlined className="text-red-600" />}
+            // title="حذف الفيديو"
+            className="bg-red-500 text-white p-2 rounded-md"
+            // icon={<DeleteOutlined className="text-red-600" />}
             onClick={(e) => {
               e.stopPropagation();
               if (isExamVideo) {
@@ -279,7 +283,9 @@ export default function CourseSourceLecturesContent({ id }) {
                 setOpenDeleteVideo(true);
               }
             }}
-          />
+          >
+            حذف الفيديو
+          </ActionButton>
         </div>
       </div>
     );
@@ -318,46 +324,52 @@ export default function CourseSourceLecturesContent({ id }) {
         </div>
         <div className="flex space-x-2 space-x-reverse ml-4 flex-shrink-0">
           <ActionButton
-            title="تعديل الملف"
-            icon={<EditOutlined className="text-blue-600" />}
+            className="bg-blue-500 text-white p-2 rounded-md"
+            // title="تعديل الملف"
+            // icon={<EditOutlined className="text-blue-600" />}
             onClick={(e) => {
               e.stopPropagation();
               setSelectedExamPdf(pdf);
               setOpenEditExamPdf(true);
             }}
-          />
+          >
+            تعديل الملف
+          </ActionButton>
           <ActionButton
-            title="حذف الملف"
-            icon={<DeleteOutlined className="text-red-600" />}
+            className="bg-red-500 text-white p-2 rounded-md"
+            // title="حذف الملف"
+            // icon={<DeleteOutlined className="text-red-600" />}
             onClick={(e) => {
               e.stopPropagation();
               setSelectedExamPdf(pdf);
               setOpenDeleteExamPdf(true);
             }}
-          />
+          >
+            حذف الملف
+          </ActionButton>
         </div>
       </div>
     );
   };
 
   // Exam Card Renderer
-  const ExamCard = ({ exam, lessonId, lesson , lessonExams }) => {
-    const [exams , setExams] = useState({});
-    const [videos , setVideos] = useState([]);
-    const [pdfs , setPdfs ] = useState([]);
-    
+  const ExamCard = ({ exam, lessonId, lesson, lessonExams }) => {
+    const [exams, setExams] = useState({});
+    const [videos, setVideos] = useState([]);
+    const [pdfs, setPdfs] = useState([]);
+
     useEffect(() => {
-      if(lessonExams && lessonExams?.length > 0) {
+      if (lessonExams && lessonExams?.length > 0) {
         setExams(lessonExams[0]?.exam);
         setVideos(lessonExams[0]?.videos);
         setPdfs(lessonExams[0]?.exam_pdfs)
       }
-    } , [lessonExams])
+    }, [lessonExams])
 
 
     useEffect(() => {
-      console.log(exams , lessonExams)
-    } ,[exams , lessonExams])
+      console.log(exams, lessonExams)
+    }, [exams, lessonExams])
 
     useEffect(() => {
       setSelectedLesson(lesson);
@@ -365,7 +377,7 @@ export default function CourseSourceLecturesContent({ id }) {
 
     return (
       <div className="bg-orange-50/70 p-4 mb-3 rounded-lg border border-orange-100">
-        { (
+        {(
           <div className="mt-4 border-t pt-4">
 
             {/* Exam Sections */}
@@ -375,41 +387,47 @@ export default function CourseSourceLecturesContent({ id }) {
                   <FileOutlined className="ml-2 text-blue-500 w-4 h-4" />
                   الاختبارات
                 </h5>
-                {(lessonExams?.length == 0 ||  !exams ) && <button
+                {(lessonExams?.length == 0 || !exams) && <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setSelectedExam(exams?.id);
                     router.push(`/questions/new?lessonId=${lessonId}`)
                   }}
-                  className="flex items-center text-sm text-green-600 hover:text-green-700"
+                  className="flex items-center text-sm bg-green-700 text-white rounded-md p-2"
                 >
                   <PlusOutlined className="ml-1" />
                   إضافة اختبار
                 </button>}
               </div>
 
-              {lessonExams?.length > 0 && exams  ? (
+              {lessonExams?.length > 0 && exams ? (
                 <div className="bg-blue-50/70 p-4 mb-3 rounded-lg border border-blue-100 flex justify-between items-start">
                   <div className="flex flex-col gap-2">
                     <p className="font-medium text-gray-800 truncate">اسم الاختبار  : {exams?.title}</p> <p className="text-gray-600 text-sm mt-1"> وصف الاختبار : {exams?.description}</p>
                   </div>
                   <div className="flex space-x-2 space-x-reverse ml-4 flex-shrink-0">
                     <ActionButton
-                      title="تعديل الاختبار"
-                      icon={<EditOutlined className="text-blue-600" />}
+                      className="bg-blue-500 text-white p-2 rounded-md"
+                      // title="تعديل الاختبار"
+                      // icon={<EditOutlined className="text-blue-600" />}
                       onClick={(e) => {
                         e.stopPropagation();
                         router.push(`/exams/edit/${exams?.id}?lessonId=${lessonId}`)
                       }}
-                    />
+                    >
+                      تعديل الاختبار
+                    </ActionButton>
                     <ActionButton
-                      title="حذف الاختبار"
-                      icon={<DeleteOutlined className="text-red-600" />}
+                      className="bg-red-500 text-white p-2 rounded-md"
+                      // title="حذف الاختبار"
+                      // icon={<DeleteOutlined className="text-red-600" />}
                       onClick={(e) => {
                         e.stopPropagation();
                         setDeleteExamModal(exams);
                       }}
-                    />
+                    >
+                      حذف الاختبار
+                    </ActionButton>
                   </div>
                 </div>
 
@@ -433,7 +451,7 @@ export default function CourseSourceLecturesContent({ id }) {
                     setSelectedExam(exams?.id);
                     setOpenAddExamVideo(lesson);
                   }}
-                  className="flex items-center text-sm text-green-600 hover:text-green-700"
+                  className="flex items-center text-sm text-white  bg-green-700 p-2 !rounded-md"
                 >
                   <PlusOutlined className="ml-1" />
                   إضافة فيديو
@@ -466,7 +484,7 @@ export default function CourseSourceLecturesContent({ id }) {
                     setSelectedExam(exams);
                     setOpenAddExamPdf(true);
                   }}
-                  className="flex items-center text-sm text-green-600 hover:text-green-700"
+                  className="flex items-center text-sm text-white bg-green-700 p-2 rounded-md"
                 >
                   <PlusOutlined className="ml-1" />
                   إضافة ملف PDF
@@ -507,7 +525,7 @@ export default function CourseSourceLecturesContent({ id }) {
               )}
             </div>
             <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-              <span>⏱️ {live?.time}</span>
+             {live?.time &&  <span>⏱️ {live?.time}</span>}
               {live?.link && (
                 <a href={live?.link} target="_blank" rel="noreferrer" className="truncate max-w-xs text-blue-600 hover:text-blue-700">
                   {live?.link}
@@ -518,23 +536,29 @@ export default function CourseSourceLecturesContent({ id }) {
         </div>
         <div className="flex space-x-2 space-x-reverse ml-4 flex-shrink-0">
           <ActionButton
-            title="تعديل البث المباشر"
-            icon={<EditOutlined className="text-blue-600" />}
+            className="bg-blue-500 text-white p-2 rounded-md"
+            // title="تعديل البث المباشر"
+            // icon={<EditOutlined className="text-blue-600" />}
             onClick={(e) => {
               e.stopPropagation();
               setSelectedLive(live);
               setOpenEditLive(true);
             }}
-          />
+          >
+            تعديل البث المباشر
+          </ActionButton>
           <ActionButton
-            title="حذف البث المباشر"
-            icon={<DeleteOutlined className="text-red-600" />}
+            className="bg-red-500 text-white p-2 rounded-md"
+            // title="حذف البث المباشر"
+            // icon={<DeleteOutlined className="text-red-600" />}
             onClick={(e) => {
               e.stopPropagation();
               setSelectedLive(live);
               setOpenDeleteLive(true);
             }}
-          />
+          >
+            حذف البث المباشر
+          </ActionButton>
           <button
             title={isLiveActive ? "إلغاء تنشيط البث" : "تنشيط البث"}
             onClick={(e) => {
@@ -543,17 +567,29 @@ export default function CourseSourceLecturesContent({ id }) {
               console.log(live);
               setActiveLiveModal(true);
             }}>
-            {isLiveActive ? <EyeOff className="text-green-600 h-4 w-4" /> : <Eye className="text-green-600 h-4 w-4" />}
+            {isLiveActive ?
+              <div className="flex items-center bg-yellow-700 rounded-md p-2 text-white gap-1">
+                <span> إلغاء تنشيط البث</span>
+                <EyeOff className=" h-4 w-4" />
+              </div> : <div className="flex items-center bg-yellow-700 rounded-md p-2 text-white gap-1">
+                <span>
+                  تنشيط البث المباشر
+                </span>
+                <Eye className="text-white h-4 w-4" />
+              </div>}
           </button>
           {live?.finished == "0" && <ActionButton
-            title="انهاء البث"
-            icon={<Clock className="text-yellow-600 w-4 h-4" />}
+            className="bg-red-500 text-white rounded-md p-2"
+            // title="انهاء البث"
+            // icon={<Clock className="text-yellow-600 w-4 h-4" />}
             onClick={(e) => {
               e.stopPropagation();
               setSelectedLive(live);
               setMarkFinishModal(true);
             }}
-          />}
+          >
+            إنهاء البث
+          </ActionButton>}
         </div>
       </div>
     );
@@ -567,7 +603,7 @@ export default function CourseSourceLecturesContent({ id }) {
     const lessonVideos = lesson?.videos;
     const isVideosExpanded = expandedVideos[lesson.id];
     const isLivesExpanded = expandedLives[lesson?.id];
-        const isExamExpanded = expandedExams[lesson?.id];
+    const isExamExpanded = expandedExams[lesson?.id];
 
 
     const releaseAt =
@@ -610,21 +646,27 @@ export default function CourseSourceLecturesContent({ id }) {
             onClick={(e) => e.stopPropagation()}
           >
             <ActionButton
-              title="تعديل الدرس"
-              icon={<EditOutlined className="text-blue-600" />}
+              className="bg-blue-500 text-white p-2 rounded-md"
+              // title="تعديل الدرس"
+              // icon={<EditOutlined className="text-blue-600" />}
               onClick={() => {
                 setSelectedLesson(lesson);
                 setOpenEditLesson(true);
               }}
-            />
+            >
+              تعديل الدرس
+            </ActionButton>
             <ActionButton
-              title="حذف الدرس"
-              icon={<DeleteOutlined className="text-red-600" />}
+              className="bg-red-500 text-white p-2 rounded-md"
+              // title="حذف الدرس"
+              // icon={<DeleteOutlined className="text-red-600" />}
               onClick={() => {
                 setSelectedLesson(lesson);
                 setOpenDeleteLesson(true);
               }}
-            />
+            >
+              حذف الدرس
+            </ActionButton>
           </div>
         </div>
 
@@ -664,7 +706,7 @@ export default function CourseSourceLecturesContent({ id }) {
                         setOpenAddVideo(true);
                         setSelectedLesson(lesson);
                       }}
-                      className="flex items-center text-sm text-green-600 hover:text-green-700"
+                      className="flex items-center text-sm text-white bg-green-700 rounded-md p-2"
                     >
                       <PlusOutlined className="ml-1" />
                       إضافة فيديو
@@ -708,18 +750,18 @@ export default function CourseSourceLecturesContent({ id }) {
                   </div>
 
 
-                  {isExamExpanded && 
-                  <div className="space-y-2">
-                   
-              
-                        <ExamCard
+                  {isExamExpanded &&
+                    <div className="space-y-2">
+
+
+                      <ExamCard
                         lessonExams={lessonExams}
-                          // key={exam.id}
-                          // exam={exam}
-                          lessonId={lesson?.id}
-                          lesson={lesson}
-                        />
-                    {/* {lessonExams?.map((exam) => {
+                        // key={exam.id}
+                        // exam={exam}
+                        lessonId={lesson?.id}
+                        lesson={lesson}
+                      />
+                      {/* {lessonExams?.map((exam) => {
                       console.log("exam lesson", lesson)
                       return (
                         <ExamCard
@@ -730,7 +772,7 @@ export default function CourseSourceLecturesContent({ id }) {
                         />
                       )
                     })} */}
-                  </div>}
+                    </div>}
                 </div>
 
                 {/* Live Sessions Section - Now Collapsible */}
@@ -756,7 +798,7 @@ export default function CourseSourceLecturesContent({ id }) {
                         setOpenAddLive(true);
                         setRowData(lesson);
                       }}
-                      className="flex items-center px-4 py-2 text-green-600 rounded-lg transition duration-150"
+                      className="flex items-center px-4 py-2 bg-green-700 text-white rounded-md transition duration-150"
                     >
                       <PlusOutlined className="ml-2" /> إضافة جلسة مباشرة
                     </button>
@@ -834,29 +876,35 @@ export default function CourseSourceLecturesContent({ id }) {
             onClick={(e) => e.stopPropagation()}
           >
             <ActionButton
-              icon={<PlusOutlined className="text-green-600" />}
+              icon={<PlusOutlined className="text-white" />}
               onClick={() => {
                 setOpenAddLesson(true);
                 setRowData(contentItem);
               }}
-              className="text-base border border-green-200 bg-white"
+              className="text-base p-2 rounded-md bg-green-700 text-white border border-green-200"
             >
               إضافة درس
             </ActionButton>
             <ActionButton
-              icon={<EditOutlined className="text-blue-600" />}
+              className="bg-blue-500 text-white p-2 rounded-md"
+              // icon={<EditOutlined className="text-blue-600" />}
               onClick={() => {
                 setRowData(contentItem);
                 setEditModalContent(true);
               }}
-            />
+            >
+              تعديل المحتوي
+            </ActionButton>
             <ActionButton
-              icon={<DeleteOutlined className="text-red-600" />}
+              className="bg-red-500 text-white p-2 rounded-md"
+              // icon={<DeleteOutlined className="text-red-600" />}
               onClick={() => {
                 setDeleteModalContent(true);
                 setRowData(contentItem);
               }}
-            />
+            >
+              حذف المحتوي
+            </ActionButton>
           </div>
         </div>
 
@@ -896,7 +944,7 @@ export default function CourseSourceLecturesContent({ id }) {
       {/* Page Header */}
       <div className="max-w-6xl mx-auto mb-8 p-6 bg-white rounded-2xl shadow-xl border-b-4 border-blue-500">
         <h1 className="text-3xl font-extrabold text-gray-800">
-          إدارة محتوى الدورة |  المحاضرات
+          إدارة محتوى الدورة |  مرحلة المحاضرات
         </h1>
         <p className="text-gray-600 mt-1">
           تنظيم المناهج، الدروس، والفيديوهات وتحديد جدول الدورة.
@@ -936,12 +984,14 @@ export default function CourseSourceLecturesContent({ id }) {
       {/* MODAL RENDERING */}
       {/* ... existing modals ... */}
       <AddRoundContent
-        type="lecture"
+      type="lecture"
+      isSource={isSource}
         open={addModalContent}
         setOpen={setAddModalContent}
         id={id}
       />
       <EditRoundContent
+      isSource={isSource}
         type="lecture"
         open={editModalContent}
         setOpen={setEditModalContent}
@@ -951,6 +1001,7 @@ export default function CourseSourceLecturesContent({ id }) {
       />
       <DeleteRoundContent
         id={id}
+        isSource={isSource}
         open={deleteModalContent}
         setOpen={setDeleteModalContent}
         rowData={rowData}
@@ -958,18 +1009,21 @@ export default function CourseSourceLecturesContent({ id }) {
 
       <AddLessonModal
         id={id}
+        isSource={isSource}
         open={openAddLesson}
         setOpen={setOpenAddLesson}
         round_content_id={rowData?.id}
         type={rowData?.content_type}
       />
       <DeleteLessonModal
+      isSource={isSource}
         open={openDeleteLesson}
         setOpen={setOpenDeleteLesson}
         rowData={selectedLesson}
         setRowData={setSelectedLesson}
       />
       <EditLessonModal
+      isSource={isSource}
         round_id={id}
         open={openEditLesson}
         setOpen={setOpenEditLesson}
@@ -978,12 +1032,14 @@ export default function CourseSourceLecturesContent({ id }) {
       />
 
       <AddVideoModal
+      isSource={isSource}
         open={openAddVideo}
         setOpen={setOpenAddVideo}
         id={selectedLesson?.id}
         content_id={id}
       />
       <EditVideoModal
+      isSource={isSource}
         open={openEditVideo}
         setOpen={setOpenEditVideo}
         rowData={selectedVideo}
@@ -992,6 +1048,7 @@ export default function CourseSourceLecturesContent({ id }) {
         round_id={id}
       />
       <DeleteVideoModal
+      isSource={isSource}
         open={openDeleteVideo}
         setOpen={setOpenDeleteVideo}
         rowData={selectedVideo}
@@ -999,13 +1056,14 @@ export default function CourseSourceLecturesContent({ id }) {
         round_id={id}
       />
 
-      <AddLivesModal open={openAddLive} setOpen={setOpenAddLive} id={id} lesson_id={rowData?.id} />
-      <EditLivesModal open={openEditLive} lesson_id={selectedLive?.id} id={id} setOpen={setOpenEditLive} rowData={selectedLive} setRowData={setSelectedLive} />
+      <AddLivesModal isSource={isSource} open={openAddLive} setOpen={setOpenAddLive} id={id} lesson_id={rowData?.id} />
+      <EditLivesModal isSource={isSource} open={openEditLive} lesson_id={selectedLive?.id} id={id} setOpen={setOpenEditLive} rowData={selectedLive} setRowData={setSelectedLive} />
       <DeleteLivesModal round_id={id} open={openDeleteLive} setOpen={setOpenDeleteLive} rowData={selectedLive} setRowData={setSelectedLive} />
       <ActiveLiveModal id={id} open={activeLiveModal} rowData={selectedLive} setOpen={setActiveLiveModal} />
       <FinishLiveModal id={id} open={markFinishModal} rowData={selectedLive} setOpen={setMarkFinishModal} />
 
       <AddExamVideoModal
+      isSource={isSource}
         open={openAddExamVideo}
         setOpen={setOpenAddExamVideo}
         exam_id={selectedExam}
@@ -1014,6 +1072,7 @@ export default function CourseSourceLecturesContent({ id }) {
       />
 
       <EditExamVideoModal
+      isSource={isSource}
         open={openEditExamVideo}
         setOpen={setOpenEditExamVideo}
         rowData={selectedExamVideo}
@@ -1023,6 +1082,7 @@ export default function CourseSourceLecturesContent({ id }) {
       />
 
       <DeleteExamVideoModal
+      isSource={isSource}
         open={openDeleteExamVideo}
         setOpen={setOpenDeleteExamVideo}
         rowData={selectedExamVideo}
@@ -1031,6 +1091,7 @@ export default function CourseSourceLecturesContent({ id }) {
       />
 
       <AddExamPdfModal
+      isSource={isSource}
         open={openAddExamPdf}
         setOpen={setOpenAddExamPdf}
         exam_id={selectedExam}
@@ -1038,7 +1099,9 @@ export default function CourseSourceLecturesContent({ id }) {
         id={id}
       />
 
-      <EditExamPdfModal id={id} exam_id={selectedLesson?.id} open={openEditExamPdf} setOpen={setOpenEditExamPdf} pdfData={selectedExamPdf} />
+      <EditExamPdfModal
+      isSource={isSource}
+      id={id} exam_id={selectedLesson?.id} open={openEditExamPdf} setOpen={setOpenEditExamPdf} pdfData={selectedExamPdf} />
 
       <DeleteExamPdfModal
         open={openDeleteExamPdf}

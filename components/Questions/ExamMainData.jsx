@@ -15,6 +15,7 @@ import {
   FilePlus,
   FileIcon,
   VideoIcon,
+  Trash2,
 } from "lucide-react";
 import {
   PlusOutlined,
@@ -82,9 +83,7 @@ export default function ExamMainData({
   examid
 }) {
   const dispatch = useDispatch();
-  const { all_exam_data_loading, all_exam_data_list } = useSelector(
-    (state) => state?.exam
-  );
+
 
   const [openExamVideoModal, setOpenExamVideoModal] = useState(false); // Add video
   const [openExamPdfModal, setOpenExamPdfModal] = useState(false); // Add pdf
@@ -107,10 +106,12 @@ export default function ExamMainData({
 
   const searchparams = useSearchParams();
   const lessonId = searchparams?.get("lessonId") ?? null;
+  const page = searchparams.get("page");
+  const pageSize = searchparams.get("pageSize");
 
-   useEffect(() => {
-    console.log("exam id" , examid);
-   }  ,[examid])
+  useEffect(() => {
+    console.log("exam id", examid);
+  }, [examid])
 
   const [examData, setExamData] = useState({
     name: "",
@@ -124,7 +125,7 @@ export default function ExamMainData({
   // Common states
   const [currentQuestion, setCurrentQuestion] = useState("");
   const [selectedSectionId, setSelectedSectionId] = useState(null);
-  const [selectedSectionData , setSelectedSectionData] = useState({});
+  const [selectedSectionData, setSelectedSectionData] = useState({});
   const [expandedSections, setExpandedSections] = useState({});
   const [editingQuestion, setEditingQuestion] = useState(null);
 
@@ -187,6 +188,7 @@ export default function ExamMainData({
     edit_exam_loading,
     get_exam_sections_list,
     add_question_loading,
+    all_exam_data_list
   } = useSelector((state) => state?.exam);
 
   const [exmaInfoData, setExamInfoData] = useState({
@@ -197,6 +199,7 @@ export default function ExamMainData({
     date: "",
     type: "mock",
     level: "medium",
+    success_percentage: 0,
   });
   const [openExamSection, setOpenExamSection] = useState(false);
   const [openExamQuestion, setOpenExamQuestion] = useState(false);
@@ -220,23 +223,35 @@ export default function ExamMainData({
   }, [editExamData]);
 
   useEffect(() => {
-    if (examData?.sections?.length > 0 && !selectedSectionId)
+    if (examData?.sections?.length > 0 && !selectedSectionId) {
       setSelectedSectionId(examData.sections[0].id);
-      setSelectedSectionData(examData?.sections[0]);
-  }, [examData?.sections, selectedSectionId]);
+    }
+  }, [examData?.sections, selectedSectionId , selectedSectionData]);
 
+  useEffect(() => {
+    if(selectedSectionId){
+    const filtered = get_exam_sections_list?.data?.message?.find(item => item?.id == selectedSectionId);
+    console.log(filtered);
+    setSelectedSectionData(filtered)
+    }
+  } , [selectedSectionId])
 
-useEffect(() => {
-  dispatch(handleGetAllExams({}))
-  .unwrap()
-  .then(res => {
-    console.log(res?.data?.message?.data);
-  })
-}, [dispatch]);
+  useEffect(() => {
+    dispatch(handleGetAllExams({
+      page: page,
+      per_page: pageSize
+    }))
+      .unwrap()
+      .then(res => {
+        console.log(res)
+        console.log(res?.data?.message?.data);
+      })
+  }, [dispatch, params["exam-id"], page, pageSize]);
 
 
   // Edit mode: load exam info
   useEffect(() => {
+    console.log(params["exam-id"], all_exam_list)
     if (params["exam-id"] && !lessonId) {
       const filteredItem = all_exam_list?.data?.message?.data?.find(
         (item) => item?.id == params["exam-id"]
@@ -256,18 +271,19 @@ useEffect(() => {
         level: filteredItem?.level,
         date: filteredItem?.date,
         time: filteredItem?.time,
-        type:  filteredItem?.type ,
+        type: filteredItem?.type,
+        success_percentage : filteredItem?.success_percentage
       }));
 
       setExamData((prev) => ({
         ...prev,
-        type:  lessonId ? "intern" : filteredItem?.type ,
+        type: lessonId ? "intern" : filteredItem?.type,
         sections: filteredItem?.sections || prev.sections || [],
       }));
 
       setOpenExamSection(true);
       setOpenExamQuestion(true);
-    }else if (params["exam-id"] && lessonId) {
+    } else if (params["exam-id"] && lessonId) {
       const filteredItem = all_exam_data_list?.data?.message?.exam;
       // const filteredItem = all_exam_data_list?.data?.message?.data?.find(
       //   (item) => item?.id == params["exam-id"]
@@ -287,19 +303,20 @@ useEffect(() => {
         level: filteredItem?.level,
         date: filteredItem?.date,
         time: filteredItem?.time,
-        type:  "intern"  ,
+        type: "intern",
+        success_percentage: filteredItem?.success_percentage
       }));
 
       setExamData((prev) => ({
         ...prev,
-        type:  lessonId ? "intern" : filteredItem?.type ,
+        type: lessonId ? "intern" : filteredItem?.type,
         sections: filteredItem?.sections || prev.sections || [],
       }));
 
       setOpenExamSection(true);
       setOpenExamQuestion(true);
     }
-  }, [params, all_exam_list]);
+  }, [params, all_exam_list, all_exam_data_list]);
 
   /* Helpers */
 
@@ -359,10 +376,11 @@ useEffect(() => {
         title: exmaInfoData.title,
         description: exmaInfoData.description,
         free: `${exmaInfoData.free}`,
-        time: exmaInfoData.time,
+        time: null,
         date: exmaInfoData.date,
         level: exmaInfoData?.level,
-        type: lessonId ? "intern" : exmaInfoData?.type
+        type: lessonId ? "intern" : exmaInfoData?.type,
+        success_percentage: exmaInfoData?.success_percentage
       };
 
       dispatch(handleEditExam({ body: data_send }))
@@ -384,11 +402,13 @@ useEffect(() => {
         title: exmaInfoData.title,
         description: exmaInfoData.description,
         free: JSON.stringify(exmaInfoData.free),
-        time: exmaInfoData.time,
+        time: null,
         date: exmaInfoData.date,
         level: exmaInfoData?.level,
         type: lessonId ? "intern" : exmaInfoData?.type,
+        success_percentage: exmaInfoData?.success_percentage
       };
+
 
       dispatch(handleCreateExam({ body: data_send }))
         .unwrap()
@@ -692,450 +712,6 @@ useEffect(() => {
     }
   };
 
-  // دالة لتحميل بيانات السؤال للتحرير
-  // const loadQuestionForEdit = (question) => {
-  //   setEditingQuestion(question);
-  //   setCurrentQuestion(question.question_text || "");
-
-  //   switch (question.question_type) {
-  //     case "mcq":
-  //       setQuestionType("mcq");
-
-  //       // تحقق إذا كان سؤال فقرة (paragraph)
-  //       if (question.paragraph_content) {
-  //         setMcqSubType("passage");
-  //         setMcqPassages({
-  //           ...mcqPassages,
-  //           passage: [{
-  //             content: question.paragraph_content,
-  //             questions: [{
-  //               id: question.id,
-  //               text: question.question_text,
-  //               options: question.mcq_array || [],
-  //               correctIndex: question.correctAnswer || 0,
-  //             }]
-  //           }]
-  //         });
-  //       } else if (question.mcqSubType === "chemical") {
-  //         setMcqSubType("chemical");
-  //         // معالجة معادلات كيميائية
-  //       } else {
-  //         setMcqSubType("general");
-  //         setMcqOptions(question.mcq_array?.map(opt => normalizeOption(opt)) || [
-  //           emptyOption(), emptyOption(), emptyOption(), emptyOption()
-  //         ]);
-  //         setMcqCorrectAnswer(
-  //           question.mcq_array?.findIndex(opt => opt.correct_or_not === "1") || 0
-  //         );
-  //       }
-  //       break;
-
-  //     case "essay":
-  //       setQuestionType("essay");
-  //       setModalAnswer(question.model_answer || "");
-  //       break;
-
-  //     case "complete":
-  //       setQuestionType("complete");
-  //       setCompleteText(question.text || "");
-  //       setCompleteAnswers(
-  //         question.answers?.map(answer => ({ answer })) || [{ answer: "" }]
-  //       );
-  //       break;
-  //   }
-
-  //   // True/False يتم معالجته كـ MCQ خاص
-  //   if (question.mcq_array?.length === 2 && 
-  //       question.mcq_array[0].answer === "صحيح") {
-  //     setQuestionType("trueFalse");
-  //     setTrueFalseAnswer(question.mcq_array[0].correct_or_not === "1");
-  //     setTrueFalseExplanation(
-  //       question.mcq_array[0].question_explanation || ""
-  //     );
-  //   }
-  // };
-
-  /* ===================== Add / Update Question ===================== */
-  // const addOrUpdateQuestion = async () => {
-  //   if (!selectedSectionId) {
-  //     toast.error("يرجى اختيار قسم أولاً");
-  //     return;
-  //   }
-
-  //   if (questionType !== "mcq" && !currentQuestion.trim()) {
-  //     toast.error("يرجى كتابة نص السؤال");
-  //     return;
-  //   }
-
-  //   const section = examData?.sections.find((s) => s.id === selectedSectionId);
-  //   const currentCount = section?.questions?.length || 0;
-  //   const isMock = examData.type === "mock";
-  //   const maxPerSection = 24;
-
-  //   const canAdd = (count = 1) =>
-  //     !isMock || currentCount + count <= maxPerSection;
-
-  //   /* ========== 1) MCQ with subtypes (chemical / passage) ========== */
-  //   if (questionType === "mcq" && mcqSubType !== "general") {
-  //     const groups = mcqPassages[mcqSubType] || [];
-
-  //     /* ----- 1A) Paragraph MCQ → paragraph_mcq payload ----- */
-  //     if (mcqSubType === "passage") {
-  //       const flatQuestions = [];
-  //       const paragraphPayloads = [];
-
-  //       for (const group of groups) {
-  //         if (!group?.content?.trim()) continue;
-
-  //         const groupQuestionsForPayload = [];
-
-  //         for (const q of group.questions || []) {
-  //           if (!q.text?.trim()) continue;
-
-  //           // Normalize options and mark correct
-  //           const normalizedOptions = (q.options || []).map((opt, idx) => {
-  //             const base = normalizeOption(opt);
-  //             return {
-  //               ...base,
-  //               correct_or_not: q.correctIndex === idx ? "1" : "0",
-  //             };
-  //           });
-
-  //           if (normalizedOptions.length < 2) {
-  //             toast.error(
-  //               "كل سؤال في الفقرة يجب أن يحتوي على خيارين على الأقل"
-  //             );
-  //             return;
-  //           }
-
-  //           // UI-level question (flat for DisplayQuestions)
-  //           const flatQuestion = {
-  //             id: editingQuestion?.id || Date.now() + Math.random(),
-  //             question_type: "paragraph_mcq",
-  //             question_text: q.text,
-  //             exam_section_id: selectedSectionId,
-  //             mcqSubType,
-  //             mcq_array: normalizedOptions,
-  //             correctAnswer: q.correctIndex ?? 0,
-  //             paragraph_content: group.content,
-  //             instructions: "اختر الإجابة الصحيحة",
-  //           };
-
-  //           flatQuestions.push(flatQuestion);
-
-  //           // API payload inner question
-  //           groupQuestionsForPayload.push({
-  //             question_text: q.text,
-  //             instructions: "اختر الإجابة الصحيحة",
-  //             mcq_array: normalizedOptions,
-  //           });
-  //         }
-
-  //         if (groupQuestionsForPayload.length) {
-  //           paragraphPayloads.push({
-  //             exam_section_id: selectedSectionId,
-  //             question_type: "paragraph_mcq",
-  //             paragraph_content: group.content,
-  //             questions: groupQuestionsForPayload,
-  //           });
-  //         }
-
-  //         console.log(groupQuestionsForPayload);
-  //       }
-
-  //       if (!flatQuestions.length) {
-  //         toast.error("لم يتم إنشاء أي سؤال صالح للفقرة");
-  //         return;
-  //       }
-
-  //       const totalNewQuestions = flatQuestions.length;
-
-  //       if (!canAdd(totalNewQuestions)) {
-  //         toast.error(`الحد الأقصى 24 سؤال لكل قسم في الاختبار المحاكي`);
-  //         return;
-  //       }
-
-  //       // Optimistic UI update (flat questions)
-  //       const updatedSections = examData.sections.map((s) => {
-  //         if (s.id !== selectedSectionId) return s;
-
-  //         if (editingQuestion) {
-  //           editQuestion();
-  //           return;
-  //           // simple replace by id for edit mode
-  //           // return {
-  //           //   ...s,
-  //           //   questions: s.questions.map((q) =>
-  //           //     q.id === editingQuestion.id ? flatQuestions[0] : q
-  //           //   ),
-  //           // };
-  //         }
-
-  //         return {
-  //           ...s,
-  //           questions: [...(s.questions || []), ...flatQuestions],
-  //         };
-  //       });
-
-  //       setExamData((prev) => ({ ...prev, sections: updatedSections }));
-  //       resetQuestionForm();
-
-  //       try {
-  //         // API: send grouped paragraph_mcq payloads
-  //         for (const payload of paragraphPayloads) {
-  //           await dispatch(handleAddQuestion({ body: payload }))
-  //             .unwrap()
-  //             .then((res) => {
-  //               if (res?.data?.status == "success") {
-  //                 toast.success("تم اضافة السؤال بنجاح");
-  //                 dispatch(
-  //                   handleGetExamQuestions({
-  //                     body: {
-  //                       exam_section_id:
-  //                         res?.data?.message?.exam_section_id ||
-  //                         res?.data?.message?.questions[0]?.exam_section_id ||
-  //                         res?.data?.message?.paragraph[0]?.exam_section_id,
-  //                     },
-  //                   })
-  //                 );
-  //               }
-  //             });
-  //         }
-  //         toast.success("تم حفظ أسئلة الفقرة بنجاح");
-  //       } catch (err) {
-  //         toast.error("فشل حفظ أسئلة الفقرة");
-  //       }
-
-  //       return;
-  //     }
-
-  //     /* ----- 1B) Chemical equations → behave as normal MCQ ----- */
-  //     const questionsToAdd = [];
-
-  //     for (const group of groups) {
-  //       for (const q of group.questions || []) {
-  //         // Either a specific question text or fallback to the equation content
-  //         if (!q.text?.trim() && !group?.content?.trim()) continue;
-
-  //         const normalizedOptions = (q.options || []).map((opt, idx) => {
-  //           const base = normalizeOption(opt);
-  //           return {
-  //             ...base,
-  //             correct_or_not: q.correctIndex === idx ? "1" : "0",
-  //           };
-  //         });
-
-  //         if (normalizedOptions.length < 2) {
-  //           toast.error("كل سؤال يجب أن يحتوي على خيارين على الأقل");
-  //           return;
-  //         }
-
-  //         questionsToAdd.push({
-  //           id: editingQuestion?.id || Date.now() + Math.random(),
-  //           question_type: "mcq",
-  //           question_text: q.text || group.content || "",
-  //           exam_section_id: selectedSectionId,
-  //           mcqSubType,
-  //           mcq_array: normalizedOptions,
-  //           correctAnswer: q.correctIndex ?? 0,
-  //           instructions: "اختر الاجابة الصحيحه",
-  //         });
-  //       }
-  //     }
-
-  //     if (!questionsToAdd.length) {
-  //       toast.error("لم يتم إنشاء أي سؤال صالح");
-  //       return;
-  //     }
-
-  //     if (!canAdd(questionsToAdd.length)) {
-  //       toast.error(`الحد الأقصى 24 سؤال لكل قسم في الاختبار المحاكي`);
-  //       return;
-  //     }
-
-  //     const updatedSections = examData.sections.map((s) =>
-  //       s.id === selectedSectionId
-  //         ? {
-  //           ...s,
-  //           questions: editingQuestion
-  //             ? s.questions.map((q) =>
-  //               q.id === editingQuestion.id ? questionsToAdd[0] : q
-  //             )
-  //             : [...(s.questions || []), ...questionsToAdd],
-  //         }
-  //         : s
-  //     );
-
-  //     setExamData((prev) => ({ ...prev, sections: updatedSections }));
-  //     resetQuestionForm();
-  //     // toast.success(
-  //     //   editingQuestion
-  //     //     ? "تم تحديث الأسئلة بنجاح"
-  //     //     : "تم إضافة الأسئلة بنجاح"
-  //     // );
-
-  //     // Send each chemical question as normal MCQ to API
-  //     for (const q of questionsToAdd) {
-  //       try {
-  //         const res = await dispatch(handleAddQuestion({ body: q })).unwrap();
-  //         console.log(res);
-  //         if (res?.data?.status == "success") {
-  //           toast.success("تم اضافة السؤال بنجاح");
-  //           dispatch(
-  //             handleGetExamQuestions({
-  //               body: {
-  //                 exam_section_id:
-  //                   res?.data?.message?.exam_section_id ||
-  //                   res?.data?.message?.questions[0]?.exam_section_id ||
-  //                   res?.data?.message?.paragraph[0]?.exam_section_id,
-  //               },
-  //             })
-  //           );
-  //         }
-  //       } catch (err) {
-  //         toast.error(`فشل حفظ سؤال: ${err}`);
-  //       }
-  //     }
-
-  //     return;
-  //   }
-
-  //   /* ========== 2) Normal questions (general MCQ, True/False, Essay, Complete) ========== */
-
-  //   if (isMock && !canAdd()) {
-  //     toast.error("تم الوصول للحد الأقصى (24 سؤال) في هذا القسم");
-  //     return;
-  //   }
-
-  //   const baseQuestion = {
-  //     id: editingQuestion?.id || Date.now() + Math.random(),
-  //     question_type: questionType,
-  //     question_text: currentQuestion,
-  //     exam_section_id: selectedSectionId,
-  //     instructions: "Instructions",
-  //   };
-
-  //   let finalQuestion = { ...baseQuestion };
-
-  //   switch (questionType) {
-  //     case "mcq":
-  //       if (mcqOptions?.filter((o) => o?.answer?.trim())?.length < 2) {
-  //         toast.error("يجب إضافة خيارين على الأقل");
-  //         return;
-  //       }
-  //       finalQuestion = {
-  //         ...finalQuestion,
-  //         question_type: "mcq",
-  //         mcqSubType: "general",
-  //         mcq_array: mcqOptions.map((opt, idx) => ({
-  //           ...normalizeOption(opt),
-  //           correct_or_not: mcqCorrectAnswer === idx ? "1" : "0",
-  //         })),
-  //         correctAnswer: mcqCorrectAnswer,
-  //       };
-  //       break;
-
-  //     case "trueFalse":
-  //       if (trueFalseAnswer === null) {
-  //         toast.error("اختر إجابة صحيحة");
-  //         return;
-  //       }
-  //       // Treat True/False as MCQ type with 2 options
-  //       finalQuestion = {
-  //         ...finalQuestion,
-  //         question_type: "mcq",
-  //         correctAnswer: trueFalseAnswer,
-  //         explanation: trueFalseExplanation,
-  //         mcq_array: [
-  //           {
-  //             answer: "صحيح",
-  //             correct_or_not: trueFalseAnswer === true ? "1" : "0",
-  //             question_explanation: trueFalseExplanation || "",
-  //           },
-  //           {
-  //             answer: "خطأ",
-  //             correct_or_not: trueFalseAnswer === false ? "1" : "0",
-  //             question_explanation: trueFalseExplanation || "",
-  //           },
-  //         ],
-  //       };
-  //       break;
-
-  //     case "essay":
-  //       finalQuestion = {
-  //         ...finalQuestion,
-  //         model_answer: modalAnswer,
-  //       };
-  //       break;
-
-  //     case "complete":
-  //       if (!completeText.trim()) {
-  //         toast.error("اكتب نص الجملة");
-  //         return;
-  //       }
-  //       if (completeAnswers.filter((a) => a.answer.trim()).length === 0) {
-  //         toast.error("أضف إجابة واحدة على الأقل");
-  //         return;
-  //       }
-  //       finalQuestion = {
-  //         ...finalQuestion,
-  //         text: completeText,
-  //         answers: completeAnswers.map((a) => a.answer).filter(Boolean),
-  //       };
-  //       break;
-  //   }
-
-  //   // Optimistic UI update
-  //   const newSections = examData.sections.map((s) => {
-  //     if (s.id !== selectedSectionId) return s;
-
-  //     if (editingQuestion) {
-  //       return {
-  //         ...s,
-  //         questions: s.questions.map((q) =>
-  //           q.id === editingQuestion.id ? finalQuestion : q
-  //         ),
-  //       };
-  //     }
-  //     return {
-  //       ...s,
-  //       questions: [...(s.questions || []), finalQuestion],
-  //     };
-  //   });
-
-  //   setExamData((prev) => ({ ...prev, sections: newSections }));
-  //   resetQuestionForm();
-
-  //   try {
-  //     const result = await dispatch(
-  //       handleAddQuestion({ body: finalQuestion })
-  //     ).unwrap();
-
-  //     if (result?.data?.status === "success") {
-  //       toast.success("تم اضافة السؤال بنجاح");
-  //       const exSectionId =
-  //         result?.data?.message?.exam_section_id || selectedSectionId;
-  //       if (exSectionId) {
-  //         dispatch(
-  //           handleGetExamQuestions({
-  //             body: {
-  //               exam_section_id:
-  //                 res?.data?.message?.exam_section_id ||
-  //                 res?.data?.message?.questions[0]?.exam_section_id ||
-  //                 res?.data?.message?.paragraph[0]?.exam_section_id,
-  //             },
-  //           })
-  //         );
-  //       }
-  //     }
-
-  //     toast.success(
-  //       editingQuestion ? "تم تحديث السؤال بنجاح" : "تم إضافة السؤال بنجاح"
-  //     );
-  //   } catch (error) {
-  //     toast.error(error || "فشل حفظ السؤال");
-  //   }
-  // };
 
   /* ===================== Add / Update Question ===================== */
   const addOrUpdateQuestion = async () => {
@@ -1966,105 +1542,145 @@ useEffect(() => {
 
                   {/* General MCQ */}
                   {mcqSubType === "general" ? (
-                    <div className="space-y-5">
-                      <LabeledEditor
-                        label="نص السؤال"
-                        value={currentQuestion}
-                        onChange={setCurrentQuestion}
-                        editorMinH={160}
-                        allowImages
-                      />
+                   <div className="space-y-8">
+  {/* Question Text */}
+  <div>
+    <label className="block text-lg font-semibold text-gray-800 mb-4">
+      نص السؤال
+    </label>
+    <LabeledEditor
+      label="" // Hide duplicate label since we have one above
+      value={currentQuestion}
+      onChange={setCurrentQuestion}
+      editorMinH={180}
+      allowImages
+      placeholder="اكتب نص السؤال هنا... يمكنك إضافة صور، معادلات، تنسيق..."
+    />
+  </div>
 
-                      <div className="space-y-3">
-                        <label className="block text-sm font-medium text-gray-700">
-                          خيارات الإجابة (لكل خيار نص + شرح)
-                        </label>
+  {/* Options Section */}
+  <div className="space-y-5">
+    <div className="flex items-center justify-between mb-5">
+      <label className="text-lg font-semibold text-gray-800">
+        خيارات الإجابة
+      </label>
+      <span className="text-sm text-gray-500">
+        يجب تحديد إجابة صحيحة واحدة فقط
+      </span>
+    </div>
 
-                        {mcqOptions.map((option, index) => {
-                          const letter = String.fromCharCode(65 + index);
-                          const isCorrect = mcqCorrectAnswer === index;
+    <div className="space-y-6">
+      {mcqOptions.map((option, index) => {
+        const letter = String.fromCharCode(1632 + index +1); // Arabic numerals: ١, ٢, ٣...
+        const isCorrect = mcqCorrectAnswer === index;
 
-                          return (
-                            <div
-                              key={index}
-                              className={`border rounded-2xl p-4 bg-white space-y-3 shadow-sm transition ${isCorrect
-                                ? "ring-1 ring-green-200"
-                                : "ring-1 ring-transparent"
-                                }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <span
-                                  className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${isCorrect
-                                    ? "bg-green-600 text-white"
-                                    : "bg-gray-100 text-gray-700"
-                                    }`}
-                                >
-                                  {letter}
-                                </span>
+        return (
+          <div
+            key={index}
+            className={`relative overflow-hidden rounded-3xl border-2 transition-all duration-300 ${
+              isCorrect
+                ? "border-green-400 bg-green-50/50 shadow-lg shadow-green-100"
+                : "border-gray-200 bg-white shadow-md"
+            }`}
+          >
+            {/* Header with letter, correct indicator, and delete */}
+            <div className="flex items-center justify-between p-5 bg-gradient-to-r from-transparent to-transparent">
+              <div className="flex items-center gap-4">
+                {/* Letter Circle */}
+                <div
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold shadow-md transition-colors ${
+                    isCorrect
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  {letter }
+                </div>
 
-                                <label
-                                  className="flex items-center gap-2 text-xs font-medium text-gray-600"
-                                  title="الإجابة الصحيحة"
-                                >
-                                  <input
-                                    type="radio"
-                                    checked={isCorrect}
-                                    onChange={() => setMcqCorrectAnswer(index)}
-                                    className="h-4 w-4 text-blue-600"
-                                  />
-                                  إجابة صحيحة
-                                </label>
+                {/* Correct Answer Radio */}
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="correctAnswer"
+                    checked={isCorrect}
+                    onChange={() => setMcqCorrectAnswer(index)}
+                    className="h-5 w-5 text-green-600 focus:ring-green-500"
+                  />
+                  <span className="font-medium text-gray-700">
+                    {isCorrect ? "الإجابة الصحيحة" : "تحديد كإجابة صحيحة"}
+                  </span>
+                  {isCorrect && (
+                    <span className="px-3 py-1 text-xs font-bold text-green-700 bg-green-200 rounded-full">
+                      ✓ صحيحة
+                    </span>
+                  )}
+                </label>
+              </div>
 
-                                {mcqOptions.length > 2 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => removeMcqOption(index)}
-                                    className="ml-auto px-2 py-1 text-red-600 hover:text-red-800 text-xs rounded-lg hover:bg-red-50"
-                                    title="حذف الخيار"
-                                  >
-                                    حذف
-                                  </button>
-                                )}
-                              </div>
+              {/* Delete Button - hidden if only 2 options */}
+              {mcqOptions.length > 2 && (
+                <button
+                  type="button"
+                  onClick={() => removeMcqOption(index)}
+                  className="p-2 text-red-600 rounded-xl hover:bg-red-50 transition-colors"
+                  title="حذف هذا الخيار"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              )}
+            </div>
 
-                              <LabeledEditor
-                                label={`نص الخيار #${index + 1}`}
-                                value={option.answer}
-                                onChange={(v) =>
-                                  updateMcqOption(index, "answer", v)
-                                }
-                                editorMinH={110}
-                                allowImages
-                              />
+            {/* Option Content */}
+            <div className="px-6 pb-6 space-y-6 border-t border-gray-100">
+              {/* Option Text */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  نص الخيار 
+                </label>
+                <LabeledEditor
+                  label=""
+                  value={option.answer}
+                  onChange={(v) => updateMcqOption(index, "answer", v)}
+                  editorMinH={130}
+                  allowImages
+                  placeholder="اكتب نص الخيار هنا..."
+                />
+              </div>
 
-                              <LabeledEditor
-                                label={`شرح الخيار #${index + 1
-                                  } (لماذا هو صحيح/خاطئ)`}
-                                value={option.question_explanation}
-                                onChange={(v) =>
-                                  updateMcqOption(
-                                    index,
-                                    "question_explanation",
-                                    v
-                                  )
-                                }
-                                editorMinH={90}
-                                allowImages
-                              />
-                            </div>
-                          );
-                        })}
+              {/* Explanation */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                  شرح الخيار 
+                  <span className="text-xs font-normal text-gray-500">(يظهر بعد الإجابة في وضع المراجعة)</span>
+                </label>
+                <LabeledEditor
+                  label=""
+                  value={option.question_explanation}
+                  onChange={(v) => updateMcqOption(index, "question_explanation", v)}
+                  editorMinH={100}
+                  allowImages
+                  placeholder="اشرح لماذا هذا الخيار صحيح أو خاطئ... (اختياري لكن موصى به)"
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
 
-                        <button
-                          type="button"
-                          onClick={addMcqOption}
-                          className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white hover:bg-gray-50 shadow-sm"
-                        >
-                          <PlusIcon className="w-4 h-4" />
-                          إضافة خيار
-                        </button>
-                      </div>
-                    </div>
+    {/* Add Option Button */}
+    <div className="flex justify-center pt-4">
+      <button
+        type="button"
+        onClick={addMcqOption}
+        className="inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-blue-700 bg-blue-50 rounded-2xl hover:bg-blue-100 hover:shadow-md transition-all shadow-sm border border-blue-200"
+      >
+        <PlusIcon className="w-5 h-5" />
+        إضافة خيار جديد
+      </button>
+    </div>
+  </div>
+</div>
                   ) : (
                     <McqSharedPassageEditor
 
@@ -2078,15 +1694,7 @@ useEffect(() => {
               )}
 
               {/* Non-MCQ */}
-              {questionType === "essay" && (
-                <LabeledEditor
-                  label="نص السؤال"
-                  value={currentQuestion}
-                  onChange={setCurrentQuestion}
-                  editorMinH={160}
-                  allowImages
-                />
-              )}
+             
 
               {questionType === "trueFalse" && (
                 <TrueFalseQuestions
@@ -2096,24 +1704,6 @@ useEffect(() => {
                   trueFalseAnswer={trueFalseAnswer}
                   setTrueFalseAnswer={setTrueFalseAnswer}
                   setTrueFalseExplanation={setTrueFalseExplanation}
-                />
-              )}
-
-              {questionType === "essay" && (
-                <EssayQuestions
-                  modalAnswer={modalAnswer}
-                  setModalAnswer={setModalAnswer}
-                />
-              )}
-
-              {questionType === "complete" && (
-                <CompleteQuestions
-                  addCompleteAnswer={addCompleteAnswer}
-                  completeAnswers={completeAnswers}
-                  completeText={completeText}
-                  removeCompleteAnswer={removeCompleteAnswer}
-                  setCompleteText={setCompleteText}
-                  updateCompleteAnswer={updateCompleteAnswer}
                 />
               )}
 
@@ -2152,7 +1742,7 @@ useEffect(() => {
 
           {/* Questions list */}
           {<DisplayQuestions
-           selectedSection={selectedSectionData}
+            selectedSection={selectedSectionData}
             setEditingQuestion={setEditingQuestion} editingQuestion={editQuestion} selectedSectionId={selectedSectionId} />}
         </>
       ) : (

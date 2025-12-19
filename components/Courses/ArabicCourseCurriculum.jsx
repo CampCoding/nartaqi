@@ -38,13 +38,13 @@ const initialSchedule = {
   endTime: "11:00"
 };
 
-export default function ArabicCourseCurriculum({ id }) {
+export default function ArabicCourseCurriculum({ id , source }) {
   const [rowData, setRowData] = useState({});
   const [contentSchedule, setContentSchedule] = useState({});
   const [lessonSchedule, setLessonSchedule] = useState({});
   const [activeTab, setActiveTab] = useState("lecture"); // lecture | basic | exams
 
-  // Modal states...
+  // Modal states... 
   const [addModalContent, setAddModalContent] = useState(false);
   const [deleteModalContent, setDeleteModalContent] = useState(false);
   const [editModalContent, setEditModalContent] = useState(false);
@@ -85,6 +85,8 @@ export default function ArabicCourseCurriculum({ id }) {
   const [loadingContents, setLoadingContents] = useState({});
   const [loadingLessons, setLoadingLessons] = useState({});
   const [selectedContent, setSelectedContent] = useState(null);
+
+
 
   const isReleased = useCallback((releaseAt) => {
     if (!releaseAt) return true;
@@ -580,7 +582,8 @@ export default function ArabicCourseCurriculum({ id }) {
       <div className="flex items-start justify-between p-4 mb-3 border border-yellow-100 rounded-lg bg-yellow-50/70">
         <DeleteLiveModal open={deleteOpen} setOpen={setDeleteOpen} />
         <FinishLiveModal open={finishOpen} setOpen={setFinishOpen} />
-        <EditLive
+        <EditLive 
+        source={source}
           setIsEditing={setIsEditting}
           isEditing={isEditting}
           open={editOpen}
@@ -1109,6 +1112,7 @@ export default function ArabicCourseCurriculum({ id }) {
           </button>
         </div>
         <EditContent
+         source={source}
           open={editOpen}
           data={editOpen}
           setOpen={setIsEditOpen}
@@ -1116,6 +1120,7 @@ export default function ArabicCourseCurriculum({ id }) {
           isEditing={isEditing}
         />
         <EditLesson
+        source={source}
           open={editLessonOpen}
           data={editLessonOpen}
           setOpen={setIsEditLessonOpen}
@@ -1158,6 +1163,7 @@ export default function ArabicCourseCurriculum({ id }) {
                     {/* {console.log("item", item)} */}
 
                     <ContentSection
+                      source={source}
                       key={item.id}
                       contentItem={item}
                       setIsEditOpen={setIsEditOpen}
@@ -1192,7 +1198,8 @@ export default function ArabicCourseCurriculum({ id }) {
                     وملفات الـ PDF الخاصة بكل امتحان.
                   </p>
                   {examsRound.map((examGroup, idx) => (
-                    <ExamCard
+                    <ExamCard 
+                      source={source}
                       key={examGroup?.exam?.id || idx}
                       exam={examGroup}
                     />

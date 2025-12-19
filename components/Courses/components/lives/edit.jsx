@@ -12,6 +12,7 @@ import {
   handleEditLessonVideo
 } from "@/lib/features/videoSlice";
 import { Modal } from "antd";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
@@ -22,10 +23,13 @@ export default function EditLive({
   setOpen,
   isEditing,
   setIsEditing,
-  isExam
+  isExam,
 }) {
   const [formData, setFormData] = useState({});
   const dispatch = useDispatch();
+  const searchParams  =  useSearchParams();
+  const source = searchParams.get("source"); 
+   
   useEffect(() => {
     setFormData({ ...data });
   }, [data]);
@@ -36,7 +40,9 @@ export default function EditLive({
   const handleSubmit = async (e) => {
     console.log("formDataokdfokdf", formData);
     e.preventDefault();
-    const data = {
+    let data ;
+    if(!source) {
+     data = {
       id: formData?.id,
       lesson_id: formData?.lesson_id,
       time: formData?.time,
@@ -45,6 +51,17 @@ export default function EditLive({
       title: formData?.title,
       active: 0
     };
+    }else {
+       data = {
+      id: formData?.id,
+      lesson_id: formData?.lesson_id,
+      // time: formData?.time,
+      // date: formData?.date,
+      // link: formData?.link,
+      title: formData?.title,
+      // active: 0
+    };
+    }
     if (isEditing) {
       dispatch(handleEditLive({ body: data })).then((payload) => {
         setIsEditing(false);
@@ -115,6 +132,7 @@ export default function EditLive({
             onChange={changeHandler}
           />
         </div>
+        {!source && <div className="flex flex-col gap-2">
         <div>
           <label
             for="visitors"
@@ -171,13 +189,14 @@ export default function EditLive({
             onChange={changeHandler}
           />
         </div>
-
+</div>}
         <button
           type="submit"
           class="!rounded-md text-white bg-primary mr-auto box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none"
         >
           حفظ{" "}
         </button>
+        
       </form>
     </Modal>
   );

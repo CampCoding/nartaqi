@@ -16,6 +16,7 @@ export default function AddLessonModal({
   round_content_id,
   type,
   id,
+  isSource
 }) {
   const [lessonData, setLessonData] = useState({
     title: "",
@@ -26,7 +27,7 @@ export default function AddLessonModal({
   const [dateStr, setDateStr] = useState(""); // string
   const { add_lesson_loading } = useSelector((state) => state?.lesson);
 
-  const isFormValid = Boolean(lessonData?.title && lessonData?.description && dateStr);
+  const isFormValid = isSource ? lessonData?.title  : Boolean(lessonData?.title && dateStr);
 
   function handleInputChange(e) {
     const { name, value } = e.target;
@@ -131,7 +132,7 @@ export default function AddLessonModal({
           <label
             htmlFor="date"
             className="text-lg font-medium text-gray-700"
-          >جدولة الدرس</label>
+          > جدولة الدرس (تحديد تاريخ ظهور الدرس) </label>
           <DatePicker
             onChange={(value, stringValue) => {
               setDate(value); // value ده dayjs أو null

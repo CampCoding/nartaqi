@@ -50,7 +50,7 @@ const initialSchedule = {
   endTime: "11:00",
 };
 
-export default function CourseSourceBasicLevel({ id }) {
+export default function CourseSourceBasicLevel({ id  , isSource}) {
   const [rowData, setRowData] = useState({});
   const [contentSchedule, setContentSchedule] = useState({});
   const [lessonSchedule, setLessonSchedule] = useState({});
@@ -525,7 +525,7 @@ export default function CourseSourceBasicLevel({ id }) {
               )}
             </div>
             <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-              <span>⏱️ {live?.time}</span>
+              {live?.time && <span>⏱️ {live?.time}</span>}
               {live?.link && (
                 <a href={live?.link} target="_blank" rel="noreferrer" className="truncate max-w-xs text-blue-600 hover:text-blue-700">
                   {live?.link}
@@ -984,11 +984,13 @@ export default function CourseSourceBasicLevel({ id }) {
       {/* MODAL RENDERING */}
       {/* ... existing modals ... */}
       <AddRoundContent
+      isSource={isSource}
         open={addModalContent}
         setOpen={setAddModalContent}
         id={id}
       />
       <EditRoundContent
+      isSource={isSource}
         type="lecture"
         open={editModalContent}
         setOpen={setEditModalContent}
@@ -998,6 +1000,7 @@ export default function CourseSourceBasicLevel({ id }) {
       />
       <DeleteRoundContent
         id={id}
+        isSource={isSource}
         open={deleteModalContent}
         setOpen={setDeleteModalContent}
         rowData={rowData}
@@ -1005,18 +1008,21 @@ export default function CourseSourceBasicLevel({ id }) {
 
       <AddLessonModal
         id={id}
+        isSource={isSource}
         open={openAddLesson}
         setOpen={setOpenAddLesson}
         round_content_id={rowData?.id}
         type={rowData?.content_type}
       />
       <DeleteLessonModal
+      isSource={isSource}
         open={openDeleteLesson}
         setOpen={setOpenDeleteLesson}
         rowData={selectedLesson}
         setRowData={setSelectedLesson}
       />
       <EditLessonModal
+      isSource={isSource}
         round_id={id}
         open={openEditLesson}
         setOpen={setOpenEditLesson}
@@ -1025,12 +1031,14 @@ export default function CourseSourceBasicLevel({ id }) {
       />
 
       <AddVideoModal
+      isSource={isSource}
         open={openAddVideo}
         setOpen={setOpenAddVideo}
         id={selectedLesson?.id}
         content_id={id}
       />
       <EditVideoModal
+      isSource={isSource}
         open={openEditVideo}
         setOpen={setOpenEditVideo}
         rowData={selectedVideo}
@@ -1039,6 +1047,7 @@ export default function CourseSourceBasicLevel({ id }) {
         round_id={id}
       />
       <DeleteVideoModal
+      isSource={isSource}
         open={openDeleteVideo}
         setOpen={setOpenDeleteVideo}
         rowData={selectedVideo}
@@ -1046,13 +1055,14 @@ export default function CourseSourceBasicLevel({ id }) {
         round_id={id}
       />
 
-      <AddLivesModal open={openAddLive} setOpen={setOpenAddLive} id={id} lesson_id={rowData?.id} />
-      <EditLivesModal open={openEditLive} lesson_id={selectedLive?.id} id={id} setOpen={setOpenEditLive} rowData={selectedLive} setRowData={setSelectedLive} />
+      <AddLivesModal isSource={isSource} open={openAddLive} setOpen={setOpenAddLive} id={id} lesson_id={rowData?.id} />
+      <EditLivesModal isSource={isSource} open={openEditLive} lesson_id={selectedLive?.id} id={id} setOpen={setOpenEditLive} rowData={selectedLive} setRowData={setSelectedLive} />
       <DeleteLivesModal round_id={id} open={openDeleteLive} setOpen={setOpenDeleteLive} rowData={selectedLive} setRowData={setSelectedLive} />
       <ActiveLiveModal id={id} open={activeLiveModal} rowData={selectedLive} setOpen={setActiveLiveModal} />
       <FinishLiveModal id={id} open={markFinishModal} rowData={selectedLive} setOpen={setMarkFinishModal} />
 
       <AddExamVideoModal
+      isSource={isSource}
         open={openAddExamVideo}
         setOpen={setOpenAddExamVideo}
         exam_id={selectedExam}
@@ -1061,6 +1071,7 @@ export default function CourseSourceBasicLevel({ id }) {
       />
 
       <EditExamVideoModal
+      isSource={isSource}
         open={openEditExamVideo}
         setOpen={setOpenEditExamVideo}
         rowData={selectedExamVideo}
@@ -1070,6 +1081,7 @@ export default function CourseSourceBasicLevel({ id }) {
       />
 
       <DeleteExamVideoModal
+      isSource={isSource}
         open={openDeleteExamVideo}
         setOpen={setOpenDeleteExamVideo}
         rowData={selectedExamVideo}
@@ -1078,6 +1090,7 @@ export default function CourseSourceBasicLevel({ id }) {
       />
 
       <AddExamPdfModal
+      isSource={isSource}
         open={openAddExamPdf}
         setOpen={setOpenAddExamPdf}
         exam_id={selectedExam}
@@ -1085,7 +1098,9 @@ export default function CourseSourceBasicLevel({ id }) {
         id={id}
       />
 
-      <EditExamPdfModal id={id} exam_id={selectedLesson?.id} open={openEditExamPdf} setOpen={setOpenEditExamPdf} pdfData={selectedExamPdf} />
+      <EditExamPdfModal
+      isSource={isSource}
+      id={id} exam_id={selectedLesson?.id} open={openEditExamPdf} setOpen={setOpenEditExamPdf} pdfData={selectedExamPdf} />
 
       <DeleteExamPdfModal
         open={openDeleteExamPdf}

@@ -20,7 +20,7 @@ const EditExamPdfModal = ({ open, setOpen, pdfData, exam_id, id , lesson_id }) =
       form.setFieldsValue({
         title: pdfData?.title || "",
         description: pdfData?.description || "",
-        type: pdfData?.type || "question",
+        type: pdfData?.type || "",
       });
       // لا نعرض ملف في الـ Upload إلا لو المستخدم اختار واحد جديد
       setFileList([]);
@@ -58,7 +58,7 @@ const EditExamPdfModal = ({ open, setOpen, pdfData, exam_id, id , lesson_id }) =
       formData.append("lesson_id", exam_id || pdfData?.exam_id);
       formData.append("title", values.title);
       formData.append("description", values.description || "");
-      formData.append("type", values?.type || "question");
+      formData.append("type", values?.type || "");
 
       // لو المستخدم اختار ملف جديد نبعته، لو لأ نسيب القديم زي ما هو
       if (fileList.length > 0 && fileList[0]?.originFileObj) {
@@ -132,7 +132,7 @@ const EditExamPdfModal = ({ open, setOpen, pdfData, exam_id, id , lesson_id }) =
         <Form.Item
           name="type"
           label="نوع الملف"
-          rules={[{ required: true, message: "يرجى اختيار نوع الملف" }]}
+          // rules={[{ required: true, message: "يرجى اختيار نوع الملف" }]}
         >
           <Select
             placeholder="اختر نوع الملف"

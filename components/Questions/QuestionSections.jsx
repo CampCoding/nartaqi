@@ -140,7 +140,7 @@ export default function QuestionSections({
         ...editingSection,
         title: nameHtml,
         description: descHtml,
-        time_if_free: "01:30:00",
+        time_if_free: null,
       };
 
       if (params["exam-id"]) {
@@ -184,7 +184,7 @@ export default function QuestionSections({
           exam_id: params["exam-id"],
           title: nameHtml,
           description: descHtml,
-          time_if_free: time || "",
+          time_if_free: null,
         };
 
         dispatch(handleCreateExamSection({ body: newSection }))
@@ -217,7 +217,7 @@ export default function QuestionSections({
           exam_id: data?.id,
           title: nameHtml,
           description: descHtml,
-          time_if_free: "01:30:00",
+          time_if_free:null,
           questions: [],
         };
 

@@ -17,49 +17,75 @@ export default function EditLivesModal({
   id,
   rowData,
   setRowData,
-  selectedLesson
+  selectedLesson,
+  isSource
 }) {
   const dispatch = useDispatch();
-  const [date, setDate] = useState(null); // dayjs | null
-  const [dateStr, setDateStr] = useState(""); // string
+  const [date, setDate] = useState(null);
+  const [dateStr, setDateStr] = useState("");
   const { edit_live_loading } = useSelector((state) => state?.lives);
 
-  // Set initial data when the modal opens
+  const isFormValid = isSource 
+    ? Boolean(rowData?.title) 
+    : Boolean(rowData?.title && dateStr && rowData?.time && rowData?.link);
+
   useEffect(() => {
-    if (rowData) {
-      setDateStr(rowData?.date);
+    if (rowData && open) {
+      setDateStr(rowData?.date || "");
+      // تأكد من تهيئة active بشكل صحيح
+      if (!rowData?.active && rowData?.active !== "0") {
+        setRowData(prev => ({ ...prev, active: 0 }));
+      }
     }
-  }, [rowData]);
+  }, [rowData, open]);
 
   function handleInputChange(e) {
     const { name, value } = e.target;
     setRowData((prev) => ({ ...prev, [name]: value }));
   }
 
-  function handleSubmit() {
-    if (edit_live_loading) return;
+  // دالة خاصة لمعالجة تغيير active
+  function handleActiveChange(e) {
+    setRowData((prev) => ({ 
+      ...prev, 
+      active: e.target.checked ? 1 : 0 
+    }));
+  }
 
-    const data_send = {
-      ...rowData,
-      date: dateStr,
-    };
+  function handleSubmit() {
+    if (!isFormValid || edit_live_loading) return;
+    
+    const data_send = isSource 
+      ? {
+          id: rowData?.id,
+          lesson_id: rowData?.lesson_id,
+          title: rowData?.title
+        }
+      : {
+          ...rowData,
+          id: rowData?.id,
+          lesson_id: rowData?.lesson_id,
+          title: rowData?.title,
+          date: dateStr,
+        };
+
+    // للتأكد: تحقق من قيمة active قبل الإرسال
+    console.log("Sending data:", data_send);
 
     dispatch(handleEditLive({ body: data_send }))
       .unwrap()
       .then((res) => {
         if (res?.data?.status === "success") {
           toast.success("تم تعديل البث بنجاح");
-            dispatch(handleGetAllLives({body : {
-                          lesson_id : selectedLesson
-                        }}))
+          dispatch(handleGetAllLives({
+            body: { lesson_id: selectedLesson }
+          }));
           dispatch(handleGetAllRoundContent({
             body: { round_id: id },
           }));
-          dispatch(
-            handleGetAllRoundLessons({
-              body: { round_content_id }, // parent round id
-            })
-          );
+          dispatch(handleGetAllRoundLessons({
+            body: { round_content_id },
+          }));
           setOpen(false);
         } else {
           toast.error(res?.error?.response?.data?.message || "هناك خطأ أثناء تعديل البث");
@@ -122,72 +148,75 @@ export default function EditLivesModal({
             className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
           />
         </div>
+        
+        {!isSource && (
+          <div className="flex flex-col gap-2">
+            {/* Link Input */}
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="link"
+                className="text-lg font-medium text-gray-700"
+              >
+                رابط البث المباشر (رابط مباشر)
+              </label>
+              <input
+                id="link"
+                name="link"
+                value={rowData?.link || ""}
+                onChange={handleInputChange}
+                className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
+                placeholder="رابط البث (مثل: https://example.com)"
+              />
+            </div>
 
-        {/* Link Input */}
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="link"
-            className="text-lg font-medium text-gray-700"
-          >
-            رابط البث المباشر (رابط مباشر)
-          </label>
-          <input
-            id="link"
-            name="link"
-            value={rowData?.link || ""}
-            onChange={handleInputChange}
-            className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
-            placeholder="رابط البث (مثل: https://example.com)"
-          />
-        </div>
+            {/* Date Input */}
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="date"
+                className="text-lg font-medium text-gray-700"
+              >
+                تاريخ البث
+              </label>
+              <DatePicker
+                value={dateStr ? dayjs(dateStr) : null}
+                onChange={(value, stringValue) => {
+                  setDate(value);
+                  setDateStr(stringValue);
+                }}
+                className="border border-gray-400 rounded-md p-2 focus:ring-1 focus:ring-orange-400"
+              />
+            </div>
 
-        {/* Date Input */}
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="date"
-            className="text-lg font-medium text-gray-700"
-          >
-            تاريخ البث
-          </label>
-          <DatePicker
-            value={dateStr ? dayjs(dateStr) : null}
-            onChange={(value, stringValue) => {
-              setDate(value);
-              setDateStr(stringValue);
-            }}
-            className="border border-gray-400 rounded-md p-2 focus:ring-1 focus:ring-orange-400"
-          />
-        </div>
+            {/* Time Input */}
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="time"
+                className="text-lg font-medium text-gray-700"
+              >
+                وقت البث
+              </label>
+              <input
+                id="time"
+                name="time"
+                value={rowData?.time || ""}
+                onChange={handleInputChange}
+                className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
+                placeholder="وقت البث (مثل: 18:00)"
+              />
+            </div>
 
-        {/* Time Input */}
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="time"
-            className="text-lg font-medium text-gray-700"
-          >
-            وقت البث
-          </label>
-          <input
-            id="time"
-            name="time"
-            // type="time"
-            value={rowData?.time || ""}
-            onChange={handleInputChange}
-            className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
-            placeholder="وقت البث (مثل: 18:00)"
-          />
-        </div>
-
-        {/* Active Toggle */}
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={rowData?.active === "1"}
-            onChange={(e) => setRowData(({ ...rowData, active: e.target.checked ? "1" : "0" }))}
-            className="form-checkbox"
-          />
-          <label className="text-gray-700 text-sm">تنشيط البث</label>
-        </div>
+            {/* Active Toggle - تم التصحيح */}
+            {/* <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={rowData?.active === "1"}
+                onChange={handleActiveChange}
+                className="form-checkbox h-5 w-5 text-orange-500"
+              />
+              <label className="text-gray-700 text-sm">تنشيط البث</label>
+            </div> */}
+          </div>
+        )}
       </div>
     </Modal>
   );

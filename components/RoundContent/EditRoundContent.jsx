@@ -16,7 +16,8 @@ export default function EditRoundContent({
   id,
   rowData,
   setRowData,
-  type="basic"
+  type="basic",
+  isSource
 }) {
   const dispatch = useDispatch();
   const [errors, setErrors] = useState({});
@@ -76,10 +77,11 @@ export default function EditRoundContent({
   }
 
   // Validate description
-  if (!rowData?.content_description?.trim()) {
-    newErrors.content_description = "يرجى إدخال وصف المحتوى";
-  }
+  // if (!rowData?.content_description?.trim()) {
+  //   newErrors.content_description = "يرجى إدخال وصف المحتوى";
+  // }
   // Validate date
+  if(!isSource) {
   if (!rowData?.content_show_date) {
     newErrors.content_show_date = "يرجى اختيار التاريخ";
   } else {
@@ -88,6 +90,7 @@ export default function EditRoundContent({
       newErrors.content_show_date = "يرجى اختيار تاريخ صحيح";
     }
   }
+}
 
   setErrors(newErrors);
   return Object.keys(newErrors).length === 0;
@@ -111,7 +114,7 @@ export default function EditRoundContent({
     const data_send = {
       id: rowData?.id, // content ID
       title: rowData?.content_title?.trim(),
-      description: rowData?.content_description?.trim(),
+      description: rowData?.content_description?.trim() || "",
       show_date: formattedDate, // Send formatted date
     };
 
@@ -227,15 +230,13 @@ export default function EditRoundContent({
             }`}
             placeholder="شرح موجز لأهداف هذا المحتوى وما سيتم تغطيته"
           />
-          {errors.content_description && (
-            <p className="text-red-500 text-sm mt-1">{errors.content_description}</p>
-          )}
+         
         </div>
 
         {/* Date Input - Required */}
         <div className="flex flex-col gap-2">
           <label className="text-lg font-medium text-gray-700">
-            التاريخ *
+          جدولة المحتوي * (تحديد تاريخ ظهور المحتوي)   
           </label>
           <DatePicker
             value={dateValue}

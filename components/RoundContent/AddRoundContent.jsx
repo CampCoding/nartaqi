@@ -10,7 +10,7 @@ import {
 import { toast } from "react-toastify";
 import { handleGetSourceRound } from "@/lib/features/roundsSlice";
 
-export default function AddRoundContent({ open, setOpen, id, type = "basic" }) {
+export default function AddRoundContent({ isSource, open, setOpen, id, type = "basic" }) {
   const [date, setDate] = useState(null); // dayjs | null
   const [dateStr, setDateStr] = useState(""); // string
 
@@ -28,7 +28,7 @@ export default function AddRoundContent({ open, setOpen, id, type = "basic" }) {
     (state) => state?.rounds
   );
 
-  const isFormValid = roundContentData.title && roundContentData.description && dateStr;
+  const isFormValid =  isSource ?roundContentData.title  : roundContentData.title && dateStr; 
 
   useEffect(() => {
     if (!id) {
@@ -61,12 +61,7 @@ export default function AddRoundContent({ open, setOpen, id, type = "basic" }) {
       return
     }
 
-    if(!roundContentData?.description) {
-      toast.warn("برجاء ادخال وصف أولا!");
-      return
-    }
-
-    if(!dateStr) {
+    if(!isSource &&!dateStr) {
       toast.warn("برجاء اختيار تاريخ أولا!");
       return
     }
@@ -207,9 +202,9 @@ export default function AddRoundContent({ open, setOpen, id, type = "basic" }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label>التاريخ</label>
+          <label>جدولة المحتوي (تحديد تاريخ ظهور المحتوي) </label>
             <DatePicker
-             required
+             
                 onChange={(value, stringValue) => {
                   setDate(value); // value ده dayjs أو null
                   setDateStr(stringValue); // string formatted
