@@ -35,6 +35,7 @@ import {
 import { useQuillConfig } from "@/utils/quillConfig"; // ← uses your shared config
 import "react-quill-new/dist/quill.snow.css";
 import MathFieldInput from "../../../../components/Questions/McqSharedPassageEditor/parts/MathFieldInput";
+import MathTypeEditor from "@/components/MathTypeEditor/MathTypeEditor";
 // import "mathlive/core.css";
 // import "mathlive/static.css";
 
@@ -224,7 +225,12 @@ const EnhancedQuillEditor = ({
       </div>
 
       <div onPaste={onPaste} onDrop={onDrop} onDragOver={(e) => e.preventDefault()}>
-        <ReactQuill
+        <MathTypeEditor editorData={value} setEditorData=
+        {(data) => {
+          onChange(data);
+        }}
+        />
+        {/* <ReactQuill
           ref={quillRef}
           theme="snow"
           modules={modules}
@@ -233,7 +239,7 @@ const EnhancedQuillEditor = ({
           value={value}
           onChange={onChange}
           style={{ minHeight: "120px", border: "none" }}
-        />
+        /> */}
       </div>
 
       {/* Safety-net CSS to enforce fixed image size + RTL/editor polish */}

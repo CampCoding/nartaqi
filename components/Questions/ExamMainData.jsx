@@ -73,6 +73,7 @@ import EditExamVideoModal from "../RoundContent/Exams/EditExamVideoModal";
 import EditExamPdfModal from "../RoundContent/Exams/EditExamPdfModal";
 import DeleteExamPdfModal from "../RoundContent/Exams/DeleteExamPdfModal";
 import DeleteExamVideoModal from "../RoundContent/Exams/DeleteExamVideoModal";
+import MathTypeEditor from "../MathTypeEditor/MathTypeEditor";
 
 
 /* ===================== Main: ExamMainData ===================== */
@@ -226,15 +227,15 @@ export default function ExamMainData({
     if (examData?.sections?.length > 0 && !selectedSectionId) {
       setSelectedSectionId(examData.sections[0].id);
     }
-  }, [examData?.sections, selectedSectionId , selectedSectionData]);
+  }, [examData?.sections, selectedSectionId, selectedSectionData]);
 
   useEffect(() => {
-    if(selectedSectionId){
-    const filtered = get_exam_sections_list?.data?.message?.find(item => item?.id == selectedSectionId);
-    console.log(filtered);
-    setSelectedSectionData(filtered)
+    if (selectedSectionId) {
+      const filtered = get_exam_sections_list?.data?.message?.find(item => item?.id == selectedSectionId);
+      console.log(filtered);
+      setSelectedSectionData(filtered)
     }
-  } , [selectedSectionId])
+  }, [selectedSectionId])
 
   useEffect(() => {
     dispatch(handleGetAllExams({
@@ -272,7 +273,7 @@ export default function ExamMainData({
         date: filteredItem?.date,
         time: filteredItem?.time,
         type: filteredItem?.type,
-        success_percentage : filteredItem?.success_percentage
+        success_percentage: filteredItem?.success_percentage
       }));
 
       setExamData((prev) => ({
@@ -1542,145 +1543,153 @@ export default function ExamMainData({
 
                   {/* General MCQ */}
                   {mcqSubType === "general" ? (
-                   <div className="space-y-8">
-  {/* Question Text */}
-  <div>
-    <label className="block text-lg font-semibold text-gray-800 mb-4">
-      نص السؤال
-    </label>
-    <LabeledEditor
-      label="" // Hide duplicate label since we have one above
-      value={currentQuestion}
-      onChange={setCurrentQuestion}
-      editorMinH={180}
-      allowImages
-      placeholder="اكتب نص السؤال هنا... يمكنك إضافة صور، معادلات، تنسيق..."
-    />
-  </div>
+                    <div className="space-y-8">
+                      {/* Question Text */}
+                      <div>
+                        <label className="block text-lg font-semibold text-gray-800 mb-4">
+                          نص السؤال
+                        </label>
+                        <LabeledEditor
+                          label="" // Hide duplicate label since we have one above
+                          value={currentQuestion}
+                          onChange={setCurrentQuestion}
+                          editorMinH={180}
+                          allowImages
+                          placeholder="اكتب نص السؤال هنا... يمكنك إضافة صور، معادلات، تنسيق..."
+                        />
+                      </div>
 
-  {/* Options Section */}
-  <div className="space-y-5">
-    <div className="flex items-center justify-between mb-5">
-      <label className="text-lg font-semibold text-gray-800">
-        خيارات الإجابة
-      </label>
-      <span className="text-sm text-gray-500">
-        يجب تحديد إجابة صحيحة واحدة فقط
-      </span>
-    </div>
+                      {/* Options Section */}
+                      <div className="space-y-5">
+                        <div className="flex items-center justify-between mb-5">
+                          <label className="text-lg font-semibold text-gray-800">
+                            خيارات الإجابة
+                          </label>
+                          <span className="text-sm text-gray-500">
+                            يجب تحديد إجابة صحيحة واحدة فقط
+                          </span>
+                        </div>
 
-    <div className="space-y-6">
-      {mcqOptions.map((option, index) => {
-        const letter = String.fromCharCode(1632 + index +1); // Arabic numerals: ١, ٢, ٣...
-        const isCorrect = mcqCorrectAnswer === index;
+                        <div className="space-y-6">
+                          {mcqOptions.map((option, index) => {
+                            const letter = String.fromCharCode(1632 + index + 1); // Arabic numerals: ١, ٢, ٣...
+                            const isCorrect = mcqCorrectAnswer === index;
 
-        return (
-          <div
-            key={index}
-            className={`relative overflow-hidden rounded-3xl border-2 transition-all duration-300 ${
-              isCorrect
-                ? "border-green-400 bg-green-50/50 shadow-lg shadow-green-100"
-                : "border-gray-200 bg-white shadow-md"
-            }`}
-          >
-            {/* Header with letter, correct indicator, and delete */}
-            <div className="flex items-center justify-between p-5 bg-gradient-to-r from-transparent to-transparent">
-              <div className="flex items-center gap-4">
-                {/* Letter Circle */}
-                <div
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold shadow-md transition-colors ${
-                    isCorrect
-                      ? "bg-green-600 text-white"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  {letter }
-                </div>
+                            return (
+                              <div
+                                key={index}
+                                className={`relative overflow-hidden rounded-3xl border-2 transition-all duration-300 ${isCorrect
+                                    ? "border-green-400 bg-green-50/50 shadow-lg shadow-green-100"
+                                    : "border-gray-200 bg-white shadow-md"
+                                  }`}
+                              >
+                                {/* Header with letter, correct indicator, and delete */}
+                                <div className="flex items-center justify-between p-5 bg-gradient-to-r from-transparent to-transparent">
+                                  <div className="flex items-center gap-4">
+                                    {/* Letter Circle */}
+                                    <div
+                                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold shadow-md transition-colors ${isCorrect
+                                          ? "bg-green-600 text-white"
+                                          : "bg-gray-100 text-gray-700"
+                                        }`}
+                                    >
+                                      {letter}
+                                    </div>
 
-                {/* Correct Answer Radio */}
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="correctAnswer"
-                    checked={isCorrect}
-                    onChange={() => setMcqCorrectAnswer(index)}
-                    className="h-5 w-5 text-green-600 focus:ring-green-500"
-                  />
-                  <span className="font-medium text-gray-700">
-                    {isCorrect ? "الإجابة الصحيحة" : "تحديد كإجابة صحيحة"}
-                  </span>
-                  {isCorrect && (
-                    <span className="px-3 py-1 text-xs font-bold text-green-700 bg-green-200 rounded-full">
-                      ✓ صحيحة
-                    </span>
-                  )}
-                </label>
-              </div>
+                                    {/* Correct Answer Radio */}
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                      <input
+                                        type="radio"
+                                        name="correctAnswer"
+                                        checked={isCorrect}
+                                        onChange={() => setMcqCorrectAnswer(index)}
+                                        className="h-5 w-5 text-green-600 focus:ring-green-500"
+                                      />
+                                      <span className="font-medium text-gray-700">
+                                        {isCorrect ? "الإجابة الصحيحة" : "تحديد كإجابة صحيحة"}
+                                      </span>
+                                      {isCorrect && (
+                                        <span className="px-3 py-1 text-xs font-bold text-green-700 bg-green-200 rounded-full">
+                                          ✓ صحيحة
+                                        </span>
+                                      )}
+                                    </label>
+                                  </div>
 
-              {/* Delete Button - hidden if only 2 options */}
-              {mcqOptions.length > 2 && (
-                <button
-                  type="button"
-                  onClick={() => removeMcqOption(index)}
-                  className="p-2 text-red-600 rounded-xl hover:bg-red-50 transition-colors"
-                  title="حذف هذا الخيار"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              )}
-            </div>
+                                  {/* Delete Button - hidden if only 2 options */}
+                                  {mcqOptions.length > 2 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => removeMcqOption(index)}
+                                      className="p-2 text-red-600 rounded-xl hover:bg-red-50 transition-colors"
+                                      title="حذف هذا الخيار"
+                                    >
+                                      <Trash2 className="w-5 h-5" />
+                                    </button>
+                                  )}
+                                </div>
 
-            {/* Option Content */}
-            <div className="px-6 pb-6 space-y-6 border-t border-gray-100">
-              {/* Option Text */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  نص الخيار 
-                </label>
-                <LabeledEditor
+                                {/* Option Content */}
+                                <div className="px-6 pb-6 space-y-6 border-t border-gray-100">
+                                  {/* Option Text */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                                      نص الخيار
+                                    </label>
+                                    <MathTypeEditor editorData={option.answer} setEditorData=
+
+                                      {(data) =>
+                                        updateMcqOption(
+                                          index,
+                                          "answer",
+                                          data
+                                        )
+                                      }
+                                    />
+                                    {/* <LabeledEditor
                   label=""
                   value={option.answer}
                   onChange={(v) => updateMcqOption(index, "answer", v)}
                   editorMinH={130}
                   allowImages
                   placeholder="اكتب نص الخيار هنا..."
-                />
-              </div>
+                /> */}
+                                  </div>
 
-              {/* Explanation */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                  شرح الخيار 
-                  <span className="text-xs font-normal text-gray-500">(يظهر بعد الإجابة في وضع المراجعة)</span>
-                </label>
-                <LabeledEditor
-                  label=""
-                  value={option.question_explanation}
-                  onChange={(v) => updateMcqOption(index, "question_explanation", v)}
-                  editorMinH={100}
-                  allowImages
-                  placeholder="اشرح لماذا هذا الخيار صحيح أو خاطئ... (اختياري لكن موصى به)"
-                />
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
+                                  {/* Explanation */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                                      شرح الخيار
+                                      <span className="text-xs font-normal text-gray-500">(يظهر بعد الإجابة في وضع المراجعة)</span>
+                                    </label>
+                                    <LabeledEditor
+                                      label=""
+                                      value={option.question_explanation}
+                                      onChange={(v) => updateMcqOption(index, "question_explanation", v)}
+                                      editorMinH={100}
+                                      allowImages
+                                      placeholder="اشرح لماذا هذا الخيار صحيح أو خاطئ... (اختياري لكن موصى به)"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
 
-    {/* Add Option Button */}
-    <div className="flex justify-center pt-4">
-      <button
-        type="button"
-        onClick={addMcqOption}
-        className="inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-blue-700 bg-blue-50 rounded-2xl hover:bg-blue-100 hover:shadow-md transition-all shadow-sm border border-blue-200"
-      >
-        <PlusIcon className="w-5 h-5" />
-        إضافة خيار جديد
-      </button>
-    </div>
-  </div>
-</div>
+                        {/* Add Option Button */}
+                        <div className="flex justify-center pt-4">
+                          <button
+                            type="button"
+                            onClick={addMcqOption}
+                            className="inline-flex items-center gap-3 px-6 py-3 text-sm font-medium text-blue-700 bg-blue-50 rounded-2xl hover:bg-blue-100 hover:shadow-md transition-all shadow-sm border border-blue-200"
+                          >
+                            <PlusIcon className="w-5 h-5" />
+                            إضافة خيار جديد
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   ) : (
                     <McqSharedPassageEditor
 
@@ -1694,7 +1703,7 @@ export default function ExamMainData({
               )}
 
               {/* Non-MCQ */}
-             
+
 
               {questionType === "trueFalse" && (
                 <TrueFalseQuestions

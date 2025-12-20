@@ -30,7 +30,7 @@
 //   // State for collapsable panels
 //   const [expandedQuestions, setExpandedQuestions] = useState({});
 
-  
+
 //   // State for editing
 //   const [editingQuestionId, setEditingQuestionId] = useState(null);
 //   const [editingContent, setEditingContent] = useState("");
@@ -43,7 +43,7 @@
 //   const [questionToDelete, setQuestionToDelete] = useState(null);
 //   const [sectionName , setSectionName] = useState("");
 //   // Log to verify if selectedSectionId is set correctly
-  
+
 //   useEffect(() => {
 //     console.log("selectedSection" , selectedSection)
 //   } ,[selectedSection])
@@ -68,17 +68,17 @@
 //     if (get_exam_questions_list) {
 //       const questions = get_exam_questions_list?.data?.message;
 //       const initialExpandedState = {};
-      
+
 //       // Process MCQs
 //       (questions?.mcq || []).forEach((q, index) => {
 //         initialExpandedState[`mcq-${q.id}`] = false; // Default expanded
 //       });
-      
+
 //       // Process paragraphs
 //       (questions?.paragraphs || []).forEach((p, index) => {
 //         initialExpandedState[`paragraph-${p?.paragraph?.id}`] = false; // Default expanded
 //       });
-      
+
 //       setExpandedQuestions(initialExpandedState);
 //     }
 //   }, [get_exam_questions_list]);
@@ -184,7 +184,7 @@
 //   // Function to delete a question
 //   const handleDeleteQuestion = () => {
 //     if (!questionToDelete) return;
-    
+
 //     dispatch(handleDeleteExamQuestions({
 //       body: {
 //         id: questionToDelete.id
@@ -271,7 +271,7 @@
 //                       {String.fromCharCode(1632 + (idx + 1))}
 //                     </span>
 //                   </div>
-                  
+
 //                   <div className="space-y-2">
 //                     <label className="text-xs text-gray-600">نص الخيار</label>
 //                     <ReactQuill
@@ -283,7 +283,7 @@
 //                       style={{ minHeight: '80px' }}
 //                     />
 //                   </div>
-                  
+
 //                   <div className="space-y-2">
 //                     <label className="text-xs text-gray-600">شرح الخيار</label>
 //                     <ReactQuill
@@ -382,7 +382,7 @@
 //                           {String.fromCharCode(1632 + (oIdx + 1))}
 //                         </span>
 //                       </div>
-                      
+
 //                       <div className="space-y-2">
 //                         <label className="text-xs text-gray-600">نص الخيار</label>
 //                         <ReactQuill
@@ -459,7 +459,7 @@
 //               </button>
 //             </div>
 //           </div>
-          
+
 //           <div className="grid gap-2">
 //             {q.options.map((option, idx) => {
 //               const isCorrect = idx === q.correctAnswer;
@@ -656,7 +656,7 @@
 //                       )}
 //                     </div>
 //                   </div>
-                  
+
 //                   {/* Collapsible Content */}
 //                   {isExpanded && (
 //                     <div className="p-4 pt-0 border-t">
@@ -707,8 +707,9 @@ import Card from "./ExamCard";
 import { handleDeleteExamQuestions, handleGetExamQuestions } from "../../lib/features/examSlice";
 import { toast } from "react-toastify";
 
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "quill/dist/quill.snow.css";
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+import "react-quill-new/dist/quill.snow.css";
+import MathTypeEditor from "../MathTypeEditor/MathTypeEditor";
 
 const { confirm } = Modal;
 
@@ -733,7 +734,7 @@ export default function DisplayQuestions({
   const [questionToDelete, setQuestionToDelete] = useState(null);
   const [sectionName, setSectionName] = useState("");
 
- 
+
 
   useEffect(() => {
     if (get_exam_questions_list) {
@@ -757,11 +758,11 @@ export default function DisplayQuestions({
 
   const quillFormats = ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'align', 'link', 'image', 'formula'];
 
-  const apiQuestions = useMemo(() => {
-    if (!get_exam_questions_list) return [];
-    const data = get_exam_questions_list?.data?.message;
 
-    const mcqs = (data?.mcq || []).map(q => {
+  const apiQuestions = useMemo(() => {
+    if (!get_exam_questions_list && !selectedSection) return [];
+    const data = get_exam_questions_list?.data?.message || { mcq: [], paragraphs: [] };
+    const mcqs = ((data?.mcq && data?.mcq?.length) ? data?.mcq : (selectedSection?.mcq && selectedSection?.mcq?.length) ? selectedSection?.mcq : []).map(q => {
       const options = q?.options || [];
       const correctIndex = options.findIndex(opt => Number(opt?.is_correct) === 1);
       return {
@@ -776,7 +777,7 @@ export default function DisplayQuestions({
         rawData: q
       };
     });
-
+    console.log("get_exam_questions_list--------", ((data?.mcq && data?.mcq?.length) ? data?.mcq : (selectedSection?.mcq && selectedSection?.mcq?.length) ? selectedSection?.mcq : []))
     const paragraphs = (data?.paragraphs || []).map(p => ({
       id: p.paragraph.id,
       type: "paragraph_mcq",
@@ -793,7 +794,7 @@ export default function DisplayQuestions({
     }));
 
     return [...mcqs, ...paragraphs];
-  }, [get_exam_questions_list]);
+  }, [get_exam_questions_list, selectedSection]);
 
   const toggleQuestion = (id, type) => {
     const key = `${type === 'mcq' ? 'mcq' : 'paragraph'}-${id}`;
@@ -880,7 +881,16 @@ export default function DisplayQuestions({
                       <div className="space-y-4">
                         <div>
                           <label className="text-sm text-gray-600 mb-2 block">نص الخيار</label>
-                          <ReactQuill
+                          <MathTypeEditor editorData={opt.text} setEditorData=
+
+                            {(data) =>{
+                              const newOpts = [...editingOptions];
+                              newOpts[idx].text = data;
+                              setEditingOptions(newOpts);
+                            }
+                          }
+                          />
+                          {/* <ReactQuill
                             value={opt.text}
                             onChange={v => {
                               const newOpts = [...editingOptions];
@@ -889,7 +899,7 @@ export default function DisplayQuestions({
                             }}
                             modules={quillModules}
                             formats={quillFormats}
-                          />
+                          /> */}
                         </div>
                         <div>
                           <label className="text-sm text-gray-600 mb-2 block">الشرح (اختياري)</label>
@@ -957,11 +967,10 @@ export default function DisplayQuestions({
                 return (
                   <div
                     key={oIdx}
-                    className={`p-5 rounded-xl border-2 transition-all ${
-                      isCorrect
-                        ? "bg-emerald-50 border-emerald-300 shadow-sm"
-                        : "bg-white border-gray-200 hover:border-gray-300"
-                    }`}
+                    className={`p-5 rounded-xl border-2 transition-all ${isCorrect
+                      ? "bg-emerald-50 border-emerald-300 shadow-sm"
+                      : "bg-white border-gray-200 hover:border-gray-300"
+                      }`}
                   >
                     <div className="flex items-start gap-3">
                       <span className="font-bold text-lg text-gray-700 mt-1">
@@ -1032,7 +1041,7 @@ export default function DisplayQuestions({
             <div className="p-8 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-3xl border border-indigo-200 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h2 className="text-3xl font-bold text-indigo-900" dangerouslySetInnerHTML={{ __html:`قسم : ${selectedSection?.title}` }} />
+                  <h2 className="text-3xl font-bold text-indigo-900" dangerouslySetInnerHTML={{ __html: `قسم : ${selectedSection?.title}` }} />
                   <p className="text-lg text-indigo-700 mt-2">عدد الأسئلة: <span className="font-bold">{apiQuestions.length}</span></p>
                 </div>
                 {/* <Tag color="indigo" className="text-base px-5 py-2">معرف القسم: {selectedSectionId}</Tag> */}

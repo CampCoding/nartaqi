@@ -75,6 +75,7 @@ async function fileToDataUrl(file) {
 
 /* ================= MathLive Arabic/RTL setup (JS only) ================= */
 import "mathlive"; // JS only (CSS must be imported globally in app/globals.css)
+import MathTypeEditor from "../MathTypeEditor/MathTypeEditor";
 
 /** run once per app load */
 function useMathliveArabicSetupOnce() {
@@ -703,13 +704,19 @@ export default function McqSharedPassageEditor({
               {isChemical ? (
                 <>
                   <label className="block text-xs font-semibold text-gray-600">معادلات/صيغ عامة</label>
-                  <MathFieldInput
+                  <MathTypeEditor editorData={p.content} setEditorData=
+                    {(data) =>
+                      updatePassageContent(p.id, data)
+                    }
+                  />
+
+                  {/* <MathFieldInput
                     value={p.content}
                     onChange={(latex) => updatePassageContent(p.id, latex)}
                     className="w-full"
                     options={{ virtualKeyboardMode: "onfocus" }}
                     placeholder="أدخل المعادلات/الصيغ العامة هنا…"
-                  />
+                  /> */}
                 </>
               ) : isMath ? (
                 <>
@@ -775,14 +782,19 @@ export default function McqSharedPassageEditor({
                     )}
 
                     {isPassage && (
-                      <LabeledEditor
-                        label="نص السؤال"
-                        value={q.text}
-                        onChange={(val) => updateQuestionText(p.id, q.id, val)}
-                        editorMinH={110}
-                        uploadImage={uploadImage}
-                        imageSize={FIXED_IMG}
+                      <MathTypeEditor editorData={q.text} setEditorData=
+                        {(data) =>
+                          updateQuestionText(p.id, q.id, data)
+                        }
                       />
+                      // <LabeledEditor
+                      //   label="نص السؤال"
+                      //   value={q.text}
+                      //   onChange={(val) => updateQuestionText(p.id, q.id, val)}
+                      //   editorMinH={110}
+                      //   uploadImage={uploadImage}
+                      //   imageSize={FIXED_IMG}
+                      // />
                     )}
 
                     {/* الخيارات */}
@@ -839,13 +851,27 @@ export default function McqSharedPassageEditor({
                               <>
                                 <div className="space-y-2">
                                   <label className="block text-xs font-semibold text-gray-600">معادلة الاختيار</label>
-                                  <MathFieldInput
+                                 
+                                  <MathTypeEditor editorData={opt.latex} setEditorData=
+
+                                    {(data) =>
+                                      updateOptionField(
+                                        p.id,
+                                        q.id,
+                                        optIndex,
+                                        "answer",
+                                        data
+                                      )
+                                    }
+                                  />
+                                 
+                                  {/* <MathFieldInput
                                     value={opt.latex}
                                     onChange={(latex) => updateOptionField(p.id, q.id, optIndex, "latex", latex)}
                                     placeholder="مثال: \\frac{a+b}{c}"
                                     className="w-full"
                                     options={{ virtualKeyboardMode: "onfocus" }}
-                                  />
+                                  /> */}
                                 </div>
 
                                 {/* مرفقات الاختيار: صور + PDF */}

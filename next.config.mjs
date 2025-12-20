@@ -5,7 +5,8 @@ const nextConfig = {
   },
   experimental: {
     turbo: false
-  }
+  },
+  reactStrictMode: false,
 };
 
 export default nextConfig;

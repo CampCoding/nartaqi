@@ -8,6 +8,7 @@ import PagesHeader from "../../../../../components/ui/PagesHeader";
 import ExamMainData from "../../../../../components/Questions/ExamMainData";
 import exams from "../../../../../data/exams";
 import { useDispatch, useSelector } from "react-redux";
+import MathTypeEditor from "@/components/MathTypeEditor/MathTypeEditor";
 
 const breadcrumbs = [
   { label: "الرئيسية", href: "/", icon: BarChart3 },

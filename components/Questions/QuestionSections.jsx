@@ -434,7 +434,7 @@ export default function QuestionSections({
                         />
                       )}
                       <div className="text-xs text-gray-500 mt-1">
-                        عدد الأسئلة: {section.questions?.length || 0}
+                        عدد الأسئلة: {section.mcq?.length || 0}
                       </div>
                     </div>
                     <div className="flex gap-2">
