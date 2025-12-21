@@ -565,6 +565,7 @@ const SubjectsManagementPage = () => {
               {filteredSubjects?.map((subject) => (
                 <CourseSourceSubjectCard
                   page={page}
+                  source={true}
                   pageSize={backendPageSize}
                   key={subject.code || subject.id}
                   subject={subject}

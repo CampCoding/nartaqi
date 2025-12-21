@@ -96,9 +96,7 @@ export default function QuestionSections({
       setLocalSections(get_exam_sections_list.data.message);
     } else if (sections.length > 0) {
       setLocalSections(sections);
-    } else {
-      setLocalSections([]);
-    }
+    } 
   }, [get_exam_sections_list, sections]);
 
   // Reset form

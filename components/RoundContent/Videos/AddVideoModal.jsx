@@ -1,31 +1,34 @@
 "use client";
-import { Modal, Button, Spin } from 'antd' // Import Button and Spin from Ant Design
-import React, { useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux' 
-import { PlusOutlined } from '@ant-design/icons'; // Import icons
-import { toast } from 'react-toastify';
-import { handleAddLessonVideo, handleGetAllLessonVideo } from '../../../lib/features/videoSlice';
-import { handleGetAllRoundContent } from '../../../lib/features/roundContentSlice';
+import { Modal, Button, Spin } from "antd"; // Import Button and Spin from Ant Design
+import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { PlusOutlined } from "@ant-design/icons"; // Import icons
+import { toast } from "react-toastify";
+import {
+  handleAddLessonVideo,
+  handleGetAllLessonVideo
+} from "../../../lib/features/videoSlice";
+import { handleGetAllRoundContent } from "../../../lib/features/roundContentSlice";
 
+export default function AddVideoModal({ open, setOpen, id, content_id }) {
+  const [videoData, setVideoData] = useState({
+    title: "",
+    description: "",
+    youtube_link: null,
+    vimeo_link: null,
+    time: ""
+  });
 
+  const dispatch = useDispatch();
+  const { add_video_loading } = useSelector(
+    (state) => state?.videos || { store_content_loading: false }
+  );
 
-export default function AddVideoModal({ open, setOpen, id , content_id }) {
-  const [videoData , setVideoData] = useState({
-    title:"",
-    description:"",
-    youtube_link:null,
-    vimeo_link:null,
-    time:"",
-  })
-  
-  const dispatch = useDispatch(); 
-  const { add_video_loading } = useSelector(state => state?.videos || { store_content_loading: false });
-  
   const isFormValid = videoData.title && videoData.description;
 
   function handleInputChange(e) {
     const { name, value } = e.target;
-    setVideoData(prev => ({
+    setVideoData((prev) => ({
       ...prev,
       [name]: value
     }));
@@ -41,131 +44,164 @@ export default function AddVideoModal({ open, setOpen, id , content_id }) {
 
     dispatch(handleAddLessonVideo({ body: data_send }))
       .unwrap()
-      .then(res => {
-        if(res?.data?.status == "success") {
+      .then((res) => {
+        if (res?.data?.status == "success") {
           toast.success("تم اضافه الفيديو بنجاح");
-          dispatch(handleGetAllRoundContent({
-        body: {
-          round_id: content_id,
-        },
-      }))
-          dispatch(handleGetAllLessonVideo({body : {
-            round_content_id : id
-          }}))
-           setOpen(false);
-        setVideoData({time :"",title:"",description:"",video:""});
-        }else {
-          toast.error(res?.data?.message || "هناك خطأ أثناء اضافه الفيديو")
+          dispatch(
+            handleGetAllRoundContent({
+              body: {
+                round_id: content_id
+              }
+            })
+          );
+          dispatch(
+            handleGetAllLessonVideo({
+              body: {
+                round_content_id: id
+              }
+            })
+          );
+          setOpen(false);
+          setVideoData({ time: "", title: "", description: "", video: "" });
+        } else {
+          toast.error(res?.data?.message || "هناك خطأ أثناء اضافه الفيديو");
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Failed to add video:", err);
       })
-      .finally(() => setOpen(false))
+      .finally(() => setOpen(false));
   }
-  
+
   // Custom footer for better control over button design and loading state
   const modalFooter = (
-    <div className='flex justify-start space-x-2 space-x-reverse pt-4'>
-      <Button 
-        key="submit" 
-        type="primary" 
-        onClick={handleSubmit} 
+    <div className="flex justify-start space-x-2 space-x-reverse pt-4">
+      <Button
+        key="submit"
+        type="primary"
+        onClick={handleSubmit}
         disabled={!isFormValid || add_video_loading}
         loading={add_video_loading}
-        className='bg-orange-500 hover:!bg-orange-600 border-none rounded-md px-6'
+        className="bg-orange-500 hover:!bg-orange-600 border-none rounded-md px-6"
         icon={<PlusOutlined />}
       >
         إضافة الفيديو
       </Button>
-      <Button 
-        key="back" 
+      <Button
+        key="back"
         onClick={() => setOpen(false)}
-        className='rounded-md px-6'
+        className="rounded-md px-6"
       >
         إلغاء
       </Button>
     </div>
   );
-  
+
   return (
-    <Modal 
+    <Modal
       open={open}
       onCancel={() => setOpen(false)}
-      footer={modalFooter} 
+      footer={modalFooter}
       title="إضافة الفيديو "
       wrapClassName="rtl-modal-wrap"
-      style={{ direction: 'rtl' }}
+      style={{ direction: "rtl" }}
     >
-      <div className='flex flex-col gap-4 mt-4'>
-        
+      <div className="flex flex-col gap-4 mt-4">
         {/* Title Input */}
-        <div className='flex flex-col gap-2'>
-          <label htmlFor='title' className='text-lg font-medium text-gray-700'>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="title" className="text-lg font-medium text-gray-700">
             عنوان الفيديو
           </label>
-          <input 
-            id='title'
-            name='title'
+          <input
+            id="title"
+            name="title"
             value={videoData?.title}
             onChange={handleInputChange}
-            className='border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400'
-            placeholder='مثل: أساسيات برمجة React'
+            className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
+            placeholder="مثل: أساسيات برمجة React"
           />
         </div>
 
         {/* Description Input (using textarea for multi-line description) */}
-        <div className='flex flex-col gap-2'>
-          <label htmlFor='description' className='text-lg font-medium text-gray-700'>
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="description"
+            className="text-lg font-medium text-gray-700"
+          >
             وصف الفيديو
           </label>
-          <textarea 
-            id='description'
-            name='description'
+          <textarea
+            id="description"
+            name="description"
             value={videoData?.description}
             onChange={handleInputChange}
             rows={3} // Allows for a better description entry experience
-            className='border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400 resize-none'
-            placeholder='شرح موجز لأهداف هذا المحتوى وما سيتم تغطيته'
+            className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400 resize-none"
+            placeholder="شرح موجز لأهداف هذا المحتوى وما سيتم تغطيته"
           />
         </div>
-         
-          <div className='flex flex-col gap-2'>
-          <label htmlFor='youtube_link' className='text-lg font-medium text-gray-700'>
-          (Youtube)  لينك الفيديو
+
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="youtube_link"
+            className="text-lg font-medium text-gray-700"
+          >
+            (Youtube) لينك الفيديو
           </label>
-          <input 
-            id='youtube_link'
-            name='youtube_link'
+          <input
+            id="youtube_link"
+            name="youtube_link"
             value={videoData?.youtube_link}
             onChange={handleInputChange}
-            className='border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400'
+            className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
           />
         </div>
 
-          <div className='flex flex-col gap-2'>
-          <label htmlFor='vimeo_link' className='text-lg font-medium text-gray-700'>
-          (Vimeo)  لينك الفيديو
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="vimeo_link"
+            className="text-lg font-medium text-gray-700"
+          >
+            (Vimeo) لينك الفيديو
           </label>
-          <input 
-            id='vimeo_link'
-            name='vimeo_link'
+          <input
+            id="vimeo_link"
+            name="vimeo_link"
             value={videoData?.vimeo_link}
             onChange={handleInputChange}
-            className='border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400'
+            className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
           />
         </div>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="time" className="text-lg font-medium text-gray-700">
+            مجاني
+          </label>
 
-         <div className='flex flex-col gap-2'>
-          <label htmlFor='time' className='text-lg font-medium text-gray-700'>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              مجاني
+            </label>
+            <select
+              value={videoData?.free}
+              onChange={handleInputChange}
+              name="free"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="0">لا</option>
+              <option value="1">نعم</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="time" className="text-lg font-medium text-gray-700">
             مدة الفيديو
           </label>
-          <input 
-            id='time'
-            name='time'
+          <input
+            id="time"
+            name="time"
             value={videoData?.time}
             onChange={handleInputChange}
-            className='border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400'
+            className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
           />
         </div>
       </div>

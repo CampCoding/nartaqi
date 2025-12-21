@@ -37,6 +37,7 @@ export default function EditVideo({
       youtube_link: formData?.youtube_link,
       vimeo_link: formData?.vimeo_link,
       title: formData?.title,
+      free: formData?.free,
       description: formData?.description
     };
     console.log(data, "formData");
@@ -143,6 +144,20 @@ export default function EditVideo({
             onChange={changeHandler}
           />
         </div>
+         <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              مجاني
+            </label>
+            <select
+              value={formData?.free}
+              onChange={changeHandler}
+              name="free"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="0">لا</option>
+              <option value="1">نعم</option>
+            </select>
+          </div>
            <div>
           <label
             for="visitors"

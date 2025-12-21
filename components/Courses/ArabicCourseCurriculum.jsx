@@ -368,6 +368,7 @@ export default function ArabicCourseCurriculum({ id , source }) {
                 إضافة اختبار{" "}
               </button>
             </div>
+            {console.log("examDataexamDataexamData-----.-----", examData)}
             <div className="flex-1 min-w-0">
               <p className="font-medium text-gray-800 truncate">
                 {examData?.title}

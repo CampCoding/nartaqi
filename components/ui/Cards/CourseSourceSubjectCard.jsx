@@ -2,7 +2,15 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreVertical, Edit, Trash2, Copy, Eye, EyeOff, File } from "lucide-react";
+import {
+  MoreVertical,
+  Edit,
+  Trash2,
+  Copy,
+  Eye,
+  EyeOff,
+  File
+} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { handleGetAllCoursesCategories } from "../../../lib/features/categoriesSlice";
 import { Badge } from "antd";
@@ -48,7 +56,9 @@ const CourseSourceSubjectCard = ({
   const handleEdit = (e) => {
     e?.stopPropagation?.();
     setShowDropdown(false);
-    router.push(`/saudi_source_course/edit/${subject?.id}?page=${page}&pageSize=${page_size}`);
+    router.push(
+      `/saudi_source_course/edit/${subject?.id}?page=${page}&pageSize=${page_size}`
+    );
     onEdit?.(subject);
   };
 
@@ -64,9 +74,7 @@ const CourseSourceSubjectCard = ({
     onRequestDuplicate?.(subject, "new");
   };
 
-  const startDate = subject?.start_date
-    ? subject.start_date.split("T")[0]
-    : "";
+  const startDate = subject?.start_date ? subject.start_date.split("T")[0] : "";
   const endDate = subject?.end_date ? subject.end_date.split("T")[0] : "";
 
   // ✅ determine active state from subject.active
@@ -75,11 +83,10 @@ const CourseSourceSubjectCard = ({
     subject?.active === 1 ||
     subject?.active === true;
 
-  const { teachers_loading, teachers_list } = useSelector(state => state?.teachers)
+  const { teachers_loading, teachers_list } = useSelector(
+    (state) => state?.teachers
+  );
   const [selectedTeacher, setSelectedTeacher] = useState({});
-
-
-
 
   return (
     <div
@@ -107,21 +114,23 @@ const CourseSourceSubjectCard = ({
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* تفعيل / إلغاء تفعيل – يفتح مودال في الأب */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowDropdown(false);
-                      onActive?.(subject);
-                    }}
-                    className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    {isActive ? (
-                      <EyeOff size={14} className="text-emerald-600" />
-                    ) : (
-                      <Eye size={14} className="text-emerald-600" />
-                    )}
-                    <span>{isActive ? "غير نشط" : "نشط"}</span>
-                  </button>
+                  {subject?.source == 0 ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowDropdown(false);
+                        onActive?.(subject);
+                      }}
+                      className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      {isActive ? (
+                        <EyeOff size={14} className="text-emerald-600" />
+                      ) : (
+                        <Eye size={14} className="text-emerald-600" />
+                      )}
+                      <span>{isActive ? "غير نشط" : "نشط"}</span>
+                    </button>
+                  ) : null}
 
                   <button
                     onClick={handleDuplicateNewCourse}
@@ -132,7 +141,13 @@ const CourseSourceSubjectCard = ({
                   </button>
 
                   <button
-                    onClick={() => router.push(`/termsCondition?roundId=${subject?.id}&page=${page}&pageSize=${6}`)}
+                    onClick={() =>
+                      router.push(
+                        `/termsCondition?roundId=${
+                          subject?.id
+                        }&page=${page}&pageSize=${6}`
+                      )
+                    }
                     className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
                   >
                     <File size={14} className="text-blue-600" />
@@ -147,7 +162,11 @@ const CourseSourceSubjectCard = ({
                   </button>
 
                   <button
-                    onClick={() => router.push(`/round_content?id=${subject?.id}&source=${1}`)}
+                    onClick={() =>
+                      router.push(
+                        `/round_content?id=${subject?.id}&source=${1}`
+                      )
+                    }
                     className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
                   >
                     <Edit size={14} className="text-blue-600" />
@@ -202,7 +221,7 @@ const CourseSourceSubjectCard = ({
             backgroundImage: `url('${subject?.image_url || ""}')`,
             backgroundSize: "cover",
             backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
+            backgroundRepeat: "no-repeat"
           }}
         >
           {/* فترة البداية والنهاية */}
@@ -247,18 +266,22 @@ const CourseSourceSubjectCard = ({
             </div>
 
             <div className="flex items-center gap-[5px]">
-              {subject?.teachers[0]?.image && <img
-                className="w-6 h-6 rounded-xl"
-                src={subject?.teachers[0]?.image}
-                alt="instructor"
-              />}
+              {subject?.teachers[0]?.image && (
+                <img
+                  className="w-6 h-6 rounded-xl"
+                  src={subject?.teachers[0]?.image}
+                  alt="instructor"
+                />
+              )}
               <div className="text-text text-[10px] font-medium">
                 المدرس: {subject?.teachers[0]?.name || "—"}
               </div>
 
-              {subject?.teachers?.length > 1 && <div className="w-7 h-7 !text-sm font-bold rounded-full flex justify-center items-center bg-orange-400/50 text-orange-600">
-                {subject?.teachers?.length - 1}+
-              </div>}
+              {subject?.teachers?.length > 1 && (
+                <div className="w-7 h-7 !text-sm font-bold rounded-full flex justify-center items-center bg-orange-400/50 text-orange-600">
+                  {subject?.teachers?.length - 1}+
+                </div>
+              )}
             </div>
           </div>
 

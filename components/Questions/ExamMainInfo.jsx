@@ -49,7 +49,7 @@ export default function ExamMainInfo({
             onChange={(e) => handleBasicDataChange("description", e.target.value)}
             multiline
           />
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">مجاني</label>
             <select
               value={examInfoData?.free || "0"}
@@ -59,7 +59,7 @@ export default function ExamMainInfo({
               <option value="0">لا</option>
               <option value="1">نعم</option>
             </select>
-          </div>
+          </div> */}
 
            <Input
           min={currentDate}

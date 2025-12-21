@@ -11,10 +11,11 @@ import { toast } from "react-toastify";
 
 export default function AssignExam({exam , lessonId}) {
   const { assign_exam_loading } = useSelector((state) => state?.exam);
+  const examData = useSelector((state) => state?.exam);
   const { all_round_lessons, source_round_loading, source_round_list } = useSelector(
     (state) => state?.rounds
   );
-
+console.log("lesson_or_round_id", examData?.all_exam_data_list?.data?.message?.exam?.id)
   const [assignData, setAssignData] = useState({
     type: "full_round", // Default type
     round_id: null,
@@ -69,8 +70,9 @@ export default function AssignExam({exam , lessonId}) {
 
     const data_send = {
       type: type, // 'full_round' or 'lesson'
-      exam_id: exam?.id, // Assuming an exam_id
+      exam_id: exam?.id || examData?.all_exam_data_list?.data?.message?.exam?.id, // Assuming an exam_id
       lesson_or_round_id: type === "lesson" ? lesson_id : round_id,
+
     };
  
     console.log(data_send);

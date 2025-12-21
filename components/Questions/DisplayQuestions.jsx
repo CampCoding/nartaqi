@@ -778,7 +778,7 @@ export default function DisplayQuestions({
       };
     });
     console.log("get_exam_questions_list--------", ((data?.mcq && data?.mcq?.length) ? data?.mcq : (selectedSection?.mcq && selectedSection?.mcq?.length) ? selectedSection?.mcq : []))
-    const paragraphs = (data?.paragraphs || []).map(p => ({
+    const paragraphs = (selectedSection?.paragraphs || []).map(p => ({
       id: p.paragraph.id,
       type: "paragraph_mcq",
       paragraphContent: p.paragraph.paragraph_content || "",

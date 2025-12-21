@@ -246,3 +246,9 @@
   content: "Cancel";
   font-size: 14px;
 }
+
+
+strong{
+  max-width: 100% !important;
+  white-space: pre-wrap !important;
+}
