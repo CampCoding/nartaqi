@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -14,7 +13,7 @@ import {
   Plus,
   Settings,
   Trash2,
-  Users,
+  Users
 } from "lucide-react";
 import PagesHeader from "./../../../components/ui/PagesHeader";
 import Button from "../../../components/atoms/Button";
@@ -24,7 +23,10 @@ import DeleteSubjectModal from "../../../components/Subjects/DeleteSubject.modal
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { handleGetAllCoursesCategories } from "@/lib/features/categoriesSlice";
-import { handleDeleteRound, handleGetAllRounds } from "@/lib/features/roundsSlice";
+import {
+  handleDeleteRound,
+  handleGetAllRounds
+} from "@/lib/features/roundsSlice";
 import Table from "../../../components/ui/Table";
 import CourseSubjectCard from "../../../components/ui/Cards/CourseSubjectCard";
 import { toast } from "react-toastify";
@@ -34,7 +36,9 @@ import { Pagination, Spin } from "antd";
 
 // حاول نكتشف الفئة لو الداتا مش مضاف فيها categoryKey
 function inferCategory(s) {
-  const key = (s.categoryKey || s.category || s.type || "").toString().toLowerCase();
+  const key = (s.categoryKey || s.category || s.type || "")
+    .toString()
+    .toLowerCase();
   const name = (s.name || "").toLowerCase();
 
   if (
@@ -78,7 +82,7 @@ const SubjectsManagementPage = () => {
 
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
-    { label: "دورات الوجهه السعودية", href: "#", icon: Book, current: true },
+    { label: "دورات الوجهه السعودية", href: "#", icon: Book, current: true }
   ];
 
   const [viewMode, setViewMode] = useState("grid");
@@ -143,8 +147,7 @@ const SubjectsManagementPage = () => {
     if (!apiData || apiData.length === 0) return [];
 
     return apiData.map((s) => {
-      const status =
-        s.active === "1" || s.active === 1 ? "active" : "draft";
+      const status = s.active === "1" || s.active === 1 ? "active" : "draft";
       let difficulty;
       if (s.for?.toLowerCase().includes("beginner")) difficulty = "Easy";
       else if (s.for?.toLowerCase().includes("advanced")) difficulty = "Hard";
@@ -162,14 +165,19 @@ const SubjectsManagementPage = () => {
         units: s.units || [],
         students: s.students || 0,
         questions: s.questions || 0,
-        code: s.code || `R-${s.id}`,
+        code: s.code || `R-${s.id}`
       };
     });
   }, [apiData]);
 
   /* ===== عدادات لكل تبويب (لو حبيت تستخدمها) ===== */
   const tabCounts = useMemo(() => {
-    const c = { all: normalizedSubjects.length, general: 0, license: 0, other: 0 };
+    const c = {
+      all: normalizedSubjects.length,
+      general: 0,
+      license: 0,
+      other: 0
+    };
     normalizedSubjects.forEach((s) => {
       c[s._cat] = (c[s._cat] || 0) + 1;
     });
@@ -211,7 +219,7 @@ const SubjectsManagementPage = () => {
             handleGetAllRounds({
               course_category_id: activeTab,
               page: backendCurrentPage,
-              per_page: 6,
+              per_page: 6
             })
           );
         } else {
@@ -227,7 +235,6 @@ const SubjectsManagementPage = () => {
       setActiveTab(cats[0].id);
     }
   }, [all_courses_categories_list, activeTab]);
-  
 
   const columns = [
     {
@@ -244,7 +251,7 @@ const SubjectsManagementPage = () => {
             <div className="font-semibold text-[#202938]">{text}</div>
           </div>
         </div>
-      ),
+      )
     },
     {
       title: "الوصف",
@@ -252,9 +259,11 @@ const SubjectsManagementPage = () => {
       key: "description",
       render: (text) => (
         <div className="max-w-xs">
-          <p className="text-sm text-[#202938]/80 line-clamp-2 text-right">{text}</p>
+          <p className="text-sm text-[#202938]/80 line-clamp-2 text-right">
+            {text}
+          </p>
         </div>
-      ),
+      )
     },
     {
       title: "إحصاءات",
@@ -275,7 +284,7 @@ const SubjectsManagementPage = () => {
             <span>{record.questions} أسئلة</span>
           </div>
         </div>
-      ),
+      )
     },
     {
       title: "الحالة",
@@ -294,7 +303,7 @@ const SubjectsManagementPage = () => {
               : status}
           </Badge>
         </div>
-      ),
+      )
     },
     {
       title: "الصعوبة",
@@ -313,7 +322,7 @@ const SubjectsManagementPage = () => {
               : difficulty}
           </Badge>
         </div>
-      ),
+      )
     },
     {
       title: "آخر تحديث",
@@ -325,7 +334,7 @@ const SubjectsManagementPage = () => {
           <Calendar className="w-3 h-3" />
           <span>{date}</span>
         </div>
-      ),
+      )
     },
     {
       title: "إجراءات",
@@ -374,18 +383,18 @@ const SubjectsManagementPage = () => {
             <MoreVertical className="w-4 h-4" />
           </Button>
         </div>
-      ),
-    },
+      )
+    }
   ];
 
   const isLoadingRounds = rounds_loading && normalizedSubjects.length === 0;
 
-  if(rounds_loading) {
-     return (
-          <div className="h-screen flex justify-center items-center">
-            <Spin size="large" spinning />
-          </div>
-        );
+  if (rounds_loading) {
+    return (
+      <div className="h-screen flex justify-center items-center">
+        <Spin size="large" spinning />
+      </div>
+    );
   }
 
   return (
@@ -400,9 +409,10 @@ const SubjectsManagementPage = () => {
           extra={
             <div className="flex items-center gap-4 gap-reverse">
               <Button
-                onClick={() =>
-                  window.location.href= `/saudi_source_course/add-data?source=0`;
-                }
+                onClick={() => {
+                  if (typeof window !== "undefined")
+                    window.location.href = `/saudi_source_course/add-data?source=0`;
+                }}
                 type="primary"
                 size="large"
                 icon={<Plus className="w-5 h-5" />}
@@ -467,7 +477,7 @@ const SubjectsManagementPage = () => {
                 showSizeChanger: false,
                 showTotal: (total, range) =>
                   `عرض ${range[0]}–${range[1]} من ${total} دورة (عدد الصفحات: ${lastPage})`,
-                onChange: handlePageChange,
+                onChange: handlePageChange
               }}
             />
           </div>
@@ -476,8 +486,8 @@ const SubjectsManagementPage = () => {
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredSubjects?.map((subject) => (
                 <CourseSubjectCard
-                page={page}
-                 cat_id={activeTab}
+                  page={page}
+                  cat_id={activeTab}
                   activationModal={activationModal}
                   setActivationModal={setActivationModal}
                   deleteModal={deleteModal}
@@ -511,7 +521,7 @@ const SubjectsManagementPage = () => {
                     jump_to: "اذهب إلى",
                     page: "الصفحة",
                     prev_page: "الصفحة السابقة",
-                    next_page: "الصفحة التالية",
+                    next_page: "الصفحة التالية"
                   }}
                 />
               </div>
