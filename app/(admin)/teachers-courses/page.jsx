@@ -401,7 +401,7 @@ const SubjectsManagementPage = () => {
             <div className="flex items-center gap-4 gap-reverse">
               <Button
                 onClick={() =>
-                  window.location.href(`/saudi_source_course/add-data?source=0`)
+                  window.location.href= `/saudi_source_course/add-data?source=0`;
                 }
                 type="primary"
                 size="large"
