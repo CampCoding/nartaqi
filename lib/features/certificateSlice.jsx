@@ -33,7 +33,7 @@ export const handleEditCertificate  = createAsyncThunk("certificateSlice/handleE
 export const handleDeleteCertificate  = createAsyncThunk("certificateSlice/handleDeleteCertificate",async({body}) => {
   const response = await api.post(apiRoutes.delete_certificate ,{body});
   return response;
-})
+}) 
 
 
 
