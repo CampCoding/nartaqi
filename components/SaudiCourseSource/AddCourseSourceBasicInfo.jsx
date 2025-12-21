@@ -1982,7 +1982,7 @@ export default function AddCourseSourceBasicInfo({
       formData.append("name", values?.name?.trim());
       formData.append("description", values?.description?.trim() || "");
       formData.append("price", values?.price?.toString() || "0");
-      formData.append("certificate", values?.certificate ? "1" : "0");
+      formData.append("have_certificate", values?.certificate ? "1" : "0");
 
       if (hasStart) {
         formData.append("start_date", dayjs(start).format("YYYY-MM-DD"));
