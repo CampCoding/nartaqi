@@ -5,19 +5,25 @@ import { useDispatch, useSelector } from "react-redux";
 import { PlusOutlined, LoadingOutlined } from "@ant-design/icons"; // Import icons
 import {
   handleAddRoundContent,
-  handleGetAllRoundContent,
+  handleGetAllRoundContent
 } from "../../lib/features/roundContentSlice";
 import { toast } from "react-toastify";
 import { handleGetSourceRound } from "@/lib/features/roundsSlice";
 
-export default function AddRoundContent({ isSource, open, setOpen, id, type = "basic" }) {
+export default function AddRoundContent({
+  isSource,
+  open,
+  setOpen,
+  id,
+  type = "basic"
+}) {
   const [date, setDate] = useState(null); // dayjs | null
   const [dateStr, setDateStr] = useState(""); // string
 
   const [roundContentData, setRoundContentData] = useState({
     title: "",
     description: "",
-    round_id: null,
+    round_id: null
   });
 
   const dispatch = useDispatch();
@@ -28,7 +34,9 @@ export default function AddRoundContent({ isSource, open, setOpen, id, type = "b
     (state) => state?.rounds
   );
 
-  const isFormValid =  isSource ?roundContentData.title  : roundContentData.title && dateStr; 
+  const isFormValid = isSource
+    ? roundContentData.title
+    : roundContentData.title && dateStr;
 
   useEffect(() => {
     if (!id) {
@@ -44,7 +52,7 @@ export default function AddRoundContent({ isSource, open, setOpen, id, type = "b
     const { name, value } = e.target;
     setRoundContentData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
   }
 
@@ -56,21 +64,21 @@ export default function AddRoundContent({ isSource, open, setOpen, id, type = "b
   }, [id]);
 
   function handleSubmit() {
-    if(!roundContentData?.title) {
+    if (!roundContentData?.title) {
       toast.warn("برجاء ادخال عنوان أولا!");
-      return
+      return;
     }
 
-    if(!isSource &&!dateStr) {
+    if (!isSource && !dateStr) {
       toast.warn("برجاء اختيار تاريخ أولا!");
-      return
+      return;
     }
 
     const data_send = {
       ...roundContentData,
       type: type ? type : "basic",
       round_id: roundContentData?.round_id,
-      show_date: dateStr,
+      show_date: dateStr
       // Ensure 'id' is correctly passed as the parent round ID
     };
 
@@ -83,24 +91,38 @@ export default function AddRoundContent({ isSource, open, setOpen, id, type = "b
           dispatch(
             handleGetAllRoundContent({
               body: {
-                round_id: id || roundContentData?.round_id,
-              },
+                round_id: id || roundContentData?.round_id
+              }
             })
           );
           setOpen(false);
-          setRoundContentData({ title: "", description: "" });
+          setRoundContentData({
+            title: "",
+            description: "",
+            round_id: id || roundContentData?.round_id
+          });
+          setOpen(false);
           setDate(null);
           setDateStr("");
         } else {
-          toast.error(res?.error?.response?.data?.message || "هناك خطأ أثناء اضافه المحتوي");
+          toast.error(
+            res?.error?.response?.data?.message ||
+              "هناك خطأ أثناء اضافه المحتوي"
+          );
         }
       })
       .catch((err) => {
         console.error("Failed to add round content:", err);
       })
-      .finally(() => setOpen(false));
+      .finally(() => null);
   }
-
+  useEffect(() => {
+    setRoundContentData({
+      title: "",
+      description: "",
+      round_id: id || roundContentData?.round_id
+    });
+  }, [open]);
   // Custom footer for better control over button design and loading state
   const modalFooter = (
     <div className="flex justify-start space-x-2 space-x-reverse pt-4">
@@ -167,10 +189,7 @@ export default function AddRoundContent({ isSource, open, setOpen, id, type = "b
             >
               عنوان المحتوى
             </label>
-            <div className="">
-              {" "}
-            
-            </div>
+            <div className=""> </div>
           </div>
           <input
             id="title"
@@ -203,15 +222,14 @@ export default function AddRoundContent({ isSource, open, setOpen, id, type = "b
 
         <div className="flex flex-col gap-2">
           <label>جدولة المحتوي (تحديد تاريخ ظهور المحتوي) </label>
-            <DatePicker
-             
-                onChange={(value, stringValue) => {
-                  setDate(value); // value ده dayjs أو null
-                  setDateStr(stringValue); // string formatted
-                  console.log("string:", stringValue);
-                  console.log("ISO:", value ? value.toISOString() : null);
-                }}
-              />
+          <DatePicker
+            onChange={(value, stringValue) => {
+              setDate(value); // value ده dayjs أو null
+              setDateStr(stringValue); // string formatted
+              console.log("string:", stringValue);
+              console.log("ISO:", value ? value.toISOString() : null);
+            }}
+          />
         </div>
       </div>
     </Modal>

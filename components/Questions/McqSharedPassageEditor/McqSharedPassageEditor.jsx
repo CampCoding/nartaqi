@@ -1037,22 +1037,12 @@ export default function McqSharedPassageEditor({
                                 />
                               </>
                             ) : (
-                              <LabeledEditor
-                                label="نص الاختيار"
-                                value={opt.answer}
-                                onChange={(val) =>
-                                  updateOptionField(
-                                    p.id,
-                                    q.id,
-                                    optIndex,
-                                    "answer",
-                                    val
-                                  )
-                                }
-                                editorMinH={90}
-                                uploadImage={uploadImage}
-                                imageSize={FIXED_IMG}
-                              />
+                              <MathTypeEditor editorData={opt.answer} setEditorData=
+                                      {(data) => {
+                                        onChange(p.id, q.id, optIndex, "latex", data );
+                                      }}
+                                      />
+                             
                             )}
 
                             <LabeledEditor

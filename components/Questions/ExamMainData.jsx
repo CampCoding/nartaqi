@@ -356,15 +356,15 @@ export default function ExamMainData({
       return;
     }
 
-    if (!exmaInfoData.description) {
-      toast.warn("ادخل وصف الاختبار أولا!");
-      return;
-    }
+    // if (!exmaInfoData.description) {
+    //   toast.warn("ادخل وصف الاختبار أولا!");
+    //   return;
+    // }
 
-    if (!exmaInfoData?.time) {
-      toast.warn("اختر وقت أولا");
-      return;
-    }
+    // if (!exmaInfoData?.time) {
+    //   toast.warn("اختر وقت أولا");
+    //   return;
+    // }
 
     if (!exmaInfoData?.date) {
       toast.warn("اختر تاريخ أولا");
@@ -1549,14 +1549,19 @@ export default function ExamMainData({
                         <label className="block text-lg font-semibold text-gray-800 mb-4">
                           نص السؤال
                         </label>
-                        <LabeledEditor
+                        <MathTypeEditor editorData={currentQuestion} setEditorData=
+        {(data) => {
+          setCurrentQuestion(data);
+        }}
+        />
+                        {/* <LabeledEditor
                           label="" // Hide duplicate label since we have one above
                           value={currentQuestion}
                           onChange={setCurrentQuestion}
                           editorMinH={180}
                           allowImages
                           placeholder="اكتب نص السؤال هنا... يمكنك إضافة صور، معادلات، تنسيق..."
-                        />
+                        /> */}
                       </div>
 
                       {/* Options Section */}

@@ -1513,7 +1513,7 @@ export default function AddCourseSourceBasicInfo({
     (state) => state?.rounds
   );
   const { teachers_list } = useSelector((state) => state?.teachers);
-
+  // const searchParams = new URLSearchParams(typeof window != undefined && typeof window != "undefined" && window.location.search);
   const [categoriesOptions, setCategoriesOptions] = useState([]);
   const [categoriesPartOptions, setCategoriesPartOptions] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -2085,6 +2085,10 @@ export default function AddCourseSourceBasicInfo({
       ).unwrap();
 
       if (result?.data?.status == "success") {
+      const url = new URL(window.location);
+      url.searchParams.set("round_id", result?.data?.message?.round_id || rowData?.id || id);
+      window.history.replaceState({}, "", url);
+    
         const roundIdValue = result?.data?.message?.round_id || rowData?.id || id;
         setRoundId(roundIdValue);
         dispatch(handleGetSourceRound({ page, per_page: 6 }));
@@ -2205,7 +2209,7 @@ export default function AddCourseSourceBasicInfo({
               help={hasError("image") ? "صورة الدورة مطلوبة" : null}
             >
               <Dragger
-                accept=".jpg,.jpeg,.png,.gif,.webp"
+                accept=".jpg,.jpeg,.png"
                 multiple={false}
                 maxCount={1}
                 beforeUpload={beforeUpload}
@@ -2228,7 +2232,7 @@ export default function AddCourseSourceBasicInfo({
                   {isEditMode && rowData?.image_url ? "تغيير الصورة" : "اسحب الصورة هنا أو اضغط للاختيار"}
                 </p>
                 <p className="ant-upload-hint text-gray-500">
-                  الحجم الأقصى 5MB - صيغ مدعومة: JPG, PNG, WebP
+                  الحجم الأقصى 5MB - صيغ مدعومة: JPG, PNG
                 </p>
               </Dragger>
             </Form.Item>

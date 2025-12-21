@@ -822,7 +822,7 @@ export default function McqSharedPassageEditor({
                                 {letter}
                               </span>
 
-                              <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+                              <label className= "flex items-center gap-2 text-xs font-medium text-gray-600">
                                 <input
                                   type="radio"
                                   name={`correct-${p.id}-${q.id}`}
@@ -849,7 +849,7 @@ export default function McqSharedPassageEditor({
                             {/* محتوى الاختيار */}
                             {isMath ? (
                               <>
-                                <div className="space-y-2">
+                                <div className="space-y-2 !w-[100%]">
                                   <label className="block text-xs font-semibold text-gray-600">معادلة الاختيار</label>
                                  
                                   <MathTypeEditor editorData={opt.latex} setEditorData=
@@ -885,14 +885,12 @@ export default function McqSharedPassageEditor({
                                 />
                               </>
                             ) : (
-                              <LabeledEditor
-                                label="نص الاختيار"
-                                value={opt.latex}
-                                onChange={(val) => updateOptionField(p.id, q.id, optIndex, "latex", val)}
-                                editorMinH={90}
-                                uploadImage={uploadImage}
-                                imageSize={FIXED_IMG}
-                              />
+                              <MathTypeEditor editorData={opt.latex} setEditorData=
+        {(data) => {
+          onChange(p.id, q.id, optIndex, "latex", data );
+        }}
+        />
+                              
                             )}
 
                             {/* شرح الاختيار */}
