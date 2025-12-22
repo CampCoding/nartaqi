@@ -961,11 +961,11 @@ export default function ArabicCourseCurriculum({ id , source }) {
                   isContentExpanded ? "rotate-0" : "-rotate-90"
                 }`}
               />
-              <div className="min-w-0">
+              <div className="min-w-0 !max-w-[100%]">
                 <h3 className="text-xl font-bold text-gray-900 truncate">
                   {contentItem.content_title}
                 </h3>
-                <p className="mt-1 text-base text-gray-700 truncate max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
+                <p className="mt-1 text-base text-gray-700 truncate max-w-[600px] overflow-hidden text-ellipsis !whitespace-pre-wrap">
                   {contentItem.content_description}
                 </p>
                 <div className="flex flex-wrap items-center gap-3 mt-2">
