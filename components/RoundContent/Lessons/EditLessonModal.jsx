@@ -41,7 +41,7 @@ export default function EditLessonModal({
   }
 
   function handleSubmit() {
-    if (!isFormValid || edit_lesson_loading) return;
+    // if (!isFormValid || edit_lesson_loading) return;
 
     const data_send = {
       id: rowData?.id,
