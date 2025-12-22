@@ -2537,7 +2537,7 @@ export default function AddCourseSourceBasicInfo({
               </Form.Item>
             </Col>
 
-            <Col span={8}>
+            {/* <Col span={8}>
               <Form.Item
                 label={<span className="font-semibold text-gray-700 flex items-center gap-2">نشط</span>}
                 name="active"
@@ -2545,7 +2545,7 @@ export default function AddCourseSourceBasicInfo({
               >
                 <Switch onChange={(v) => handleFieldChange("active", v)} />
               </Form.Item>
-            </Col>
+            </Col> */}
 
             <Col span={8}>
               <Form.Item

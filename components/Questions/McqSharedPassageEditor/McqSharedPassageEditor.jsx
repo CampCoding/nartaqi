@@ -266,7 +266,7 @@
 //                     options={{ virtualKeyboardMode: "onfocus" }}
 //                     placeholder="أدخل المعادلة هنا…"
 //                   />
-
+                  
 //                   <AttachmentPicker
 //                     label="مرفقات المعادلة (صور / PDF)"
 //                     files={p.attachments || []}
@@ -451,7 +451,6 @@ import { Plus as PlusIcon, Trash2 } from "lucide-react";
 import MathFieldInput from "./parts/MathFieldInput";
 import LabeledEditor, { FIXED_IMG } from "./parts/LabeledEditor";
 import AttachmentPicker from "./parts/AttachmentPicker";
-import MathTypeEditor from "@/components/MathTypeEditor/MathTypeEditor";
 
 /** Main editor */
 export default function McqSharedPassageEditor({
@@ -512,8 +511,8 @@ export default function McqSharedPassageEditor({
           options: opts,
           correctIndex:
             typeof q.correctIndex === "number" &&
-              q.correctIndex >= 0 &&
-              q.correctIndex < (opts?.length || 0)
+            q.correctIndex >= 0 &&
+            q.correctIndex < (opts?.length || 0)
               ? q.correctIndex
               : 0,
           attachments: Array.isArray(q.attachments) ? q.attachments : [],
@@ -552,11 +551,11 @@ export default function McqSharedPassageEditor({
       ps.map((p) =>
         p.id === pId
           ? {
-            ...p,
-            attachments: (p.attachments || []).filter(
-              (_, i) => i !== fileIdx
-            ),
-          }
+              ...p,
+              attachments: (p.attachments || []).filter(
+                (_, i) => i !== fileIdx
+              ),
+            }
           : p
       )
     );
@@ -575,12 +574,12 @@ export default function McqSharedPassageEditor({
       ps.map((p) =>
         p.id === pId
           ? {
-            ...p,
-            questions:
-              p.questions.length > 1
-                ? p.questions.filter((q) => q.id !== qId)
-                : p.questions,
-          }
+              ...p,
+              questions:
+                p.questions.length > 1
+                  ? p.questions.filter((q) => q.id !== qId)
+                  : p.questions,
+            }
           : p
       )
     );
@@ -589,11 +588,11 @@ export default function McqSharedPassageEditor({
       ps.map((p) =>
         p.id === pId
           ? {
-            ...p,
-            questions: p.questions.map((q) =>
-              q.id === qId ? { ...q, text } : q
-            ),
-          }
+              ...p,
+              questions: p.questions.map((q) =>
+                q.id === qId ? { ...q, text } : q
+              ),
+            }
           : p
       )
     );
@@ -604,19 +603,19 @@ export default function McqSharedPassageEditor({
       ps.map((p) =>
         p.id === pId
           ? {
-            ...p,
-            questions: p.questions.map((q) =>
-              q.id === qId
-                ? {
-                  ...q,
-                  options: [
-                    ...q.options,
-                    { answer: "", question_explanation: "", images: [] },
-                  ],
-                }
-                : q
-            ),
-          }
+              ...p,
+              questions: p.questions.map((q) =>
+                q.id === qId
+                  ? {
+                      ...q,
+                      options: [
+                        ...q.options,
+                        { answer: "", question_explanation: "", images: [] },
+                      ],
+                    }
+                  : q
+              ),
+            }
           : p
       )
     );
@@ -659,15 +658,15 @@ export default function McqSharedPassageEditor({
       ps.map((p) =>
         p.id === pId
           ? {
-            ...p,
-            questions: p.questions.map((q) => {
-              if (q.id !== qId) return q;
-              const next = q.options.map((opt, i) =>
-                i === optIndex ? { ...opt, [field]: value } : opt
-              );
-              return { ...q, options: next };
-            }),
-          }
+              ...p,
+              questions: p.questions.map((q) => {
+                if (q.id !== qId) return q;
+                const next = q.options.map((opt, i) =>
+                  i === optIndex ? { ...opt, [field]: value } : opt
+                );
+                return { ...q, options: next };
+              }),
+            }
           : p
       )
     );
@@ -682,17 +681,17 @@ export default function McqSharedPassageEditor({
       ps.map((p) =>
         p.id === pId
           ? {
-            ...p,
-            questions: p.questions.map((q) => {
-              if (q.id !== qId) return q;
-              const next = q.options.map((opt, i) =>
-                i === optIndex
-                  ? { ...opt, images: [...(opt.images || []), ...files] }
-                  : opt
-              );
-              return { ...q, options: next };
-            }),
-          }
+              ...p,
+              questions: p.questions.map((q) => {
+                if (q.id !== qId) return q;
+                const next = q.options.map((opt, i) =>
+                  i === optIndex
+                    ? { ...opt, images: [...(opt.images || []), ...files] }
+                    : opt
+                );
+                return { ...q, options: next };
+              }),
+            }
           : p
       )
     );
@@ -707,22 +706,22 @@ export default function McqSharedPassageEditor({
       ps.map((p) =>
         p.id === pId
           ? {
-            ...p,
-            questions: p.questions.map((q) => {
-              if (q.id !== qId) return q;
-              const next = q.options.map((opt, i) =>
-                i === optIndex
-                  ? {
-                    ...opt,
-                    images: (opt.images || []).filter(
-                      (_, k) => k !== imgIdx
-                    ),
-                  }
-                  : opt
-              );
-              return { ...q, options: next };
-            }),
-          }
+              ...p,
+              questions: p.questions.map((q) => {
+                if (q.id !== qId) return q;
+                const next = q.options.map((opt, i) =>
+                  i === optIndex
+                    ? {
+                        ...opt,
+                        images: (opt.images || []).filter(
+                          (_, k) => k !== imgIdx
+                        ),
+                      }
+                    : opt
+                );
+                return { ...q, options: next };
+              }),
+            }
           : p
       )
     );
@@ -732,11 +731,11 @@ export default function McqSharedPassageEditor({
       ps.map((p) =>
         p.id === pId
           ? {
-            ...p,
-            questions: p.questions.map((q) =>
-              q.id === qId ? { ...q, correctIndex: idx } : q
-            ),
-          }
+              ...p,
+              questions: p.questions.map((q) =>
+                q.id === qId ? { ...q, correctIndex: idx } : q
+              ),
+            }
           : p
       )
     );
@@ -752,8 +751,8 @@ export default function McqSharedPassageEditor({
           {isPassage
             ? "إدارة القطع وأسئلتها"
             : isMath
-              ? "أسئلة معادلات — الإجابات معادلات + دعم مرفقات صور/PDF"
-              : "أسئلة (وصف/تعليمات عامة)"}
+            ? "أسئلة معادلات — الإجابات معادلات + دعم مرفقات صور/PDF"
+            : "أسئلة (وصف/تعليمات عامة)"}
         </h4>
         {isPassage && (
           <button
@@ -780,8 +779,8 @@ export default function McqSharedPassageEditor({
                   {isPassage
                     ? `قطعة ${pIndex + 1}`
                     : isMath
-                      ? `معادلة ${pIndex + 1}`
-                      : `وصف عام ${pIndex + 1}`}
+                    ? `معادلة ${pIndex + 1}`
+                    : `وصف عام ${pIndex + 1}`}
                 </div>
                 <span className="rounded-full border border-blue-100 bg-blue-50 px-2 py-0.5 text-[11px] text-blue-700">
                   {questionsCount} سؤال
@@ -805,18 +804,13 @@ export default function McqSharedPassageEditor({
                   <label className="block text-xs font-semibold text-gray-600">
                     معادلات/صيغ عامة
                   </label>
-                  <MathTypeEditor editorData={p.content} setEditorData=
-                    {(data) =>
-                      updatePassageContent(p.id, data)
-                    }
-                  />
-                  {/* <MathFieldInput
+                  <MathFieldInput
                     value={p.content}
                     onChange={(latex) => updatePassageContent(p.id, latex)}
                     className="w-full"
                     options={{ virtualKeyboardMode: "onfocus" }}
                     placeholder="أدخل المعادلات/الصيغ العامة هنا…"
-                  /> */}
+                  />
                 </>
               ) : isMath ? (
                 <>
@@ -894,21 +888,16 @@ export default function McqSharedPassageEditor({
                     )}
 
                     {isPassage && (
-                      <MathTypeEditor editorData={q.text} setEditorData=
-                        {(data) =>
-                          updateQuestionText(p.id, q.id, data)
+                      <LabeledEditor
+                        label="نص السؤال"
+                        value={q.text}
+                        onChange={(val) =>
+                          updateQuestionText(p.id, q.id, val)
                         }
+                        editorMinH={110}
+                        uploadImage={uploadImage}
+                        imageSize={FIXED_IMG}
                       />
-                      // <LabeledEditor
-                      //   label="نص السؤال"
-                      //   value={q.text}
-                      //   onChange={(val) =>
-                      //     updateQuestionText(p.id, q.id, val)
-                      //   }
-                      //   editorMinH={110}
-                      //   uploadImage={uploadImage}
-                      //   imageSize={FIXED_IMG}
-                      // />
                     )}
 
                     <div className="mt-4 space-y-3">
@@ -926,17 +915,19 @@ export default function McqSharedPassageEditor({
                         return (
                           <div
                             key={optIndex}
-                            className={`flex flex-col gap-3 rounded-xl border bg-white p-3 shadow-sm transition ${isCorrect
-                              ? "ring-1 ring-green-200"
-                              : "ring-1 ring-transparent"
-                              }`}
+                            className={`flex flex-col gap-3 rounded-xl border bg-white p-3 shadow-sm transition ${
+                              isCorrect
+                                ? "ring-1 ring-green-200"
+                                : "ring-1 ring-transparent"
+                            }`}
                           >
                             <div className="flex items-center gap-3">
                               <span
-                                className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${isCorrect
-                                  ? "bg-green-600 text-white"
-                                  : "bg-gray-100 text-gray-700"
-                                  }`}
+                                className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                                  isCorrect
+                                    ? "bg-green-600 text-white"
+                                    : "bg-gray-100 text-gray-700"
+                                }`}
                               >
                                 {letter}
                               </span>
@@ -979,22 +970,7 @@ export default function McqSharedPassageEditor({
                                   <label className="block text-xs font-semibold text-gray-600">
                                     معادلة الاختيار
                                   </label>
-
-                                  <MathTypeEditor editorData={opt.answer} setEditorData=
-
-                                    {(data) =>
-                                      updateOptionField(
-                                        p.id,
-                                        q.id,
-                                        optIndex,
-                                        "answer",
-                                        data
-                                      )
-                                    }
-                                  />
-
-
-                                  {/* <MathFieldInput
+                                  <MathFieldInput
                                     value={opt.answer}
                                     onChange={(latex) =>
                                       updateOptionField(
@@ -1010,7 +986,7 @@ export default function McqSharedPassageEditor({
                                     options={{
                                       virtualKeyboardMode: "onfocus",
                                     }}
-                                  /> */}
+                                  />
                                 </div>
 
                                 <AttachmentPicker
@@ -1037,12 +1013,22 @@ export default function McqSharedPassageEditor({
                                 />
                               </>
                             ) : (
-                              <MathTypeEditor editorData={opt.answer} setEditorData=
-                                      {(data) => {
-                                        onChange(p.id, q.id, optIndex, "latex", data );
-                                      }}
-                                      />
-                             
+                              <LabeledEditor
+                                label="نص الاختيار"
+                                value={opt.answer}
+                                onChange={(val) =>
+                                  updateOptionField(
+                                    p.id,
+                                    q.id,
+                                    optIndex,
+                                    "answer",
+                                    val
+                                  )
+                                }
+                                editorMinH={90}
+                                uploadImage={uploadImage}
+                                imageSize={FIXED_IMG}
+                              />
                             )}
 
                             <LabeledEditor
