@@ -57,7 +57,7 @@ const CourseSourceSubjectCard = ({
     e?.stopPropagation?.();
     setShowDropdown(false);
     router.push(
-      `/saudi_source_course/edit/${subject?.id}?page=${page}&pageSize=${page_size}`
+      `/saudi_source_course/edit/${subject?.id}?page=${1}&pageSize=${10000000}`
     );
     onEdit?.(subject);
   };
@@ -145,7 +145,7 @@ const CourseSourceSubjectCard = ({
                       router.push(
                         `/termsCondition?roundId=${
                           subject?.id
-                        }&page=${page}&pageSize=${6}`
+                        }&page=${page}&pageSize=${1000000000}`
                       )
                     }
                     className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"

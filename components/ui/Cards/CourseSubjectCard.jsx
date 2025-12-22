@@ -38,7 +38,7 @@ const CourseSourceSubjectCard = ({
   const handleEdit = (e) => {
     e?.stopPropagation?.();
     setShowDropdown(false);
-    router.push(`/saudi_source_course/edit/${subject?.id}?isSource=0&category_id=${cat_id}&page=${page}`);
+    router.push(`/saudi_source_course/edit/${subject?.id}?isSource=0&category_id=${cat_id}&page=${1}&pageSize=${10000000}`);
     onEdit?.(subject);
   };
 
@@ -126,7 +126,7 @@ const CourseSourceSubjectCard = ({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
-                    onClick={() => router.push(`/termsCondition?roundId=${subject?.id}&category=${cat_id}&page=${page}&pageSize=${6}`)}
+                    onClick={() => router.push(`/termsCondition?roundId=${subject?.id}&category=${cat_id}&page=${page}&pageSize=${1000000000}`)}
                     className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
                   >
                     <File size={14} className="text-blue-600" />

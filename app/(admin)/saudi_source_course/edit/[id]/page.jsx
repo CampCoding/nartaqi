@@ -838,7 +838,7 @@ export default function Page() {
 
   useEffect(() => {
     if(!isSource) {
-      dispatch(handleGetSourceRound({page , per_page: 6}))
+      dispatch(handleGetSourceRound({page , per_page: 10000000}))
       .unwrap()
       .then((res) => {
         if (res?.data?.status === "success") {

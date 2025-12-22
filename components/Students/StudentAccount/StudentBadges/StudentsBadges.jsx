@@ -4,8 +4,10 @@ import { Award, Calendar, Trophy, Star, Crown, Plus } from "lucide-react";
 import BadgeCard from "./BadgeCard";
 import BadgeForm from "./BadgeForm";
 import { useDispatch, useSelector } from "react-redux";
-import { handleGetAllStudentBadges } from "../../../../lib/features/badgeSlice";
+import { handleGetAllBadges, handleGetAllStudentBadges } from "../../../../lib/features/badgeSlice";
 import { Spin } from "antd";
+import { handleGetAllTeachers } from "@/lib/features/teacherSlice";
+import { handleGetSourceRound } from "@/lib/features/roundsSlice";
 
 export default function StudentsBadges({ student_id }) {
   const [selectedBadge, setSelectedBadge] = useState(null);
@@ -18,6 +20,11 @@ export default function StudentsBadges({ student_id }) {
   const { student_badges_loading, student_badges_list } = useSelector(
     (state) => state?.badges
   );
+  useEffect(() => {
+    dispatch(handleGetAllTeachers())
+    dispatch(handleGetSourceRound())
+    dispatch(handleGetAllBadges());
+  }, [dispatch]);
 
   // Fetch student badges
   useEffect(() => {

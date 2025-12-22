@@ -37,7 +37,7 @@ export default function TermsPage() {
   const roundID = searchParams.get("roundId");
   const categoriesId = searchParams.get("category");
   const page = searchParams.get("page") || "1";
-  const pageSize = searchParams.get("pageSize") || "10";
+  const pageSize = searchParams.get("pageSize") || "100000000";
 
   const [terms, setTerms] = useState([]);
 

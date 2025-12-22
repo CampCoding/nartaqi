@@ -2091,7 +2091,7 @@ export default function AddCourseSourceBasicInfo({
     
         const roundIdValue = result?.data?.message?.round_id || rowData?.id || id;
         setRoundId(roundIdValue);
-        dispatch(handleGetSourceRound({ page, per_page: 6 }));
+        dispatch(handleGetSourceRound({ page, per_page: 100000 }));
         dispatch(handleGetAllRounds({
           course_category_id: Cat_id,
           page,

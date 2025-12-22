@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Button from "../atoms/Button";
 import { Check, X, Eraser, Image as ImageIcon } from "lucide-react";
 import { useQuillConfig } from "@/utils/quillConfig";
+import MathTypeEditor from "../MathTypeEditor/MathTypeEditor";
 
 // SSR-safe
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });

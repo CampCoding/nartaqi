@@ -45,7 +45,7 @@ export const handleGetAllRounds = createAsyncThunk(
 
 export const handleGetSourceRound = createAsyncThunk(
   "roundesSlice/handleGetSourceRound",
-  async ({ page, per_page } = {}) => {
+  async ({ page = 1, per_page = 100000 } = {}) => {
     // لو بعت page و per_page استخدمهم في الكويري
     if (page && per_page) {
       const response = await api.get(

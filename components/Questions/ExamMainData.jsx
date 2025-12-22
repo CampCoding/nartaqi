@@ -349,7 +349,6 @@ export default function ExamMainData({
   useEffect(() => {
     console.log('editingQuestion', editingQuestion)
   }, [editingQuestion])
-
   const handleSubmitBasicData = () => {
     if (!exmaInfoData.title) {
       toast.warn("ادخل اسم الاختبار أولا!");
@@ -428,7 +427,7 @@ export default function ExamMainData({
             }
             dispatch(
               handleGetAllExamSections({
-                body: { exam_id: examid || res?.data?.message?.id },
+                body: { exam_id: examId || res?.data?.message?.id },
               })
             );
             setExamData({ ...examData, sections: [] });
@@ -492,7 +491,7 @@ export default function ExamMainData({
             const newSection = res?.data?.message;
             dispatch(
               handleGetAllExamSections({
-                body: { exam_id: examid || newSection?.id },
+                body: { exam_id: examId || newSection?.exam_id },
               })
             );
             setOpenExamQuestion(newSection);
@@ -523,7 +522,7 @@ export default function ExamMainData({
           setOpenExamQuestion(res?.data?.message);
           dispatch(
             handleGetAllExamSections({
-              body: { exam_id: examid || res?.data?.message?.section?.id },
+              body: { exam_id: examId || res?.data?.message?.section?.exam_id },
             })
           );
         } else {
@@ -1282,7 +1281,7 @@ export default function ExamMainData({
     dispatch(
       handleGetAllExamSections({
         body: {
-          exam_id: examid || openExamSection?.id || openExamQuestion?.section?.id,
+          exam_id: examId || openExamSection?.exam_id || openExamQuestion?.section?.exam_id,
         },
       })
     );
@@ -1337,7 +1336,7 @@ export default function ExamMainData({
   }, [editingQuestion]);
 
   const examIdForSections =
-    examid || params["exam-id"] || params.examId || openExamSection?.id;
+    examId || params["exam-id"] || params.examId || openExamSection?.exam_id;
 
   const onSectionDeleted = (deletedSectionId) => {
     console.log(deletedSectionId);

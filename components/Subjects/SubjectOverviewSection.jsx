@@ -329,7 +329,7 @@ const router = useRouter()
                      <button
                     onClick={() => {
                       
-                      router.push(`/saudi_source_course/edit/${subject?.id}?page=1&pageSize=10&isSource=${subject?.source}&category_id=${subject?.category_id}`)
+                      router.push(`/saudi_source_course/edit/${subject?.id}?page=1&pageSize=1000000000&isSource=${subject?.source}&category_id=${subject?.category_id}`)
                     }}
                     className= "w-fit px-3 py-2 text-right   flex items-center gap-2 text-[25px] text-[white] font-semibold border border-gray-200 rounded-lg shadow-sm  bg-blue-600 hover:shadow-md transition"
                   >
