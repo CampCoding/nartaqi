@@ -1402,6 +1402,9 @@ export default function ExamMainData({
                 onTypeChange={handleQuestionTypeChange}
               />
 
+{console.log("examData.sections", selectedSection)}
+
+
               {/* Section selector */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

@@ -1,24 +1,26 @@
+"use client"
 import { useState, useEffect } from 'react';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic'; // Official build
-
+import ClassicEditor from 'ckeditor5-classic-with-mathtype';
 import './MathTypeEditor.css';
 
-function MathTypeEditor() {
-  const [editorData, setEditorData] = useState(
-    '<p>اكتب معادلة رياضية هنا... / Write a mathematical equation here...</p>'
-  );
+function MathTypeEditor({editorData = '<p></p>', setEditorData}) {
   const [isRTL, setIsRTL] = useState(true);
+  const [ready, setReady] = useState(false);
 
-  // CKEditor configuration with MathType plugin
+  useEffect(() => {
+    setReady(true);
+    return () => setReady(false);
+  }, []);
+
+  if (!ready) return null;
   const editorConfiguration = {
-    language: 'ar',
-    
+    language: 'ar', 
     toolbar: {
       items: [
         'heading',
-        '|',
-        'MathType', // This will appear in the toolbar
+        'MathType',
+        'ChemType',
         '|',
         'bold',
         'italic',
@@ -30,88 +32,58 @@ function MathTypeEditor() {
         'insertTable',
         '|',
         'undo',
-        'redo',
-      ],
-    },
-
+        'redo'
+      ]
+    }
   };
+
+
 
   return (
     <div className="math-editor-container" dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="editor-header">
-        <h2>MathType Editor with Arabic Support</h2>
-        <p className="subtitle">محرر المعادلات مع دعم العربية</p>
-        <div className="controls">
-          <label>
-            <input
-              type="checkbox"
-              checked={isRTL}
-              onChange={(e) => setIsRTL(e.target.checked)}
-            />
-            {isRTL ? 'الوضع من اليمين لليسار (RTL)' : 'Right-to-Left (RTL) Mode'}
-          </label>
-        </div>
-      </div>
-
-      <div className="editor-section">
-        <h3>{isRTL ? 'محرر المعادلات' : 'Math Editor'}</h3>
-        <p className="instructions">
-          {isRTL
-            ? 'انقر على زر MathType لإدراج معادلة رياضية'
-            : 'Click the MathType button to insert a mathematical equation'}
-        </p>
-        <div className="ckeditor-wrapper">
-          <CKEditor
-             editor={ClassicEditor}
-             config={editorConfiguration}
-             data={editorData}
-             onReady={(editor) => {
-               console.log('CKEditor is ready to use!', editor);
-               try {
-                console.log('Available toolbar items:', Array.from(editor.ui.componentFactory.names()));
-
-                 // Set editor direction
-                 if (editor && editor.editing && editor.editing.view) {
-                   editor.editing.view.document.dir = isRTL ? 'rtl' : 'ltr';
-                 }
-               } catch (error) {
-                 console.warn('Error setting editor direction:', error);
-               }
-             }}
-             onChange={(event, editor) => {
-               try {
-                 if (editor) {
-                   const data = editor.getData();
-                   setEditorData(data);
-                 }
-               } catch (error) {
-                 console.error('Error in onChange:', error);
-               }
-             }}
-             onError={(error, { phase, willEditorRestart }) => {
-               console.error('CKEditor error:', error, phase, willEditorRestart);
-             }}
+      <CKEditor
+            editor={ClassicEditor}
+            config={editorConfiguration}
+            data={editorData}
+            placeholder="اكتب هنا…"
+            className="!w-full border border-gray-200"
+            style={{ fontSize: "14px", minHeight: "48px", width: "100%", textAlign: "right" }}
+            // I want to change confirm button text
+            toolbarConfirmButtonLabel="تأكيد"
+            toolbarCancelButtonLabel="إلغاء"
+            toolbarUndoButtonLabel="تراجع"
+            toolbarRedoButtonLabel="إعادة"
+            toolbarBoldButtonLabel="عريض"
+            toolbarItalicButtonLabel="مائل"
+            toolbarUnderlineButtonLabel="تحتي"
+            toolbarStrikethroughButtonLabel="مشطوب"
+            toolbarSuperscriptButtonLabel="رفع"
+            toolbarSubscriptButtonLabel="خفض"
+            onReady={(editor) => {
+              console.log('CKEditor is ready to use!', editor);
+              try {
+                // Set editor direction
+                if (editor && editor.editing && editor.editing.view) {
+                  editor.editing.view.document.dir = isRTL ? 'rtl' : 'ltr';
+                }
+              } catch (error) {
+                console.warn('Error setting editor direction:', error);
+              }
+            }}
+            onChange={(event, editor) => {
+              try {
+                if (editor) {
+                  const data = editor.getData();
+                  setEditorData(data);
+                }
+              } catch (error) {
+                console.error('Error in onChange:', error);
+              }
+            }}
+            onError={(error, { phase, willEditorRestart }) => {
+              console.error('CKEditor error:', error, phase, willEditorRestart);
+            }}
           />
-        </div>
-      </div>
-
-      <div className="display-section">
-        <h3>{isRTL ? 'المحتوى' : 'Content'}</h3>
-        <div
-          className="content-display"
-          dir={isRTL ? 'rtl' : 'ltr'}
-          dangerouslySetInnerHTML={{ __html: editorData }}
-        />
-      </div>
-
-      {/* Info section remains the same */}
-      <div className="info-section">
-        <h3>{isRTL ? 'ميزات التدوين الرياضي العربي' : 'Arabic Math Notation Features'}</h3>
-        <ul>
-          <li>✓ {isRTL ? 'وضع الكتابة من اليمين لليسار (RTL)' : 'Right-to-Left (RTL) writing mode'}</li>
-          {/* ... other items */}
-        </ul>
-      </div>
     </div>
   );
 }

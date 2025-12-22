@@ -285,7 +285,6 @@ export default function ExamMainData() {
 
       {/* Sections Selection */}
       <QuestionSections examData={examData} filteredSection={filteredSection} onAddSection={onAddSection} />
-
       {examData?.name && examData?.sections?.length > 0 ? (
         <>
           <Card title="إنشاء الأسئلة" icon={Edit3}>

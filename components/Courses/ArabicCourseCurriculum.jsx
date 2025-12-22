@@ -965,7 +965,7 @@ export default function ArabicCourseCurriculum({ id , source }) {
                 <h3 className="text-xl font-bold text-gray-900 truncate">
                   {contentItem.content_title}
                 </h3>
-                <p className="mt-1 text-base text-gray-700 truncate">
+                <p className="mt-1 text-base text-gray-700 truncate max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
                   {contentItem.content_description}
                 </p>
                 <div className="flex flex-wrap items-center gap-3 mt-2">
