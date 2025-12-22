@@ -71,7 +71,7 @@ const SubjectDetails = ({ subjectId, setSelectedUnit }) => {
   const [features, setFeatures] = useState([]);
   const [teacher, setTeacher] = useState(null);
   const catId = params.get("category_id");
-const router = useRouter()
+  const router = useRouter();
   useEffect(() => {
     if (catId) {
       // When category_id exists, fetch rounds by category
@@ -136,8 +136,8 @@ const router = useRouter()
         id: filteredRound.id,
         name: filteredRound.name || "اسم الدورة",
         price: parseFloat(filteredRound.price) || 0,
-        source: (filteredRound.source) || 0,
-        category_id: (filteredRound.course_category_id) || 0,
+        source: filteredRound.source || 0,
+        category_id: filteredRound.course_category_id || 0,
         free: filteredRound.free === "1",
         description: filteredRound.description || "لا يوجد وصف",
         capacity: parseInt(filteredRound.capacity) || 0,
@@ -174,7 +174,11 @@ const router = useRouter()
             }</p>
             <p className="max-w-[100%] whitespace-pre-wrap overflow-hidden">
             <strong className= "max-w-[100%] whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html:${
+              // replace all &nbsp; With " "
               filteredRound.goal
+                ?.replaceAll("&nbsp;", " ")
+                ?.replace(/\s+/g, " ")
+                ?.trim()
             }</strong> </p>
             <p className="max-w-[100%] whitespace-pre-wrap"><strong>الفئة المستهدفة:</strong> ${
               filteredRound.for || "الجميع"
@@ -300,7 +304,6 @@ const router = useRouter()
                   <Title level={2} className="mb-2 text-primary w-[100%]">
                     {subject.name}
                   </Title>
-               
                 </div>
                 {/* <Paragraph className="text-gray-600 text-lg">
                   {subject.description}
@@ -323,19 +326,20 @@ const router = useRouter()
               </Col>
               <Col xs={24} md={8}>
                 <div className="text-right md:text-left">
-                  <div className= "text-3xl font-bold text-primary mb-2 flex flex-col items-end gap-3">
-                  {/* {console.log("subject.price09240394034", subject)} */}
+                  <div className="text-3xl font-bold text-primary mb-2 flex flex-col items-end gap-3">
+                    {/* {console.log("subject.price09240394034", subject)} */}
                     {subject.free ? "مجانية" : `${subject.price} ر.س`}
-                     <button
-                    onClick={() => {
-                      
-                      router.push(`/saudi_source_course/edit/${subject?.id}?page=1&pageSize=1000000000&isSource=${subject?.source}&category_id=${subject?.category_id}`)
-                    }}
-                    className= "w-fit px-3 py-2 text-right   flex items-center gap-2 text-[25px] text-[white] font-semibold border border-gray-200 rounded-lg shadow-sm  bg-blue-600 hover:shadow-md transition"
-                  >
-                    <Edit size={14} className="text-[white]" />
-                    <span className="text-[white]">تعديل</span>
-                  </button>
+                    <button
+                      onClick={() => {
+                        router.push(
+                          `/saudi_source_course/edit/${subject?.id}?page=1&pageSize=1000000000&isSource=${subject?.source}&category_id=${subject?.category_id}`
+                        );
+                      }}
+                      className="w-fit px-3 py-2 text-right   flex items-center gap-2 text-[25px] text-[white] font-semibold border border-gray-200 rounded-lg shadow-sm  bg-blue-600 hover:shadow-md transition"
+                    >
+                      <Edit size={14} className="text-[white]" />
+                      <span className="text-[white]">تعديل</span>
+                    </button>
                   </div>
                 </div>
               </Col>
