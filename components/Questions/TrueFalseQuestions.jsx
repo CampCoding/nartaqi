@@ -142,19 +142,19 @@ export default function TrueFalseQuestions({
   return (
     <div className="space-y-5" dir="rtl">
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-        <MathTypeEditor editorData={qValue} setEditorData=
+        {/* <MathTypeEditor editorData={qValue} setEditorData=
           {(data) => {
             setQ(data);
           }}
-        />
-        {/* <LabeledQuill
+        /> */}
+        <LabeledQuill
           label="نص السؤال"
           value={qValue}
           onChange={setQ}
           placeholder="اكتب نص السؤال… (يدعم الألوان والخلفية وكتابة H₂O باستخدام x₂)"
           minH={160}
           uploadImage={uploadImage}
-        /> */}
+        />
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">

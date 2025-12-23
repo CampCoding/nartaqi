@@ -15,7 +15,7 @@ export default function EditVideoModal({ open, setOpen, id,round_id, rowData, se
   const dispatch = useDispatch();
   const { edit_video_laoding } = useSelector(state => state?.videos || { store_content_loading: false });
 
-  const isFormValid = rowData.title && rowData.description;
+  const isFormValid = rowData.title;
 
   function handleInputChange(e) {
     const { name, value } = e.target;
@@ -30,7 +30,8 @@ export default function EditVideoModal({ open, setOpen, id,round_id, rowData, se
 
     const data_send = {
       ...rowData,
-      id: rowData?.id // Ensure 'id' is correctly passed as the parent round ID
+      id: rowData?.id, // Ensure 'id' is correctly passed as the parent round ID.
+      free: "0"
     };
 
     dispatch(handleEditLessonVideo({ body: data_send }))
@@ -153,7 +154,7 @@ export default function EditVideoModal({ open, setOpen, id,round_id, rowData, se
             className='border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400'
           />
         </div>
-   <div className="space-y-2">
+   {/* <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               مجاني
             </label>
@@ -166,7 +167,7 @@ export default function EditVideoModal({ open, setOpen, id,round_id, rowData, se
               <option value="0">لا</option>
               <option value="1">نعم</option>
             </select>
-          </div>
+          </div> */}
         <div className='flex flex-col gap-2'>
           <label htmlFor='time' className='text-lg font-medium text-gray-700'>
             مدة الفيديو

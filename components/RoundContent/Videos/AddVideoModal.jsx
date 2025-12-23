@@ -24,7 +24,7 @@ export default function AddVideoModal({ open, setOpen, id, content_id }) {
     (state) => state?.videos || { store_content_loading: false }
   );
 
-  const isFormValid = videoData.title && videoData.description;
+  const isFormValid = videoData.title;
 
   function handleInputChange(e) {
     const { name, value } = e.target;
@@ -39,7 +39,8 @@ export default function AddVideoModal({ open, setOpen, id, content_id }) {
 
     const data_send = {
       ...videoData,
-      lesson_id: id // Ensure 'id' is correctly passed as the parent round ID
+      lesson_id: id, // Ensure 'id' is correctly passed as the parent round ID
+      free: "0"
     };
 
     dispatch(handleAddLessonVideo({ body: data_send }))
@@ -172,7 +173,7 @@ export default function AddVideoModal({ open, setOpen, id, content_id }) {
             className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
           />
         </div>
-        <div className="flex flex-col gap-2">
+        {/* <div className="flex flex-col gap-2">
           <label htmlFor="time" className="text-lg font-medium text-gray-700">
             مجاني
           </label>
@@ -191,7 +192,7 @@ export default function AddVideoModal({ open, setOpen, id, content_id }) {
               <option value="1">نعم</option>
             </select>
           </div>
-        </div>
+        </div> */}
         <div className="flex flex-col gap-2">
           <label htmlFor="time" className="text-lg font-medium text-gray-700">
             مدة الفيديو

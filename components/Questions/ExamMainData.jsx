@@ -109,10 +109,12 @@ export default function ExamMainData({
   const lessonId = searchparams?.get("lessonId") ?? null;
   const page = searchparams.get("page");
   const pageSize = searchparams.get("pageSize");
+  const params = useParams();
+  // const editExamId = params["]/
 
   useEffect(() => {
-    console.log("exam id", examid);
-  }, [examid])
+    console.log("exam id", params);
+  }, [params])
 
   const [examData, setExamData] = useState({
     name: "",
@@ -206,7 +208,7 @@ export default function ExamMainData({
   const [openExamQuestion, setOpenExamQuestion] = useState(false);
   const [filteredData, setFilteredData] = useState({});
 
-  const params = useParams();
+  // const params = useParams();
   const isEditMode = Boolean(params["exam-id"]);
 
   /* Effects */
@@ -427,7 +429,7 @@ export default function ExamMainData({
             }
             dispatch(
               handleGetAllExamSections({
-                body: { exam_id: examId || res?.data?.message?.id },
+                body: { exam_id: examId || params["exam-id"] || res?.data?.message?.id },
               })
             );
             setExamData({ ...examData, sections: [] });
@@ -491,7 +493,7 @@ export default function ExamMainData({
             const newSection = res?.data?.message;
             dispatch(
               handleGetAllExamSections({
-                body: { exam_id: examId || newSection?.exam_id },
+                body: { exam_id: examId || params["exam-id"]|| newSection?.exam_id },
               })
             );
             setOpenExamQuestion(newSection);
@@ -522,7 +524,7 @@ export default function ExamMainData({
           setOpenExamQuestion(res?.data?.message);
           dispatch(
             handleGetAllExamSections({
-              body: { exam_id: examId || res?.data?.message?.section?.exam_id },
+              body: { exam_id: examId || params["exam-id"] || res?.data?.message?.section?.exam_id },
             })
           );
         } else {
@@ -1281,7 +1283,7 @@ export default function ExamMainData({
     dispatch(
       handleGetAllExamSections({
         body: {
-          exam_id: examId || openExamSection?.exam_id || openExamQuestion?.section?.exam_id,
+          exam_id: examId ||  params["exam-id"] || openExamSection?.exam_id || openExamQuestion?.section?.exam_id,
         },
       })
     );
@@ -1347,6 +1349,10 @@ export default function ExamMainData({
   };
 
 
+
+  useEffect(() => {
+    console.log("get_exam_sections_list", get_exam_sections_list)
+  }, [get_exam_sections_list])
 
   /* ===================== UI ===================== */
   return (
@@ -1551,19 +1557,19 @@ export default function ExamMainData({
                         <label className="block text-lg font-semibold text-gray-800 mb-4">
                           نص السؤال
                         </label>
-                        <MathTypeEditor editorData={currentQuestion} setEditorData=
+                        {/* <MathTypeEditor editorData={currentQuestion} setEditorData=
         {(data) => {
           setCurrentQuestion(data);
         }}
-        />
-                        {/* <LabeledEditor
+        /> */}
+                        <LabeledEditor
                           label="" // Hide duplicate label since we have one above
                           value={currentQuestion}
                           onChange={setCurrentQuestion}
                           editorMinH={180}
                           allowImages
                           placeholder="اكتب نص السؤال هنا... يمكنك إضافة صور، معادلات، تنسيق..."
-                        /> */}
+                        />
                       </div>
 
                       {/* Options Section */}
@@ -1643,7 +1649,7 @@ export default function ExamMainData({
                                     <label className="block text-sm font-medium text-gray-700 mb-3">
                                       نص الخيار
                                     </label>
-                                    <MathTypeEditor editorData={option.answer} setEditorData=
+                                    {/* <MathTypeEditor editorData={option.answer} setEditorData=
 
                                       {(data) =>
                                         updateMcqOption(
@@ -1652,15 +1658,15 @@ export default function ExamMainData({
                                           data
                                         )
                                       }
-                                    />
-                                    {/* <LabeledEditor
+                                    /> */}
+                                    <LabeledEditor
                   label=""
                   value={option.answer}
                   onChange={(v) => updateMcqOption(index, "answer", v)}
                   editorMinH={130}
                   allowImages
                   placeholder="اكتب نص الخيار هنا..."
-                /> */}
+                />
                                   </div>
 
                                   {/* Explanation */}

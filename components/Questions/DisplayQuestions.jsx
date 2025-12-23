@@ -30,7 +30,6 @@
 //   // State for collapsable panels
 //   const [expandedQuestions, setExpandedQuestions] = useState({});
 
-
 //   // State for editing
 //   const [editingQuestionId, setEditingQuestionId] = useState(null);
 //   const [editingContent, setEditingContent] = useState("");
@@ -433,8 +432,8 @@
 //         <div className="space-y-3">
 //           <div className="flex justify-between items-start mb-2">
 //             <div className="flex-1">
-//               <div 
-//                 className="text-[13px] text-gray-800 leading-6 mb-3" 
+//               <div
+//                 className="text-[13px] text-gray-800 leading-6 mb-3"
 //                 dangerouslySetInnerHTML={{__html : q?.question}}
 //               />
 //             </div>
@@ -472,12 +471,12 @@
 //                       : "bg-gray-50 border-gray-200 text-gray-700"
 //                   }`}
 //                 >
-//                   <div 
+//                   <div
 //                     dangerouslySetInnerHTML={{__html : `${String.fromCharCode(1632 + (idx + 1))}. ${option?.text}`}}
 //                     className="font-medium"
 //                   />
 //                   {option.explanation && (
-//                     <div 
+//                     <div
 //                       dangerouslySetInnerHTML={{__html : `Explanation: ${option.explanation}`}}
 //                       className="mt-1 text-[12px] text-gray-600"
 //                     />
@@ -497,7 +496,7 @@
 //             <div className="flex-1">
 //               <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 mb-3">
 //                 <div className="text-[12px] font-semibold text-blue-800 mb-1">Paragraph:</div>
-//                 <div 
+//                 <div
 //                   className="text-[12px] text-blue-700 leading-6"
 //                   dangerouslySetInnerHTML={{__html : q.paragraphContent}}
 //                 />
@@ -530,7 +529,7 @@
 //               <div className="flex justify-between items-start">
 //                 <h2 className="font-bold text-lg">أسئله القطعه</h2>
 //                 <div className="flex-1">
-//                   <p 
+//                   <p
 //                     className="text-[13px] text-gray-800 leading-6 mb-2"
 //                     dangerouslySetInnerHTML={{__html : question.questionText}}
 //                   />
@@ -548,12 +547,12 @@
 //                           : "bg-gray-50 border-gray-200 text-gray-700"
 //                       }`}
 //                     >
-//                       <div 
-//                         className="font-medium" 
+//                       <div
+//                         className="font-medium"
 //                         dangerouslySetInnerHTML={{__html : `${String.fromCharCode(1632 + (i + 1))}. ${option?.text}`}}
 //                       />
 //                       {option.explanation && (
-//                         <div 
+//                         <div
 //                           dangerouslySetInnerHTML={{__html :` Explanation: ${option.explanation}`}}
 //                           className="mt-1 text-[12px] text-gray-600"
 //                         />
@@ -614,7 +613,7 @@
 //           <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
 //             <div className="flex items-center justify-between">
 //               <div>
-//                 <h3 
+//                 <h3
 //                 dangerouslySetInnerHTML={{__html : `Section ${sectionName}`}}
 //                 className="font-semibold text-blue-800"></h3>
 //                 <p className="text-sm text-blue-600">Total Questions: {apiQuestions.length}</p>
@@ -633,12 +632,12 @@
 //               const isExpanded = isQuestionExpanded(q.id, q.type);
 
 //               return (
-//                 <div 
-//                   key={q.id} 
+//                 <div
+//                   key={q.id}
 //                   className="rounded-2xl border bg-white shadow-sm transition-all hover:shadow-md"
 //                 >
 //                   {/* Collapsible Header */}
-//                   <div 
+//                   <div
 //                     className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 rounded-t-2xl transition-colors"
 //                     onClick={() => toggleQuestion(q.id, q.type)}
 //                   >
@@ -695,7 +694,6 @@
 //   );
 // }
 
-
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
@@ -704,7 +702,10 @@ import { Empty, Spin, Tag, Button, Modal } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import dynamic from "next/dynamic";
 import Card from "./ExamCard";
-import { handleDeleteExamQuestions, handleGetExamQuestions } from "../../lib/features/examSlice";
+import {
+  handleDeleteExamQuestions,
+  handleGetExamQuestions,
+} from "../../lib/features/examSlice";
 import { toast } from "react-toastify";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
@@ -717,10 +718,13 @@ export default function DisplayQuestions({
   selectedSectionId,
   setEditingQuestion,
   selectedSection,
-
 }) {
   const dispatch = useDispatch();
-  const { get_exam_questions_list, get_exam_questions_loading, delete_question_loading } = useSelector(state => state?.exam);
+  const {
+    get_exam_questions_list,
+    get_exam_questions_loading,
+    delete_question_loading,
+  } = useSelector((state) => state?.exam);
 
   const [expandedQuestions, setExpandedQuestions] = useState({});
   const [editingQuestionId, setEditingQuestionId] = useState(null);
@@ -728,19 +732,27 @@ export default function DisplayQuestions({
   const [editingOptions, setEditingOptions] = useState([]);
   const [editingCorrectAnswer, setEditingCorrectAnswer] = useState(0);
   const [editingParagraphContent, setEditingParagraphContent] = useState("");
-  const [editingParagraphQuestions, setEditingParagraphQuestions] = useState([]);
+  const [editingParagraphQuestions, setEditingParagraphQuestions] = useState(
+    []
+  );
 
   const [deleteModal, setDeleteModal] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState(null);
   const [sectionName, setSectionName] = useState("");
 
-
+  useEffect(() => {
+    console.log("selectedSection", selectedSection);
+  }, [selectedSection]);
 
   useEffect(() => {
     if (get_exam_questions_list) {
       const initial = {};
-      (get_exam_questions_list?.data?.message?.mcq || []).forEach(q => initial[`mcq-${q.id}`] = false);
-      (get_exam_questions_list?.data?.message?.paragraphs || []).forEach(p => initial[`paragraph-${p.paragraph.id}`] = false);
+      (get_exam_questions_list?.data?.message?.mcq || []).forEach(
+        (q) => (initial[`mcq-${q.id}`] = false)
+      );
+      (get_exam_questions_list?.data?.message?.paragraphs || []).forEach(
+        (p) => (initial[`paragraph-${p.paragraph.id}`] = false)
+      );
       setExpandedQuestions(initial);
     }
   }, [get_exam_questions_list]);
@@ -748,73 +760,104 @@ export default function DisplayQuestions({
   const quillModules = {
     toolbar: [
       [{ header: [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline'],
-      [{ list: 'ordered' }, { list: 'bullet' }],
+      ["bold", "italic", "underline"],
+      [{ list: "ordered" }, { list: "bullet" }],
       [{ align: [] }],
-      ['clean'],
-      ['link', 'image', 'formula']
+      ["clean"],
+      ["link", "image", "formula"],
     ],
   };
 
-  const quillFormats = ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'align', 'link', 'image', 'formula'];
-
+  const quillFormats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "list",
+    "bullet",
+    "align",
+    "link",
+    "image",
+    "formula",
+  ];
 
   const apiQuestions = useMemo(() => {
     if (!get_exam_questions_list && !selectedSection) return [];
-    const data = get_exam_questions_list?.data?.message || { mcq: [], paragraphs: [] };
-    const mcqs = ((data?.mcq && data?.mcq?.length) ? data?.mcq : (selectedSection?.mcq && selectedSection?.mcq?.length) ? selectedSection?.mcq : []).map(q => {
+    const data = get_exam_questions_list?.data?.message || {
+      mcq: [],
+      paragraphs: [],
+    };
+    const mcqs = (
+      data?.mcq && data?.mcq?.length
+        ? data?.mcq
+        : selectedSection?.mcq && selectedSection?.mcq?.length
+        ? selectedSection?.mcq
+        : []
+    ).map((q) => {
       const options = q?.options || [];
-      const correctIndex = options.findIndex(opt => Number(opt?.is_correct) === 1);
+      const correctIndex = options.findIndex(
+        (opt) => Number(opt?.is_correct) === 1
+      );
       return {
         id: q.id,
         type: "mcq",
         question: q?.question_text || "",
         correctAnswer: correctIndex >= 0 ? correctIndex : 0,
-        options: options.map(opt => ({
+        options: options.map((opt) => ({
           text: opt.option_text || "",
           explanation: opt.question_explanation || "",
         })),
-        rawData: q
+        rawData: q,
       };
     });
-    console.log("get_exam_questions_list--------", ((data?.mcq && data?.mcq?.length) ? data?.mcq : (selectedSection?.mcq && selectedSection?.mcq?.length) ? selectedSection?.mcq : []))
-    const paragraphs = (selectedSection?.paragraphs || []).map(p => ({
+    console.log(
+      "get_exam_questions_list--------",
+      data?.mcq && data?.mcq?.length
+        ? data?.mcq
+        : selectedSection?.mcq && selectedSection?.mcq?.length
+        ? selectedSection?.mcq
+        : []
+    );
+    const paragraphs = (selectedSection?.paragraphs || []).map((p) => ({
       id: p.paragraph.id,
       type: "paragraph_mcq",
       paragraphContent: p.paragraph.paragraph_content || "",
-      questions: p.questions.map(q => ({
+      questions: p.questions.map((q) => ({
         questionText: q.question_text || "",
-        options: (q.options || []).map(opt => ({
+        options: (q.options || []).map((opt) => ({
           text: opt.option_text || "",
           explanation: opt.question_explanation || "",
           isCorrect: opt.is_correct === 1,
         })),
       })),
-      rawData: p
+      rawData: p,
     }));
 
     return [...mcqs, ...paragraphs];
   }, [get_exam_questions_list, selectedSection]);
 
   const toggleQuestion = (id, type) => {
-    const key = `${type === 'mcq' ? 'mcq' : 'paragraph'}-${id}`;
-    setExpandedQuestions(prev => ({ ...prev, [key]: !prev[key] }));
+    const key = `${type === "mcq" ? "mcq" : "paragraph"}-${id}`;
+    setExpandedQuestions((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const isExpanded = (id, type) => expandedQuestions[`${type === 'mcq' ? 'mcq' : 'paragraph'}-${id}`] || false;
+  const isExpanded = (id, type) =>
+    expandedQuestions[`${type === "mcq" ? "mcq" : "paragraph"}-${id}`] || false;
 
   const startEditing = (q) => {
     setEditingQuestionId(q.id);
     if (q.type === "mcq") {
       setEditingContent(q.question);
-      setEditingOptions(q.options.map(opt => ({ ...opt })));
+      setEditingOptions(q.options.map((opt) => ({ ...opt })));
       setEditingCorrectAnswer(q.correctAnswer);
     } else if (q.type === "paragraph_mcq") {
       setEditingParagraphContent(q.paragraphContent);
-      setEditingParagraphQuestions(q.questions.map(pq => ({
-        questionText: pq.questionText,
-        options: pq.options.map(opt => ({ ...opt }))
-      })));
+      setEditingParagraphQuestions(
+        q.questions.map((pq) => ({
+          questionText: pq.questionText,
+          options: pq.options.map((opt) => ({ ...opt })),
+        }))
+      );
     }
     setEditingQuestion(q);
   };
@@ -833,10 +876,14 @@ export default function DisplayQuestions({
     if (!questionToDelete) return;
     dispatch(handleDeleteExamQuestions({ body: { id: questionToDelete.id } }))
       .unwrap()
-      .then(res => {
+      .then((res) => {
         if (res?.data?.status === "success") {
           toast.success("تم حذف السؤال بنجاح");
-          dispatch(handleGetExamQuestions({ body: { exam_section_id: selectedSectionId } }));
+          dispatch(
+            handleGetExamQuestions({
+              body: { exam_section_id: selectedSectionId },
+            })
+          );
         } else {
           toast.error(res?.data?.message || "فشل الحذف");
         }
@@ -857,15 +904,28 @@ export default function DisplayQuestions({
           {q.type === "mcq" ? (
             <>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-3">نص السؤال</label>
-                <ReactQuill value={editingContent} onChange={setEditingContent} modules={quillModules} formats={quillFormats} className="bg-white" />
+                <label className="block text-sm font-semibold text-gray-800 mb-3">
+                  نص السؤال
+                </label>
+                <ReactQuill
+                  value={editingContent}
+                  onChange={setEditingContent}
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white"
+                />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-4">الخيارات</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-4">
+                  الخيارات
+                </label>
                 <div className="space-y-5">
                   {editingOptions.map((opt, idx) => (
-                    <div key={idx} className="p-5 bg-gray-50 border border-gray-200 rounded-xl">
+                    <div
+                      key={idx}
+                      className="p-5 bg-gray-50 border border-gray-200 rounded-xl"
+                    >
                       <div className="flex items-center gap-4 mb-4">
                         <input
                           type="radio"
@@ -873,22 +933,25 @@ export default function DisplayQuestions({
                           onChange={() => setEditingCorrectAnswer(idx)}
                           className="w-5 h-5 text-blue-600"
                         />
-                        <span className="font-medium text-gray-700">الإجابة الصحيحة</span>
+                        <span className="font-medium text-gray-700">
+                          الإجابة الصحيحة
+                        </span>
                         <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium">
                           {String.fromCharCode(1632 + idx + 1)}
                         </span>
                       </div>
                       <div className="space-y-4">
                         <div>
-                          <label className="text-sm text-gray-600 mb-2 block">نص الخيار</label>
-                          <MathTypeEditor editorData={opt.text} setEditorData=
-
-                            {(data) =>{
+                          <label className="text-sm text-gray-600 mb-2 block">
+                            نص الخيار
+                          </label>
+                          <MathTypeEditor
+                            editorData={opt.text}
+                            setEditorData={(data) => {
                               const newOpts = [...editingOptions];
                               newOpts[idx].text = data;
                               setEditingOptions(newOpts);
-                            }
-                          }
+                            }}
                           />
                           {/* <ReactQuill
                             value={opt.text}
@@ -902,10 +965,12 @@ export default function DisplayQuestions({
                           /> */}
                         </div>
                         <div>
-                          <label className="text-sm text-gray-600 mb-2 block">الشرح (اختياري)</label>
+                          <label className="text-sm text-gray-600 mb-2 block">
+                            الشرح (اختياري)
+                          </label>
                           <ReactQuill
                             value={opt.explanation}
-                            onChange={v => {
+                            onChange={(v) => {
                               const newOpts = [...editingOptions];
                               newOpts[idx].explanation = v;
                               setEditingOptions(newOpts);
@@ -926,10 +991,19 @@ export default function DisplayQuestions({
           )}
 
           <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
-            <Button onClick={cancelEditing} size="large" icon={<X className="w-5 h-5" />}>
+            <Button
+              onClick={cancelEditing}
+              size="large"
+              icon={<X className="w-5 h-5" />}
+            >
               إلغاء
             </Button>
-            <Button type="primary" size="large" icon={<Save className="w-5 h-5" />} loading={delete_question_loading}>
+            <Button
+              type="primary"
+              size="large"
+              icon={<Save className="w-5 h-5" />}
+              loading={delete_question_loading}
+            >
               حفظ التعديلات
             </Button>
           </div>
@@ -944,44 +1018,76 @@ export default function DisplayQuestions({
         {q.type === "paragraph_mcq" && (
           <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl">
             <h4 className="font-bold text-blue-900 mb-4 text-lg">الفقرة</h4>
-            <div dangerouslySetInnerHTML={{ __html: q.paragraphContent }} className="text-gray-800 leading-relaxed text-base" />
+            <div
+              dangerouslySetInnerHTML={{ __html: q.paragraphContent }}
+              className="text-gray-800 leading-relaxed text-base"
+            />
           </div>
         )}
 
         {/* Questions */}
-        {(q.type === "mcq" ? [{ questionText: q.question, options: q.options, correctAnswer: q.correctAnswer }] : q.questions).map((item, qIdx) => (
+        {(q.type === "mcq"
+          ? [
+              {
+                questionText: q.question,
+                options: q.options,
+                correctAnswer: q.correctAnswer,
+              },
+            ]
+          : q.questions
+        ).map((item, qIdx) => (
           <div key={qIdx} className="space-y-5">
             {q.type === "paragraph_mcq" && (
-              <h4 className="font-bold text-gray-900 text-lg">سؤال {qIdx + 1}</h4>
+              <h4 className="font-bold text-gray-900 text-lg">
+                سؤال {qIdx + 1}
+              </h4>
             )}
             {q.type === "paragraph_mcq" && (
-              <div dangerouslySetInnerHTML={{ __html: item.questionText }} className="text-gray-800 leading-relaxed text-base mb-4" />
+              <div
+                dangerouslySetInnerHTML={{ __html: item.questionText }}
+                className="text-gray-800 leading-relaxed text-base mb-4"
+              />
             )}
             {q.type === "mcq" && (
-              <div dangerouslySetInnerHTML={{ __html: item.questionText }} className="text-gray-800 leading-relaxed text-base mb-5" />
+              <div
+                dangerouslySetInnerHTML={{ __html: item.questionText }}
+                className="text-gray-800 leading-relaxed text-base mb-5"
+              />
             )}
 
             <div className="grid gap-4">
               {item.options.map((opt, oIdx) => {
-                const isCorrect = q.type === "mcq" ? oIdx === q.correctAnswer : opt.isCorrect;
+                const isCorrect =
+                  q.type === "mcq" ? oIdx === q.correctAnswer : opt.isCorrect;
                 return (
                   <div
                     key={oIdx}
-                    className={`p-5 rounded-xl border-2 transition-all ${isCorrect
-                      ? "bg-emerald-50 border-emerald-300 shadow-sm"
-                      : "bg-white border-gray-200 hover:border-gray-300"
-                      }`}
+                    className={`p-5 rounded-xl border-2 transition-all ${
+                      isCorrect
+                        ? "bg-emerald-50 border-emerald-300 shadow-sm"
+                        : "bg-white border-gray-200 hover:border-gray-300"
+                    }`}
                   >
                     <div className="flex items-start gap-3">
                       <span className="font-bold text-lg text-gray-700 mt-1">
                         {String.fromCharCode(1632 + oIdx + 1)}.
                       </span>
                       <div className="flex-1">
-                        <div dangerouslySetInnerHTML={{ __html: opt.text }} className="font-medium text-gray-800 leading-relaxed" />
+                        <div
+                          dangerouslySetInnerHTML={{ __html: opt.text }}
+                          className="font-medium text-gray-800 leading-relaxed"
+                        />
                         {opt.explanation && (
                           <div className="mt-3 pt-3 border-t border-gray-200">
-                            <span className="text-sm font-medium text-gray-600">الشرح:</span>
-                            <div dangerouslySetInnerHTML={{ __html: opt.explanation }} className="text-sm text-gray-600 mt-1 leading-relaxed" />
+                            <span className="text-sm font-medium text-gray-600">
+                              الشرح:
+                            </span>
+                            <div
+                              dangerouslySetInnerHTML={{
+                                __html: opt.explanation,
+                              }}
+                              className="text-sm text-gray-600 mt-1 leading-relaxed"
+                            />
                           </div>
                         )}
                       </div>
@@ -1032,7 +1138,9 @@ export default function DisplayQuestions({
 
   return (
     <Card title="أسئلة الامتحان" icon={Edit3} className="p-0">
-      <div className="p-6"> {/* Main container padding */}
+      <div className="p-6">
+        {" "}
+        {/* Main container padding */}
         {apiQuestions.length === 0 ? (
           <Empty description="لا توجد أسئلة في هذا القسم بعد" />
         ) : (
@@ -1041,8 +1149,19 @@ export default function DisplayQuestions({
             <div className="p-8 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-3xl border border-indigo-200 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h2 className="text-3xl font-bold text-indigo-900" dangerouslySetInnerHTML={{ __html: `قسم : ${selectedSection?.title}` }} />
-                  <p className="text-lg text-indigo-700 mt-2">عدد الأسئلة: <span className="font-bold">{apiQuestions.length}</span></p>
+                  <div className="flex gap-1 items-center">
+                    {/* <h2 className="text-3xl font-bold text-indigo-900">قسم </h2> */}
+                    <h2
+                      className="text-3xl font-bold text-indigo-900"
+                      dangerouslySetInnerHTML={{
+                        __html: ` ${selectedSection?.title}`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-lg text-indigo-700 mt-2">
+                    عدد الأسئلة:{" "}
+                    <span className="font-bold">{apiQuestions.length}</span>
+                  </p>
                 </div>
                 {/* <Tag color="indigo" className="text-base px-5 py-2">معرف القسم: {selectedSectionId}</Tag> */}
               </div>
@@ -1051,8 +1170,10 @@ export default function DisplayQuestions({
             {/* Questions List */}
             <div className="space-y-6">
               {apiQuestions.map((q, index) => {
+                console.log("q", q);
                 const isExp = isExpanded(q.id, q.type);
-                const typeLabel = q.type === "mcq" ? "سؤال اختيار متعدد" : "فقرة مع أسئلة";
+                const typeLabel =
+                  q.type == "mcq" ? "سؤال اختيار متعدد" : "فقرة مع أسئلة";
 
                 return (
                   <div
@@ -1069,18 +1190,28 @@ export default function DisplayQuestions({
                           {index + 1}
                         </div>
                         <div>
-                          <div className="font-bold text-xl text-gray-900">{typeLabel}</div>
+                          <div className="font-bold text-xl text-gray-900">
+                            {typeLabel}
+                          </div>
                           <div
                             className="text-sm text-gray-600 mt-1 line-clamp-2"
                             dangerouslySetInnerHTML={{
-                              __html: q.type === "mcq" ? q.question : q.paragraphContent || q.questions[0]?.questionText || "فقرة"
+                              __html:
+                                q.type === "mcq"
+                                  ? q.question
+                                  : q.paragraphContent ||
+                                    q.questions[0]?.questionText ||
+                                    "فقرة",
                             }}
                           />
                         </div>
                       </div>
 
                       <div className="flex items-center gap-4">
-                        <Tag color={q.type === "mcq" ? "blue" : "purple"} className="text-sm px-4 py-1">
+                        <Tag
+                          color={q.type === "mcq" ? "blue" : "purple"}
+                          className="text-sm px-4 py-1"
+                        >
                           {q.type === "mcq" ? "MCQ" : "فقرة"}
                         </Tag>
                         {isExp ? (
@@ -1119,7 +1250,9 @@ export default function DisplayQuestions({
           <Trash2 className="w-20 h-20 text-red-500 mx-auto mb-6" />
           <h3 className="text-2xl font-bold text-gray-900 mb-4">تأكيد الحذف</h3>
           <p className="text-gray-600 text-lg leading-relaxed">
-            هل أنت متأكد من حذف هذا {questionToDelete?.type === "mcq" ? "السؤال" : "الفقرة مع أسئلتها"}؟<br />
+            هل أنت متأكد من حذف هذا{" "}
+            {questionToDelete?.type === "mcq" ? "السؤال" : "الفقرة مع أسئلتها"}؟
+            <br />
             <strong className="text-red-600">هذا الإجراء لا رجعة فيه</strong>.
           </p>
         </div>
