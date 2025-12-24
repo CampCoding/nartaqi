@@ -6,10 +6,22 @@ const initialState = {
   all_resources_list : [],
   all_resources_loading : false,
 
+  all_resources_links : [],
+  all_resources_links_loading : false,
+
   add_resource_loading : false,
   edit_resource_loading : false,
   delete_resource_loading : false,
+
+  add_resource_link_loading : false,
+  edit_resource_link_loading : false,
+  delete_resource_link_loading :false,
 }
+
+export const handleGetAllRoundResourcesLinks = createAsyncThunk("resourcesSlice/handleGetAllRoundResourcesLinks",async({body}) => {
+  const response = await api.post("admin/rounds-resources/getResourceLinks" , {body});
+  return response;
+})
 
 export const handleGetAllRoundResources  = createAsyncThunk("resourcesSlice/handleGetAllRoundResources",async({body}) => {
   const response = await api.post(apiRoutes.get_resources , {body});
@@ -32,6 +44,22 @@ export const handleDeleteRoundResource = createAsyncThunk("resourcesSlice/handle
 })
 
 
+export const handleAddRoundResourceLink = createAsyncThunk("resourcesSlice/handleAddRoundResourceLink",async({body}) => {
+  const response = await api.post("admin/rounds-resources/storeResourceLinks" , {body , isFile : true});
+  return response;
+})
+
+export const handleEditRoundResourceLink = createAsyncThunk("resourcesSlice/handleEditRoundResourceLink",async({body}) => {
+  const response = await api.post("admin/rounds-resources/editResourceLinks" , {body , isFile : true});
+  return response;
+})
+
+export const handleDeleteRoundResourceLink = createAsyncThunk("resourcesSlice/handleDeleteRoundResourceLink",async({body}) => {
+  const response = await api.post("admin/rounds-resources/deleteResourceLinks" , {body});
+  return response;
+})
+
+
 export const resourcesSlice = createSlice({
   name:"resourcesSlice",
   initialState,
@@ -46,6 +74,17 @@ export const resourcesSlice = createSlice({
     })
     .addCase(handleGetAllRoundResources.rejected ,(state) => {
       state.all_resources_loading = false
+    })
+
+    .addCase(handleGetAllRoundResourcesLinks.pending, (state) => {
+      state.all_resources_links_loading = true;
+    })
+    .addCase(handleGetAllRoundResourcesLinks.fulfilled , (state , action) => {
+      state.all_resources_links_loading = false;
+      state.all_resources_links = action.payload;
+    })
+    .addCase(handleGetAllRoundResourcesLinks.rejected ,(state) => {
+      state.all_resources_links_loading = false
     })
 
     .addCase(handleAddRoundResource.pending, (state) => {
@@ -76,6 +115,36 @@ export const resourcesSlice = createSlice({
     })
     .addCase(handleDeleteRoundResource.rejected ,(state) => {
       state.delete_resource_loading = false
+    })
+
+    .addCase(handleAddRoundResourceLink.pending, (state) => {
+      state.add_resource_link_loading = true;
+    })
+    .addCase(handleAddRoundResourceLink.fulfilled , (state , action) => {
+      state.add_resource_link_loading = false;
+    })
+    .addCase(handleAddRoundResourceLink.rejected ,(state) => {
+      state.add_resource_link_loading = false
+    })
+
+    .addCase(handleEditRoundResourceLink.pending, (state) => {
+      state.edit_resource_link_loading = true;
+    })
+    .addCase(handleEditRoundResourceLink.fulfilled , (state , action) => {
+      state.edit_resource_link_loading = false;
+    })
+    .addCase(handleEditRoundResourceLink.rejected ,(state) => {
+      state.edit_resource_link_loading = false
+    })
+
+    .addCase(handleDeleteRoundResourceLink.pending, (state) => {
+      state.delete_resource_link_loading = true;
+    })
+    .addCase(handleDeleteRoundResourceLink.fulfilled , (state , action) => {
+      state.delete_resource_link_loading = false;
+    })
+    .addCase(handleDeleteRoundResourceLink.rejected ,(state) => {
+      state.delete_resource_link_loading = false
     })
   }
 })

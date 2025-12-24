@@ -31,8 +31,8 @@ const CourseSourceSubjectCard = ({
   }, [subject]);
 
   const goToCourse = () => {
-      router.push(`/subjects/${subject?.id}/units?category_id=${subject?.category_part_id}&page=${page}`);
-    
+    router.push(`/subjects/${subject?.id}/units?category_id=${subject?.category_part_id}&page=${page}`);
+
   };
 
   const handleEdit = (e) => {
@@ -131,6 +131,18 @@ const CourseSourceSubjectCard = ({
                   >
                     <File size={14} className="text-blue-600" />
                     <span>الشروط والأحكام</span>
+                  </button>
+                  <button
+                    onClick={() =>
+                      router.push(
+                        `/resources?roundId=${subject?.id
+                        }`
+                      )
+                    }
+                    className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <File size={14} className="text-blue-600" />
+                    <span>مصادر الدورة</span>
                   </button>
                   <button
                     onClick={handleEdit}
@@ -253,8 +265,8 @@ const CourseSourceSubjectCard = ({
               </div>
 
               {subject?.teachers?.length > 1 && <div className="w-7 h-7 !text-sm font-bold rounded-full flex justify-center items-center bg-orange-400/50 text-orange-600">
-                  {subject?.teachers?.length - 1}+
-                </div>}
+                {subject?.teachers?.length - 1}+
+              </div>}
             </div>
           </div>
 

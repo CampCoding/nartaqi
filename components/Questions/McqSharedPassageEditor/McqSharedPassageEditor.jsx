@@ -524,6 +524,36 @@ export default function McqSharedPassageEditor({
     initialData?.length ? normalize(initialData) : [createPassage()]
   );
 
+  // In McqSharedPassageEditor component
+useEffect(() => {
+  console.log("McqSharedPassageEditor initialData:", initialData);
+  
+  if (initialData && initialData.content) {
+    // If initialData is already in passage format
+    setPassages([initialData]);
+  } else if (Array.isArray(initialData) && initialData.length > 0) {
+    // If initialData is an array
+    setPassages(initialData);
+  } else if (initialData && initialData.type === "paragraph_mcq") {
+    // Convert paragraph_mcq format to editor format
+    const convertedPassage = {
+      id: Date.now().toString(),
+      content: initialData.paragraphContent || "",
+      questions: initialData.questions?.map((q, index) => ({
+        id: `${Date.now()}-q${index}`,
+        text: q.questionText || "",
+        options: q.options?.map(opt => ({
+          answer: opt.text || "",
+          explanation: opt.explanation || "",
+          isCorrect: opt.isCorrect || false,
+        })) || [],
+        correctIndex: q.options?.findIndex(opt => opt.isCorrect) || 0,
+      })) || [],
+    };
+    setPassages([convertedPassage]);
+  }
+}, [initialData]);
+
   useEffect(() => {
     onPassagesChange?.(passages);
   }, [passages, onPassagesChange]);

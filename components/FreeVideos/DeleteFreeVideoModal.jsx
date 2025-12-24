@@ -4,15 +4,14 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { toast } from 'react-toastify';
-import { handleDeleteLessonVideo, handleGetAllLessonVideo } from '../../../lib/features/videoSlice';
-import { handleGetAllContentFreeVideos, handleGetAllRoundContent } from '../../../lib/features/roundContentSlice';
+import { handleDeleteFreeVideos, handleGetAllFreeVideos } from '../../lib/features/freeVideoSlice';
 
 const { Text } = Typography;
 
-export default function DeleteVideoModal({ open, round_id,setOpen, rowData, id }) {
+export default function DeleteFreeVideoModal({ open, setOpen, rowData , page , per_page }) {
   const dispatch = useDispatch();
   // Ensure the state path and variable name are correct (e.g., state?.content?.delete_content_loading)
-  const { delete_video_loading } = useSelector(state => state?.videos);
+  const { delete_video } = useSelector(state => state?.free_videos);
 
   function handleDelete() {
     // Check if rowData is valid before dispatching
@@ -26,30 +25,13 @@ export default function DeleteVideoModal({ open, round_id,setOpen, rowData, id }
       id: rowData?.id
     };
 
-    dispatch(handleDeleteLessonVideo({ body: data_send }))
+    dispatch(handleDeleteFreeVideos({ body: data_send }))
       .unwrap()
       .then(res => {
         if (res?.data?.status == "success") {
           toast.success("تم حذف الفيديو بنجاح");
-          dispatch(handleGetAllLessonVideo({
-            body: {
-              round_content_id: rowData?.round_content_id
-            }
-          }))
-          dispatch(
-            handleGetAllRoundContent({
-              body: {
-                round_id, // parent round id
-              },
-            })
-          );
-          dispatch(
-            handleGetAllContentFreeVideos({
-              body: {
-                round_id, // parent round id
-              },
-            })
-          );
+          dispatch(handleGetAllFreeVideos({page : 1, per_page:per_page}))
+
         }
         setOpen(false);
       })
@@ -69,7 +51,7 @@ export default function DeleteVideoModal({ open, round_id,setOpen, rowData, id }
         type="primary"
         danger // Ant Design style for destructive action
         onClick={handleDelete}
-        loading={delete_video_loading}
+        loading={delete_video}
         className='rounded-md px-6'
         icon={<DeleteOutlined />}
       >
@@ -78,7 +60,7 @@ export default function DeleteVideoModal({ open, round_id,setOpen, rowData, id }
       <Button
         key="back"
         onClick={() => setOpen(false)}
-        disabled={delete_video_loading}
+        disabled={delete_video}
         className='rounded-md px-6'
       >
         إلغاء

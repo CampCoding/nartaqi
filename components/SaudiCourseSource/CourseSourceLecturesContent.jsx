@@ -30,7 +30,7 @@ import DeleteVideoModal from "../RoundContent/Videos/DeleteVideoModal";
 import AddLivesModal from "../RoundContent/Lives/AddLivesModal";
 import EditLivesModal from "../RoundContent/Lives/EditLivesModal";
 import DeleteLivesModal from "../RoundContent/Lives/DeleteLivesModal";
-import { Clock, Eye, EyeOff, FileIcon, VideoIcon } from "lucide-react";
+import { BadgeAlert, Clock, Eye, EyeOff, FileIcon, VideoIcon } from "lucide-react";
 import { handleActiveLive, handleMarkLiveAsFinish } from "../../lib/features/livesSlice";
 import { toast } from "react-toastify";
 import AddExamVideoModal from "../RoundContent/Exams/AddExamVideoModal";
@@ -851,12 +851,18 @@ export default function CourseSourceLecturesContent({ id  , isSource}) {
                 }`}
             />
             <div className="min-w-0">
-              <h3 className="text-xl font-bold text-gray-900 truncate">
+               <h3 className="text-xl flex gap-3 items-center font-bold text-gray-900 truncate">
+                                              <span>{contentItem.content_title}</span>
+                                             <Tooltip title={contentItem.content_description}>
+                                               <BadgeAlert color="gray" />
+                                             </Tooltip>
+                                            </h3>
+              {/* <h3 className="text-xl font-bold text-gray-900 truncate">
                 {contentItem?.content_title}
               </h3>
               <p className="text-base text-gray-700 mt-1 truncate">
                 {contentItem?.content_description}
-              </p>
+              </p> */}
 
               <div className="mt-2 flex items-center gap-3 flex-wrap">
                 {/* {contentItem?.current_show_date} */}

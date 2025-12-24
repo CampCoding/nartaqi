@@ -7,9 +7,9 @@ import {
   PlayCircleOutlined,
   PlusOutlined
 } from "@ant-design/icons";
-import { Spin, Tag, Tooltip } from "antd";
+import { Pagination, Spin, Tag, Tooltip } from "antd";
 import dayjs from "dayjs";
-import { Eye, FileIcon, VideoIcon } from "lucide-react";
+import { BadgeAlert, Eye, FileIcon, Info, VideoIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -30,6 +30,8 @@ import DeleteLiveModal from "./components/lives/delete";
 import FinishLiveModal from "./components/lives/finish";
 import { handleActiveLive } from "@/lib/features/livesSlice";
 import { toast } from "react-toastify";
+import FreeVideos from "../RoundContent/FreeVideos/FreeVideos";
+import { handleGetAllExamByRoundId } from "../../lib/features/examSlice";
 
 const initialSchedule = {
   startDate: "2025-12-01",
@@ -38,13 +40,12 @@ const initialSchedule = {
   endTime: "11:00"
 };
 
-export default function ArabicCourseCurriculum({ id , source }) {
+export default function ArabicCourseCurriculum({ id, source }) {
   const [rowData, setRowData] = useState({});
   const [contentSchedule, setContentSchedule] = useState({});
   const [lessonSchedule, setLessonSchedule] = useState({});
   const [activeTab, setActiveTab] = useState("lecture"); // lecture | basic | exams
 
-  // Modal states... 
   const [addModalContent, setAddModalContent] = useState(false);
   const [deleteModalContent, setDeleteModalContent] = useState(false);
   const [editModalContent, setEditModalContent] = useState(false);
@@ -86,7 +87,17 @@ export default function ArabicCourseCurriculum({ id , source }) {
   const [loadingLessons, setLoadingLessons] = useState({});
   const [selectedContent, setSelectedContent] = useState(null);
 
-
+  const { all_exam_round_loading, all_exam_round_list } = useSelector(state => state?.exam)
+  const [examPagination, setExamPagination] = useState({
+    current_page: 1,
+    per_page: 15,
+    last_page: 1,
+    total: 0,
+    from: 1,
+    to: 15
+  })
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(5);
 
   const isReleased = useCallback((releaseAt) => {
     if (!releaseAt) return true;
@@ -102,8 +113,55 @@ export default function ArabicCourseCurriculum({ id , source }) {
           }
         })
       );
+
+      // dispatch(handleGetAllExamByRoundId({
+      //   body: {
+      //     round_id: id,
+      //     page: examPagination?.current_page,
+      //     per_page: examPagination?.per_page
+      //   }
+      // }))
+
+      fetchExams(examPagination.current_page, examPagination.per_page);
     }
   }, [id, dispatch]);
+
+    const fetchExams = (page = 1, perPage = 15) => {
+    dispatch(handleGetAllExamByRoundId({
+      body: {
+        round_id: id,
+        
+      },
+      page: page,
+        per_page: perPage
+    }));
+  };
+
+
+
+  useEffect(() => {
+    if (all_exam_round_list?.data?.message) {
+      const examData = all_exam_round_list.data.message;
+    
+    }
+  }, [all_exam_round_list]);
+
+  const handleExamPageChange = (page, pageSize) => {
+    setExamPagination(prev => ({
+      ...prev,
+      current_page: page,
+      per_page: pageSize
+    }));
+    fetchExams(page, pageSize);
+  };
+
+
+  useEffect(() => {
+    console.log(all_exam_round_list?.data?.message?.data);
+    setPage(all_content_list?.data?.message?.current_page);
+    setPerPage(all_content_list?.data?.message?.per_page);
+
+  }, [all_exam_round_list])
 
   const apiMessage = all_content_list?.data?.message;
   const contents = useSelector(
@@ -113,7 +171,7 @@ export default function ArabicCourseCurriculum({ id , source }) {
 
   const filteredContents =
     (contents && contents?.length && activeTab === "lecture") ||
-    activeTab === "basic"
+      activeTab === "basic"
       ? contents.filter((c) => c.content_type === activeTab)
       : [];
   const [getContent, setContentSelected] = useState(null);
@@ -337,36 +395,30 @@ export default function ArabicCourseCurriculum({ id , source }) {
 
   const ExamCard = ({ exam, lesson, content }) => {
     const [deleteOpen, setDeleteOpen] = useState(false);
-    const examData = exam?.exam || {};
+    const examData = exam || {};
     const examId = exam?.id || examData.id;
     const isExamExpanded = expandedExams[examId];
     const [addOpen, setAddOpen] = useState(false);
     const [addVideoOpen, setAddVideoOpen] = useState(false);
     const videos = exam?.videos || [];
     const pdfs = exam?.exam_pdfs || [];
+
+    useEffect(() => {
+      console.log("exam", exam, "lesson", lesson);
+    }, [exam, lesson])
+
     return (
       <div className="p-4 mb-3 border border-orange-100 rounded-lg bg-orange-50/70">
         <div className="flex items-start justify-between mb-3 cursor-pointer">
           <div className="flex items-start flex-1 min-w-0 w-[100%] flex-col">
             <div className="flex w-[100%] items-center justify-between">
               {" "}
-              <CaretDownOutlined
-                className={`text-xl ml-3 text-orange-500 transition-transform duration-300 cursor-pointer ${
-                  isExamExpanded ? "rotate-0" : "-rotate-90"
-                }`}
+              {/* <CaretDownOutlined
+                className={`text-xl ml-3 text-orange-500 transition-transform duration-300 cursor-pointer ${isExamExpanded ? "rotate-0" : "-rotate-90"
+                  }`}
                 onClick={() => toggleExamCollapse(examId)}
-              />
-              <button
-                type="submit"
-                class="!rounded-md mb-2 mr-auto text-white bg-primary mr-auto box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none !m-2"
-                onClick={() => {
-                  if (typeof window != undefined) {
-                    window.location.href = `/questions/new?lessonId=${lesson?.id}`;
-                  }
-                }}
-              >
-                إضافة اختبار{" "}
-              </button>
+              /> */}
+
             </div>
             {console.log("examDataexamDataexamData-----.-----", examData)}
             <div className="flex-1 min-w-0">
@@ -385,7 +437,7 @@ export default function ArabicCourseCurriculum({ id , source }) {
             </div>
             {/* Actions Icons */}
             {examData?.id ? (
-              <div className="flex gap-3 actions">
+              <div className="flex gap-3 mt-3 actions">
                 <div class="flex gap-3 items-center space-x-4">
                   <button
                     type="button"
@@ -395,7 +447,7 @@ export default function ArabicCourseCurriculum({ id , source }) {
                     class="py-2 px-3 flex items-center text-sm font-medium text-center text-white bg-primary rounded-lg hover:bg-primary focus:ring-4 focus:outline-none focus:ring-primary-300 dark:bg-primary dark:hover:bg-primary dark:focus:ring-primary"
                     onClick={() => {
                       if (typeof window != undefined) {
-                        window.location.href =   `/exams/edit/${examData?.id}?lessonId=${lesson?.id}`;
+                        window.location.href = `/exams/edit/${examData?.id}`;
                       }
                     }}
                   >
@@ -418,8 +470,9 @@ export default function ArabicCourseCurriculum({ id , source }) {
             ) : null}
           </div>
         </div>
-        <DeleteExamModal open={deleteOpen} setOpen={setDeleteOpen} />
-        {isExamExpanded && (
+        <DeleteExamModal round_id={id} page={examPagination?.current_page} per_page={examPagination?.per_page} open={deleteOpen} setOpen={setDeleteOpen} />
+        
+        {/* {isExamExpanded && (
           <div className="pt-4 mt-4 border-t">
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
@@ -525,7 +578,7 @@ export default function ArabicCourseCurriculum({ id , source }) {
               )}
             </div>
           </div>
-        )}
+        )} */}
       </div>
     );
   };
@@ -583,8 +636,8 @@ export default function ArabicCourseCurriculum({ id , source }) {
       <div className="flex items-start justify-between p-4 mb-3 border border-yellow-100 rounded-lg bg-yellow-50/70">
         <DeleteLiveModal open={deleteOpen} setOpen={setDeleteOpen} />
         <FinishLiveModal open={finishOpen} setOpen={setFinishOpen} />
-        <EditLive 
-        source={source}
+        <EditLive
+          source={source}
           setIsEditing={setIsEditting}
           isEditing={isEditting}
           open={editOpen}
@@ -693,6 +746,10 @@ export default function ArabicCourseCurriculum({ id , source }) {
       lessonSchedule[lesson.id] ?? lesson.release_at ?? lesson.releaseAt;
     const released = isReleased(releaseAt);
 
+    useEffect(() => {
+      console.log(lesson);
+    }, [lesson])
+
     return (
       <div className="mb-4 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm">
         <div className="flex items-start justify-between p-4 transition duration-150 cursor-pointer hover:bg-gray-50">
@@ -702,9 +759,8 @@ export default function ArabicCourseCurriculum({ id , source }) {
               onClick={() => toggleLessonCollapse(lesson.id)}
             >
               <CaretDownOutlined
-                className={`text-xl ml-3 text-blue-500 transition-transform duration-300 ${
-                  isLessonExpanded ? "rotate-0" : "-rotate-90"
-                }`}
+                className={`text-xl ml-3 text-blue-500 transition-transform duration-300 ${isLessonExpanded ? "rotate-0" : "-rotate-90"
+                  }`}
               />
               <div className="min-w-0">
                 <h4 className="text-lg font-semibold text-gray-800 truncate">
@@ -844,12 +900,12 @@ export default function ArabicCourseCurriculum({ id , source }) {
                     {(lessonExams?.length
                       ? lessonExams
                       : [
-                          {
-                            exam: null,
-                            videos: [],
-                            exam_pdfs: []
-                          }
-                        ]
+                        {
+                          exam: null,
+                          videos: [],
+                          exam_pdfs: []
+                        }
+                      ]
                     ).map((examGroup, idx) => (
                       <ExamCard
                         key={idx}
@@ -957,17 +1013,19 @@ export default function ArabicCourseCurriculum({ id , source }) {
               }
             >
               <CaretDownOutlined
-                className={`text-2xl ml-3 text-blue-700 transition-transform duration-300 ${
-                  isContentExpanded ? "rotate-0" : "-rotate-90"
-                }`}
+                className={`text-2xl ml-3 text-blue-700 transition-transform duration-300 ${isContentExpanded ? "rotate-0" : "-rotate-90"
+                  }`}
               />
               <div className="min-w-0 !max-w-[100%]">
-                <h3 className="text-xl font-bold text-gray-900 truncate">
-                  {contentItem.content_title}
+                <h3 className="text-xl flex gap-3 items-center font-bold text-gray-900 truncate">
+                  <span>{contentItem.content_title}</span>
+                 <Tooltip title={contentItem.content_description}>
+                   <BadgeAlert color="gray" />
+                 </Tooltip>
                 </h3>
-                <p className="mt-1 text-base text-gray-700 truncate max-w-[600px] overflow-hidden text-ellipsis !whitespace-pre-wrap">
+                {/* <p className="mt-1 text-base text-gray-700 truncate max-w-[600px] overflow-hidden text-ellipsis !whitespace-pre-wrap">
                   {contentItem.content_description}
-                </p>
+                </p> */}
                 <div className="flex flex-wrap items-center gap-3 mt-2">
                   {releaseAt ? (
                     opened ? (
@@ -1083,37 +1141,43 @@ export default function ArabicCourseCurriculum({ id , source }) {
         <div className="flex gap-3 p-2 mb-6 bg-white border border-gray-200 shadow-sm rounded-xl">
           <button
             onClick={() => setActiveTab("basic")}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
-              activeTab === "basic"
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === "basic"
                 ? "bg-green-600 text-white shadow"
                 : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-            }`}
+              }`}
           >
             مرحلة التأسيس
           </button>
           <button
             onClick={() => setActiveTab("lecture")}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
-              activeTab === "lecture"
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === "lecture"
                 ? "bg-blue-600 text-white shadow"
                 : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-            }`}
+              }`}
           >
             مرحلة المحاضرات
           </button>
           <button
             onClick={() => setActiveTab("exams")}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
-              activeTab === "exams"
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === "exams"
                 ? "bg-orange-600 text-white shadow"
                 : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-            }`}
+              }`}
           >
             الاختبارات التجريبية
           </button>
+          <button
+            onClick={() => setActiveTab("free_explain")}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === "free_explain"
+                ? "bg-fuchsia-600 text-white shadow"
+                : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+              }`}
+          >
+            الشروحات المجانية
+          </button>
         </div>
         <EditContent
-         source={source}
+          source={source}
           open={editOpen}
           data={editOpen}
           setOpen={setIsEditOpen}
@@ -1121,7 +1185,7 @@ export default function ArabicCourseCurriculum({ id , source }) {
           isEditing={isEditing}
         />
         <EditLesson
-        source={source}
+          source={source}
           open={editLessonOpen}
           data={editLessonOpen}
           setOpen={setIsEditLessonOpen}
@@ -1189,32 +1253,101 @@ export default function ArabicCourseCurriculum({ id , source }) {
           {/* EXAMS TAB */}
           {activeTab === "exams" && (
             <div className="p-6 bg-white border border-gray-200 shadow-md rounded-xl">
-              {examsRound.length > 0 ? (
+              {all_exam_round_loading ? (
+                <div className="flex justify-center py-10">
+                  <Spin size="large" />
+                </div>
+              ) : all_exam_round_list?.data?.message?.length > 0 ? (
                 <>
-                  <h2 className="mb-4 text-xl font-bold text-gray-900">
-                    امتحانات الدورة
-                  </h2>
-                  <p className="mb-4 text-sm text-gray-600">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="mb-1 text-xl font-bold text-gray-900">
+                        امتحانات الدورة
+                      </h2>
+                      {/* <p className="text-sm text-gray-600">
+                        عرض {examPagination.from} إلى {examPagination.to} من أصل {examPagination.total} امتحان
+                      </p> */}
+                    </div>
+                    {/* <button
+                      onClick={() => {
+                        window.location.href = `/exams/new?roundId=${id}`;
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition duration-150"
+                    >
+                      <PlusOutlined />
+                      إضافة امتحان جديد
+                    </button> */}
+                  </div>
+
+                  <p className="mb-6 text-sm text-gray-600">
                     هنا تظهر كل الامتحانات المرتبطة بالروند، مع الفيديوهات
                     وملفات الـ PDF الخاصة بكل امتحان.
                   </p>
-                  {examsRound.map((examGroup, idx) => (
-                    <ExamCard 
-                      source={source}
-                      key={examGroup?.exam?.id || idx}
-                      exam={examGroup}
-                    />
-                  ))}
+
+                  <div className="space-y-4 mb-8">
+                    {all_exam_round_list?.data?.message?.map((examGroup, idx) => (
+                      <ExamCard
+                        source={source}
+                        key={examGroup?.exam?.id || idx}
+                        exam={examGroup}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Exam Pagination */}
+                  {/* {examPagination.total > examPagination.per_page && (
+                    <div className="mt-8 pt-6 border-t border-gray-200">
+                      <div className="flex flex-col items-center justify-between sm:flex-row">
+                        <div className="mb-4 text-sm text-gray-600 sm:mb-0">
+                          الصفحة {examPagination.current_page} من {examPagination.last_page}
+                        </div>
+                        <Pagination
+                          current={examPagination.current_page}
+                          pageSize={examPagination.per_page}
+                          total={examPagination.total}
+                          onChange={handleExamPageChange}
+                          showSizeChanger
+                          onShowSizeChange={(current, size) => {
+                            handleExamPageChange(1, size);
+                          }}
+                          pageSizeOptions={[5, 10, 15, 20, 50]}
+                          showTotal={(total, range) => `${range[0]}-${range[1]} من ${total} امتحان`}
+                          locale={{
+                            items_per_page: 'لكل صفحة',
+                            jump_to: 'الذهاب إلى',
+                            page: 'صفحة',
+                            prev_page: 'الصفحة السابقة',
+                            next_page: 'الصفحة التالية',
+                            prev_5: '5 صفحات سابقة',
+                            next_5: '5 صفحات تالية',
+                            prev_3: '3 صفحات سابقة',
+                            next_3: '3 صفحات تالية',
+                          }}
+                          className="exam-pagination"
+                        />
+                      </div>
+                    </div>
+                  )} */}
                 </>
               ) : (
                 <div className="py-10 text-center">
-                  <p className="text-lg text-gray-500">
+                  <div className="inline-block p-6 mb-4 bg-orange-100 rounded-full">
+                    <FileTextOutlined className="text-3xl text-orange-500" />
+                  </div>
+                  <p className="mb-2 text-lg font-medium text-gray-700">
                     لا توجد امتحانات مضافة لهذه الدورة حتى الآن.
                   </p>
+                  <p className="mb-6 text-gray-600">
+                    ابدأ بإضافة أول امتحان للدورة لاختبار الطلاب.
+                  </p>
+                 
                 </div>
               )}
             </div>
           )}
+
+
+          {activeTab === "free_explain" && <FreeVideos />}
         </div>
       </div>
     </div>

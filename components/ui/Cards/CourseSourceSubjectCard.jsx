@@ -154,6 +154,19 @@ const CourseSourceSubjectCard = ({
                     <span>الشروط والأحكام</span>
                   </button>
                   <button
+                    onClick={() =>
+                      router.push(
+                        `/resources?roundId=${
+                          subject?.id
+                        }`
+                      )
+                    }
+                    className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <File size={14} className="text-blue-600" />
+                    <span>مصادر الدورة</span>
+                  </button>
+                  <button
                     onClick={handleEdit}
                     className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
                   >

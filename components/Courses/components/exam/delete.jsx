@@ -1,6 +1,6 @@
 "use client";
 
-import { handleDeleteExam } from "@/lib/features/examSlice";
+import { handleDeleteExam, handleGetAllExamByRoundId } from "@/lib/features/examSlice";
 import { handleGetAllRoundContent } from "@/lib/features/roundContentSlice";
 import { handleDeleteLessonVideo } from "@/lib/features/videoSlice";
 import {
@@ -13,7 +13,7 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
-export default function DeleteExamModal({ open, setOpen }) {
+export default function DeleteExamModal({ open, setOpen , round_id , page , per_page }) {
   const dispatch = useDispatch();
   const deleteData = async () => {
     dispatch(handleDeleteExam({ body: open })).then((payload) => {
@@ -25,6 +25,9 @@ export default function DeleteExamModal({ open, setOpen }) {
         toast.success("Exam Deleted successfully");
         dispatch(
           handleGetAllRoundContent({ body: { round_id: open.round_id } })
+        );
+         dispatch(
+          handleGetAllExamByRoundId({ body: { round_id } , page , per_page })
         );
         setOpen(null);
       } else {

@@ -151,10 +151,7 @@ const SubjectsManagementPage = () => {
     );
   }, [dispatch, page, pageSize]);
 
-  // Debug: see raw data
-  useEffect(() => {
-    console.log("source_round_list:", source_round_list?.data?.message);
-  }, [source_round_list]);
+
 
   // Normalize backend data to array
   const normalizedSubjects = useMemo(() => {
@@ -181,15 +178,10 @@ const SubjectsManagementPage = () => {
     });
   }, [normalizedSubjects, activeTab, searchTerm]);
 
-  useEffect(() => {
-    console.log("filteredSubjects:", filteredSubjects);
-  }, [filteredSubjects]);
-
   /* ===== Handlers ===== */
 
   // ✅ افتح مودال "دورة كاملة جديدة" مباشرة
   const openDuplicate = (record) => {
-    console.log(record);
     setDupFromSubject(record);
     setDupError("");
     setNewCourseTitle(record?.name ? `نسخة من ${record.name}` : "");
@@ -255,7 +247,6 @@ const SubjectsManagementPage = () => {
     setDupLoading(true);
     try {
       const res = await dispatch(handleCopyRound({ body })).unwrap();
-      console.log(res);
       if (res?.data?.status == "success") {
         toast.success("تم إنشاء نسخة من الدورة بنجاح");
         setDupTableOpen(false);
@@ -265,7 +256,6 @@ const SubjectsManagementPage = () => {
         );
       }
     } catch (e) {
-      console.error(e);
       setDupError(
         e?.error?.response?.data?.message || "تعذّر نسخ الدورة، جرّب مرة أخرى."
       );
@@ -304,7 +294,6 @@ const SubjectsManagementPage = () => {
     dispatch(handleActiveRound({ body: formData }))
       .unwrap()
       .then((res) => {
-        console.log(res);
         if (res?.data?.status === "success") {
           toast.success(res?.data?.message);
           dispatch(
@@ -499,9 +488,7 @@ const SubjectsManagementPage = () => {
     },
   ];
 
-  function handleDublicate(data) {
-    console.log(data);
-  }
+
 
   if (source_round_loading) {
     return (

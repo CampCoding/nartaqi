@@ -5,6 +5,7 @@ import { PlusOutlined } from "@ant-design/icons";
 import { Check } from "lucide-react";
 import CourseSourceBasicLevel from "../../../components/SaudiCourseSource/CourseSourceBasicLevel";
 import CourseSourceLecturesContent from "../../../components/SaudiCourseSource/CourseSourceLecturesContent";
+import FreeVideos from "../../../components/RoundContent/FreeVideos/FreeVideos";
 
 // Define the steps data
 const STEPS = [
@@ -21,6 +22,7 @@ const STEPS = [
 ];
 
 export default function Page() {
+  const [activeTab,  setActiveTab ]=useState("basic");
   const params = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const id = params.get("id");
@@ -83,16 +85,23 @@ export default function Page() {
 
   // ------- Step content -------
   const renderStepContent = () => {
-    if (currentStep === 1) {
+    if (activeTab == "basic") {
       // مرحلة التأسيس
       return <CourseSourceBasicLevel isSource={isSource} id={id} />;
     }
 
-    if (currentStep === 2) {
+    if (activeTab == "lecture") {
       // المحاضرات
       return <CourseSourceLecturesContent isSource={isSource} id={id} />;
     }
 
+    if(activeTab == "exams") {
+      return "exam";
+    }
+
+     if(activeTab == "free_explain") {
+      return <FreeVideos />
+     }
     // المصادر والملفات
     return (
       <div className="space-y-6">
@@ -154,7 +163,7 @@ export default function Page() {
       <div className="mx-auto max-w-6xl">
         {/* Stepper */}
         <div className="mb-10 flex items-start justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-lg">
-          {STEPS.map((step, index) => {
+          {/* {STEPS.map((step, index) => {
             const status = getStepStatus(step.id);
             const { dot, text, line, container } = getStatusClasses(status);
             const isLast = index === STEPS.length - 1;
@@ -201,19 +210,64 @@ export default function Page() {
                 )}
               </React.Fragment>
             );
-          })}
+          })} */}
+
+           <div className="flex !w-full gap-3 p-2 mb-6 bg-white border border-gray-200 shadow-sm rounded-xl">
+          <button
+            onClick={() => setActiveTab("basic")}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+              activeTab === "basic"
+                ? "bg-green-600 text-white shadow"
+                : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            مرحلة التأسيس
+          </button>
+          <button
+            onClick={() => setActiveTab("lecture")}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+              activeTab === "lecture"
+                ? "bg-blue-600 text-white shadow"
+                : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            مرحلة المحاضرات
+          </button>
+          {/* <button
+            onClick={() => setActiveTab("exams")}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+              activeTab === "exams"
+                ? "bg-orange-600 text-white shadow"
+                : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            الاختبارات التجريبية
+          </button> */}
+
+          <button
+            onClick={() => setActiveTab("free_explain")}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+              activeTab === "free_explain"
+                ? "bg-fuchsia-600 text-white shadow"
+                : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            الشروحات المجانية 
+          </button>
+        </div>
+        
         </div>
 
         {/* Content */}
         <div className="mt-8 rounded-xl border border-gray-100 bg-white p-8 shadow-lg">
-          <h2 className="mb-4 border-b pb-2 text-2xl font-bold text-gray-800">
+          {/* <h2 className="mb-4 border-b pb-2 text-2xl font-bold text-gray-800">
             الخطوة {currentStep}: {STEPS[currentStep - 1].title}
-          </h2>
+          </h2> */}
 
           {renderStepContent()}
 
           {/* Navigation buttons */}
-          <div className="mt-8 flex justify-between space-x-4 space-x-reverse">
+          {/* <div className="mt-8 flex justify-between space-x-4 space-x-reverse">
             <button
               onClick={goToPrevStep}
               disabled={currentStep === 1}
@@ -230,7 +284,7 @@ export default function Page() {
             >
               {currentStep === STEPS.length ? "إنهاء ونشر" : "التالي"}
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

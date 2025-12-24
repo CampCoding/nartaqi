@@ -26,6 +26,7 @@ import {
   Award,
   Trophy,
   Badge,
+  VideoIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -114,6 +115,7 @@ export default function Sidebar() {
     { name: "المتدربين", icon: GraduationCap, path: "/students" },
     // { name: "أقسام الاختبارات", icon: BookCopy , path: "/exam_sections" },
     { name: "الاختبارات", icon: FileText, path: "/exams" },
+    {name:"الشروحات المجانية",icon:VideoIcon,path:"/freeVideos"},
     {
       name:"المدونة",
       icon : BookOpenIcon,

@@ -36,7 +36,17 @@ const initialState = {
 
   all_exam_data_list : [],
   all_exam_data_loading : false,
+  
+  all_exam_round_list : [],
+  all_exam_round_loading : false,
 }
+
+
+export const handleGetAllExamByRoundId = createAsyncThunk("examSlice/handleGetAllExamByRoundId",async({body , page , per_page})=> {
+  const response = await api.post(`admin/exams/getAllExamsByRoundId?page=${page}&per_page=${per_page}`,{body});
+  return response
+})
+
 
 export const handleGetAllExams = createAsyncThunk(
   "examSlice/handleGetAllExams", 
@@ -397,6 +407,17 @@ export const examSlice = createSlice({
     })
     .addCase(handleGetAllExamData.rejected ,(state) => {
       state.all_exam_data_loading = false;
+    })
+
+     .addCase(handleGetAllExamByRoundId.pending ,(state) => {
+      state.all_exam_round_loading = true;
+    })
+    .addCase(handleGetAllExamByRoundId.fulfilled ,(state , action) => {
+      state.all_exam_round_loading = false;
+      state.all_exam_round_list= action.payload;
+    })
+    .addCase(handleGetAllExamByRoundId.rejected ,(state) => {
+      state.all_exam_round_loading = false;
     })
   }
 })

@@ -8,7 +8,15 @@ const initialState = {
   store_content_loading : false,
   edit_content_loading:  false,
   delete_content_loading : false,
+
+  get_free_videos:[],
+  get_free_video_loading : false,
 };
+
+export const handleGetAllContentFreeVideos = createAsyncThunk("roundContentSlice/handleGetAllContentFreeVideos",async({body}) => {
+  const response = await api.post("admin/rounds/getRoundFreeVideos",{body});
+  return response;
+})
 
 export const handleGetAllRoundContent = createAsyncThunk("roundContentSlice/handleGetAllRoundContent",async({body}) => {
   const response = await api.post(`admin/rounds-contents/get_all_round_contents`,{body});
@@ -74,6 +82,17 @@ export const roundContentSlice = createSlice({
     })
     .addCase(handleDeleteContent.rejected , (state) => {
       state.delete_content_loading = false;
+    })
+
+     .addCase(handleGetAllContentFreeVideos.pending ,(state) =>{ 
+      state.get_free_video_loading = true;
+    })
+    .addCase(handleGetAllContentFreeVideos.fulfilled ,(state , action) => {
+      state.get_free_video_loading = false;
+      state.get_free_videos = action.payload;
+    })
+    .addCase(handleGetAllContentFreeVideos.rejected , (state) => {
+      state.get_free_video_loading = false;
     })
   }
 })
