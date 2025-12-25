@@ -80,7 +80,9 @@ export default function DeletePdfModal({ open, setOpen }) {
               <div className="px-4 py-3 bg-gray-50 sm:flex sm:flex-row-reverse sm:px-6">
                 <button
                   type="button"
-                  onClick={() => deleteData()}
+                  onClick={async () => {
+                    await deleteData();
+                  }}
                   className="inline-flex justify-center w-full px-3 py-2 text-sm font-semibold text-white bg-red-600 rounded-md shadow-xs hover:bg-red-500 sm:ml-3 sm:w-auto"
                 >
                   تأكيد

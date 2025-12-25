@@ -1006,6 +1006,7 @@ export default function CourseSourceLecturesContent({ id  , isSource}) {
         setRowData={setRowData}
       />
       <DeleteRoundContent
+
         id={id}
         isSource={isSource}
         open={deleteModalContent}
@@ -1027,6 +1028,8 @@ export default function CourseSourceLecturesContent({ id  , isSource}) {
         setOpen={setOpenDeleteLesson}
         rowData={selectedLesson}
         setRowData={setSelectedLesson}
+        round_id={id}
+        id={id}
       />
       <EditLessonModal
       isSource={isSource}
@@ -1060,6 +1063,7 @@ export default function CourseSourceLecturesContent({ id  , isSource}) {
         rowData={selectedVideo}
         setRowData={setSelectedVideo}
         round_id={id}
+        id={id}
       />
 
       <AddLivesModal isSource={isSource} open={openAddLive} setOpen={setOpenAddLive} id={id} lesson_id={rowData?.id} />

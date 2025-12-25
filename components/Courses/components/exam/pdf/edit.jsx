@@ -63,6 +63,7 @@ export default function EditPdf({
       
       dispatch(handleEditExamPdfFile({ body: dataForm })).then((payload) => {
         setIsEditing(false);
+        console.log(payload);
         if (
           payload?.payload?.status == 200 &&
           payload?.payload?.data?.status === "success"
@@ -79,7 +80,9 @@ export default function EditPdf({
         }
       });
     } else {
+      
       dispatch(handleAddExamPdf({ body: {"Sd": "Sd"} })).then((payload) => {
+                console.log(payload);
         if (
           payload?.payload?.status == 200 &&
           payload?.payload?.data?.status === "success"
@@ -142,7 +145,6 @@ export default function EditPdf({
             id="description"
             className="!rounded-md bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body text-black"
             placeholder=""
-            required
             value={formData?.description || ''}
             onChange={changeHandler}
           />

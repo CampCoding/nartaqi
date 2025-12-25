@@ -16,6 +16,7 @@ export default function DeleteRoundContent({ open, setOpen, rowData , id }) {
   const { delete_content_loading } = useSelector(state => state?.content || { delete_content_loading: false });
 
   function handleDelete() {
+    console.log("open" , open);
     // Check if rowData is valid before dispatching
     if (!rowData || !rowData.id) {
       console.error("rowData or rowData.id is missing.");
@@ -34,7 +35,7 @@ export default function DeleteRoundContent({ open, setOpen, rowData , id }) {
         if(res?.data?.status == "success") {
           toast.success("تم حذف المحتوي بنجاح");
           dispatch(handleGetAllRoundContent({body : {
-            round_content_id : rowData?.round_content_id
+            round_id : id 
           }}))
           setOpen(false);
         }else {

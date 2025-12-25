@@ -8,7 +8,7 @@ import { handleDeleteFreeVideos, handleGetAllFreeVideos } from '../../lib/featur
 
 const { Text } = Typography;
 
-export default function DeleteFreeVideoModal({ open, setOpen, rowData , page , per_page }) {
+export default function DeleteFreeVideoModal({ open, categoryId,setOpen, rowData , page , per_page }) {
   const dispatch = useDispatch();
   // Ensure the state path and variable name are correct (e.g., state?.content?.delete_content_loading)
   const { delete_video } = useSelector(state => state?.free_videos);
@@ -30,7 +30,9 @@ export default function DeleteFreeVideoModal({ open, setOpen, rowData , page , p
       .then(res => {
         if (res?.data?.status == "success") {
           toast.success("تم حذف الفيديو بنجاح");
-          dispatch(handleGetAllFreeVideos({page : 1, per_page:per_page}))
+           dispatch(handleGetAllFreeVideos({ page, per_page , body : {
+                        course_category_id : categoryId
+                      } }));
 
         }
         setOpen(false);

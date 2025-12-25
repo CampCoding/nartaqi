@@ -11,8 +11,8 @@ const initialState = {
   delete_video:false
 }
 
-export const handleGetAllFreeVideos = createAsyncThunk("freeVideoSlice/handleGetAllFreeVideos",async({page, per_page}) =>{
-  const response = await api.get(`admin/categories/free_videos/get_all_free_videos?page=${page}&per_page=${per_page}`);
+export const handleGetAllFreeVideos = createAsyncThunk("freeVideoSlice/handleGetAllFreeVideos",async({page, per_page , body}) =>{
+  const response = await api.post(`admin/categories/free_videos/get_all_free_videos?page=${page}&per_page=${per_page}` , {body});
   return response;
 })
 

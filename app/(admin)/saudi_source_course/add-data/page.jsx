@@ -1,11 +1,12 @@
 "use client";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams , useRouter} from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import { Check } from "lucide-react";
 import AddCourseSourceBasicInfo from "../../../../components/SaudiCourseSource/AddCourseSourceBasicInfo";
 import AddCourseSourceResource from "../../../../components/SaudiCourseSource/AddCourseSourceResource";
 import Features from "../../../../components/SaudiCourseSource/Features";
+
 
 // Define the steps data
 const STEPS = [
@@ -19,11 +20,11 @@ const STEPS = [
     title: "مميزات الدورة",
     description: "إضافة أقسام، دروس، ومواد تعليمية.",
   },
-  {
-    id: 3,
-    title: "المصادر والملفات",
-    description: "رفع الملفات والروابط المساندة ومراجعة الدورة.",
-  },
+  // {
+  //   id: 3,
+  //   title: "المصادر والملفات",
+  //   description: "رفع الملفات والروابط المساندة ومراجعة الدورة.",
+  // },
 ];
 
 export default function Page() {
@@ -46,6 +47,8 @@ export default function Page() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const isSource = params?.get("source");
 
+  const router = useRouter()
+
   // Save form data when navigating away from a step
   const saveStepData = (stepNumber, data) => {
     setFormData(prev => ({
@@ -58,13 +61,22 @@ export default function Page() {
   // Get saved data for a step
   const getStepData = (stepNumber) => {
     return formData[`step${stepNumber}`];
-  };
-
+  }; 
   // --- Navigation Logic ---
   const goToNextStep = () => {
+    console.log(currentStep ,STEPS.length );
+    if (currentStep == STEPS.length) {
+      if(!isSource) {
+       router.push(`/round_content?id=${roundId}&source=${1}`);
+      }else {
+        router.push(`/round_content?id=${roundId}`);
+      }
+    }
     // Save current step data before moving
     // This should be called from each child component before navigation
-    setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
+    else{ 
+      setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
+    }
   };
 
   const goToPrevStep = () => {

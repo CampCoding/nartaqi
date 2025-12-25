@@ -509,7 +509,10 @@ const SubjectsManagementPage = () => {
           extra={
             <div className="flex items-center gap-4 gap-reverse">
               <Button
-                onClick={() => router.push(`/saudi_source_course/add-data`)}
+                 onClick={() => {
+                  if (typeof window !== "undefined")
+                    window.location.href = `/saudi_source_course/add-data`;
+                }}
                 type="primary"
                 size="large"
                 icon={<Plus className="w-5 h-5" />}

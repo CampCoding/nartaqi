@@ -14,9 +14,10 @@ import {
   Eye,
   EyeOff,
   Trash2,
+  ChevronDown,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
-import { message, Tooltip, Pagination, Modal } from "antd";
+import { message, Tooltip, Pagination, Modal, Dropdown } from "antd";
 import AddCategoryModal from "@/components/Categories/AddCategoryModal";
 import DeleteCategoryModal from "@/components/Categories/DeleteCategoryModal";
 import { useDispatch, useSelector } from "react-redux";
@@ -63,6 +64,45 @@ const CategoryCard = ({
     image: category.image_url,
   };
 
+  const dropdownItems = [
+    {
+      key: "viewSections",
+      label: "عرض الأقسام",
+      icon: <Eye className="w-4 h-4" />,
+      onClick: () => router.push(`/categories/sub-category/${mappedCategory.id}`),
+    },
+    {
+      key: "freeVideos",
+      label: "عرض الشروحات المجانية",
+      icon: <Eye className="w-4 h-4" />,
+      onClick: () => router.push(`/freeVideos?categoryId=${mappedCategory.id}`),
+    },
+    { type: "divider" },
+    {
+      key: "edit",
+      label: "تعديل",
+      icon: <Edit className="w-4 h-4" />,
+      onClick: () => onEdit(category),
+    },
+    {
+      key: "toggleVisibility",
+      label: mappedCategory.visible ? "إخفاء" : "إظهار",
+      icon: mappedCategory.visible ? (
+        <EyeOff className="w-4 h-4" />
+      ) : (
+        <Eye className="w-4 h-4" />
+      ),
+      onClick: () => onToggleVisibility(category),
+    },
+    {
+      key: "delete",
+      label: "حذف",
+      icon: <Trash2 className="w-4 h-4" />,
+      danger: true,
+      onClick: () => onDelete(category),
+    },
+  ];
+
   return (
     <div
       className={`bg-white relative rounded-xl overflow-hidden shadow-md border border-gray-100 p-6 transition-all ${
@@ -86,11 +126,6 @@ const CategoryCard = ({
           </div>
 
           <div className="flex items-center gap-2">
-            {/* {mappedCategory.status == "active" ? (
-              <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-700">
-                ظاهر
-              </span>
-            )} */}
             <span
               className={`px-2 py-1 rounded-full text-xs font-medium ${
                 mappedCategory.status === "active"
@@ -138,53 +173,48 @@ const CategoryCard = ({
           </div>
         )}
 
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() =>
-            router.push(`/categories/sub-category/${mappedCategory.id}`)
-          }
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm"
-          title="عرض الأقسام"
+      {/* Actions Dropdown */}
+      <div className="flex items-center justify-end">
+        <Dropdown
+          trigger={["click"]}
+          menu={{
+            items: dropdownItems.map((item) => {
+              if (item.type === "divider") return item;
+
+              return {
+                key: item.key,
+                danger: item.danger,
+                label: (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      item.onClick?.();
+                    }}
+                    className={`w-full text-left flex items-center gap-2 px-2 py-1 ${
+                      item.danger ? "text-red-600" : "text-gray-800"
+                    }`}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </button>
+                ),
+              };
+            }),
+          }}
         >
-          <Eye className="w-4 h-4" /> عرض الأقسام
-        </button>
-
-        <div className="flex items-center gap-1">
-          <Tooltip title="تعديل">
-            <button
-              onClick={() => onEdit(category)}
-              className="p-2 hover:bg-green-50 rounded-lg text-green-600"
-            >
-              <Edit className="w-4 h-4" />
-            </button>
-          </Tooltip>
-
-          <Tooltip title={mappedCategory.visible ? "إخفاء" : "إظهار"}>
-            <button
-              onClick={() => onToggleVisibility(category)}
-              className="p-2 hover:bg-gray-50 rounded-lg text-gray-700"
-            >
-              {mappedCategory.visible ? (
-                <EyeOff className="w-4 h-4" />
-              ) : (
-                <Eye className="w-4 h-4" />
-              )}
-            </button>
-          </Tooltip>
-
-          <Tooltip title="حذف">
-            <button
-              onClick={() => onDelete(category)}
-              className="p-2 hover:bg-red-50 rounded-lg text-red-600"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </Tooltip>
-        </div>
+          <button
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm"
+            type="button"
+          >
+            إجراءات <ChevronDown className="w-4 h-4" />
+          </button>
+        </Dropdown>
       </div>
     </div>
   );
 };
+
 
 /* ===================== Mobile Row (Cards) ===================== */
 const MobileCategoryRow = ({

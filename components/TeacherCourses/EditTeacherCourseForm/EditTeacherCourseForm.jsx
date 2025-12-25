@@ -1333,7 +1333,7 @@ const EditTeacherCourseForm = ({ open, setOpen, rowData }) => {
                         <Form.Item
                           label="الوقت"
                           name={[name, "time"]}
-                          rules={[{ required: true, message: "اختر الوقت" }]}
+                          // rules={[{ required: true, message: "اختر الوقت" }]}
                         >
                           <TimePicker className="w-full" format="HH:mm" />
                         </Form.Item>

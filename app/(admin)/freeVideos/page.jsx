@@ -55,6 +55,7 @@ import {
   Avatar
 } from 'antd';
 import dayjs from 'dayjs';
+import { useSearchParams } from 'next/navigation';
 
 const { Search: AntSearch } = Input;
 
@@ -73,6 +74,8 @@ const breadcrumbs = [
 export default function Page() {
   const dispatch = useDispatch();
   const { videos_data_loading, videos_data } = useSelector(state => state?.free_videos);
+  const searchParams =useSearchParams();
+  const categoryId = searchParams.get("categoryId");
 
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
@@ -86,8 +89,10 @@ export default function Page() {
   const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
-    dispatch(handleGetAllFreeVideos({ page, per_page: perPage }))
-  }, [dispatch, page, perPage]);
+    dispatch(handleGetAllFreeVideos({ page, per_page: perPage , body : {
+      course_category_id : categoryId
+    }}))
+  }, [dispatch, page, perPage , categoryId]);
 
   useEffect(() => {
     if (videos_data?.data?.message) {
@@ -504,7 +509,7 @@ const VideoCard = ({ video }) => (
           {viewMode === 'grid' ? (
             <Row gutter={[16, 16]} className="mb-8">
               {filteredVideos.map((video) => (
-                <Col key={video.id} xs={24} sm={12} md={8} lg={6}>
+                <Col key={video.id} xs={24} sm={12} md={8}>
                   <VideoCard video={video} />
                 </Col>
               ))}
@@ -574,9 +579,9 @@ const VideoCard = ({ video }) => (
       )}
 
       {/* Modals */}
-      <AddFreeVideoModal page={page} per_page={perPage} open={openAddModal} setOpen={setOpenAddModal} />
-      <EditFreeVideoModal page={page} per_page={perPage} open={openEditModal} setOpen={setOpenEditModal} rowData={rowData} setRowData={setRowData} />
-      <DeleteFreeVideoModal page={page} per_page={perPage}  open={openDeleteModal} setOpen={setOpenDeleteModal} rowData={rowData} />
+      <AddFreeVideoModal categoryId={categoryId} page={page} per_page={perPage} open={openAddModal} setOpen={setOpenAddModal} />
+      <EditFreeVideoModal categoryId={categoryId} page={page} per_page={perPage} open={openEditModal} setOpen={setOpenEditModal} rowData={rowData} setRowData={setRowData} />
+      <DeleteFreeVideoModal categoryId={categoryId} page={page} per_page={perPage}  open={openDeleteModal} setOpen={setOpenDeleteModal} rowData={rowData} />
     </PageLayout>
   );
 }

@@ -39,6 +39,9 @@ const initialState = {
   
   all_exam_round_list : [],
   all_exam_round_loading : false,
+
+  edit_paragraph_loading : false,
+  delete_paragraph_loading : false
 }
 
 
@@ -154,6 +157,18 @@ export const handleDeleteExamPdf = createAsyncThunk("examSlice/handleDeleteExamP
   const response = await api.post(apiRoutes.delete_exam_pdf , {body});
   return response;
 })
+
+export const handleEditParagraph = createAsyncThunk("examSlice/handleEditParagraph",async({body}) =>{
+  const response = await api.post("admin/questions/editParagraphQuestions",{body});
+  return response;
+})
+
+export const handleDeleteParagraph = createAsyncThunk("examSlice/handleDeleteParagraph",async({body}) =>{
+  const response = await api.post("admin/questions/deleteParagraphQuestions",{body});
+  return response;
+})
+
+
 export const handleEditExamPdfFile = createAsyncThunk(
   "examSlice/handleEditExamPdfFile",
   async ({ body }) => {
@@ -418,6 +433,26 @@ export const examSlice = createSlice({
     })
     .addCase(handleGetAllExamByRoundId.rejected ,(state) => {
       state.all_exam_round_loading = false;
+    })
+
+     .addCase(handleEditParagraph.pending ,(state) => {
+      state.edit_paragraph_loading = true;
+    })
+    .addCase(handleEditParagraph.fulfilled ,(state , action) => {
+      state.edit_paragraph_loading = false;
+    })
+    .addCase(handleEditParagraph.rejected ,(state) => {
+      state.edit_paragraph_loading = false;
+    })
+
+     .addCase(handleDeleteParagraph.pending ,(state) => {
+      state.delete_paragraph_loading = true;
+    })
+    .addCase(handleDeleteParagraph.fulfilled ,(state , action) => {
+      state.delete_paragraph_loading = false;
+    })
+    .addCase(handleDeleteParagraph.rejected ,(state) => {
+      state.delete_paragraph_loading = false;
     })
   }
 })

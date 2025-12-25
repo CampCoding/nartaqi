@@ -779,7 +779,7 @@
 
 
 "use client";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams , useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import { Check } from "lucide-react";
@@ -811,11 +811,11 @@ const STEPS = [
     title: "مميزات الدورة",
     description: "إضافة أقسام، دروس، ومواد تعليمية.",
   },
-  {
-    id: 3,
-    title: "المصادر والملفات",
-    description: "رفع الملفات والروابط المساندة ومراجعة الدورة.",
-  },
+  // {
+  //   id: 3,
+  //   title: "المصادر والملفات",
+  //   description: "رفع الملفات والروابط المساندة ومراجعة الدورة.",
+  // },
 ];
 
 export default function Page() {
@@ -835,6 +835,8 @@ export default function Page() {
   const pageSize = params.get("pageSize")
   const isSource = params.get("isSource")
   const Cat_id = params.get("category_id");
+
+  const router = useRouter();
 
   useEffect(() => {
     if(!isSource) {
@@ -878,7 +880,15 @@ export default function Page() {
 
   // --- Navigation Logic ---
   const goToNextStep = () => {
+     if (currentStep == STEPS.length) {
+      if(!isSource) {
+       router.push(`/saudi_source_course`);
+      }else {
+        router.push(`/teachers-courses`);
+      }
+    }else {
     setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
+    }
   };
 
   const goToPrevStep = () => {

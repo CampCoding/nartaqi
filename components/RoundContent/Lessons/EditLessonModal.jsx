@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { PlusOutlined } from "@ant-design/icons";
 import {
-  handleAddRoundLessons,
   handleEditRoundLessons,
   handleGetAllRoundLessons,
 } from "../../../lib/features/lessonSlice";
@@ -19,21 +18,40 @@ export default function EditLessonModal({
   setRowData,
   round_content_id,
   round_id,
-  isSource
+  isSource,
 }) {
   const dispatch = useDispatch();
   const { edit_lesson_loading } = useSelector((state) => state?.lesson);
 
-  const isFormValid = isSource ? Boolean(rowData?.lesson_title) : Boolean(rowData?.title && dateStr);
   const [date, setDate] = useState(null); // dayjs | null
   const [dateStr, setDateStr] = useState("");
 
+  const isFormValid = isSource
+    ? Boolean(rowData?.lesson_title?.trim?.())
+    : Boolean(rowData?.title?.trim?.() && dateStr);
+
   useEffect(() => {
-    if (rowData) {
-      setDate(dayjs(rowData?.lesson_show_date)); // Setting the date from rowData
-      setDateStr(dayjs(rowData?.lesson_show_date)?.format("YYYY-MM-DD")); // Format date for DatePicker input
+    const raw = rowData?.lesson_show_date;
+
+    // If there's no date in rowData, reset to empty (avoid Invalid Date)
+    if (!raw) {
+      setDate(null);
+      setDateStr("");
+      return;
     }
-  }, [rowData]);
+
+    const d = dayjs(raw);
+
+    // If date is invalid, reset
+    if (!d.isValid()) {
+      setDate(null);
+      setDateStr("");
+      return;
+    }
+
+    setDate(d);
+    setDateStr(d.format("YYYY-MM-DD"));
+  }, [rowData?.lesson_show_date]);
 
   function handleInputChange(e) {
     const { name, value } = e.target;
@@ -41,13 +59,20 @@ export default function EditLessonModal({
   }
 
   function handleSubmit() {
-    // if (!isFormValid || edit_lesson_loading) return;
+    // Optional: prevent submit while loading
+    if (edit_lesson_loading) return;
+
+    // If you want date to be required, uncomment:
+    // if (!dateStr) {
+    //   toast.error("يرجى اختيار تاريخ ظهور الدرس");
+    //   return;
+    // }
 
     const data_send = {
       id: rowData?.id,
-      title:  rowData?.lesson_title,
-      description : rowData?.lesson_description || "",
-      show_date :dateStr
+      title: rowData?.lesson_title || "",
+      description: rowData?.lesson_description || "",
+      show_date: dateStr || "", // safe (won't be "Invalid Date")
     };
 
     dispatch(handleEditRoundLessons({ body: data_send }))
@@ -55,23 +80,30 @@ export default function EditLessonModal({
       .then((res) => {
         if (res?.data?.status === "success") {
           toast.success("تم تعديل الدرس بنجاح");
+
           dispatch(
             handleGetAllRoundLessons({
               body: {
-                round_content_id: rowData?.round_content_id, // parent round id
+                round_content_id: rowData?.round_content_id || round_content_id,
               },
             })
           );
-           dispatch(
+
+          dispatch(
             handleGetAllRoundContent({
-               body: {
-                round_id: round_id, // parent round id
+              body: {
+                round_id: round_id,
               },
             })
           );
+
           setOpen(false);
         } else {
-          toast.error(res?.error?.response?.data?.message || "هناك خطأ أثناء تعديل الدرس");
+          toast.error(
+            res?.error?.response?.data?.message ||
+              res?.data?.message ||
+              "هناك خطأ أثناء تعديل الدرس"
+          );
         }
       })
       .catch((err) => {
@@ -86,18 +118,14 @@ export default function EditLessonModal({
         key="submit"
         type="primary"
         onClick={handleSubmit}
-        disabled={edit_lesson_loading}
+        disabled={edit_lesson_loading || !isFormValid}
         loading={edit_lesson_loading}
         className="bg-orange-500 hover:!bg-orange-600 border-none rounded-md px-6"
         icon={<PlusOutlined />}
       >
         تعديل الدرس
       </Button>
-      <Button
-        key="back"
-        onClick={() => setOpen(false)}
-        className="rounded-md px-6"
-      >
+      <Button key="back" onClick={() => setOpen(false)} className="rounded-md px-6">
         إلغاء
       </Button>
     </div>
@@ -111,11 +139,17 @@ export default function EditLessonModal({
       title="تعديل درس"
       wrapClassName="rtl-modal-wrap"
       style={{ direction: "rtl" }}
+      // Optional UX: prevent closing while saving
+      maskClosable={!edit_lesson_loading}
+      closable={!edit_lesson_loading}
     >
       <div className="flex flex-col gap-4 mt-4">
         {/* Title Input */}
         <div className="flex flex-col gap-2">
-          <label htmlFor="lesson_title" className="text-lg font-medium text-gray-700">
+          <label
+            htmlFor="lesson_title"
+            className="text-lg font-medium text-gray-700"
+          >
             عنوان الدرس
           </label>
           <input
@@ -128,25 +162,36 @@ export default function EditLessonModal({
           />
         </div>
 
-        {/* Date Input - Setting value from the state */}
+        {/* Date Input */}
         <div className="flex flex-col gap-2">
-          <label htmlFor="lesson_show_date" className="text-lg font-medium text-gray-700">
-         (تحديد تاريخ ظهور الدرس)   جدولة الدرس 
+          <label
+            htmlFor="lesson_show_date"
+            className="text-lg font-medium text-gray-700"
+          >
+            (تحديد تاريخ ظهور الدرس) جدولة الدرس
           </label>
+
           <DatePicker
-            value={date} // Directly pass the dayjs date value here
+            value={date} // ✅ must be dayjs or null (no "")
             onChange={(value, stringValue) => {
-              setDate(value); // set dayjs object
-              setDateStr(stringValue); // set the date string
+              // value: dayjs | null , stringValue: "" when cleared
+              setDate(value);
+              setDateStr(stringValue || "");
+              // Optional: keep rowData in sync if you want
+              // setRowData((prev) => ({ ...prev, lesson_show_date: stringValue || null }));
             }}
             format="YYYY-MM-DD"
             className="w-full"
+            allowClear
           />
         </div>
 
         {/* Description Input */}
         <div className="flex flex-col gap-2">
-          <label htmlFor="lesson_description" className="text-lg font-medium text-gray-700">
+          <label
+            htmlFor="lesson_description"
+            className="text-lg font-medium text-gray-700"
+          >
             وصف الدرس
           </label>
           <textarea

@@ -202,10 +202,9 @@ export default function Features({
         </button>
         <button
           onClick={goToNextStep}
-          disabled={currentStep === STEPS.length}
-          className={`rounded-lg bg-blue-600 px-6 py-2 text-white shadow-md transition duration-150 hover:bg-blue-700 ${
-            currentStep === STEPS.length ? "cursor-not-allowed opacity-50" : ""
-          }`}
+          // disabled={currentStep === STEPS.length}
+          className={`rounded-lg bg-blue-600 px-6 py-2 text-white shadow-md transition duration-150 hover:bg-blue-700 
+            `}
         >
           {currentStep === STEPS.length ? "إنهاء ونشر" : "التالي"}
         </button>

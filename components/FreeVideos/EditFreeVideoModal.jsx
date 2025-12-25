@@ -1,11 +1,11 @@
 "use client";
-import { 
-  Modal, 
-  Button, 
-  Form, 
-  Input, 
-  Select, 
-  Upload, 
+import {
+  Modal,
+  Button,
+  Form,
+  Input,
+  Select,
+  Upload,
   Space,
   Tooltip,
   message,
@@ -13,14 +13,14 @@ import {
 } from 'antd';
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { 
-  EditOutlined, 
-  DeleteOutlined, 
-  UploadOutlined, 
+import {
+  EditOutlined,
+  DeleteOutlined,
+  UploadOutlined,
   YoutubeOutlined,
   VideoCameraOutlined,
   ClockCircleOutlined,
-  InfoCircleOutlined 
+  InfoCircleOutlined
 } from '@ant-design/icons';
 import { toast } from 'react-toastify';
 import { handleEditFreeVideos, handleGetAllFreeVideos } from '../../lib/features/freeVideoSlice';
@@ -28,7 +28,7 @@ import { Trash2, Link, Image as ImageIcon, AlertCircle } from 'lucide-react';
 
 const { TextArea } = Input;
 
-export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowData, setRowData }) {
+export default function EditFreeVideoModal({ open, setOpen, page, categoryId, per_page, rowData, setRowData }) {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
   const { edit_video } = useSelector(state => state?.free_videos);
@@ -46,7 +46,7 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
         time: rowData.time || '',
         free: rowData.free?.toString() || '0',
       });
-      
+
       // Set image preview
       if (rowData.image_url && rowData.image_url !== "0") {
         setImagePreview(rowData.image_url);
@@ -58,7 +58,7 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
   const handleSubmit = async (values) => {
     console.log('Form values:', values);
     console.log('Image file:', imageFile);
-    
+
     try {
       const formData = new FormData();
       formData.append("id", rowData?.id);
@@ -67,7 +67,7 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
       formData.append("time", values.time || '');
       formData.append("vimeo_link", values.vimeo_link || '');
       formData.append("youtube_link", values.youtube_link || '');
-      
+
       // Append image file if a new one was selected
       if (imageFile) {
         console.log('Appending image file:', imageFile);
@@ -87,7 +87,11 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
         .then(res => {
           if (res?.data?.status === "success") {
             toast.success("تم تعديل الفيديو بنجاح");
-            dispatch(handleGetAllFreeVideos({page, per_page}));
+            dispatch(handleGetAllFreeVideos({
+              page, per_page, body: {
+                course_category_id: categoryId
+              }
+            }));
             handleClose();
           } else {
             toast.error(res?.error?.response?.data?.message || "حدث خطأ أثناء التعديل");
@@ -123,20 +127,20 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
       message.error('يمكنك رفع صور فقط!');
       return Upload.LIST_IGNORE;
     }
-    
+
     const isLt2M = file.size / 1024 / 1024 < 2;
     if (!isLt2M) {
       message.error('يجب أن يكون حجم الصورة أقل من 2MB!');
       return Upload.LIST_IGNORE;
     }
-    
+
     // Store the file object
     setImageFile(file);
-    
+
     // Create preview
     const preview = URL.createObjectURL(file);
     setImagePreview(preview);
-    
+
     return false; // Prevent auto upload
   };
 
@@ -145,7 +149,7 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
     if (rowData.image_url && rowData.image_url !== "0") {
       form.setFieldValue('removeImage', true);
     }
-    
+
     setImagePreview(null);
     setImageFile(null);
     form.setFieldValue('image', null);
@@ -155,11 +159,11 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
     if (!value) {
       return Promise.resolve();
     }
-    
+
     if (value.startsWith('http://') || value.startsWith('https://')) {
       return Promise.resolve();
     }
-    
+
     return Promise.reject(new Error('يجب أن يبدأ الرابط بـ http:// أو https://'));
   };
 
@@ -207,7 +211,7 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
               <InfoCircleOutlined className="text-orange-500" />
               المعلومات الأساسية
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Title */}
               <Form.Item
@@ -223,7 +227,7 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
                   { min: 3, message: 'العنوان يجب أن يكون 3 أحرف على الأقل' }
                 ]}
               >
-                <Input 
+                <Input
                   size="large"
                   placeholder="أدخل عنوان الفيديو"
                   prefix={<VideoCameraOutlined className="text-gray-400" />}
@@ -239,10 +243,30 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
                   </span>
                 }
                 name="time"
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      if (!value) {
+                        return Promise.reject(new Error('الرجاء إدخال مدة الفيديو'));
+                      }
+
+                      // تحقق من تنسيق MM:SS
+                      const mmssPattern = /^(?:[0-5]?[0-9]):(?:[0-5][0-9])$/;
+                      // تحقق من تنسيق HH:MM:SS
+                      const hhmmssPattern = /^(?:[01]?[0-9]|2[0-3]):(?:[0-5][0-9]):(?:[0-5][0-9])$/;
+
+                      if (mmssPattern.test(value) || hhmmssPattern.test(value)) {
+                        return Promise.resolve();
+                      }
+
+                      return Promise.reject(new Error('الرجاء إدخال الوقت بالتنسيق HH:MM:SS أو MM:SS (مثال: 14:30:45 أو 05:30)'));
+                    }
+                  }
+                ]}
               >
-                <Input 
+                <Input
                   size="large"
-                  placeholder="مثال: 30:00"
+                  placeholder="(مثال: 14:30:45 أو 05:30)"
                   prefix={<ClockCircleOutlined className="text-gray-400" />}
                   className="rounded-lg"
                 />
@@ -274,7 +298,7 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
               <Link className="w-5 h-5 text-blue-500" />
               روابط الفيديو
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* YouTube Link */}
               <Form.Item
@@ -290,7 +314,7 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
                   { type: 'url', warningOnly: true, message: 'يرجى إدخال رابط صحيح' }
                 ]}
               >
-                <Input 
+                <Input
                   size="large"
                   placeholder="https://youtube.com/watch?v=..."
                   className="rounded-lg"
@@ -311,7 +335,7 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
                   { type: 'url', warningOnly: true, message: 'يرجى إدخال رابط صحيح' }
                 ]}
               >
-                <Input 
+                <Input
                   size="large"
                   placeholder="https://vimeo.com/..."
                   className="rounded-lg"
@@ -334,7 +358,7 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
               <ImageIcon className="w-5 h-5 text-purple-500" />
               صورة الغلاف
             </h3>
-            
+
             <Form.Item
               name="image"
               valuePropName="fileList"
@@ -352,9 +376,9 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
               >
                 {imagePreview ? (
                   <div className="relative w-full h-full">
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
                       className="w-full h-full object-cover rounded-lg"
                     />
                     <button
@@ -392,15 +416,15 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
                   className="rounded-lg"
                 />
               )}
-              
+
               {!imagePreview && rowData?.image_url && rowData.image_url !== "0" && (
                 <Alert
                   message="تنبيه"
                   description={
                     <div className="flex items-center gap-2">
                       <span>الصورة الحالية ستظل محفوظة. لحذفها:</span>
-                      <Button 
-                        type="link" 
+                      <Button
+                        type="link"
                         size="small"
                         onClick={() => {
                           form.setFieldValue('removeImage', true);
@@ -430,10 +454,10 @@ export default function EditFreeVideoModal({ open, setOpen,page, per_page, rowDa
                 إلغاء
               </Button>
               <Tooltip title="سيتم حذف جميع التغييرات">
-              
+
               </Tooltip>
             </div>
-            
+
             <Button
               type="primary"
               htmlType="submit"

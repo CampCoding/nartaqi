@@ -559,6 +559,8 @@ export default function CourseSourceBasicLevel({ id  , isSource}) {
           >
             حذف البث المباشر
           </ActionButton>
+          {!isSource&& 
+          <>
           <button
             title={isLiveActive ? "إلغاء تنشيط البث" : "تنشيط البث"}
             onClick={(e) => {
@@ -589,7 +591,8 @@ export default function CourseSourceBasicLevel({ id  , isSource}) {
             }}
           >
             إنهاء البث
-          </ActionButton>}
+          </ActionButton>
+          }</>}
         </div>
       </div>
     );
@@ -905,7 +908,7 @@ export default function CourseSourceBasicLevel({ id  , isSource}) {
               className="bg-red-500 text-white p-2 rounded-md"
               // icon={<DeleteOutlined className="text-red-600" />}
               onClick={() => {
-                setDeleteModalContent(true);
+                setDeleteModalContent(contentItem);
                 setRowData(contentItem);
               }}
             >
@@ -1021,6 +1024,8 @@ export default function CourseSourceBasicLevel({ id  , isSource}) {
         type={rowData?.content_type}
       />
       <DeleteLessonModal
+      round_id={id}
+      id={id}
       isSource={isSource}
         open={openDeleteLesson}
         setOpen={setOpenDeleteLesson}

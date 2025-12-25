@@ -27,7 +27,7 @@ export default function EditLivesModal({
 
   const isFormValid = isSource 
     ? Boolean(rowData?.title) 
-    : Boolean(rowData?.title && dateStr && rowData?.time && rowData?.link);
+    : Boolean(rowData?.title && dateStr  && rowData?.link);
 
   useEffect(() => {
     if (rowData && open) {

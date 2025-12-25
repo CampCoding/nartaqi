@@ -377,7 +377,7 @@ const SubjectDetails = ({ subjectId, setSelectedUnit }) => {
                 </Card>
 
                 {/* Terms */}
-                <Card
+               {subject?.round_terms?.length &&  <Card
                   title={
                     <div className="flex items-center gap-2">
                       <InfoCircleOutlined className="text-[#0F7490]" />
@@ -408,7 +408,7 @@ const SubjectDetails = ({ subjectId, setSelectedUnit }) => {
                       </div>
                     ))}
                   </div>
-                </Card>
+                </Card>}
               </div>
             </Col>
 

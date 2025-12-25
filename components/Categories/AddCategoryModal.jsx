@@ -106,9 +106,7 @@ export default function AddCategoryModal({
         <Form.Item
           name="description"
           label="وصف الفئة"
-          rules={[
-            { required: true, message: "الوصف مطلوب" },
-          ]}
+          
           validateTrigger="onSubmit"
         >
           <Input.TextArea

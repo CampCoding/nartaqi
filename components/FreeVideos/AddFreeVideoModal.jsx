@@ -1,10 +1,10 @@
 "use client";
-import { 
-  Modal, 
-  Button, 
-  Form, 
-  Input, 
-  Upload, 
+import {
+  Modal,
+  Button,
+  Form,
+  Input,
+  Upload,
   Tooltip,
   message,
   Alert,
@@ -12,13 +12,13 @@ import {
 } from "antd";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { 
+import {
   PlusOutlined,
   UploadOutlined,
   YoutubeOutlined,
   VideoCameraOutlined,
   ClockCircleOutlined,
-  InfoCircleOutlined 
+  InfoCircleOutlined
 } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import { handleCreateFreeVideos, handleGetAllFreeVideos } from "../../lib/features/freeVideoSlice";
@@ -26,7 +26,7 @@ import { Trash2, Link, Image as ImageIcon } from "lucide-react";
 
 const { TextArea } = Input;
 
-export default function AddFreeVideoModal({ open, setOpen, id, page, per_page, content_id }) {
+export default function AddFreeVideoModal({ categoryId, open, setOpen, id, page, per_page, content_id }) {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
   const { create_video_loading } = useSelector(state => state?.free_videos);
@@ -35,22 +35,18 @@ export default function AddFreeVideoModal({ open, setOpen, id, page, per_page, c
 
   const handleSubmit = async (values) => {
     try {
-      if(!values?.time?.includes(":")) {
-        toast.warn("ادخل مدة الوقت بطريقة صحيحه لازم يحتوي علي :  ");
-        return;
-      }
+
       const formData = new FormData();
       formData.append('title', values.title?.trim());
       formData.append("description", values.description?.trim() || '');
       formData.append("time", values.time || '');
       formData.append("vimeo_link", values.vimeo_link || '');
       formData.append("youtube_link", values.youtube_link || '');
-      
-      // Append image file if selected
-      if (imageFile) {
-        formData.append("image", imageFile);
-      }
+      formData.append("course_category_id", categoryId);
 
+      formData.append("image", imageFile || null);
+      // Append image file if selected
+    
       // Log FormData for debugging
       console.log('FormData being sent:');
       for (let [key, value] of formData.entries()) {
@@ -62,7 +58,11 @@ export default function AddFreeVideoModal({ open, setOpen, id, page, per_page, c
         .then((res) => {
           if (res?.data?.status == "success") {
             toast.success("تم إضافة الفيديو بنجاح");
-            dispatch(handleGetAllFreeVideos({ page, per_page }));
+            dispatch(handleGetAllFreeVideos({
+              page, per_page, body: {
+                course_category_id: categoryId
+              }
+            }));
             handleClose();
           } else {
             toast.error(res?.error?.response?.data?.message || "هناك خطأ أثناء إضافة الفيديو");
@@ -97,20 +97,20 @@ export default function AddFreeVideoModal({ open, setOpen, id, page, per_page, c
       message.error('يمكنك رفع صور فقط!');
       return Upload.LIST_IGNORE;
     }
-    
+
     const isLt2M = file.size / 1024 / 1024 < 2;
     if (!isLt2M) {
       message.error('يجب أن يكون حجم الصورة أقل من 2MB!');
       return Upload.LIST_IGNORE;
     }
-    
+
     // Store the file object
     setImageFile(file);
-    
+
     // Create preview
     const preview = URL.createObjectURL(file);
     setImagePreview(preview);
-    
+
     return false; // Prevent auto upload
   };
 
@@ -124,11 +124,11 @@ export default function AddFreeVideoModal({ open, setOpen, id, page, per_page, c
     if (!value) {
       return Promise.resolve();
     }
-    
+
     if (value.startsWith('http://') || value.startsWith('https://')) {
       return Promise.resolve();
     }
-    
+
     return Promise.reject(new Error('يجب أن يبدأ الرابط بـ http:// أو https://'));
   };
 
@@ -168,7 +168,7 @@ export default function AddFreeVideoModal({ open, setOpen, id, page, per_page, c
               <InfoCircleOutlined className="text-green-500" />
               المعلومات الأساسية
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Title */}
               <Form.Item
@@ -184,7 +184,7 @@ export default function AddFreeVideoModal({ open, setOpen, id, page, per_page, c
                   { min: 3, message: 'العنوان يجب أن يكون 3 أحرف على الأقل' }
                 ]}
               >
-                <Input 
+                <Input
                   size="large"
                   placeholder="أدخل عنوان الفيديو"
                   prefix={<VideoCameraOutlined className="text-gray-400" />}
@@ -194,23 +194,40 @@ export default function AddFreeVideoModal({ open, setOpen, id, page, per_page, c
 
               {/* Duration */}
               <Form.Item
-                label={
-                  <span className="font-medium text-gray-700">
-                    مدة الفيديو
-                  </span>
-                }
-                name="time"
-                rules={[
-                  { pattern: /^([0-5]?[0-9]):([0-5][0-9])$/, message: 'الرجاء إدخال الوقت بالتنسيق MM:SS' }
-                ]}
-              >
-                <Input 
-                  size="large"
-                  placeholder="مثال: 30:00"
-                  prefix={<ClockCircleOutlined className="text-gray-400" />}
-                  className="rounded-lg"
-                />
-              </Form.Item>
+  label={
+    <span className="font-medium text-gray-700">
+      مدة الفيديو
+    </span>
+  }
+  name="time"
+  rules={[
+    {
+      validator: (_, value) => {
+        if (!value) {
+          return Promise.reject(new Error('الرجاء إدخال مدة الفيديو'));
+        }
+        
+        // تحقق من تنسيق MM:SS
+        const mmssPattern = /^(?:[0-5]?[0-9]):(?:[0-5][0-9])$/;
+        // تحقق من تنسيق HH:MM:SS
+        const hhmmssPattern = /^(?:[01]?[0-9]|2[0-3]):(?:[0-5][0-9]):(?:[0-5][0-9])$/;
+        
+        if (mmssPattern.test(value) || hhmmssPattern.test(value)) {
+          return Promise.resolve();
+        }
+        
+        return Promise.reject(new Error('الرجاء إدخال الوقت بالتنسيق HH:MM:SS أو MM:SS (مثال: 14:30:45 أو 05:30)'));
+      }
+    }
+  ]}
+>
+  <Input
+    size="large"
+    placeholder="(مثال: 14:30:45 أو 05:30)"
+    prefix={<ClockCircleOutlined className="text-gray-400" />}
+    className="rounded-lg"
+  />
+</Form.Item>
             </div>
 
             {/* Description */}
@@ -238,7 +255,7 @@ export default function AddFreeVideoModal({ open, setOpen, id, page, per_page, c
               <Link className="w-5 h-5 text-blue-500" />
               روابط الفيديو
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* YouTube Link */}
               <Form.Item
@@ -254,7 +271,7 @@ export default function AddFreeVideoModal({ open, setOpen, id, page, per_page, c
                   { type: 'url', message: 'يرجى إدخال رابط صحيح' }
                 ]}
               >
-                <Input 
+                <Input
                   size="large"
                   placeholder="https://youtube.com/watch?v=..."
                   className="rounded-lg"
@@ -275,7 +292,7 @@ export default function AddFreeVideoModal({ open, setOpen, id, page, per_page, c
                   { type: 'url', message: 'يرجى إدخال رابط صحيح' }
                 ]}
               >
-                <Input 
+                <Input
                   size="large"
                   placeholder="https://vimeo.com/..."
                   className="rounded-lg"
@@ -296,9 +313,9 @@ export default function AddFreeVideoModal({ open, setOpen, id, page, per_page, c
           <div className="p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <ImageIcon className="w-5 h-5 text-purple-500" />
-              صورة الغلاف (اختياري)
+              صورة الغلاف 
             </h3>
-            
+
             <Form.Item
               name="image"
               valuePropName="fileList"
@@ -316,9 +333,9 @@ export default function AddFreeVideoModal({ open, setOpen, id, page, per_page, c
               >
                 {imagePreview ? (
                   <div className="relative w-full h-full">
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
                       className="w-full h-full object-cover rounded-lg"
                     />
                     <button
@@ -364,10 +381,10 @@ export default function AddFreeVideoModal({ open, setOpen, id, page, per_page, c
                 إلغاء
               </Button>
               <Tooltip title="سيتم حذف جميع البيانات المدخلة">
-                
+
               </Tooltip>
             </div>
-            
+
             <Space>
               <Button
                 type="primary"

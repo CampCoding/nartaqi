@@ -115,7 +115,7 @@ export default function Sidebar() {
     { name: "المتدربين", icon: GraduationCap, path: "/students" },
     // { name: "أقسام الاختبارات", icon: BookCopy , path: "/exam_sections" },
     { name: "الاختبارات", icon: FileText, path: "/exams" },
-    {name:"الشروحات المجانية",icon:VideoIcon,path:"/freeVideos"},
+    // {name:"الشروحات المجانية",icon:VideoIcon,path:"/freeVideos"},
     {
       name:"المدونة",
       icon : BookOpenIcon,

@@ -39,7 +39,7 @@ export default function DeleteLessonModal({ open, round_id, setOpen, rowData, id
           dispatch(
             handleGetAllRoundContent({
               body: {
-                round_id: id, // parent round id
+                round_id: id || round_id, // parent round id
               },
             })
           );

@@ -53,28 +53,27 @@ const AddExamPdfModal = ({ open, setOpen, exam_id, lesson_id, id }) => {
 
       // Build FormData to match your Postman request
       const formData = new FormData();
-      formData.append("lesson_id",lesson_id || exam_id?.id || exam_id); // same as Postman
+      formData.append("lesson_id", lesson_id || exam_id?.id || exam_id); // same as Postman
       formData.append("title", values.title);
       formData.append("description", values.description || "");
       formData.append("type", values?.type || "");
       formData.append("pdf_url", fileObj); // the actual file
-
-      console.log("Sending FormData for add_exam_pdf");
-
       const result = await dispatch(handleAddExamPdf({ body: formData })).unwrap();
 
       if (result?.data?.status === "success") {
-        toast.success( "تم إضافة الملف PDF بنجاح");
+        toast.success("تم إضافة الملف PDF بنجاح");
         // refresh round content
         dispatch(handleGetAllRoundContent({ body: { round_id: id } }));
-        dispatch(handleGetAllExamData({body : {
-          id : exam_id
-        }}))
+        dispatch(handleGetAllExamData({
+          body: {
+            id: exam_id
+          }
+        }))
         form.resetFields();
         setFileList([]);
         setOpen(false);
       } else {
-        toast.error(res?.error?.response?.data?.message ||"فشل في إضافة الملف PDF");
+        toast.error(res?.error?.response?.data?.message || "فشل في إضافة الملف PDF");
       }
     } catch (error) {
       console.error("Error adding exam PDF:", error);
@@ -128,7 +127,7 @@ const AddExamPdfModal = ({ open, setOpen, exam_id, lesson_id, id }) => {
         <Form.Item
           name="type"
           label="نوع الملف"
-          // rules={[{ required: true, message: "يرجى اختيار نوع الملف" }]}
+        // rules={[{ required: true, message: "يرجى اختيار نوع الملف" }]}
         >
           <Select
             placeholder="اختر نوع الملف"
@@ -152,7 +151,7 @@ const AddExamPdfModal = ({ open, setOpen, exam_id, lesson_id, id }) => {
           >
             <Button icon={<UploadOutlined />}>اختر ملف PDF</Button>
           </Upload>
-          
+
           {fileList.length > 0 && (
             <p className="text-xs text-green-600 mt-1">
               ✓ تم اختيار ملف: {fileList[0].name}

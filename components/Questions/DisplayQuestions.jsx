@@ -694,25 +694,1588 @@
 //   );
 // }
 
+// "use client";
+
+// import React, { useMemo, useState, useEffect } from "react";
+// import { Edit3, Trash2, Save, X, ChevronDown, ChevronUp } from "lucide-react";
+// import { Empty, Spin, Tag, Button, Modal } from "antd";
+// import { useDispatch, useSelector } from "react-redux";
+// import dynamic from "next/dynamic";
+// import Card from "./ExamCard";
+// import {
+//   handleDeleteExamQuestions,
+//   handleGetExamQuestions,
+// } from "../../lib/features/examSlice";
+// import { toast } from "react-toastify";
+
+// const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+// import "react-quill-new/dist/quill.snow.css";
+// import MathTypeEditor from "../MathTypeEditor/MathTypeEditor";
+
+// const { confirm } = Modal;
+
+// export default function DisplayQuestions({
+//   selectedSectionId,
+//   setEditingQuestion,
+//   selectedSection,
+// }) {
+//   const dispatch = useDispatch();
+//   const {
+//     get_exam_questions_list,
+//     get_exam_questions_loading,
+//     delete_question_loading,
+//   } = useSelector((state) => state?.exam);
+
+//   const [expandedQuestions, setExpandedQuestions] = useState({});
+//   const [editingQuestionId, setEditingQuestionId] = useState(null);
+//   const [editingContent, setEditingContent] = useState("");
+//   const [editingOptions, setEditingOptions] = useState([]);
+//   const [editingCorrectAnswer, setEditingCorrectAnswer] = useState(0);
+//   const [editingParagraphContent, setEditingParagraphContent] = useState("");
+//   const [editingParagraphQuestions, setEditingParagraphQuestions] = useState(
+//     []
+//   );
+
+//   const [deleteModal, setDeleteModal] = useState(false);
+//   const [questionToDelete, setQuestionToDelete] = useState(null);
+//   const [sectionName, setSectionName] = useState("");
+
+//   useEffect(() => {
+//     console.log("selectedSection", selectedSection);
+//   }, [selectedSection]);
+
+//   useEffect(() => {
+//     if (get_exam_questions_list) {
+//       const initial = {};
+//       (get_exam_questions_list?.data?.message?.mcq || []).forEach(
+//         (q) => (initial[`mcq-${q.id}`] = false)
+//       );
+//       (get_exam_questions_list?.data?.message?.paragraphs || []).forEach(
+//         (p) => (initial[`paragraph-${p.paragraph.id}`] = false)
+//       );
+//       setExpandedQuestions(initial);
+//     }
+//   }, [get_exam_questions_list]);
+
+//   const quillModules = {
+//     toolbar: [
+//       [{ header: [1, 2, 3, false] }],
+//       ["bold", "italic", "underline"],
+//       [{ list: "ordered" }, { list: "bullet" }],
+//       [{ align: [] }],
+//       ["clean"],
+//       ["link", "image", "formula"],
+//     ],
+//   };
+
+//   const quillFormats = [
+//     "header",
+//     "bold",
+//     "italic",
+//     "underline",
+//     "list",
+//     "bullet",
+//     "align",
+//     "link",
+//     "image",
+//     "formula",
+//   ];
+
+//   const apiQuestions = useMemo(() => {
+//     if (!get_exam_questions_list && !selectedSection) return [];
+//     const data = get_exam_questions_list?.data?.message || {
+//       mcq: [],
+//       paragraphs: [],
+//     };
+//     const mcqs = (
+//       data?.mcq && data?.mcq?.length
+//         ? data?.mcq
+//         : selectedSection?.mcq && selectedSection?.mcq?.length
+//         ? selectedSection?.mcq
+//         : []
+//     ).map((q) => {
+//       const options = q?.options || [];
+//       const correctIndex = options.findIndex(
+//         (opt) => Number(opt?.is_correct) === 1
+//       );
+//       return {
+//         id: q.id,
+//         type: "mcq",
+//         question: q?.question_text || "",
+//         correctAnswer: correctIndex >= 0 ? correctIndex : 0,
+//         options: options.map((opt) => ({
+//           text: opt.option_text || "",
+//           explanation: opt.question_explanation || "",
+//         })),
+//         rawData: q,
+//       };
+//     });
+//     console.log(
+//       "get_exam_questions_list--------",
+//       data?.mcq && data?.mcq?.length
+//         ? data?.mcq
+//         : selectedSection?.mcq && selectedSection?.mcq?.length
+//         ? selectedSection?.mcq
+//         : []
+//     );
+//     const paragraphs = (selectedSection?.paragraphs || []).map((p) => ({
+//       id: p.paragraph.id,
+//       type: "paragraph_mcq",
+//       paragraphContent: p.paragraph.paragraph_content || "",
+//       questions: p.questions.map((q) => ({
+//         questionText: q.question_text || "",
+//         options: (q.options || []).map((opt) => ({
+//           text: opt.option_text || "",
+//           explanation: opt.question_explanation || "",
+//           isCorrect: opt.is_correct === 1,
+//         })),
+//       })),
+//       rawData: p,
+//     }));
+
+//     return [...mcqs, ...paragraphs];
+//   }, [get_exam_questions_list, selectedSection]);
+
+//   const toggleQuestion = (id, type) => {
+//     const key = `${type === "mcq" ? "mcq" : "paragraph"}-${id}`;
+//     setExpandedQuestions((prev) => ({ ...prev, [key]: !prev[key] }));
+//   };
+
+//   const isExpanded = (id, type) =>
+//     expandedQuestions[`${type === "mcq" ? "mcq" : "paragraph"}-${id}`] || false;
+
+//   const startEditing = (q) => {
+//     setEditingQuestionId(q.id);
+//     if (q.type === "mcq") {
+//       setEditingContent(q.question);
+//       setEditingOptions(q.options.map((opt) => ({ ...opt })));
+//       setEditingCorrectAnswer(q.correctAnswer);
+//     } else if (q.type === "paragraph_mcq") {
+//       setEditingParagraphContent(q.paragraphContent);
+//       setEditingParagraphQuestions(
+//         q.questions.map((pq) => ({
+//           questionText: pq.questionText,
+//           options: pq.options.map((opt) => ({ ...opt })),
+//         }))
+//       );
+//     }
+//     setEditingQuestion(q);
+//   };
+
+//   const cancelEditing = () => {
+//     setEditingQuestionId(null);
+//     setEditingContent("");
+//     setEditingOptions([]);
+//     setEditingCorrectAnswer(0);
+//     setEditingParagraphContent("");
+//     setEditingParagraphQuestions([]);
+//     setEditingQuestion(null);
+//   };
+
+//   const handleDeleteQuestion = () => {
+//     console.log("questionToDelete" , questionToDelete)
+//     if (!questionToDelete) return;
+//     dispatch(handleDeleteExamQuestions({ body: { id: questionToDelete.id } }))
+//       .unwrap()
+//       .then((res) => {
+//         if (res?.data?.status === "success") {
+//           toast.success("تم حذف السؤال بنجاح");
+//           dispatch(
+//             handleGetExamQuestions({
+//               body: { exam_section_id: selectedSectionId },
+//             })
+//           );
+//         } else {
+//           toast.error(res?.data?.message || "فشل الحذف");
+//         }
+//       })
+//       .finally(() => {
+//         setDeleteModal(false);
+//         setQuestionToDelete(null);
+//       });
+//   };
+
+//   const renderQuestionContent = (q) => {
+//     const isEditing = editingQuestionId === q.id;
+
+//     if (isEditing) {
+//       // Editing mode - clean and spacious
+//       return (
+//         <div className="space-y-8 py-6">
+//           {q.type === "mcq" ? (
+//             <>
+//               <div>
+//                 <label className="block text-sm font-semibold text-gray-800 mb-3">
+//                   نص السؤال
+//                 </label>
+//                 <ReactQuill
+//                   value={editingContent}
+//                   onChange={setEditingContent}
+//                   modules={quillModules}
+//                   formats={quillFormats}
+//                   className="bg-white"
+//                 />
+//               </div>
+
+//               <div>
+//                 <label className="block text-sm font-semibold text-gray-800 mb-4">
+//                   الخيارات
+//                 </label>
+//                 <div className="space-y-5">
+//                   {editingOptions.map((opt, idx) => (
+//                     <div
+//                       key={idx}
+//                       className="p-5 bg-gray-50 border border-gray-200 rounded-xl"
+//                     >
+//                       <div className="flex items-center gap-4 mb-4">
+//                         <input
+//                           type="radio"
+//                           checked={editingCorrectAnswer === idx}
+//                           onChange={() => setEditingCorrectAnswer(idx)}
+//                           className="w-5 h-5 text-blue-600"
+//                         />
+//                         <span className="font-medium text-gray-700">
+//                           الإجابة الصحيحة
+//                         </span>
+//                         <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium">
+//                           {String.fromCharCode(1632 + idx + 1)}
+//                         </span>
+//                       </div>
+//                       <div className="space-y-4">
+//                         <div>
+//                           <label className="text-sm text-gray-600 mb-2 block">
+//                             نص الخيار
+//                           </label>
+//                           {/* <MathTypeEditor
+//                             editorData={opt.text}
+//                             setEditorData={(data) => {
+//                               const newOpts = [...editingOptions];
+//                               newOpts[idx].text = data;
+//                               setEditingOptions(newOpts);
+//                             }}
+//                           /> */}
+//                           <ReactQuill
+//                             value={opt.text}
+//                             onChange={v => {
+//                               const newOpts = [...editingOptions];
+//                               newOpts[idx].text = v;
+//                               setEditingOptions(newOpts);
+//                             }}
+//                             modules={quillModules}
+//                             formats={quillFormats}
+//                           />
+//                         </div>
+//                         <div>
+//                           <label className="text-sm text-gray-600 mb-2 block">
+//                             الشرح (اختياري)
+//                           </label>
+//                           <ReactQuill
+//                             value={opt.explanation}
+//                             onChange={(v) => {
+//                               const newOpts = [...editingOptions];
+//                               newOpts[idx].explanation = v;
+//                               setEditingOptions(newOpts);
+//                             }}
+//                             modules={quillModules}
+//                             formats={quillFormats}
+//                           />
+//                         </div>
+//                       </div>
+//                     </div>
+//                   ))}
+//                 </div>
+//               </div>
+//             </>
+//           ) : (
+//             // Paragraph editing mode - similar spacious layout (omitted for brevity, follow same pattern)
+//             <div>Paragraph editing UI goes here with same padding style...</div>
+//           )}
+
+//           <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+//             <Button
+//               onClick={cancelEditing}
+//               size="large"
+//               icon={<X className="w-5 h-5" />}
+//             >
+//               إلغاء
+//             </Button>
+//             <Button
+//               type="primary"
+//               size="large"
+//               icon={<Save className="w-5 h-5" />}
+//               loading={delete_question_loading}
+//             >
+//               حفظ التعديلات
+//             </Button>
+//           </div>
+//         </div>
+//       );
+//     }
+
+//     // Normal display mode
+//     return (
+//       <div className="space-y-8 px-2">
+//         {/* Paragraph (if applicable) */}
+//         {q.type === "paragraph_mcq" && (
+//           <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl">
+//             <h4 className="font-bold text-blue-900 mb-4 text-lg">الفقرة</h4>
+//             <div
+//               dangerouslySetInnerHTML={{ __html: q.paragraphContent }}
+//               className="text-gray-800 leading-relaxed text-base"
+//             />
+//           </div>
+//         )}
+
+//         {/* Questions */}
+//         {(q.type === "mcq"
+//           ? [
+//               {
+//                 questionText: q.question,
+//                 options: q.options,
+//                 correctAnswer: q.correctAnswer,
+//               },
+//             ]
+//           : q.questions
+//         ).map((item, qIdx) => (
+//           <div key={qIdx} className="space-y-5">
+//             {q.type === "paragraph_mcq" && (
+//               <h4 className="font-bold text-gray-900 text-lg">
+//                 سؤال {qIdx + 1}
+//               </h4>
+//             )}
+//             {q.type === "paragraph_mcq" && (
+//               <div
+//                 dangerouslySetInnerHTML={{ __html: item.questionText }}
+//                 className="text-gray-800 leading-relaxed text-base mb-4"
+//               />
+//             )}
+//             {q.type === "mcq" && (
+//               <div
+//                 dangerouslySetInnerHTML={{ __html: item.questionText }}
+//                 className="text-gray-800 leading-relaxed text-base mb-5"
+//               />
+//             )}
+
+//             <div className="grid gap-4">
+//               {item.options.map((opt, oIdx) => {
+//                 const isCorrect =
+//                   q.type === "mcq" ? oIdx === q.correctAnswer : opt.isCorrect;
+//                 return (
+//                   <div
+//                     key={oIdx}
+//                     className={`p-5 rounded-xl border-2 transition-all ${
+//                       isCorrect
+//                         ? "bg-emerald-50 border-emerald-300 shadow-sm"
+//                         : "bg-white border-gray-200 hover:border-gray-300"
+//                     }`}
+//                   >
+//                     <div className="flex items-start gap-3">
+//                       <span className="font-bold text-lg text-gray-700 mt-1">
+//                         {String.fromCharCode(1632 + oIdx + 1)}.
+//                       </span>
+//                       <div className="flex-1">
+//                         <div
+//                           dangerouslySetInnerHTML={{ __html: opt.text }}
+//                           className="font-medium text-gray-800 leading-relaxed"
+//                         />
+//                         {opt.explanation && (
+//                           <div className="mt-3 pt-3 border-t border-gray-200">
+//                             <span className="text-sm font-medium text-gray-600">
+//                               الشرح:
+//                             </span>
+//                             <div
+//                               dangerouslySetInnerHTML={{
+//                                 __html: opt.explanation,
+//                               }}
+//                               className="text-sm text-gray-600 mt-1 leading-relaxed"
+//                             />
+//                           </div>
+//                         )}
+//                       </div>
+//                     </div>
+//                   </div>
+//                 );
+//               })}
+//             </div>
+//           </div>
+//         ))}
+
+//         {/* Action Buttons */}
+//         <div className="flex justify-end gap-4 pt-8 border-t border-gray-200">
+//           <Button
+//             size="large"
+//             icon={<Edit3 className="w-5 h-5" />}
+//             type="primary"
+//             ghost
+//             onClick={() => startEditing(q)}
+//           >
+//             تعديل
+//           </Button>
+//           <Button
+//             size="large"
+//             icon={<Trash2 className="w-5 h-5" />}
+//             danger
+//             onClick={() => {
+//               setQuestionToDelete(q);
+//               setDeleteModal(true);
+//             }}
+//             loading={delete_question_loading}
+//           >
+//             حذف
+//           </Button>
+//         </div>
+//       </div>
+//     );
+//   };
+
+//   if (get_exam_questions_loading) {
+//     return (
+//       <div className="flex flex-col items-center justify-center py-32">
+//         <Spin size="large" />
+//         <p className="mt-4 text-gray-600">جاري تحميل الأسئلة...</p>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <Card title="أسئلة الامتحان" icon={Edit3} className="p-0">
+//       <div className="p-6">
+//         {" "}
+//         {/* Main container padding */}
+//         {apiQuestions.length === 0 ? (
+//           <Empty description="لا توجد أسئلة في هذا القسم بعد" />
+//         ) : (
+//           <div className="space-y-8">
+//             {/* Section Info Card */}
+//             <div className="p-8 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-3xl border border-indigo-200 shadow-sm">
+//               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+//                 <div>
+//                   <div className="flex gap-1 items-center">
+//                     {/* <h2 className="text-3xl font-bold text-indigo-900">قسم </h2> */}
+//                     <h2
+//                       className="text-3xl font-bold text-indigo-900"
+//                       dangerouslySetInnerHTML={{
+//                         __html: ` ${selectedSection?.title}`,
+//                       }}
+//                     />
+//                   </div>
+//                   <p className="text-lg text-indigo-700 mt-2">
+//                     عدد الأسئلة:{" "}
+//                     <span className="font-bold">{apiQuestions.length}</span>
+//                   </p>
+//                 </div>
+//                 {/* <Tag color="indigo" className="text-base px-5 py-2">معرف القسم: {selectedSectionId}</Tag> */}
+//               </div>
+//             </div>
+
+//             {/* Questions List */}
+//             <div className="space-y-6">
+//               {apiQuestions.map((q, index) => {
+//                 console.log("q", q);
+//                 const isExp = isExpanded(q.id, q.type);
+//                 const typeLabel =
+//                   q.type == "mcq" ? "سؤال اختيار متعدد" : "فقرة مع أسئلة";
+
+//                 return (
+//                   <div
+//                     key={q.id}
+//                     className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden transition-all hover:shadow-xl"
+//                   >
+//                     {/* Header */}
+//                     <div
+//                       onClick={() => toggleQuestion(q.id, q.type)}
+//                       className="flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+//                     >
+//                       <div className="flex items-center gap-5">
+//                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-xl font-bold shadow-md">
+//                           {index + 1}
+//                         </div>
+//                         <div>
+//                           <div className="font-bold text-xl text-gray-900">
+//                             {typeLabel}
+//                           </div>
+//                           <div
+//                             className="text-sm text-gray-600 mt-1 line-clamp-2"
+//                             dangerouslySetInnerHTML={{
+//                               __html:
+//                                 q.type === "mcq"
+//                                   ? q.question
+//                                   : q.paragraphContent ||
+//                                     q.questions[0]?.questionText ||
+//                                     "فقرة",
+//                             }}
+//                           />
+//                         </div>
+//                       </div>
+
+//                       <div className="flex items-center gap-4">
+//                         <Tag
+//                           color={q.type === "mcq" ? "blue" : "purple"}
+//                           className="text-sm px-4 py-1"
+//                         >
+//                           {q.type === "mcq" ? "MCQ" : "فقرة"}
+//                         </Tag>
+//                         {isExp ? (
+//                           <ChevronUp className="w-6 h-6 text-gray-500" />
+//                         ) : (
+//                           <ChevronDown className="w-6 h-6 text-gray-500" />
+//                         )}
+//                       </div>
+//                     </div>
+
+//                     {/* Content */}
+//                     {isExp && (
+//                       <div className="border-t border-gray-200 px-8 pb-8 pt-6 bg-gray-50/50">
+//                         {renderQuestionContent(q)}
+//                       </div>
+//                     )}
+//                   </div>
+//                 );
+//               })}
+//             </div>
+//           </div>
+//         )}
+//       </div>
+
+//       {/* Delete Modal */}
+//       <Modal
+//         open={deleteModal}
+//         onCancel={() => setDeleteModal(false)}
+//         onOk={handleDeleteQuestion}
+//         okText="حذف نهائياً"
+//         cancelText="إلغاء"
+//         okButtonProps={{ danger: true, loading: delete_question_loading }}
+//         width={500}
+//       >
+//         <div className="text-center py-10">
+//           <Trash2 className="w-20 h-20 text-red-500 mx-auto mb-6" />
+//           <h3 className="text-2xl font-bold text-gray-900 mb-4">تأكيد الحذف</h3>
+//           <p className="text-gray-600 text-lg leading-relaxed">
+//             هل أنت متأكد من حذف هذا{" "}
+//             {questionToDelete?.type === "mcq" ? "السؤال" : "الفقرة مع أسئلتها"}؟
+//             <br />
+//             <strong className="text-red-600">هذا الإجراء لا رجعة فيه</strong>.
+//           </p>
+//         </div>
+//       </Modal>
+//     </Card>
+//   );
+// }
+
+
+// "use client";
+
+// import React, { useMemo, useState, useEffect } from "react";
+// import { Edit3, Trash2, Save, X, ChevronDown, ChevronUp } from "lucide-react";
+// import { Empty, Spin, Tag, Button, Modal } from "antd";
+// import { useDispatch, useSelector } from "react-redux";
+// import dynamic from "next/dynamic";
+// import Card from "./ExamCard";
+// import {
+//   handleDeleteExamQuestions,
+//   handleGetExamQuestions,
+//   handleUpdateExamQuestions,
+//   handleEditParagraph,
+//   handleDeleteParagraph,
+// } from "../../lib/features/examSlice";
+// import { toast } from "react-toastify";
+
+// const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+// import "react-quill-new/dist/quill.snow.css";
+// // import MathTypeEditor from "../MathTypeEditor/MathTypeEditor";
+
+// export default function DisplayQuestions({
+//   selectedSectionId,
+//   setEditingQuestion,
+//   selectedSection,
+// }) {
+//   const dispatch = useDispatch();
+
+//   const {
+//     get_exam_questions_list,
+//     get_exam_question_loading, // ✅ correct from slice
+//     delete_question_loading,
+//     edit_question_loading,
+//     edit_paragraph_loading,
+//     delete_paragraph_loading,
+//   } = useSelector((state) => state?.exam);
+
+//   const [expandedQuestions, setExpandedQuestions] = useState({});
+
+//   const [editingQuestionId, setEditingQuestionId] = useState(null);
+//   const [editingType, setEditingType] = useState(null); // "mcq" | "paragraph_mcq"
+
+//   // MCQ editing
+//   const [editingContent, setEditingContent] = useState("");
+//   const [editingOptions, setEditingOptions] = useState([]);
+//   const [editingCorrectAnswer, setEditingCorrectAnswer] = useState(0);
+
+//   // Paragraph editing
+//   const [editingParagraphContent, setEditingParagraphContent] = useState("");
+//   const [editingParagraphQuestions, setEditingParagraphQuestions] = useState([]);
+
+
+//   // Delete modal
+//   const [deleteParagraphModal , setDeleteParagraphModal] = useState(false);
+//   const [deleteQuestionModal , setDeleteQuestionModal] = useState(false);
+//   const [deleteModal, setDeleteModal] = useState(false);
+//   const [questionToDelete, setQuestionToDelete] = useState(null);
+
+//   useEffect(() => {
+//     if (get_exam_questions_list) {
+//       const initial = {};
+//       (get_exam_questions_list?.data?.message?.mcq || []).forEach(
+//         (q) => (initial[`mcq-${q.id}`] = false)
+//       );
+//       (get_exam_questions_list?.data?.message?.paragraphs || []).forEach(
+//         (p) => (initial[`paragraph-${p.paragraph.id}`] = false)
+//       );
+//       setExpandedQuestions(initial);
+//     }
+//   }, [get_exam_questions_list]);
+
+//   const quillModules = {
+//     toolbar: [
+//       [{ header: [1, 2, 3, false] }],
+//       ["bold", "italic", "underline"],
+//       [{ list: "ordered" }, { list: "bullet" }],
+//       [{ align: [] }],
+//       ["clean"],
+//       ["link", "image", "formula"],
+//     ],
+//   };
+
+//   const quillFormats = [
+//     "header",
+//     "bold",
+//     "italic",
+//     "underline",
+//     "list",
+//     "bullet",
+//     "align",
+//     "link",
+//     "image",
+//     "formula",
+//   ];
+
+//   const apiQuestions = useMemo(() => {
+//     if (!get_exam_questions_list && !selectedSection) return [];
+
+//     const data = get_exam_questions_list?.data?.message || {
+//       mcq: [],
+//       paragraphs: [],
+//     };
+
+//     const mcqSource =
+//       data?.mcq && data?.mcq?.length
+//         ? data?.mcq
+//         : selectedSection?.mcq && selectedSection?.mcq?.length
+//           ? selectedSection?.mcq
+//           : [];
+
+//     const mcqs = mcqSource.map((q) => {
+//       const options = q?.options || [];
+//       const correctIndex = options.findIndex(
+//         (opt) => Number(opt?.is_correct) === 1
+//       );
+
+//       return {
+//         id: q.id,
+//         type: "mcq",
+//         question: q?.question_text || "",
+//         correctAnswer: correctIndex >= 0 ? correctIndex : 0,
+//         options: options.map((opt) => ({
+//           id: opt?.id,
+//           text: opt.option_text || "",
+//           explanation: opt.question_explanation || "",
+//           isCorrect: Number(opt?.is_correct) === 1,
+//         })),
+//         rawData: q,
+//       };
+//     });
+
+//     // ✅ use API paragraphs if exists, fallback to selectedSection
+//     const paragraphSource =
+//       data?.paragraphs && data?.paragraphs?.length
+//         ? data?.paragraphs
+//         : selectedSection?.paragraphs || [];
+
+//     const paragraphs = paragraphSource.map((p) => ({
+//       id: p?.paragraph?.id,
+//       type: "paragraph_mcq",
+//       paragraphContent: p?.paragraph?.paragraph_content || "",
+//       questions: (p?.questions || []).map((q) => ({
+//         id: q?.id,
+//         questionText: q?.question_text || "",
+//         options: (q?.options || []).map((opt) => ({
+//           id: opt?.id,
+//           text: opt?.option_text || "",
+//           explanation: opt?.question_explanation || "",
+//           isCorrect: Number(opt?.is_correct) === 1,
+//         })),
+//       })),
+//       rawData: p,
+//     }));
+
+//     return [...mcqs, ...paragraphs];
+//   }, [get_exam_questions_list, selectedSection]);
+
+//   const toggleQuestion = (id, type) => {
+//     const key = `${type === "mcq" ? "mcq" : "paragraph"}-${id}`;
+//     setExpandedQuestions((prev) => ({ ...prev, [key]: !prev[key] }));
+//   };
+
+//   const isExpanded = (id, type) =>
+//     expandedQuestions[`${type === "mcq" ? "mcq" : "paragraph"}-${id}`] || false;
+
+//   const startEditing = (q) => {
+//     setEditingQuestionId(q.id);
+//     setEditingType(q.type);
+
+//     if (q.type === "mcq") {
+//       setEditingContent(q.question);
+//       setEditingOptions(q.options.map((opt) => ({ ...opt })));
+//       setEditingCorrectAnswer(q.correctAnswer);
+//     } else if (q.type === "paragraph_mcq") {
+//       setEditingParagraphContent(q.paragraphContent);
+//       setEditingParagraphQuestions(
+//         q.questions.map((pq) => ({
+//           id: pq.id,
+//           questionText: pq.questionText,
+//           options: pq.options.map((opt) => ({ ...opt })),
+//         }))
+//       );
+//     }
+
+//     setEditingQuestion(q);
+//   };
+
+//   const cancelEditing = () => {
+//     setEditingQuestionId(null);
+//     setEditingType(null);
+
+//     setEditingContent("");
+//     setEditingOptions([]);
+//     setEditingCorrectAnswer(0);
+
+//     setEditingParagraphContent("");
+//     setEditingParagraphQuestions([]);
+
+//     setEditingQuestion(null);
+//   };
+
+//   const refreshQuestions = () => {
+//     dispatch(
+//       handleGetExamQuestions({
+//         body: { exam_section_id: selectedSectionId },
+//       })
+//     );
+//   };
+
+//   // ✅ Save MCQ alone
+//   const handleSaveMCQ = async (q) => {
+//     const payload = {
+//       id: q.id,
+//       question_text: editingContent,
+//       options: editingOptions.map((opt, idx) => ({
+//         id: opt?.id, // keep if backend needs
+//         option_text: opt?.text || "",
+//         question_explanation: opt?.explanation || "",
+//         is_correct: editingCorrectAnswer === idx ? 1 : 0,
+//       })),
+//     };
+
+//     try {
+//       const res = await dispatch(handleUpdateExamQuestions({ body: payload })).unwrap();
+//       if (res?.data?.status === "success") {
+//         toast.success("تم تعديل السؤال بنجاح");
+//         refreshQuestions();
+//         cancelEditing();
+//       } else {
+//         toast.error(res?.data?.message || "فشل تعديل السؤال");
+//       }
+//     } catch (e) {
+//       toast.error("حصل خطأ أثناء تعديل السؤال");
+//     }
+//   };
+
+//   // ✅ Save Paragraph alone (paragraph + its questions/options)
+//   const handleSaveParagraph = async (q) => {
+//     console.log(q, editingParagraphQuestions);
+
+//     const payload = {
+//       id:q?.id,
+//       question_text : q?.questionText,
+//       "instructions": "Read carefully before answering",
+//       mcq_array: q?.options?.map((pq) => ({
+//         answer: pq?.text,
+//         correct_or_not: pq?.isCorrect ?"1" :"0",
+//         question_explanation : pq?.explanation
+//         // id: pq?.id,
+//         // question_text: pq?.questionText || "",
+//         // options: (pq?.options || []).map((opt) => ({
+//         //   id: opt?.id,
+//         //   option_text: opt?.text || "",
+//         //   question_explanation: opt?.explanation || "",
+//         //   is_correct: opt?.isCorrect ? 1 : 0,
+//         // })),
+//       })),
+//       // paragraph_id: q.id,
+//       // paragraph_content: editingParagraphContent,
+//       // questions: editingParagraphQuestions.map((pq) => ({
+//       //   id: pq?.id,
+//       //   question_text: pq?.questionText || "",
+//       //   options: (pq?.options || []).map((opt) => ({
+//       //     id: opt?.id,
+//       //     option_text: opt?.text || "",
+//       //     question_explanation: opt?.explanation || "",
+//       //     is_correct: opt?.isCorrect ? 1 : 0,
+//       //   })),
+//       // })),
+//     };
+
+//     // 🛡️ small safe-guard: make sure each paragraph question has one correct option
+//     // const invalid = payload.questions.some((qq) => {
+//     //   const correctCount = (qq.options || []).filter((o) => Number(o.is_correct) === 1).length;
+//     //   return correctCount !== 1;
+//     // });
+//     // if (invalid) {
+//     //   toast.error("لازم تختار إجابة صحيحة واحدة لكل سؤال داخل الفقرة");
+//     //   return;
+//     // }
+
+//     try {
+//       const res = await dispatch(handleUpdateExamQuestions({ body: payload })).unwrap();
+//       if (res?.data?.status === "success") {
+//         toast.success("تم تعديل أسئلة الفقرة بنجاح");
+//         refreshQuestions();
+//         cancelEditing();
+//       } else {
+//         toast.error(res?.error?.response?.data?.message || res?.error?.message || "فشل تعديل أسئلة الفقرة");
+//       }
+//     } catch (e) {
+//       toast.error("حصل خطأ أثناء تعديل الفقرة");
+//     }
+//   };
+  
+//   const handleDeleteParagraphQuestions = async () => {
+//     if (!deleteParagraphModal) return;
+   
+//      const res = await dispatch(
+//           handleDeleteExamQuestions({ body: { id: deleteParagraphModal?.id } })
+//         ).unwrap();
+
+//         if (res?.data?.status === "success") {
+//           toast.success("تم حذف السؤال بنجاح");
+//           refreshQuestions();
+//           setDeleteParagraphModal(false);
+//         } else {
+//           toast.error(res?.error?.response?.data?.message ||res?.data?.message || "فشل الحذف");
+//         }
+
+//     // try {
+//     //   if (questionToDelete.type === "mcq") {
+//     //     const res = await dispatch(
+//     //       handleDeleteExamQuestions({ body: { id: questionToDelete.id } })
+//     //     ).unwrap();
+
+//     //     if (res?.data?.status === "success") {
+//     //       toast.success("تم حذف السؤال بنجاح");
+//     //       refreshQuestions();
+//     //     } else {
+//     //       toast.error(res?.data?.message || "فشل الحذف");
+//     //     }
+//     //   } else {
+//     //     // paragraph
+//     //     const res = await dispatch(
+//     //       handleDeleteParagraph({
+//     //         body: { paragraph_id: questionToDelete.id, id: questionToDelete.id },
+//     //       })
+//     //     ).unwrap();
+
+//     //     if (res?.data?.status === "success") {
+//     //       toast.success("تم حذف الفقرة بنجاح");
+//     //       refreshQuestions();
+//     //     } else {
+//     //       toast.error(res?.data?.message || "فشل الحذف");
+//     //     }
+//     //   }
+//     // } catch (e) {
+//     //   toast.error("حصل خطأ أثناء الحذف");
+//     // } finally {
+//     //   setDeleteModal(false);
+//     //   setQuestionToDelete(null);
+//     // }
+//   };
+
+//   // ✅ Delete MCQ alone OR Paragraph alone
+//   const handleDeleteAny = async () => {
+//     if (!questionToDelete) return;
+
+//     try {
+//       if (questionToDelete.type === "mcq") {
+//         const res = await dispatch(
+//           handleDeleteExamQuestions({ body: { id: questionToDelete.id } })
+//         ).unwrap();
+
+//         if (res?.data?.status === "success") {
+//           toast.success("تم حذف السؤال بنجاح");
+//           refreshQuestions();
+//         } else {
+//           toast.error(res?.data?.message || "فشل الحذف");
+//         }
+//       } else {
+//         // paragraph
+//         const res = await dispatch(
+//           handleDeleteParagraph({
+//             body: {  id: questionToDelete.id },
+//           })
+//         ).unwrap();
+
+//         if (res?.data?.status === "success") {
+//           toast.success("تم حذف الفقرة بنجاح");
+//           refreshQuestions();
+//         } else {
+//           toast.error(res?.data?.message || "فشل الحذف");
+//         }
+//       }
+//     } catch (e) {
+//       toast.error("حصل خطأ أثناء الحذف");
+//     } finally {
+//       setDeleteModal(false);
+//       setQuestionToDelete(null);
+//     }
+//   };
+
+//   function handleEditParagraphContent(q) {
+//     const data_send = {
+//       id: q?.id,
+//       paragraph_content: editingParagraphContent
+//     }
+
+//     dispatch(handleEditParagraph({ body: data_send }))
+//       .unwrap()
+//       .then(res => {
+//         if (res?.data?.status === "success") {
+//           toast.success(res?.data?.message || "تم تعديل الفقرة بنجاح");
+//           refreshQuestions();
+//           cancelEditing();
+//         } else {
+//           toast.error(res?.data?.message || "فشل تعديل الفقرة");
+//         }
+//       }).catch(e => console.log(e))
+
+//   }
+
+//   const renderQuestionContent = (q) => {
+//     const isEditing = editingQuestionId === q.id;
+
+//     if (isEditing) {
+//       const isMCQ = q.type === "mcq";
+//       const isParagraph = q.type === "paragraph_mcq";
+
+//       return (
+//         <div className="space-y-8 py-6">
+//           {/* ============ MCQ EDIT UI ============ */}
+//           {isMCQ && (
+//             <>
+//               <div>
+//                 <label className="block text-sm font-semibold text-gray-800 mb-3">
+//                   نص السؤال
+//                 </label>
+//                 <ReactQuill
+//                   value={editingContent}
+//                   onChange={setEditingContent}
+//                   modules={quillModules}
+//                   formats={quillFormats}
+//                   className="bg-white"
+//                 />
+//               </div>
+
+//               <div>
+//                 <label className="block text-sm font-semibold text-gray-800 mb-4">
+//                   الخيارات
+//                 </label>
+//                 <div className="space-y-5">
+//                   {editingOptions.map((opt, idx) => (
+//                     <div
+//                       key={opt?.id ?? idx}
+//                       className="p-5 bg-gray-50 border border-gray-200 rounded-xl"
+//                     >
+//                       <div className="flex items-center gap-4 mb-4">
+//                         <input
+//                           type="radio"
+//                           checked={editingCorrectAnswer === idx}
+//                           onChange={() => setEditingCorrectAnswer(idx)}
+//                           className="w-5 h-5 text-blue-600"
+//                         />
+//                         <span className="font-medium text-gray-700">
+//                           الإجابة الصحيحة
+//                         </span>
+//                         <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium">
+//                           {String.fromCharCode(1632 + idx + 1)}
+//                         </span>
+//                       </div>
+
+//                       <div className="space-y-4">
+//                         <div>
+//                           <label className="text-sm text-gray-600 mb-2 block">
+//                             نص الخيار
+//                           </label>
+//                           <ReactQuill
+//                             value={opt.text}
+//                             onChange={(v) => {
+//                               setEditingOptions((prev) => {
+//                                 const copy = [...prev];
+//                                 copy[idx] = { ...copy[idx], text: v };
+//                                 return copy;
+//                               });
+//                             }}
+//                             modules={quillModules}
+//                             formats={quillFormats}
+//                           />
+//                         </div>
+
+//                         <div>
+//                           <label className="text-sm text-gray-600 mb-2 block">
+//                             الشرح (اختياري)
+//                           </label>
+//                           <ReactQuill
+//                             value={opt.explanation}
+//                             onChange={(v) => {
+//                               setEditingOptions((prev) => {
+//                                 const copy = [...prev];
+//                                 copy[idx] = { ...copy[idx], explanation: v };
+//                                 return copy;
+//                               });
+//                             }}
+//                             modules={quillModules}
+//                             formats={quillFormats}
+//                           />
+//                         </div>
+//                       </div>
+//                     </div>
+//                   ))}
+//                 </div>
+//               </div>
+//             </>
+//           )}
+
+//           {/* ============ PARAGRAPH EDIT UI ============ */}
+//           {isParagraph && (
+//             <>
+//               <div className="p-6 bg-white border border-gray-200 rounded-2xl">
+//                 <label className="block text-sm font-semibold text-gray-800 mb-3">
+//                   نص الفقرة
+//                 </label>
+//                 <ReactQuill
+//                   value={editingParagraphContent}
+//                   onChange={setEditingParagraphContent}
+//                   modules={quillModules}
+//                   formats={quillFormats}
+//                   className="bg-white"
+//                 />
+
+//                <div className="flex gap-2 items-center">
+//                  <button
+//                   onClick={() => handleEditParagraphContent(q)}
+//                   className="bg-blue-600 w-full flex justify-center items-start text-white p-3 rounded-md">
+//                   {edit_paragraph_loading ? "جاري تعديل نص الفقرة...." : "تعديل نص الفقرة"}
+//                 </button>
+
+//                 <button
+//                   onClick={() => setQuestionToDelete({
+//                     type:"paragraph",
+//                     id: q?.id
+//                   })}
+//                   className="bg-red-600 w-full flex justify-center items-start text-white p-3 rounded-md">
+//                   {delete_paragraph_loading ? "جاري حذف نص الفقرة...." : "تعديل حذف الفقرة"}
+//                 </button>
+//                </div>
+//               </div>
+
+//               <div className="space-y-6">
+//                 <label className="block text-sm font-semibold text-gray-800">
+//                   أسئلة الفقرة
+//                 </label>
+
+//                 {editingParagraphQuestions.map((pq, qIdx) => (
+//                   <div className="flex flex-col gap-2">
+//                     <div
+//                       key={pq?.id ?? qIdx}
+//                       className="p-6 bg-gray-50 border border-gray-200 rounded-2xl space-y-5"
+//                     >
+//                       <div className="flex items-center justify-between">
+//                         <h4 className="font-bold text-gray-900 text-lg">
+//                           سؤال {qIdx + 1}
+//                         </h4>
+//                       </div>
+
+//                       <div>
+//                         <label className="text-sm text-gray-600 mb-2 block">
+//                           نص السؤال
+//                         </label>
+//                         <ReactQuill
+//                           value={pq.questionText}
+//                           onChange={(v) => {
+//                             setEditingParagraphQuestions((prev) => {
+//                               const copy = [...prev];
+//                               copy[qIdx] = { ...copy[qIdx], questionText: v };
+//                               return copy;
+//                             });
+//                           }}
+//                           modules={quillModules}
+//                           formats={quillFormats}
+//                           className="bg-white"
+//                         />
+//                       </div>
+
+//                       <div className="space-y-4">
+//                         <label className="text-sm font-semibold text-gray-800">
+//                           الخيارات
+//                         </label>
+
+//                         {(pq.options || []).map((opt, oIdx) => (
+//                           <div
+//                             key={opt?.id ?? oIdx}
+//                             className="p-5 bg-white border border-gray-200 rounded-xl"
+//                           >
+//                             <div className="flex items-center gap-4 mb-4">
+//                               <input
+//                                 type="radio"
+//                                 checked={!!opt.isCorrect}
+//                                 onChange={() => {
+//                                   setEditingParagraphQuestions((prev) => {
+//                                     const copy = [...prev];
+//                                     const qCopy = { ...copy[qIdx] };
+//                                     qCopy.options = qCopy.options.map((o, ii) => ({
+//                                       ...o,
+//                                       isCorrect: ii === oIdx,
+//                                     }));
+//                                     copy[qIdx] = qCopy;
+//                                     return copy;
+//                                   });
+//                                 }}
+//                                 className="w-5 h-5 text-blue-600"
+//                               />
+//                               <span className="font-medium text-gray-700">
+//                                 الإجابة الصحيحة
+//                               </span>
+//                               <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium">
+//                                 {String.fromCharCode(1632 + oIdx + 1)}
+//                               </span>
+//                             </div>
+
+//                             <div className="space-y-4">
+//                               <div>
+//                                 <label className="text-sm text-gray-600 mb-2 block">
+//                                   نص الخيار
+//                                 </label>
+//                                 <ReactQuill
+//                                   value={opt.text}
+//                                   onChange={(v) => {
+//                                     setEditingParagraphQuestions((prev) => {
+//                                       const copy = [...prev];
+//                                       const qCopy = { ...copy[qIdx] };
+//                                       const opts = [...(qCopy.options || [])];
+//                                       opts[oIdx] = { ...opts[oIdx], text: v };
+//                                       qCopy.options = opts;
+//                                       copy[qIdx] = qCopy;
+//                                       return copy;
+//                                     });
+//                                   }}
+//                                   modules={quillModules}
+//                                   formats={quillFormats}
+//                                   className="bg-white"
+//                                 />
+//                               </div>
+
+//                               <div>
+//                                 <label className="text-sm text-gray-600 mb-2 block">
+//                                   الشرح (اختياري)
+//                                 </label>
+//                                 <ReactQuill
+//                                   value={opt.explanation}
+//                                   onChange={(v) => {
+//                                     setEditingParagraphQuestions((prev) => {
+//                                       const copy = [...prev];
+//                                       const qCopy = { ...copy[qIdx] };
+//                                       const opts = [...(qCopy.options || [])];
+//                                       opts[oIdx] = {
+//                                         ...opts[oIdx],
+//                                         explanation: v,
+//                                       };
+//                                       qCopy.options = opts;
+//                                       copy[qIdx] = qCopy;
+//                                       return copy;
+//                                     });
+//                                   }}
+//                                   modules={quillModules}
+//                                   formats={quillFormats}
+//                                   className="bg-white"
+//                                 />
+//                               </div>
+//                             </div>
+//                           </div>
+//                         ))}
+//                       </div>
+//                     </div>
+
+//                     <div className="flex gap-2 items-center">
+//                       <Button
+//                       type="primary"
+//                       size="large"
+//                       icon={<Save className="w-5 h-5" />}
+//                       loading={
+//                          edit_paragraph_loading
+//                       }
+//                       onClick={() =>  handleSaveParagraph(pq)}
+//                     >
+//                      {edit_question_loading ?"جاري التعديل.....":" تعديل أسئله الفقرة"} 
+//                     </Button>
+
+//                     <Button
+//                       type="danger"
+//                       size="large"
+//                       icon={<Trash2 className="w-5 h-5" />}
+                     
+//                       className="!bg-red-500 text-white p-2 rounded-md"
+//                       onClick={() =>  setDeleteParagraphModal(pq)}
+//                     >
+//                      حذف السؤال
+//                     </Button>
+//                     </div>
+//                   </div>
+
+//                 ))}
+//               </div>
+//             </>
+//           )}
+
+//           {/* Actions */}
+//           <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+//             <Button
+//               onClick={cancelEditing}
+//               size="large"
+//               icon={<X className="w-5 h-5" />}
+//             >
+//               إلغاء
+//             </Button>
+
+//             {q.type === "mcq" &&
+//               <Button
+//                 type="primary"
+//                 size="large"
+//                 icon={<Save className="w-5 h-5" />}
+//                 loading={
+//                   q.type === "mcq" ? edit_question_loading : edit_paragraph_loading
+//                 }
+//                 onClick={() => (q.type === "mcq" ? handleSaveMCQ(q) : handleSaveParagraph(q))}
+//               >
+//                 حفظ التعديلات
+//               </Button>
+//             }
+//           </div>
+//         </div>
+//       );
+//     }
+
+//     // Normal display mode
+//     return (
+//       <div className="space-y-8 px-2">
+//         {/* Paragraph (if applicable) */}
+//         {q.type === "paragraph_mcq" && (
+//           <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl">
+//             <h4 className="font-bold text-blue-900 mb-4 text-lg">الفقرة</h4>
+//             <div
+//               dangerouslySetInnerHTML={{ __html: q.paragraphContent }}
+//               className="text-gray-800 leading-relaxed text-base"
+//             />
+//           </div>
+//         )}
+
+//         {/* Questions */}
+//         {(q.type === "mcq"
+//           ? [
+//             {
+//               questionText: q.question,
+//               options: q.options,
+//               correctAnswer: q.correctAnswer,
+//             },
+//           ]
+//           : q.questions
+//         ).map((item, qIdx) => (
+//           <div key={qIdx} className="space-y-5">
+//             {q.type === "paragraph_mcq" && (
+//               <h4 className="font-bold text-gray-900 text-lg">
+//                 سؤال {qIdx + 1}
+//               </h4>
+//             )}
+
+//             <div
+//               dangerouslySetInnerHTML={{ __html: item.questionText }}
+//               className="text-gray-800 leading-relaxed text-base mb-5"
+//             />
+
+//             <div className="grid gap-4">
+//               {item.options.map((opt, oIdx) => {
+//                 const isCorrect =
+//                   q.type === "mcq"
+//                     ? oIdx === q.correctAnswer
+//                     : !!opt.isCorrect;
+
+//                 return (
+//                   <div
+//                     key={opt?.id ?? oIdx}
+//                     className={`p-5 rounded-xl border-2 transition-all ${isCorrect
+//                         ? "bg-emerald-50 border-emerald-300 shadow-sm"
+//                         : "bg-white border-gray-200 hover:border-gray-300"
+//                       }`}
+//                   >
+//                     <div className="flex items-start gap-3">
+//                       <span className="font-bold text-lg text-gray-700 mt-1">
+//                         {String.fromCharCode(1632 + oIdx + 1)}.
+//                       </span>
+//                       <div className="flex-1">
+//                         <div
+//                           dangerouslySetInnerHTML={{ __html: opt.text }}
+//                           className="font-medium text-gray-800 leading-relaxed"
+//                         />
+//                         {opt.explanation && (
+//                           <div className="mt-3 pt-3 border-t border-gray-200">
+//                             <span className="text-sm font-medium text-gray-600">
+//                               الشرح:
+//                             </span>
+//                             <div
+//                               dangerouslySetInnerHTML={{
+//                                 __html: opt.explanation,
+//                               }}
+//                               className="text-sm text-gray-600 mt-1 leading-relaxed"
+//                             />
+//                           </div>
+//                         )}
+//                       </div>
+//                     </div>
+//                   </div>
+//                 );
+//               })}
+//             </div>
+//           </div>
+//         ))}
+
+//         {/* Action Buttons */}
+//         <div className="flex justify-end gap-4 pt-8 border-t border-gray-200">
+//           <Button
+//             size="large"
+//             icon={<Edit3 className="w-5 h-5" />}
+//             type="primary"
+//             ghost
+//             onClick={() => startEditing(q)}
+//           >
+//             تعديل
+//           </Button>
+
+//           { q.type === "mcq" && <Button
+//             size="large"
+//             icon={<Trash2 className="w-5 h-5" />}
+//             danger
+//             onClick={() => {
+//              setQuestionToDelete(q);
+//                setDeleteModal(true);
+//             }}
+//             loading={
+//                 delete_question_loading 
+//             }
+//           >
+//             حذف
+//           </Button>}
+//         </div>
+//       </div>
+//     );
+//   };
+
+//   if (get_exam_question_loading) {
+//     return (
+//       <div className="flex flex-col items-center justify-center py-32">
+//         <Spin size="large" />
+//         <p className="mt-4 text-gray-600">جاري تحميل الأسئلة...</p>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <Card title="أسئلة الامتحان" icon={Edit3} className="p-0">
+//       <div className="p-6">
+//         {apiQuestions.length === 0 ? (
+//           <Empty description="لا توجد أسئلة في هذا القسم بعد" />
+//         ) : (
+//           <div className="space-y-8">
+//             {/* Section Info Card */}
+//             <div className="p-8 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-3xl border border-indigo-200 shadow-sm">
+//               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+//                 <div>
+//                   <div className="flex gap-1 items-center">
+//                     <h2
+//                       className="text-3xl font-bold text-indigo-900"
+//                       dangerouslySetInnerHTML={{
+//                         __html: ` ${selectedSection?.title}`,
+//                       }}
+//                     />
+//                   </div>
+//                   <p className="text-lg text-indigo-700 mt-2">
+//                     عدد الأسئلة:{" "}
+//                     <span className="font-bold">{apiQuestions.length}</span>
+//                   </p>
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* Questions List */}
+//             <div className="space-y-6">
+//               {apiQuestions.map((q, index) => {
+//                 const isExp = isExpanded(q.id, q.type);
+//                 const typeLabel =
+//                   q.type === "mcq" ? "سؤال اختيار متعدد" : "فقرة مع أسئلة";
+
+//                 return (
+//                   <div
+//                     key={`${q.type}-${q.id}`}
+//                     className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden transition-all hover:shadow-xl"
+//                   >
+//                     {/* Header */}
+//                     <div
+//                       onClick={() => toggleQuestion(q.id, q.type)}
+//                       className="flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+//                     >
+//                       <div className="flex items-center gap-5">
+//                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-xl font-bold shadow-md">
+//                           {index + 1}
+//                         </div>
+
+//                         <div>
+//                           <div className="font-bold text-xl text-gray-900">
+//                             {typeLabel}
+//                           </div>
+//                           <div
+//                             className="text-sm text-gray-600 mt-1 line-clamp-2"
+//                             dangerouslySetInnerHTML={{
+//                               __html:
+//                                 q.type === "mcq"
+//                                   ? q.question
+//                                   : q.paragraphContent ||
+//                                   q.questions?.[0]?.questionText ||
+//                                   "فقرة",
+//                             }}
+//                           />
+//                         </div>
+//                       </div>
+
+//                       <div className="flex items-center gap-4">
+//                         <Tag
+//                           color={q.type === "mcq" ? "blue" : "purple"}
+//                           className="text-sm px-4 py-1"
+//                         >
+//                           {q.type === "mcq" ? "MCQ" : "فقرة"}
+//                         </Tag>
+//                         {isExp ? (
+//                           <ChevronUp className="w-6 h-6 text-gray-500" />
+//                         ) : (
+//                           <ChevronDown className="w-6 h-6 text-gray-500" />
+//                         )}
+//                       </div>
+//                     </div>
+
+//                     {/* Content */}
+//                     {isExp && (
+//                       <div className="border-t border-gray-200 px-8 pb-8 pt-6 bg-gray-50/50">
+//                         {renderQuestionContent(q)}
+//                       </div>
+//                     )}
+//                   </div>
+//                 );
+//               })}
+//             </div>
+//           </div>
+//         )}
+//       </div>
+
+//       {/* Delete Modal */}
+//       <Modal
+//         open={deleteModal}
+//         onCancel={() => setDeleteModal(false)}
+//         onOk={handleDeleteAny}
+//         okText="حذف نهائياً"
+//         cancelText="إلغاء"
+//         okButtonProps={{
+//           danger: true,
+//           loading:
+//             questionToDelete?.type === "mcq"
+//               ? delete_question_loading
+//               : delete_paragraph_loading,
+//         }}
+//         width={500}
+//       >
+//         <div className="text-center py-10">
+//           <Trash2 className="w-20 h-20 text-red-500 mx-auto mb-6" />
+//           <h3 className="text-2xl font-bold text-gray-900 mb-4">تأكيد الحذف</h3>
+//           <p className="text-gray-600 text-lg leading-relaxed">
+//             هل أنت متأكد من حذف هذا{" "}
+//             {questionToDelete?.type === "mcq" ? "السؤال" : "الفقرة مع أسئلتها"}؟
+//             <br />
+//             <strong className="text-red-600">هذا الإجراء لا رجعة فيه</strong>.
+//           </p>
+//         </div>
+//       </Modal>
+
+//       <Modal
+//         open={deleteParagraphModal}
+//         onCancel={() => setDeleteParagraphModal(false)}
+//         onOk={handleDeleteParagraphQuestions}
+//         okText="حذف نهائياً"
+//         cancelText="إلغاء"
+//         okButtonProps={{
+//           danger: true,
+//           loading:
+//                delete_question_loading
+//         }}
+//         width={500}
+//       >
+//         <div className="text-center py-10">
+//           <Trash2 className="w-20 h-20 text-red-500 mx-auto mb-6" />
+//           <h3 className="text-2xl font-bold text-gray-900 mb-4">تأكيد الحذف</h3>
+//           <p className="text-gray-600 text-lg leading-relaxed">
+//             هل أنت متأكد من حذف هذا{" "}
+//              "السؤال"
+//             <br />
+//             <strong className="text-red-600">هذا الإجراء لا رجعة فيه</strong>.
+//           </p>
+//         </div>
+//       </Modal>
+//     </Card>
+//   );
+// }
+
+
+
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
 import { Edit3, Trash2, Save, X, ChevronDown, ChevronUp } from "lucide-react";
-import { Empty, Spin, Tag, Button, Modal } from "antd";
+import { Empty, Spin, Tag, Button, Modal, Divider, Tooltip, Space } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import dynamic from "next/dynamic";
 import Card from "./ExamCard";
 import {
   handleDeleteExamQuestions,
   handleGetExamQuestions,
+  handleUpdateExamQuestions,
+  handleEditParagraph,
+  handleDeleteParagraph,
 } from "../../lib/features/examSlice";
 import { toast } from "react-toastify";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 import "react-quill-new/dist/quill.snow.css";
-import MathTypeEditor from "../MathTypeEditor/MathTypeEditor";
-
-const { confirm } = Modal;
 
 export default function DisplayQuestions({
   selectedSectionId,
@@ -720,29 +2283,34 @@ export default function DisplayQuestions({
   selectedSection,
 }) {
   const dispatch = useDispatch();
+
   const {
     get_exam_questions_list,
-    get_exam_questions_loading,
+    get_exam_question_loading,
     delete_question_loading,
+    edit_question_loading,
+    edit_paragraph_loading,
+    delete_paragraph_loading,
   } = useSelector((state) => state?.exam);
 
   const [expandedQuestions, setExpandedQuestions] = useState({});
+
   const [editingQuestionId, setEditingQuestionId] = useState(null);
+  const [editingType, setEditingType] = useState(null);
+
+  // MCQ editing
   const [editingContent, setEditingContent] = useState("");
   const [editingOptions, setEditingOptions] = useState([]);
   const [editingCorrectAnswer, setEditingCorrectAnswer] = useState(0);
+
+  // Paragraph editing
   const [editingParagraphContent, setEditingParagraphContent] = useState("");
-  const [editingParagraphQuestions, setEditingParagraphQuestions] = useState(
-    []
-  );
+  const [editingParagraphQuestions, setEditingParagraphQuestions] = useState([]);
 
-  const [deleteModal, setDeleteModal] = useState(false);
+  // Delete modals
+  const [deleteParagraphModal, setDeleteParagraphModal] = useState(false); // stores pq object
+  const [deleteModal, setDeleteModal] = useState(false); // stores main q object
   const [questionToDelete, setQuestionToDelete] = useState(null);
-  const [sectionName, setSectionName] = useState("");
-
-  useEffect(() => {
-    console.log("selectedSection", selectedSection);
-  }, [selectedSection]);
 
   useEffect(() => {
     if (get_exam_questions_list) {
@@ -783,51 +2351,57 @@ export default function DisplayQuestions({
 
   const apiQuestions = useMemo(() => {
     if (!get_exam_questions_list && !selectedSection) return [];
+
     const data = get_exam_questions_list?.data?.message || {
       mcq: [],
       paragraphs: [],
     };
-    const mcqs = (
+
+    const mcqSource =
       data?.mcq && data?.mcq?.length
         ? data?.mcq
         : selectedSection?.mcq && selectedSection?.mcq?.length
         ? selectedSection?.mcq
-        : []
-    ).map((q) => {
+        : [];
+
+    const mcqs = mcqSource.map((q) => {
       const options = q?.options || [];
       const correctIndex = options.findIndex(
         (opt) => Number(opt?.is_correct) === 1
       );
+
       return {
         id: q.id,
         type: "mcq",
         question: q?.question_text || "",
         correctAnswer: correctIndex >= 0 ? correctIndex : 0,
         options: options.map((opt) => ({
+          id: opt?.id,
           text: opt.option_text || "",
           explanation: opt.question_explanation || "",
+          isCorrect: Number(opt?.is_correct) === 1,
         })),
         rawData: q,
       };
     });
-    console.log(
-      "get_exam_questions_list--------",
-      data?.mcq && data?.mcq?.length
-        ? data?.mcq
-        : selectedSection?.mcq && selectedSection?.mcq?.length
-        ? selectedSection?.mcq
-        : []
-    );
-    const paragraphs = (selectedSection?.paragraphs || []).map((p) => ({
-      id: p.paragraph.id,
+
+    const paragraphSource =
+      data?.paragraphs && data?.paragraphs?.length
+        ? data?.paragraphs
+        : selectedSection?.paragraphs || [];
+
+    const paragraphs = paragraphSource.map((p) => ({
+      id: p?.paragraph?.id,
       type: "paragraph_mcq",
-      paragraphContent: p.paragraph.paragraph_content || "",
-      questions: p.questions.map((q) => ({
-        questionText: q.question_text || "",
-        options: (q.options || []).map((opt) => ({
-          text: opt.option_text || "",
-          explanation: opt.question_explanation || "",
-          isCorrect: opt.is_correct === 1,
+      paragraphContent: p?.paragraph?.paragraph_content || "",
+      questions: (p?.questions || []).map((q) => ({
+        id: q?.id,
+        questionText: q?.question_text || "",
+        options: (q?.options || []).map((opt) => ({
+          id: opt?.id,
+          text: opt?.option_text || "",
+          explanation: opt?.question_explanation || "",
+          isCorrect: Number(opt?.is_correct) === 1,
         })),
       })),
       rawData: p,
@@ -846,6 +2420,8 @@ export default function DisplayQuestions({
 
   const startEditing = (q) => {
     setEditingQuestionId(q.id);
+    setEditingType(q.type);
+
     if (q.type === "mcq") {
       setEditingContent(q.question);
       setEditingOptions(q.options.map((opt) => ({ ...opt })));
@@ -854,57 +2430,235 @@ export default function DisplayQuestions({
       setEditingParagraphContent(q.paragraphContent);
       setEditingParagraphQuestions(
         q.questions.map((pq) => ({
+          id: pq.id,
           questionText: pq.questionText,
           options: pq.options.map((opt) => ({ ...opt })),
         }))
       );
     }
+
     setEditingQuestion(q);
   };
 
   const cancelEditing = () => {
     setEditingQuestionId(null);
+    setEditingType(null);
+
     setEditingContent("");
     setEditingOptions([]);
     setEditingCorrectAnswer(0);
+
     setEditingParagraphContent("");
     setEditingParagraphQuestions([]);
+
     setEditingQuestion(null);
   };
 
-  const handleDeleteQuestion = () => {
+  const refreshQuestions = () => {
+    dispatch(
+      handleGetExamQuestions({
+        body: { exam_section_id: selectedSectionId },
+      })
+    );
+  };
+
+  const handleSaveMCQ = async (q) => {
+    console.log(q , editingOptions);
+    const payload = {
+      id: q.id,
+      question_text: editingContent,
+      instructions: "Read carefully before answering",
+      mcq_array: editingOptions?.map((opt, idx) => ({
+        answer: opt?.text || "",
+        question_explanation: opt?.explanation || "",
+        correct_or_not: opt?.isCorrect  ? "1" : "0",
+      })),
+    };
+
+    try {
+      const res = await dispatch(
+        handleUpdateExamQuestions({ body: payload })
+      ).unwrap();
+
+      if (res?.data?.status === "success") {
+        toast.success("تم تعديل السؤال بنجاح");
+        refreshQuestions();
+        cancelEditing();
+      } else {
+        toast.error(res?.data?.message || "فشل تعديل السؤال");
+      }
+    } catch (e) {
+      toast.error("حصل خطأ أثناء تعديل السؤال");
+    }finally {
+      cancelEditing();
+    }
+  };
+
+  // انت كتبت payload جديد للـ paragraph question update
+  const handleSaveParagraph = async (pq) => {
+    const payload = {
+      id: pq?.id,
+      question_text: pq?.questionText,
+      instructions: "Read carefully before answering",
+      mcq_array: (pq?.options || []).map((opt) => ({
+        answer: opt?.text,
+        correct_or_not: opt?.isCorrect ? "1" : "0",
+        question_explanation: opt?.explanation,
+      })),
+    };
+
+    try {
+      const res = await dispatch(
+        handleUpdateExamQuestions({ body: payload })
+      ).unwrap();
+
+      if (res?.data?.status === "success") {
+        toast.success("تم تعديل أسئلة الفقرة بنجاح");
+        refreshQuestions();
+      } else {
+        toast.error(
+          res?.error?.response?.data?.message ||
+            res?.error?.message ||
+            "فشل تعديل أسئلة الفقرة"
+        );
+      }
+    } catch (e) {
+      toast.error("حصل خطأ أثناء تعديل الفقرة");
+    } finally {
+      cancelEditing();
+    }
+  };
+
+  const handleDeleteParagraphQuestions = async () => {
+    if (!deleteParagraphModal) return;
+
+    try {
+      const res = await dispatch(
+        handleDeleteExamQuestions({ body: { id: deleteParagraphModal?.id } })
+      ).unwrap();
+
+      if (res?.data?.status === "success") {
+        toast.success("تم حذف السؤال بنجاح");
+        refreshQuestions();
+        setDeleteParagraphModal(false);
+        if(typeof window !== undefined) {
+            window.location.reload();
+          }
+      } else {
+        toast.error(
+          res?.error?.response?.data?.message ||
+            res?.data?.message ||
+            "فشل الحذف"
+        );
+      }
+    } catch (e) {
+      toast.error("حصل خطأ أثناء الحذف");
+    }
+  };
+
+  const handleDeleteAny = async () => {
     if (!questionToDelete) return;
-    dispatch(handleDeleteExamQuestions({ body: { id: questionToDelete.id } }))
-      .unwrap()
-      .then((res) => {
+
+    try {
+      if (questionToDelete.type === "mcq") {
+        const res = await dispatch(
+          handleDeleteExamQuestions({ body: { id: questionToDelete.id } })
+        ).unwrap();
+
         if (res?.data?.status === "success") {
           toast.success("تم حذف السؤال بنجاح");
-          dispatch(
-            handleGetExamQuestions({
-              body: { exam_section_id: selectedSectionId },
-            })
-          );
+          refreshQuestions();
+          if(typeof window !== undefined) {
+            window.location.reload();
+          }
         } else {
           toast.error(res?.data?.message || "فشل الحذف");
         }
-      })
-      .finally(() => {
-        setDeleteModal(false);
-        setQuestionToDelete(null);
-      });
+      } else {
+        const res = await dispatch(
+          handleDeleteParagraph({ body: { id: questionToDelete.id } })
+        ).unwrap();
+
+        if (res?.data?.status === "success") {
+          toast.success("تم حذف الفقرة بنجاح");
+          refreshQuestions();
+          if(typeof window !== undefined) {
+            window.location.reload();
+          }
+        } else {
+          toast.error(res?.data?.message || "فشل الحذف");
+        }
+      }
+    } catch (e) {
+      toast.error("حصل خطأ أثناء الحذف");
+    } finally {
+      setDeleteModal(false);
+      setQuestionToDelete(null);
+    }
   };
+
+  function handleEditParagraphContent(q) {
+    const data_send = { id: q?.id, paragraph_content: editingParagraphContent };
+
+    dispatch(handleEditParagraph({ body: data_send }))
+      .unwrap()
+      .then((res) => {
+        if (res?.data?.status === "success") {
+          toast.success(res?.data?.message || "تم تعديل الفقرة بنجاح");
+          refreshQuestions();
+        } else {
+          toast.error(res?.data?.message || "فشل تعديل الفقرة");
+        }
+      })
+      .catch(() => toast.error("حصل خطأ أثناء تعديل نص الفقرة"));
+  }
 
   const renderQuestionContent = (q) => {
     const isEditing = editingQuestionId === q.id;
 
     if (isEditing) {
-      // Editing mode - clean and spacious
+      const isMCQ = q.type === "mcq";
+      const isParagraph = q.type === "paragraph_mcq";
+
       return (
-        <div className="space-y-8 py-6">
-          {q.type === "mcq" ? (
-            <>
+        <div className="space-y-6">
+          {/* ======= EDIT HEADER BAR ======= */}
+          <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-gray-900">
+                {isMCQ ? "تعديل سؤال MCQ" : "تعديل فقرة"}
+              </span>
+              <Tag color={isMCQ ? "blue" : "purple"}>
+                {isMCQ ? "MCQ" : "Paragraph"}
+              </Tag>
+            </div>
+
+            <Space>
+              <Button
+                onClick={cancelEditing}
+                icon={<X className="w-4 h-4" />}
+              >
+                إلغاء
+              </Button>
+
+              {isMCQ && (
+                <Button
+                  type="primary"
+                  icon={<Save className="w-4 h-4" />}
+                  loading={edit_question_loading}
+                  onClick={() => handleSaveMCQ(q)}
+                >
+                  حفظ
+                </Button>
+              )}
+            </Space>
+          </div>
+
+          {/* ============ MCQ EDIT UI ============ */}
+          {isMCQ && (
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-3">
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
                   نص السؤال
                 </label>
                 <ReactQuill
@@ -916,54 +2670,65 @@ export default function DisplayQuestions({
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-4">
-                  الخيارات
-                </label>
-                <div className="space-y-5">
+              <Divider className="!my-2" />
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-semibold text-gray-800">
+                    الخيارات
+                  </label>
+                  <span className="text-xs text-gray-500">
+                    اختر إجابة صحيحة واحدة
+                  </span>
+                </div>
+
+                <div className="space-y-4">
                   {editingOptions.map((opt, idx) => (
                     <div
-                      key={idx}
-                      className="p-5 bg-gray-50 border border-gray-200 rounded-xl"
+                      key={opt?.id ?? idx}
+                      className={`p-5 rounded-2xl border transition-all ${
+                        editingCorrectAnswer === idx
+                          ? "border-emerald-300 bg-emerald-50"
+                          : "border-gray-200 bg-gray-50"
+                      }`}
                     >
-                      <div className="flex items-center gap-4 mb-4">
-                        <input
-                          type="radio"
-                          checked={editingCorrectAnswer === idx}
-                          onChange={() => setEditingCorrectAnswer(idx)}
-                          className="w-5 h-5 text-blue-600"
-                        />
-                        <span className="font-medium text-gray-700">
-                          الإجابة الصحيحة
-                        </span>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            checked={editingCorrectAnswer === idx}
+                            onChange={() => setEditingCorrectAnswer(idx)}
+                            className="w-5 h-5"
+                          />
+                          <span className="font-medium text-gray-700">
+                            إجابة صحيحة
+                          </span>
+                        </div>
+
                         <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium">
                           {String.fromCharCode(1632 + idx + 1)}
                         </span>
                       </div>
+
                       <div className="space-y-4">
                         <div>
                           <label className="text-sm text-gray-600 mb-2 block">
                             نص الخيار
                           </label>
-                          <MathTypeEditor
-                            editorData={opt.text}
-                            setEditorData={(data) => {
-                              const newOpts = [...editingOptions];
-                              newOpts[idx].text = data;
-                              setEditingOptions(newOpts);
-                            }}
-                          />
-                          {/* <ReactQuill
+                          <ReactQuill
                             value={opt.text}
-                            onChange={v => {
-                              const newOpts = [...editingOptions];
-                              newOpts[idx].text = v;
-                              setEditingOptions(newOpts);
+                            onChange={(v) => {
+                              setEditingOptions((prev) => {
+                                const copy = [...prev];
+                                copy[idx] = { ...copy[idx], text: v };
+                                return copy;
+                              });
                             }}
                             modules={quillModules}
                             formats={quillFormats}
-                          /> */}
+                          />
                         </div>
+
                         <div>
                           <label className="text-sm text-gray-600 mb-2 block">
                             الشرح (اختياري)
@@ -971,9 +2736,11 @@ export default function DisplayQuestions({
                           <ReactQuill
                             value={opt.explanation}
                             onChange={(v) => {
-                              const newOpts = [...editingOptions];
-                              newOpts[idx].explanation = v;
-                              setEditingOptions(newOpts);
+                              setEditingOptions((prev) => {
+                                const copy = [...prev];
+                                copy[idx] = { ...copy[idx], explanation: v };
+                                return copy;
+                              });
                             }}
                             modules={quillModules}
                             formats={quillFormats}
@@ -984,40 +2751,251 @@ export default function DisplayQuestions({
                   ))}
                 </div>
               </div>
-            </>
-          ) : (
-            // Paragraph editing mode - similar spacious layout (omitted for brevity, follow same pattern)
-            <div>Paragraph editing UI goes here with same padding style...</div>
+            </div>
           )}
 
-          <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
-            <Button
-              onClick={cancelEditing}
-              size="large"
-              icon={<X className="w-5 h-5" />}
-            >
-              إلغاء
-            </Button>
-            <Button
-              type="primary"
-              size="large"
-              icon={<Save className="w-5 h-5" />}
-              loading={delete_question_loading}
-            >
-              حفظ التعديلات
-            </Button>
-          </div>
+          {/* ============ PARAGRAPH EDIT UI ============ */}
+          {isParagraph && (
+            <div className="space-y-6">
+              {/* Paragraph content card */}
+              <div className="bg-white border border-gray-200 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-semibold text-gray-800">
+                    نص الفقرة
+                  </label>
+
+                  <Space>
+                    <Tooltip title="حفظ نص الفقرة فقط">
+                      <Button
+                        type="primary"
+                        loading={edit_paragraph_loading}
+                        onClick={() => handleEditParagraphContent(q)}
+                      >
+                        حفظ الفقرة
+                      </Button>
+                    </Tooltip>
+
+                    <Tooltip title="حذف الفقرة بالكامل">
+                      <Button
+                        danger
+                        loading={delete_paragraph_loading}
+                        onClick={() => {
+                          setQuestionToDelete({ type: "paragraph", id: q?.id });
+                          setDeleteModal(true);
+                        }}
+                      >
+                        حذف الفقرة
+                      </Button>
+                    </Tooltip>
+                  </Space>
+                </div>
+
+                <ReactQuill
+                  value={editingParagraphContent}
+                  onChange={setEditingParagraphContent}
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white"
+                />
+              </div>
+
+              {/* Paragraph questions list */}
+              <div className="bg-white border border-gray-200 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-gray-900">أسئلة الفقرة</h3>
+                  <span className="text-xs text-gray-500">
+                    كل سؤال له خياراته وتحديد إجابة صحيحة
+                  </span>
+                </div>
+
+                <div className="space-y-5">
+                  { editingParagraphQuestions&&  editingParagraphQuestions?.map((pq, qIdx) => (
+                    <div
+                      key={pq?.id ?? qIdx}
+                      className="p-8 rounded-2xl border border-gray-200 bg-gray-50 space-y-5"
+                    >
+                      {/* Question header */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">
+                            {qIdx + 1}
+                          </div>
+                          <div className="font-bold text-gray-900">
+                            سؤال داخل الفقرة
+                          </div>
+                        </div>
+
+                        <Space>
+                          <Button
+                            type="primary"
+                            icon={<Save className="w-4 h-4" />}
+                            loading={edit_question_loading}
+                            onClick={() => handleSaveParagraph(pq)}
+                          >
+                            حفظ السؤال
+                          </Button>
+
+                          <Button
+                            danger
+                            icon={<Trash2 className="w-4 h-4" />}
+                            onClick={() => setDeleteParagraphModal(pq)}
+                          >
+                            حذف السؤال
+                          </Button>
+                        </Space>
+                      </div>
+
+                      {/* Question text */}
+                      <div>
+                        <label className="text-sm text-gray-600 mb-2 block">
+                          نص السؤال
+                        </label>
+                        <ReactQuill
+                          value={pq.questionText}
+                          onChange={(v) => {
+                            setEditingParagraphQuestions((prev) => {
+                              const copy = [...prev];
+                              copy[qIdx] = { ...copy[qIdx], questionText: v };
+                              return copy;
+                            });
+                          }}
+                          modules={quillModules}
+                          formats={quillFormats}
+                          className="bg-white"
+                        />
+                      </div>
+
+                      {/* Options */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-semibold text-gray-800">
+                            الخيارات
+                          </label>
+                          <span className="text-xs text-gray-500">
+                            اختر إجابة صحيحة واحدة
+                          </span>
+                        </div>
+
+                        {(pq.options || []).map((opt, oIdx) => (
+                          <div
+                            key={opt?.id ?? oIdx}
+                            className={`p-4 rounded-xl border transition-all ${
+                              opt.isCorrect
+                                ? "border-emerald-300 bg-emerald-50"
+                                : "border-gray-200 bg-white"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-3">
+                                <input
+                                  type="radio"
+                                  checked={!!opt.isCorrect}
+                                  onChange={() => {
+                                    setEditingParagraphQuestions((prev) => {
+                                      const copy = [...prev];
+                                      const qCopy = { ...copy[qIdx] };
+                                      qCopy.options = qCopy.options.map(
+                                        (o, ii) => ({
+                                          ...o,
+                                          isCorrect: ii === oIdx,
+                                        })
+                                      );
+                                      copy[qIdx] = qCopy;
+                                      return copy;
+                                    });
+                                  }}
+                                  className="w-5 h-5"
+                                />
+                                <span className="text-sm text-gray-700">
+                                  إجابة صحيحة
+                                </span>
+                              </div>
+
+                              <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium">
+                                {String.fromCharCode(1632 + oIdx + 1)}
+                              </span>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div>
+                                <label className="text-sm text-gray-600 mb-1 block">
+                                  نص الخيار
+                                </label>
+                                <ReactQuill
+                                  value={opt.text}
+                                  onChange={(v) => {
+                                    setEditingParagraphQuestions((prev) => {
+                                      const copy = [...prev];
+                                      const qCopy = { ...copy[qIdx] };
+                                      const opts = [...(qCopy.options || [])];
+                                      opts[oIdx] = { ...opts[oIdx], text: v };
+                                      qCopy.options = opts;
+                                      copy[qIdx] = qCopy;
+                                      return copy;
+                                    });
+                                  }}
+                                  modules={quillModules}
+                                  formats={quillFormats}
+                                  className="bg-white"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-sm text-gray-600 mb-1 block">
+                                  الشرح (اختياري)
+                                </label>
+                                <ReactQuill
+                                  value={opt.explanation}
+                                  onChange={(v) => {
+                                    setEditingParagraphQuestions((prev) => {
+                                      const copy = [...prev];
+                                      const qCopy = { ...copy[qIdx] };
+                                      const opts = [...(qCopy.options || [])];
+                                      opts[oIdx] = {
+                                        ...opts[oIdx],
+                                        explanation: v,
+                                      };
+                                      qCopy.options = opts;
+                                      copy[qIdx] = qCopy;
+                                      return copy;
+                                    });
+                                  }}
+                                  modules={quillModules}
+                                  formats={quillFormats}
+                                  className="bg-white"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Divider className="!my-5" />
+
+                <div className="flex justify-end">
+                  <Button onClick={cancelEditing} icon={<X className="w-4 h-4" />}>
+                    إغلاق التعديل
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
 
-    // Normal display mode
+    // ====== Normal display mode ======
     return (
       <div className="space-y-8 px-2">
-        {/* Paragraph (if applicable) */}
         {q.type === "paragraph_mcq" && (
           <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl">
-            <h4 className="font-bold text-blue-900 mb-4 text-lg">الفقرة</h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-bold text-blue-900 text-lg">الفقرة</h4>
+              <Tag color="purple">Paragraph</Tag>
+            </div>
             <div
               dangerouslySetInnerHTML={{ __html: q.paragraphContent }}
               className="text-gray-800 leading-relaxed text-base"
@@ -1025,7 +3003,6 @@ export default function DisplayQuestions({
           </div>
         )}
 
-        {/* Questions */}
         {(q.type === "mcq"
           ? [
               {
@@ -1038,30 +3015,29 @@ export default function DisplayQuestions({
         ).map((item, qIdx) => (
           <div key={qIdx} className="space-y-5">
             {q.type === "paragraph_mcq" && (
-              <h4 className="font-bold text-gray-900 text-lg">
-                سؤال {qIdx + 1}
-              </h4>
+              <div className="flex items-center gap-2">
+                <Tag color="geekblue">سؤال</Tag>
+                <h4 className="font-bold text-gray-900 text-lg">
+                  {qIdx + 1}
+                </h4>
+              </div>
             )}
-            {q.type === "paragraph_mcq" && (
-              <div
-                dangerouslySetInnerHTML={{ __html: item.questionText }}
-                className="text-gray-800 leading-relaxed text-base mb-4"
-              />
-            )}
-            {q.type === "mcq" && (
-              <div
-                dangerouslySetInnerHTML={{ __html: item.questionText }}
-                className="text-gray-800 leading-relaxed text-base mb-5"
-              />
-            )}
+
+            <div
+              dangerouslySetInnerHTML={{ __html: item.questionText }}
+              className="text-gray-800 leading-relaxed text-base mb-5"
+            />
 
             <div className="grid gap-4">
               {item.options.map((opt, oIdx) => {
                 const isCorrect =
-                  q.type === "mcq" ? oIdx === q.correctAnswer : opt.isCorrect;
+                  q.type === "mcq"
+                    ? oIdx === q.correctAnswer
+                    : !!opt.isCorrect;
+
                 return (
                   <div
-                    key={oIdx}
+                    key={opt?.id ?? oIdx}
                     className={`p-5 rounded-xl border-2 transition-all ${
                       isCorrect
                         ? "bg-emerald-50 border-emerald-300 shadow-sm"
@@ -1099,8 +3075,8 @@ export default function DisplayQuestions({
           </div>
         ))}
 
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-4 pt-8 border-t border-gray-200">
+        {/* Actions */}
+        <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
           <Button
             size="large"
             icon={<Edit3 className="w-5 h-5" />}
@@ -1110,24 +3086,27 @@ export default function DisplayQuestions({
           >
             تعديل
           </Button>
-          <Button
-            size="large"
-            icon={<Trash2 className="w-5 h-5" />}
-            danger
-            onClick={() => {
-              setQuestionToDelete(q);
-              setDeleteModal(true);
-            }}
-            loading={delete_question_loading}
-          >
-            حذف
-          </Button>
+
+          {q.type === "mcq" && (
+            <Button
+              size="large"
+              icon={<Trash2 className="w-5 h-5" />}
+              danger
+              onClick={() => {
+                setQuestionToDelete(q);
+                setDeleteModal(true);
+              }}
+              loading={delete_question_loading}
+            >
+              حذف
+            </Button>
+          )}
         </div>
       </div>
     );
   };
 
-  if (get_exam_questions_loading) {
+  if (get_exam_question_loading) {
     return (
       <div className="flex flex-col items-center justify-center py-32">
         <Spin size="large" />
@@ -1139,45 +3118,38 @@ export default function DisplayQuestions({
   return (
     <Card title="أسئلة الامتحان" icon={Edit3} className="p-0">
       <div className="p-6">
-        {" "}
-        {/* Main container padding */}
         {apiQuestions.length === 0 ? (
           <Empty description="لا توجد أسئلة في هذا القسم بعد" />
         ) : (
           <div className="space-y-8">
-            {/* Section Info Card */}
+            {/* Section Info */}
             <div className="p-8 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-3xl border border-indigo-200 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <div className="flex gap-1 items-center">
-                    {/* <h2 className="text-3xl font-bold text-indigo-900">قسم </h2> */}
-                    <h2
-                      className="text-3xl font-bold text-indigo-900"
-                      dangerouslySetInnerHTML={{
-                        __html: ` ${selectedSection?.title}`,
-                      }}
-                    />
-                  </div>
+                  <h2
+                    className="text-3xl font-bold text-indigo-900"
+                    dangerouslySetInnerHTML={{
+                      __html: ` ${selectedSection?.title}`,
+                    }}
+                  />
                   <p className="text-lg text-indigo-700 mt-2">
                     عدد الأسئلة:{" "}
                     <span className="font-bold">{apiQuestions.length}</span>
                   </p>
                 </div>
-                {/* <Tag color="indigo" className="text-base px-5 py-2">معرف القسم: {selectedSectionId}</Tag> */}
               </div>
             </div>
 
-            {/* Questions List */}
+            {/* Questions */}
             <div className="space-y-6">
               {apiQuestions.map((q, index) => {
-                console.log("q", q);
                 const isExp = isExpanded(q.id, q.type);
                 const typeLabel =
-                  q.type == "mcq" ? "سؤال اختيار متعدد" : "فقرة مع أسئلة";
+                  q.type === "mcq" ? "سؤال اختيار متعدد" : "فقرة مع أسئلة";
 
                 return (
                   <div
-                    key={q.id}
+                    key={`${q.type}-${q.id}`}
                     className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden transition-all hover:shadow-xl"
                   >
                     {/* Header */}
@@ -1189,6 +3161,7 @@ export default function DisplayQuestions({
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-xl font-bold shadow-md">
                           {index + 1}
                         </div>
+
                         <div>
                           <div className="font-bold text-xl text-gray-900">
                             {typeLabel}
@@ -1200,7 +3173,7 @@ export default function DisplayQuestions({
                                 q.type === "mcq"
                                   ? q.question
                                   : q.paragraphContent ||
-                                    q.questions[0]?.questionText ||
+                                    q.questions?.[0]?.questionText ||
                                     "فقرة",
                             }}
                           />
@@ -1236,22 +3209,52 @@ export default function DisplayQuestions({
         )}
       </div>
 
-      {/* Delete Modal */}
+      {/* Delete main modal */}
       <Modal
         open={deleteModal}
         onCancel={() => setDeleteModal(false)}
-        onOk={handleDeleteQuestion}
+        onOk={handleDeleteAny}
         okText="حذف نهائياً"
         cancelText="إلغاء"
-        okButtonProps={{ danger: true, loading: delete_question_loading }}
-        width={500}
+        okButtonProps={{
+          danger: true,
+          loading:
+            questionToDelete?.type === "mcq"
+              ? delete_question_loading
+              : delete_paragraph_loading,
+        }}
+        width={520}
       >
-        <div className="text-center py-10">
-          <Trash2 className="w-20 h-20 text-red-500 mx-auto mb-6" />
-          <h3 className="text-2xl font-bold text-gray-900 mb-4">تأكيد الحذف</h3>
-          <p className="text-gray-600 text-lg leading-relaxed">
+        <div className="text-center py-8">
+          <Trash2 className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-gray-900 mb-3">تأكيد الحذف</h3>
+          <p className="text-gray-600 text-base leading-relaxed">
             هل أنت متأكد من حذف هذا{" "}
-            {questionToDelete?.type === "mcq" ? "السؤال" : "الفقرة مع أسئلتها"}؟
+            {questionToDelete?.type === "mcq" ? "السؤال" : "الفقرة"}؟
+            <br />
+            <strong className="text-red-600">هذا الإجراء لا رجعة فيه</strong>.
+          </p>
+        </div>
+      </Modal>
+
+      {/* Delete paragraph question modal */}
+      <Modal
+        open={!!deleteParagraphModal}
+        onCancel={() => setDeleteParagraphModal(false)}
+        onOk={handleDeleteParagraphQuestions}
+        okText="حذف نهائياً"
+        cancelText="إلغاء"
+        okButtonProps={{
+          danger: true,
+          loading: delete_question_loading,
+        }}
+        width={520}
+      >
+        <div className="text-center py-8">
+          <Trash2 className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-gray-900 mb-3">تأكيد الحذف</h3>
+          <p className="text-gray-600 text-base leading-relaxed">
+            هل أنت متأكد من حذف هذا السؤال من الفقرة؟
             <br />
             <strong className="text-red-600">هذا الإجراء لا رجعة فيه</strong>.
           </p>

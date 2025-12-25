@@ -42,6 +42,7 @@ const initialSchedule = {
 
 export default function ArabicCourseCurriculum({ id, source }) {
   const [rowData, setRowData] = useState({});
+
   const [contentSchedule, setContentSchedule] = useState({});
   const [lessonSchedule, setLessonSchedule] = useState({});
   const [activeTab, setActiveTab] = useState("lecture"); // lecture | basic | exams
@@ -74,6 +75,13 @@ export default function ArabicCourseCurriculum({ id, source }) {
   const [selectedExam, setSelectedExam] = useState({});
   const [selectedExamVideo, setSelectedExamVideo] = useState({});
   const [selectedExamPdf, setSelectedExamPdf] = useState({});
+
+  const [openAddExamPdfModal, setOpenAddExamPdfModal] = useState(false);
+  const [examPdfCtx, setExamPdfCtx] = useState({
+    round_id: null,
+    lesson_id: null,
+    exam_id: null,
+  });
 
   const router = useRouter();
   const dispatch = useDispatch();
@@ -126,14 +134,14 @@ export default function ArabicCourseCurriculum({ id, source }) {
     }
   }, [id, dispatch]);
 
-    const fetchExams = (page = 1, perPage = 15) => {
+  const fetchExams = (page = 1, perPage = 15) => {
     dispatch(handleGetAllExamByRoundId({
       body: {
         round_id: id,
-        
+
       },
       page: page,
-        per_page: perPage
+      per_page: perPage
     }));
   };
 
@@ -142,7 +150,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
   useEffect(() => {
     if (all_exam_round_list?.data?.message) {
       const examData = all_exam_round_list.data.message;
-    
+
     }
   }, [all_exam_round_list]);
 
@@ -172,7 +180,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
   const filteredContents =
     (contents && contents?.length && activeTab === "lecture") ||
       activeTab === "basic"
-      ? contents.filter((c) => c.content_type === activeTab)
+      ? contents?.filter((c) => c?.content_type === activeTab)
       : [];
   const [getContent, setContentSelected] = useState(null);
   const toggleContentCollapse = async (contentId, e, content) => {
@@ -413,12 +421,22 @@ export default function ArabicCourseCurriculum({ id, source }) {
           <div className="flex items-start flex-1 min-w-0 w-[100%] flex-col">
             <div className="flex w-[100%] items-center justify-between">
               {" "}
-              {/* <CaretDownOutlined
+              <CaretDownOutlined
                 className={`text-xl ml-3 text-orange-500 transition-transform duration-300 cursor-pointer ${isExamExpanded ? "rotate-0" : "-rotate-90"
                   }`}
                 onClick={() => toggleExamCollapse(examId)}
-              /> */}
-
+              />
+              <button
+                type="submit"
+                class="!rounded-md mb-2 mr-auto text-white bg-primary mr-auto box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none !m-2"
+                onClick={() => {
+                  if (typeof window != undefined) {
+                    window.location.href = `/questions/new?lessonId=${lesson?.id}`;
+                  }
+                }}
+              >
+                إضافة اختبار{" "}
+              </button>
             </div>
             {console.log("examDataexamDataexamData-----.-----", examData)}
             <div className="flex-1 min-w-0">
@@ -471,9 +489,18 @@ export default function ArabicCourseCurriculum({ id, source }) {
           </div>
         </div>
         <DeleteExamModal round_id={id} page={examPagination?.current_page} per_page={examPagination?.per_page} open={deleteOpen} setOpen={setDeleteOpen} />
-        
-        {/* {isExamExpanded && (
+
+        {isExamExpanded && (
           <div className="pt-4 mt-4 border-t">
+            {/* <AddExamPdfModal
+                id={content?.round_id}
+                lesson_id={lesson?.id}
+                exam_id={lesson?.id}
+                open={addOpen}
+                setOpen={setAddOpen}
+                // setIsEditing={setAddOpen}
+                // isEditing={false}
+              /> */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
                 <h5 className="flex items-center font-semibold text-gray-700 text-md">
@@ -537,28 +564,19 @@ export default function ArabicCourseCurriculum({ id, source }) {
               <button
                 type="submit"
                 class="!rounded-md mb-2 mr-auto text-white bg-primary mr-auto box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none !m-2"
-                onClick={() => {
-                  setAddOpen(true);
+                onClick={(e) => {
+                  e.stopPropagation(); // مهم لو فيه collapses حوالين
+                  setExamPdfCtx({
+                    round_id: content?.round_id,
+                    lesson_id: lesson?.id,
+                    exam_id: examData?.id, // ✅ ده الصح، مش lesson_id
+                  });
+                  setOpenAddExamPdfModal(true);
                 }}
               >
                 إضافة ملف{" "}
               </button>
-              {console.log("------lesson", lesson)}
-              <AddExamPdfModal
-                data={{
-                  lesson_id: lesson?.id,
-                  title: "",
-                  description: "",
-                  pdf_url: ""
-                }}
-                id={content?.round_id}
-                lesson_id={lesson?.id}
-                exam_id={lesson?.id}
-                open={addOpen}
-                setOpen={setAddOpen}
-                setIsEditing={setAddOpen}
-                isEditing={false}
-              />
+
               {pdfs.length > 0 ? (
                 <div className="space-y-2">
                   {pdfs.map((pdf) => (
@@ -578,7 +596,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
               )}
             </div>
           </div>
-        )} */}
+        )}
       </div>
     );
   };
@@ -896,6 +914,10 @@ export default function ArabicCourseCurriculum({ id, source }) {
                         <FileTextOutlined className="ml-2 text-orange-500" />
                         الاختبارات ({lessonExams?.length || 0})
                       </h5>
+
+                      {/* <button 
+                                          class="!rounded-md mb-2 mr-auto text-white bg-primary mr-auto box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none !m-2"
+                      onClick={() => router.push(`/questions/new?lessonId=${lesson?.id}`)}>إضافة اختبار</button> */}
                     </div>
                     {(lessonExams?.length
                       ? lessonExams
@@ -992,14 +1014,14 @@ export default function ArabicCourseCurriculum({ id, source }) {
     setDeleteLessonOpen,
     setIsEditLessonOpen
   }) => {
-    const isContentExpanded = expandedContents[contentItem.id];
-    const isLoading = loadingContents[contentItem.id];
-    const contentLessons = contentItem.lessons;
+    const isContentExpanded = expandedContents[contentItem?.id];
+    const isLoading = loadingContents[contentItem?.id];
+    const contentLessons = contentItem?.lessons;
 
     const releaseAt =
-      contentSchedule[contentItem.id] ??
-      contentItem.release_at ??
-      contentItem.releaseAt;
+      contentSchedule[contentItem?.id] ??
+      contentItem?.release_at ??
+      contentItem?.releaseAt;
     const opened = isReleased(releaseAt);
 
     return (
@@ -1019,9 +1041,9 @@ export default function ArabicCourseCurriculum({ id, source }) {
               <div className="min-w-0 !max-w-[100%]">
                 <h3 className="text-xl flex gap-3 items-center font-bold text-gray-900 truncate">
                   <span>{contentItem.content_title}</span>
-                 <Tooltip title={contentItem.content_description}>
-                   <BadgeAlert color="gray" />
-                 </Tooltip>
+                  <Tooltip title={contentItem.content_description}>
+                    <BadgeAlert color="gray" />
+                  </Tooltip>
                 </h3>
                 {/* <p className="mt-1 text-base text-gray-700 truncate max-w-[600px] overflow-hidden text-ellipsis !whitespace-pre-wrap">
                   {contentItem.content_description}
@@ -1142,8 +1164,8 @@ export default function ArabicCourseCurriculum({ id, source }) {
           <button
             onClick={() => setActiveTab("basic")}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === "basic"
-                ? "bg-green-600 text-white shadow"
-                : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+              ? "bg-green-600 text-white shadow"
+              : "bg-gray-50 text-gray-700 hover:bg-gray-100"
               }`}
           >
             مرحلة التأسيس
@@ -1151,8 +1173,8 @@ export default function ArabicCourseCurriculum({ id, source }) {
           <button
             onClick={() => setActiveTab("lecture")}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === "lecture"
-                ? "bg-blue-600 text-white shadow"
-                : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+              ? "bg-blue-600 text-white shadow"
+              : "bg-gray-50 text-gray-700 hover:bg-gray-100"
               }`}
           >
             مرحلة المحاضرات
@@ -1160,8 +1182,8 @@ export default function ArabicCourseCurriculum({ id, source }) {
           <button
             onClick={() => setActiveTab("exams")}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === "exams"
-                ? "bg-orange-600 text-white shadow"
-                : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+              ? "bg-orange-600 text-white shadow"
+              : "bg-gray-50 text-gray-700 hover:bg-gray-100"
               }`}
           >
             الاختبارات التجريبية
@@ -1169,8 +1191,8 @@ export default function ArabicCourseCurriculum({ id, source }) {
           <button
             onClick={() => setActiveTab("free_explain")}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === "free_explain"
-                ? "bg-fuchsia-600 text-white shadow"
-                : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+              ? "bg-fuchsia-600 text-white shadow"
+              : "bg-gray-50 text-gray-700 hover:bg-gray-100"
               }`}
           >
             الشروحات المجانية
@@ -1222,8 +1244,8 @@ export default function ArabicCourseCurriculum({ id, source }) {
               >
                 إضافة محاضرة{" "}
               </button>
-              {filteredContents.length > 0 ? (
-                filteredContents.map((item) => (
+              {filteredContents?.length > 0 ? (
+                filteredContents?.map((item) => (
                   <>
                     {/* {console.log("item", item)} */}
 
@@ -1340,7 +1362,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                   <p className="mb-6 text-gray-600">
                     ابدأ بإضافة أول امتحان للدورة لاختبار الطلاب.
                   </p>
-                 
+
                 </div>
               )}
             </div>
@@ -1350,6 +1372,15 @@ export default function ArabicCourseCurriculum({ id, source }) {
           {activeTab === "free_explain" && <FreeVideos />}
         </div>
       </div>
+
+      <AddExamPdfModal
+        open={openAddExamPdfModal}
+        setOpen={setOpenAddExamPdfModal}
+        id={examPdfCtx.round_id}
+        lesson_id={examPdfCtx.lesson_id}
+        exam_id={examPdfCtx.exam_id}
+      />
+
     </div>
   );
 }

@@ -63,6 +63,12 @@ export default function AddLessonModal({
             })
           );
           setOpen(false);
+          setLessonData({
+            title:"",
+            description:""
+          })
+          setDate(null);
+          setDateStr("");
         } else {
           console.log(res);
           toast.error(res?.error?.response?.data?.message || "هناك خطأ أثناء اضافة الدرس");
