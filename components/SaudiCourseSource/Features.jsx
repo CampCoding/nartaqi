@@ -14,7 +14,8 @@ export default function Features({
   currentStep,
   goToNextStep,
   goToPrevStep,
-  STEPS
+  STEPS,
+  isSource
 }) {
   const dispatch = useDispatch();
   const { all_features_loading, all_features_list } = useSelector(
@@ -45,22 +46,7 @@ export default function Features({
   }
 
   const features = all_features_list?.data?.message || [];
-
-  // Handle Empty State
-  // if (features.length === 0) {
-  //   return (
-  //     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-16 px-4">
-  //       <p className="text-gray-500 text-lg mb-4">
-  //         لا تتوفر مميزات حالياً لهذه الدورة.
-  //       </p>
-  //       <Button onClick={() => {
-  //         console.log("jello")
-  //         setOpenAddModal(true)
-  //       }}>إضافة مميزة جديدة</Button>
-  //     </div>
-  //   );
-  // }
-
+  
   // --- Card Render Logic ---
   const renderFeatureCard = (feature) => (
    <div

@@ -16,6 +16,7 @@ import {
 } from "../../lib/features/examSlice";
 import { toast } from "react-toastify";
 import { useParams } from "next/navigation";
+import { Modal } from "antd";
 
 // SSR-safe import
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
@@ -148,9 +149,9 @@ export default function QuestionSections({
           .then((res) => {
             if (res?.data?.status === "success") {
               toast.success("تم تحديث القسم بنجاح");
-              if (onUpdateSection) {
-                onUpdateSection(updatedSection);
-              }
+              // if (onUpdateSection) {
+              //   onUpdateSection(updatedSection);
+              // }
               resetEditors();
               // Refresh sections list
               dispatch(
@@ -190,9 +191,9 @@ export default function QuestionSections({
           .then((res) => {
             if (res?.data?.status === "success") {
               toast.success("تم إضافة القسم بنجاح");
-              if (onAddSection) {
-                onAddSection(res?.data?.message);
-              }
+              // if (onAddSection) {
+              //   onAddSection(res?.data?.message);
+              // }
               resetEditors();
               // Refresh sections list
               dispatch(
@@ -247,7 +248,7 @@ export default function QuestionSections({
   const sectionId = sectionToDelete?.id;
   const examId =
   sectionToDelete?.exam_id || 
-    params["exam-id"] || params.examId || data?.sections?.exam_id || data?.id;
+    params["exam-id"] || params?.examId || data?.sections?.exam_id || data?.id;
 
   if (examId && sectionId) {
     dispatch(handleDeleteExamSection({ body: { id: sectionId } }))
@@ -454,7 +455,7 @@ export default function QuestionSections({
                         title="حذف القسم"
                       
                       >
-                       {delete_exam_section_loading ? "loading..." : <Trash2 className="w-4 h-4" />}
+                       { <Trash2 className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
@@ -479,7 +480,7 @@ export default function QuestionSections({
           )}
 
         {/* Delete confirmation modal */}
-        {isDeleteModalOpen && sectionToDelete && (
+        {/* {isDeleteModalOpen && sectionToDelete && (
           <div className="fixed inset-0 !z-[999999] flex items-center justify-center bg-black/40">
             <div className="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -524,7 +525,51 @@ export default function QuestionSections({
               </div>
             </div>
           </div>
-        )}
+        )} */}
+        <Modal open={isDeleteModalOpen} footer={null} onCancel={() => setIsDeleteModalOpen(false)}>
+           <div className=" rounded-2xl w-full mx-4 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                تأكيد حذف القسم
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                هل أنت متأكد أنك تريد حذف هذا القسم؟ سيتم حذف القسم وكل
+                الأسئلة المرتبطة به.
+              </p>
+              <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-4">
+                <div
+                  className="text-sm font-medium text-gray-800"
+                  dangerouslySetInnerHTML={{ __html: sectionToDelete?.title }}
+                />
+                {sectionToDelete?.description && (
+                  <div
+                    className="text-xs text-gray-600 mt-1"
+                    dangerouslySetInnerHTML={{
+                      __html: sectionToDelete?.description,
+                    }}
+                  />
+                )}
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={closeDeleteModal}
+                  className="px-3 py-2 rounded-lg border text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  disabled={delete_exam_section_loading}
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDeleteSection}
+                  className="px-3 py-2 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1"
+                  disabled={delete_exam_section_loading}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  حذف نهائي
+                </button>
+              </div>
+            </div>
+        </Modal>
       </div>
     </Card>
   );

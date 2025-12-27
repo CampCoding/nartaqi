@@ -20,6 +20,7 @@ import {
   BookOpen,
   ChevronRight,
   Video,
+  Files,
 } from "lucide-react";
 import BreadcrumbsShowcase from "../../../../../components/ui/BreadCrumbs";
 import PagesHeader from "../../../../../components/ui/PagesHeader";
@@ -35,6 +36,7 @@ import HorizontalTabs from "../../../../../components/ui/Tab";
 import SubjectStudentsSection from "../../../../../components/Subjects/SubjectStudents";
 import EditUnitForm from "../../../../../components/Units/EditUnit.modal";
 import ArabicCourseCurriculum from "../../../../../components/Courses/ArabicCourseCurriculum";
+import ResourceContent from "../../../../../components/RoundContent/ResourceContent/ResourceContent";
 
 const courseData = {
   id: 1,
@@ -407,6 +409,13 @@ const Units = () => {
       icon: Layers,
       gradient: "from-blue-500 to-cyan-500",
       content: <ArabicCourseCurriculum source={source} id={id} />,
+    },
+      {
+      id: 2,
+      label: "مصادر الدورة",
+      icon: Files,
+      gradient: "from-blue-500 to-cyan-500",
+      content: <ResourceContent source={source} round_id={id} />,
     },
     // {
     //   id: 2,

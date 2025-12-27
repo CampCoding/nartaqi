@@ -92,7 +92,7 @@ console.log("lesson_or_round_id", examData?.all_exam_data_list?.data?.message?.e
 
 
   return (
-    <Card title="تعيين الاختبار لدوره معينه او درس" icon={Book}>
+    <Modal title="تعيين الاختبار لدوره معينه او درس" icon={Book}>
       <div className="flex flex-col gap-4">
       
 
@@ -189,6 +189,6 @@ console.log("lesson_or_round_id", examData?.all_exam_data_list?.data?.message?.e
           </Button>
         </div>
       </div>
-    </Card>
+    </Modal>
   );
 }

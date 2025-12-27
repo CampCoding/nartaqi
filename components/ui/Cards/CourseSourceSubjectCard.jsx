@@ -145,7 +145,7 @@ const CourseSourceSubjectCard = ({
                       router.push(
                         `/termsCondition?roundId=${
                           subject?.id
-                        }&page=${page}&pageSize=${1000000000}`
+                        }&name=${subject?.name}&page=${page}&pageSize=${1000000000}`
                       )
                     }
                     className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"

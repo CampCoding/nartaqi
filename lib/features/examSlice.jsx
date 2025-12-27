@@ -41,7 +41,9 @@ const initialState = {
   all_exam_round_loading : false,
 
   edit_paragraph_loading : false,
-  delete_paragraph_loading : false
+  delete_paragraph_loading : false,
+
+  add_paragraph_question_loading : false,
 }
 
 
@@ -196,6 +198,11 @@ export const handleDeleteExamVideo = createAsyncThunk("examSlice/handleDeleteExa
   return response;
 })
 
+
+export const handleAddParagraphQuestion  = createAsyncThunk("examSlice/handleAddParagraphQuestion",async({body}) => {
+  const response = await api.post("admin/questions/StoreParagraphQuestionWithAnswers",{body});
+  return response;
+})
 
 
 
@@ -453,6 +460,16 @@ export const examSlice = createSlice({
     })
     .addCase(handleDeleteParagraph.rejected ,(state) => {
       state.delete_paragraph_loading = false;
+    })
+
+     .addCase(handleAddParagraphQuestion.pending ,(state) => {
+      state.add_paragraph_question_loading = true;
+    })
+    .addCase(handleAddParagraphQuestion.fulfilled ,(state , action) => {
+      state.add_paragraph_question_loading = false;
+    })
+    .addCase(handleAddParagraphQuestion.rejected ,(state) => {
+      state.add_paragraph_question_loading = false;
     })
   }
 })

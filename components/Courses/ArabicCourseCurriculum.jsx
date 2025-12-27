@@ -7,7 +7,7 @@ import {
   PlayCircleOutlined,
   PlusOutlined
 } from "@ant-design/icons";
-import { Pagination, Spin, Tag, Tooltip } from "antd";
+import { Modal, Pagination, Spin, Tag, Tooltip } from "antd";
 import dayjs from "dayjs";
 import { BadgeAlert, Eye, FileIcon, Info, VideoIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -32,6 +32,7 @@ import { handleActiveLive } from "@/lib/features/livesSlice";
 import { toast } from "react-toastify";
 import FreeVideos from "../RoundContent/FreeVideos/FreeVideos";
 import { handleGetAllExamByRoundId } from "../../lib/features/examSlice";
+import AssignExamModal from "../RoundContent/Exams/AssignExamModal";
 
 const initialSchedule = {
   startDate: "2025-12-01",
@@ -42,6 +43,8 @@ const initialSchedule = {
 
 export default function ArabicCourseCurriculum({ id, source }) {
   const [rowData, setRowData] = useState({});
+
+  const [openExamModal, setOpenExamModal] = useState(false);
 
   const [contentSchedule, setContentSchedule] = useState({});
   const [lessonSchedule, setLessonSchedule] = useState({});
@@ -281,7 +284,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
           </div>
           <div className="flex gap-3 actions">
             <div class="flex gap-3 items-center space-x-4">
-              <button
+              {/* <button
                 type="button"
                 data-drawer-target="drawer-update-product"
                 data-drawer-show="drawer-update-product"
@@ -298,9 +301,9 @@ export default function ArabicCourseCurriculum({ id, source }) {
                 }}
               >
                 تعديل
-              </button>
+              </button> */}
 
-              <button
+              {/* <button
                 type="button"
                 data-modal-target="delete-modal"
                 data-modal-toggle="delete-modal"
@@ -310,7 +313,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                 class="flex items-center text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-3 py-2 text-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900"
               >
                 حذف
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
@@ -357,7 +360,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
             </div>
           </div>
           <div className="flex gap-3 actions">
-            <div class="flex gap-3 items-center space-x-4">
+            {/* <div class="flex gap-3 items-center space-x-4">
               <button
                 type="button"
                 data-drawer-target="drawer-update-product"
@@ -386,7 +389,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
               >
                 حذف
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
         <DeletePdfModal open={deleteOpen} setOpen={setDeleteOpen} />
@@ -426,7 +429,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                   }`}
                 onClick={() => toggleExamCollapse(examId)}
               />
-              <button
+              {/* <button
                 type="submit"
                 class="!rounded-md mb-2 mr-auto text-white bg-primary mr-auto box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none !m-2"
                 onClick={() => {
@@ -436,7 +439,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                 }}
               >
                 إضافة اختبار{" "}
-              </button>
+              </button> */}
             </div>
             {console.log("examDataexamDataexamData-----.-----", examData)}
             <div className="flex-1 min-w-0">
@@ -456,7 +459,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
             {/* Actions Icons */}
             {examData?.id ? (
               <div className="flex gap-3 mt-3 actions">
-                <div class="flex gap-3 items-center space-x-4">
+                {/* <div class="flex gap-3 items-center space-x-4">
                   <button
                     type="button"
                     data-drawer-target="drawer-update-product"
@@ -483,7 +486,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                   >
                     حذف
                   </button>
-                </div>
+                </div> */}
               </div>
             ) : null}
           </div>
@@ -508,7 +511,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                   فيديوهات التدريب ({videos.length})
                 </h5>
               </div>
-              <button
+              {/* <button
                 type="submit"
                 class="!rounded-md mb-2 mr-auto text-white bg-primary mr-auto box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none !m-2"
                 onClick={() => {
@@ -526,7 +529,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                 }}
               >
                 إضافة فيديو{" "}
-              </button>
+              </button> */}
               <EditVideo
                 setIsEditing={() => null}
                 isExam={true}
@@ -561,7 +564,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                   ملفات PDF ({pdfs.length})
                 </h5>
               </div>
-              <button
+              {/* <button
                 type="submit"
                 class="!rounded-md mb-2 mr-auto text-white bg-primary mr-auto box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none !m-2"
                 onClick={(e) => {
@@ -575,7 +578,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                 }}
               >
                 إضافة ملف{" "}
-              </button>
+              </button> */}
 
               {pdfs.length > 0 ? (
                 <div className="space-y-2">
@@ -690,7 +693,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                 )}
               </div>
             </div>
-            <div class="flex gap-3 items-center space-x-4">
+            {/* <div class="flex gap-3 items-center space-x-4">
               <button
                 type="button"
                 data-drawer-target="drawer-update-product"
@@ -740,7 +743,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
               >
                 حذف
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
@@ -803,7 +806,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
             </div>
             {/* Actions Icons */}
             <div className="flex gap-3 actions">
-              <div class="flex gap-3 items-center space-x-4">
+              {/* <div class="flex gap-3 items-center space-x-4">
                 <button
                   type="button"
                   data-drawer-target="drawer-update-product"
@@ -829,7 +832,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                 >
                   حذف
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -853,7 +856,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                       الفيديوهات ({lessonVideos?.length || 0})
                     </h5>
                   </div>
-                  <button
+                  {/* <button
                     type="submit"
                     class="!rounded-md mb-2 mr-auto text-white bg-primary mr-auto box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none !m-2"
                     onClick={() => {
@@ -871,7 +874,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                     }}
                   >
                     إضافة فيديو{" "}
-                  </button>
+                  </button> */}
                   <EditVideo
                     setIsEditing={() => null}
                     isEditing={false}
@@ -951,7 +954,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                       البث المباشر ({lesson?.live?.length || 0})
                     </h5>
                   </div>
-                  <button
+                  {/* <button
                     type="submit"
                     class="!rounded-md mb-2 mr-auto text-white bg-primary mr-auto box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none !m-2"
                     onClick={() => {
@@ -968,7 +971,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                     }}
                   >
                     إضافة بث مباشر{" "}
-                  </button>
+                  </button> */}
                   <EditLive
                     setIsEditing={() => null}
                     isEditing={false}
@@ -1076,7 +1079,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
 
             {/* Actions Icons */}
             <div className="flex gap-3 actions">
-              <div class="flex gap-3 items-center space-x-4">
+              {/* <div class="flex gap-3 items-center space-x-4">
                 <button
                   type="button"
                   data-drawer-target="drawer-update-product"
@@ -1102,14 +1105,14 @@ export default function ArabicCourseCurriculum({ id, source }) {
                 >
                   حذف
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
 
         {isContentExpanded && (
           <div className="p-6 pt-3">
-            <button
+            {/* <button
               type="submit"
               class="!rounded-md mb-2 mr-auto text-white bg-primary mr-auto box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none !m-2"
               onClick={() => {
@@ -1124,7 +1127,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
               }}
             >
               إضافة درس{" "}
-            </button>
+            </button> */}
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Spin spinning size="large" />
@@ -1229,7 +1232,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
 
           {activeTab === "lecture" || activeTab === "basic" ? (
             <>
-              <button
+              {/* <button
                 type="submit"
                 class="!rounded-md mb-2 mr-auto text-white bg-primary mr-auto box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none"
                 onClick={() => {
@@ -1243,7 +1246,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                 }}
               >
                 إضافة محاضرة{" "}
-              </button>
+              </button> */}
               {filteredContents?.length > 0 ? (
                 filteredContents?.map((item) => (
                   <>
@@ -1275,6 +1278,19 @@ export default function ArabicCourseCurriculum({ id, source }) {
           {/* EXAMS TAB */}
           {activeTab === "exams" && (
             <div className="p-6 bg-white border border-gray-200 shadow-md rounded-xl">
+              <div className="flex justify-between items-center">
+                <h2 className="mb-1 text-xl font-bold text-gray-900">
+                  امتحانات الدورة
+                </h2>
+                <button
+                  onClick={() => setOpenExamModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition duration-150"
+                >
+                  <PlusOutlined />
+                  إضافة اختبار جديد
+                </button>
+              </div>
+
               {all_exam_round_loading ? (
                 <div className="flex justify-center py-10">
                   <Spin size="large" />
@@ -1283,36 +1299,45 @@ export default function ArabicCourseCurriculum({ id, source }) {
                 <>
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h2 className="mb-1 text-xl font-bold text-gray-900">
+                      {/* <h2 className="mb-1 text-xl font-bold text-gray-900">
                         امتحانات الدورة
-                      </h2>
+                      </h2> */}
                       {/* <p className="text-sm text-gray-600">
                         عرض {examPagination.from} إلى {examPagination.to} من أصل {examPagination.total} امتحان
                       </p> */}
                     </div>
-                    {/* <button
-                      onClick={() => {
-                        window.location.href = `/exams/new?roundId=${id}`;
-                      }}
-                      className="flex items-center gap-2 px-4 py-2 text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition duration-150"
-                    >
-                      <PlusOutlined />
-                      إضافة امتحان جديد
-                    </button> */}
+
                   </div>
 
-                  <p className="mb-6 text-sm text-gray-600">
+                  {/* <p className="mb-6 text-sm text-gray-600">
                     هنا تظهر كل الامتحانات المرتبطة بالروند، مع الفيديوهات
                     وملفات الـ PDF الخاصة بكل امتحان.
-                  </p>
+                  </p> */}
 
                   <div className="space-y-4 mb-8">
                     {all_exam_round_list?.data?.message?.map((examGroup, idx) => (
-                      <ExamCard
-                        source={source}
-                        key={examGroup?.exam?.id || idx}
-                        exam={examGroup}
-                      />
+                      <div
+                      className="p-4 mb-3  flex-1 min-w-0 border border-orange-100 rounded-lg bg-orange-50/70"
+                        key={examGroup?.id}
+                        >
+                        <p className="font-medium text-gray-800 truncate">
+                          {examGroup?.title}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-600">
+                          {examGroup?.description}
+                        </p>
+                        <div className="flex gap-4 mt-2 text-xs text-gray-500">
+                          {examGroup?.date && (
+                            <span>📅 {dayjs(examGroup.date).format("YYYY/MM/DD")}</span>
+                          )}
+                          {examGroup?.time && <span>⏱️ {examGroup.time}</span>}
+                        </div>
+                      </div>
+                      // <ExamCard
+                      //   source={source}
+                      //   key={examGroup?.exam?.id || idx}
+                      //   exam={examGroup}
+                      // />
                     ))}
                   </div>
 
@@ -1381,6 +1406,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
         exam_id={examPdfCtx.exam_id}
       />
 
+      <AssignExamModal open={openExamModal} setOpen={setOpenExamModal} round_id={id} />
     </div>
   );
 }

@@ -1,37 +1,24 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import Input from "./ExamInput";
 import { FileText } from "lucide-react";
-import { toast } from "react-toastify";
 import Card from "./ExamCard";
 import { useParams } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
-import { handleGetAllExams } from "../../lib/features/examSlice";
 
 export default function ExamMainInfo({
   lessonId = null,
-  examData,
-  setExamData,
   examInfoData,
   handleBasicDataChange,
   handleExamTypeChange,
   handleSubmitBasicData,
   exam_types,
   add_exam_loading,
-  edit_exam_loading
+  edit_exam_loading,
 }) {
-
-  const dispatch = useDispatch();
-
-  const {all_exam_list} = useSelector(state => state?.exam);
-
-  useEffect(() => {
-    dispatch(handleGetAllExams({}))
-  } ,[dispatch])
-
-  const currentDate = new Date().toISOString().split("T")[0];
   const params = useParams();
+  const currentDate = new Date().toISOString().split("T")[0];
+
   return (
     <Card title="معلومات الاختبار الأساسية" icon={FileText}>
       <div className="space-y-6">
@@ -42,6 +29,7 @@ export default function ExamMainInfo({
             value={examInfoData?.title || ""}
             onChange={(e) => handleBasicDataChange("title", e.target.value)}
           />
+
           <Input
             label="الوصف"
             placeholder="أدخل وصف الاختبار"
@@ -49,21 +37,10 @@ export default function ExamMainInfo({
             onChange={(e) => handleBasicDataChange("description", e.target.value)}
             multiline
           />
-          {/* <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">مجاني</label>
-            <select
-              value={examInfoData?.free || "0"}
-              onChange={(e) => handleBasicDataChange("free", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="0">لا</option>
-              <option value="1">نعم</option>
-            </select>
-          </div> */}
 
-           <Input
-          min={currentDate}
-          required
+          <Input
+            min={currentDate}
+            required
             label="التاريخ"
             type="date"
             placeholder=""
@@ -74,7 +51,7 @@ export default function ExamMainInfo({
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">المستوي</label>
             <select
-              value={examInfoData?.level || "0"}
+              value={examInfoData?.level || "medium"}
               onChange={(e) => handleBasicDataChange("level", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
@@ -85,67 +62,91 @@ export default function ExamMainInfo({
           </div>
         </div>
 
-       {!lessonId &&  <div>
-          <label className="block text-sm font-medium text-gray-700 mb-4">نوع الاختبار</label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Looping through exam types */}
-            {exam_types?.map((type) => {
-              const isSelected = examInfoData?.type == type.value;
-              
-              return (
+        {!lessonId && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-4">
+              نوع الاختبار
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {exam_types?.map((type) => {
+                const isSelected = examInfoData?.type == type.value;
+
+                return (
                   <button
-                  key={type.id}
-                  type="button"
-                  onClick={() => handleExamTypeChange(type)}
-                  className={`p-6 rounded-xl border-2 transition-all duration-200 text-right hover:scale-[1.02] ${
-                    isSelected ? "bg-blue-600 !text-white" : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div
-                      className={`p-3 rounded-lg ${isSelected ? "bg-blue-500" : "bg-gray-100 text-blue-500"}`}
-                    >
-                      <type.icon className="h-6 w-6 text-white" />
+                    key={type.id}
+                    type="button"
+                    onClick={() => handleExamTypeChange(type)}
+                    className={`p-6 rounded-xl border-2 transition-all duration-200 text-right hover:scale-[1.02] ${
+                      isSelected
+                        ? "bg-blue-600 !text-white"
+                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div
+                        className={`p-3 rounded-lg ${
+                          isSelected ? "bg-blue-500" : "bg-gray-100 text-blue-500"
+                        }`}
+                      >
+                        <type.icon className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex-1 text-right">
+                        <h3
+                          className={
+                            isSelected
+                              ? "font-semibold text-white mb-2"
+                              : "font-semibold text-gray-900 mb-2"
+                          }
+                        >
+                          {type.title}
+                        </h3>
+                        <p
+                          className={
+                            isSelected ? "text-sm text-white" : "text-sm text-gray-600"
+                          }
+                        >
+                          {type.description}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 text-right">
-                      <h3 className={isSelected? "font-semibold text-white mb-2" : "font-semibold text-gray-900 mb-2"}>{type.title}</h3>
-                      <p className={isSelected?"text-sm text-white" :"text-sm text-gray-600"}>{type.description}</p>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>}
+        )}
 
-        {<div className="grid grid-cols-2 gap-3">
-          {/* <Input
-            label="الوقت"
-            placeholder=""
-            type=""
-            name="time"
-            value={examInfoData?.time || ""}
-            onChange={(e) => handleBasicDataChange("time", e.target.value)}
-          /> */}
-
-            <Input
-            label="نسبة النجاح"
-            placeholder=""
-            type="number"
-            onWheel={(e) => e.target.blur()}
-            name="success_percentage"
-            value={examInfoData?.success_percentage || ""}
-            onChange={(e) => handleBasicDataChange("success_percentage", e.target.value)}
-          />
-         
-          </div>}
+        {examInfoData?.type == "intern" && (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Input
+                label="الوقت"
+                placeholder="مثال: 01:30:00 أو 30:00"
+                type="text"
+                name="time"
+                value={examInfoData?.time || ""}
+                onChange={(e) => handleBasicDataChange("time", e.target.value)}
+              />
+              <p className="text-xs text-gray-500">
+                الصيغة المقبولة: <span className="font-semibold">HH:MM:SS</span> أو{" "}
+                <span className="font-semibold">MM:SS</span>
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       <button
-        className="bg-blue-500 text-white p-3 rounded-md mt-3"
+        type="button"
+        className="bg-blue-500 text-white p-3 rounded-md mt-3 disabled:opacity-60"
         onClick={handleSubmitBasicData}
+        disabled={add_exam_loading || edit_exam_loading}
       >
-        {add_exam_loading || edit_exam_loading ? "جاري الاضافة...." : params["exam-id"] ?"تعديل" :"إضافة"}
+        {add_exam_loading || edit_exam_loading
+          ? "جاري الحفظ..."
+          : params["exam-id"]
+          ? "تعديل"
+          : "إضافة"}
       </button>
     </Card>
   );

@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { AlertTriangle, Trash2, UserRoundSearchIcon } from "lucide-react";
 import CustomModal from "../layout/Modal";
-import { handleDeleteExam, handleGetAllExams } from "../../lib/features/examSlice";
+import { handleDeleteExam, handleGetAllExamByRoundId, handleGetAllExams } from "../../lib/features/examSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { handleGetAllRoundContent } from "../../lib/features/roundContentSlice";
 import { toast } from "react-toastify";
 
-const DeleteExamModal = ({  open, setOpen, rowData, selectedExam, round_id  , page , per_page}) => {
+const DeleteExamModal = ({  open, setOpen, selectedExam, round_id  , page }) => {
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const { delete_exam_loading } = useSelector(state => state?.exam)
@@ -21,8 +21,11 @@ const DeleteExamModal = ({  open, setOpen, rowData, selectedExam, round_id  , pa
       .then(res => {
         if (res?.data?.status == "success") {
           toast.success(res?.data?.message || "تم حذف الاختبار بنجاح");
-          dispatch(handleGetAllExams({page , per_page : 6}))
+          dispatch(handleGetAllExams({page : 1 , per_page : 100000000000}))
           dispatch(handleGetAllRoundContent({ body: { round_id } }))
+          dispatch(handleGetAllExamByRoundId({body : {
+            round_id
+          }}))
           setOpen(false);
         } else {
           toast.error(res?.error?.response?.data?.message || "هناك خطأ أثناء حذف الاختبار");

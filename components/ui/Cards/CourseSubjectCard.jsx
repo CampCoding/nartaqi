@@ -126,7 +126,7 @@ const CourseSourceSubjectCard = ({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
-                    onClick={() => router.push(`/termsCondition?roundId=${subject?.id}&category=${cat_id}&page=${page}&pageSize=${1000000000}`)}
+                    onClick={() => router.push(`/termsCondition?roundId=${subject?.id}&name=${subject?.name}&category=${cat_id}&page=${page}&pageSize=${1000000000}`)}
                     className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
                   >
                     <File size={14} className="text-blue-600" />

@@ -7,17 +7,13 @@ import PageLayout from '../../../components/layout/PageLayout';
 import BreadcrumbsShowcase from '../../../components/ui/BreadCrumbs';
 import PagesHeader from '../../../components/ui/PagesHeader';
 import { Button, Modal, Input, Form, Popconfirm, Card, Spin, Empty, Tag } from 'antd';
-import { BarChart3, File, Plus, Edit, Trash2, RefreshCw, FileText, CheckCircle2 } from 'lucide-react';
+import { BarChart3, File, Plus, Edit, Trash2, RefreshCw, FileText, CheckCircle2, Book } from 'lucide-react';
 import { handleAddTerms, handleEditTerms, handleDeleteTerms } from '../../../lib/features/termsConditionSlice';
 import { handleGetAllRounds, handleGetSourceRound } from '../../../lib/features/roundsSlice';
 import { toast } from 'react-toastify';
 
 const { TextArea } = Input;
 
-const breadcrumbs = [
-  { label: "الرئيسية", href: "/", icon: BarChart3 },
-  { label: "الشروط والأحكام", href: "#", icon: File, current: true },
-];
 
 export default function TermsPage() {
   const dispatch = useDispatch();
@@ -38,8 +34,16 @@ export default function TermsPage() {
   const categoriesId = searchParams.get("category");
   const page = searchParams.get("page") || "1";
   const pageSize = searchParams.get("pageSize") || "100000000";
+  const name= searchParams.get("name") || "";
 
   const [terms, setTerms] = useState([]);
+
+  const breadcrumbs = [
+  { label: "الرئيسية", href: "/", icon: BarChart3 },
+  {label : name ,href:categoriesId ? "teachers-courses" :"/saudi_source_course", icon:Book},
+  { label: "الشروط والأحكام", href: "#", icon: File, current: true },
+];
+
 
   const fetchData = useCallback(async () => {
     setLoading(true);

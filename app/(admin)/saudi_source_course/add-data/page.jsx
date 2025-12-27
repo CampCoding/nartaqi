@@ -83,28 +83,8 @@ export default function Page() {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
-  // Clear all form data (if needed)
-  const clearFormData = () => {
-    setFormData({
-      step1: {},
-      step2: {},
-      step3: {},
-    });
-    setFileList([]);
-    setImagePreview(null);
-    setSelectedCategory(null);
-  };
-
-  // Handle final submission
   const handleFinalSubmit = () => {
     console.log("Final form data:", formData);
-    // Here you can combine all step data and submit
-    // const finalData = {
-    //   basicInfo: formData.step1,
-    //   features: formData.step2,
-    //   resources: formData.step3,
-    // };
-    // Submit to API...
   };
   // -------------------------
 

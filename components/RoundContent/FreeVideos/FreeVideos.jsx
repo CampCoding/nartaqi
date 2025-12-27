@@ -55,12 +55,12 @@ export default function FreeVideos() {
             <h2 className="text-2xl font-bold text-gray-800">
               هيكل الشروحات المجانية
             </h2>
-            <button
+            {/* <button
               onClick={() => setOpenAddModal(true)}
               className="flex items-center px-4 py-2 text-white bg-green-600 rounded-lg shadow-md hover:bg-green-700 transition duration-150"
             >
               <Plus className="ml-2" /> إضافة
-            </button>
+            </button> */}
           </div>
 
 
@@ -114,7 +114,7 @@ export default function FreeVideos() {
             </div>}
           </div>
         </div>
-        <div className="flex space-x-2 space-x-reverse ml-4 flex-shrink-0">
+        {/* <div className="flex space-x-2 space-x-reverse ml-4 flex-shrink-0">
           <button
             className="bg-blue-500 text-white p-2 rounded-md"
           // title="تعديل الفيديو"
@@ -138,7 +138,7 @@ export default function FreeVideos() {
           >
             حذف الفيديو
           </button>
-        </div>
+        </div> */}
       </div>):  <p className="text-gray-400 text-center py-3 text-2xl">
                   لا توجد فيديوهات  بعد.
                 </p>}
