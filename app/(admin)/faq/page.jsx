@@ -426,12 +426,7 @@ export default function FaqPage() {
           subtitle="نظّم وأدر الأسئلة الشائعة"
           extra={
             <div className="flex items-center gap-4 gap-reverse">
-              <Button type="default" icon={<Upload className="w-4 h-4" />}>
-                استيراد
-              </Button>
-              <Button type="secondary" icon={<Download className="w-4 h-4" />}>
-                تصدير
-              </Button>
+             
               <Button onClick={() => setNewModal(true)} type="primary" size="large" icon={<Plus className="w-5 h-5" />}>
                 إضافة سؤال جديد
               </Button>

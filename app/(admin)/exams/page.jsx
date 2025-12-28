@@ -263,7 +263,7 @@ const TopicExams = () => {
         <PagesHeader
           extra={
             <div className="flex gap-4 items-center">
-              <Link href={"questions/new"}>
+              <Link href={"/questions/new"}>
                 <Button
                   type="primary"
                   size="large"
@@ -292,21 +292,6 @@ const TopicExams = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="rounded-xl border-gray-200 hover:border-blue-300 focus:border-blue-500"
               />
-            </div>
-
-            {/* Filters Toggle */}
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`${
-                  showFilters
-                    ? "bg-blue-50 text-blue-600 border-blue-200"
-                    : "bg-gray-50 text-gray-600 border-gray-200"
-                } transition-all duration-300`}
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                تصفية
-              </Button>
             </div>
           </div>
 
@@ -410,7 +395,7 @@ const TopicExams = () => {
                 ? "لم يتم العثور على اختبارات تطابق معايير البحث"
                 : "ابدأ بإنشاء اختبار جديد"}
             </p>
-            <Link href="exams/new">
+            <Link href="/questions/new">
               <Button
                 type="primary"
                 size="large"

@@ -167,22 +167,26 @@ export default function TrueFalseQuestions({
 
         <div role="radiogroup" aria-label="الإجابة الصحيحة" className="grid grid-cols-2 gap-3">
           <Button
+            onMouseDown={(e) => e.preventDefault()}
+
             className={`w-full ${isTrue ? "ring-2 ring-green-400" : ""}`}
             variant={isTrue ? "success" : "outline"}
             onClick={() => setTrueFalseAnswer(true)}
-            aria-pressed={isTrue}
-            aria-label="صحيح"
+            // aria-pressed={isTrue}
+            // aria-label="صحيح"
             icon={<Check className="w-4 h-4" />}
           >
             صحيح
           </Button>
 
           <Button
+            onMouseDown={(e) => e.preventDefault()}
+
             className={`w-full ${isFalse ? "ring-2 ring-red-400" : ""}`}
             variant={isFalse ? "danger" : "outline"}
             onClick={() => setTrueFalseAnswer(false)}
-            aria-pressed={isFalse}
-            aria-label="خطأ"
+            // aria-pressed={isFalse}
+            // aria-label="خطأ"
             icon={<X className="w-4 h-4" />}
           >
             خطأ

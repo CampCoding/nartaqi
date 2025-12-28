@@ -485,14 +485,7 @@ const PaymentConfirmationPage = () => {
               {/* <Button type="default" icon={<Uploa className="w-4 h-4" />}>
                 استيراد
               </Button> */}
-              <Button
-                type="secondary"
-                icon={<Download className="w-4 h-4" />}
-                onClick={handleExportExcel}
-                loading={isLoading}
-              >
-                تصدير
-              </Button>
+             
               {/* <Button onClick={() => setNewModal(true)} type="primary" size="large" icon={<Plus className="w-5 h-5" />}>
                 إضافة سؤال جديد
               </Button> */}

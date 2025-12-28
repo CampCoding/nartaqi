@@ -5,12 +5,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { handleGetAllContentFreeVideos } from '../../../lib/features/roundContentSlice';
 import { PlayCircleIcon, Plus } from 'lucide-react';
 import AddContentVideoModal from './AddContentFreeVideo';
-import { Spin } from 'antd';
+import { Spin, Tag } from 'antd';
 import EditContentVideoModal from './EditContentFreeVideo';
 import DeleteVideoModal from '../Videos/DeleteVideoModal';
 
 
-export default function FreeVideos() {
+export default function FreeVideos({type}) {
   const dispatch = useDispatch();
   const { get_free_video_loading, get_free_videos } = useSelector(state => state?.content);
   const searchParams = useSearchParams();
@@ -53,14 +53,14 @@ export default function FreeVideos() {
         <div className="lg:col-span-2">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800">
-              هيكل الشروحات المجانية
+               الشروحات المجانية
             </h2>
-            {/* <button
+            {type&& type=="round_content" && <button
               onClick={() => setOpenAddModal(true)}
               className="flex items-center px-4 py-2 text-white bg-green-600 rounded-lg shadow-md hover:bg-green-700 transition duration-150"
             >
               <Plus className="ml-2" /> إضافة
-            </button> */}
+            </button>}
           </div>
 
 
@@ -81,6 +81,11 @@ export default function FreeVideos() {
                 <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
                   مجاني
                 </span>
+              )}
+              {video?.time  && (
+                <Tag color="green" className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                 المده :    {video?.time}
+                </Tag>
               )}
 
             </div>
@@ -114,7 +119,7 @@ export default function FreeVideos() {
             </div>}
           </div>
         </div>
-        {/* <div className="flex space-x-2 space-x-reverse ml-4 flex-shrink-0">
+        {type && type== "round_content" &&<div className="flex space-x-2 space-x-reverse ml-4 flex-shrink-0">
           <button
             className="bg-blue-500 text-white p-2 rounded-md"
           // title="تعديل الفيديو"
@@ -138,7 +143,7 @@ export default function FreeVideos() {
           >
             حذف الفيديو
           </button>
-        </div> */}
+        </div>}
       </div>):  <p className="text-gray-400 text-center py-3 text-2xl">
                   لا توجد فيديوهات  بعد.
                 </p>}

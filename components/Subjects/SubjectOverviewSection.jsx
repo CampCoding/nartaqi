@@ -991,11 +991,11 @@ const SubjectDetails = ({ subjectId, setSelectedUnit }) => {
         className="shadow-sm h-full"
         cover={
           f?.image_url ? (
-            <div className="p-3">
+            <div className="p-3  !flex !justify-center !items-center">
               <Image
                 src={f.image_url}
                 alt={title}
-                className="rounded-xl"
+                className="rounded-xl mx-auto"
                 preview={false}
               />
             </div>
@@ -1087,7 +1087,7 @@ const SubjectDetails = ({ subjectId, setSelectedUnit }) => {
 
             <div className="flex flex-col gap-2 mt-3">
               {email && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col  gap-2">
                   {/* <MailOutlined className="text-gray-500" /> */}
                   <Text type="secondary">البريد:</Text>
                   <a href={`mailto:${email}`} className="text-[#0F7490]">
@@ -1097,7 +1097,7 @@ const SubjectDetails = ({ subjectId, setSelectedUnit }) => {
               )}
 
               {website && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-2">
                   {/* <LinkOutlined className="text-gray-500" /> */}
                   <Text type="secondary">الموقع:</Text>
                   <a
@@ -1186,13 +1186,13 @@ const SubjectDetails = ({ subjectId, setSelectedUnit }) => {
 
                 <div className="flex flex-wrap gap-2 mt-4">
                   <Tag color="blue" icon={<TagOutlined />}>
-                    {subject.free ? "مجانية" : "مدفوعة"}
+                    {subject?.free ? "مجانية" : "مدفوعة"}
                   </Tag>
                   <Tag color="green" icon={<CalendarOutlined />}>
-                    {subject.duration}
+                    {subject?.duration}
                   </Tag>
                   <Tag color="orange" icon={<TeamOutlined />}>
-                    {subject.capacity} مقاعد
+                    {subject?.capacity} مقاعد
                   </Tag>
                   <Tag color="purple">
                     {getGenderPolicyIcon(subject.genderPolicy)}{" "}
@@ -1204,7 +1204,8 @@ const SubjectDetails = ({ subjectId, setSelectedUnit }) => {
               <Col xs={24} md={8}>
                 <div className="text-right md:text-left">
                   <div className="text-3xl font-bold text-primary mb-2 flex flex-col items-end gap-3">
-                    {subject.free ? "مجانية" : `${subject.price} ر.س`}
+                    {/* {subject.free ? "مجانية" : `${subject.price} ر.س`} */}
+                    {`${subject.price} ر.س`}
                   </div>
                 </div>
               </Col>

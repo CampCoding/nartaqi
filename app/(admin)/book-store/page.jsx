@@ -742,12 +742,7 @@ export default function BookStorePage() {
           subtitle="أضف، حرّر، واحذف المنتجات والحقائب والدورات"
           extra={
             <div className="flex items-center gap-4 gap-reverse">
-              <Button type="default" icon={<Upload className="w-4 h-4" />}>
-                استيراد
-              </Button>
-              <Button type="secondary" icon={<Download className="w-4 h-4" />}>
-                تصدير
-              </Button>
+             
               <Button
                 onClick={() => setNewModal(true)}
                 type="primary"

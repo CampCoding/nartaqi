@@ -193,7 +193,7 @@ export default function Page() {
     };
 
     if (activeTab == "free_explain") {
-      return <FreeVideos />
+      return <FreeVideos  type="round_content"/>
     }
     // المصادر والملفات
     return (
@@ -279,7 +279,7 @@ export default function Page() {
            
             <button
               onClick={() => setActiveTab("exam")}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === "explain"
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === "exam"
                   ? "bg-orange-600 text-white shadow"
                   : "bg-gray-50 text-gray-700 hover:bg-gray-100"
                 }`}

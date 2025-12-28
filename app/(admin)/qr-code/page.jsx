@@ -129,11 +129,11 @@ export default function Page() {
           subtitle={"نظّم وأدر QR Code "}
           extra={
             <div className="flex items-center gap-4 gap-reverse">
-              <Dropdown overlay={menu}>
+              {/* <Dropdown overlay={menu}>
                 <Button type="default" size="large">
                   خيارات
                 </Button>
-              </Dropdown>
+              </Dropdown> */}
 
               <Button
                 onClick={() => setNewModal(true)}

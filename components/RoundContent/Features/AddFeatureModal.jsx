@@ -75,7 +75,7 @@ export default function AddFeatureModal({ open, setOpen, id }) {
             handleClose(); // Close and reset modal on success
 
           } else {
-            toast.error(res?.data?.message || res?.data || "هناك خطأ أثناء إضافة الميزة");
+            toast.error(res?.error?.response?.data?.message || res?.data?.message || "هناك خطأ أثناء إضافة الميزة");
           }
         })
         .catch(e => {
@@ -137,7 +137,7 @@ export default function AddFeatureModal({ open, setOpen, id }) {
         <Form.Item
           name="image"
           label="صورة الميزة "
-           rules={[{ required: true,}]}
+          //  rules={[{ required: true,}]}
           // No 'required' rule, but a custom validation to ensure file type if one is uploaded
           valuePropName="fileList"
           getValueFromEvent={(e) => {

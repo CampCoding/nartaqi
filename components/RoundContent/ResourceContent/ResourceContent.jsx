@@ -408,19 +408,7 @@ export default function ResourceContent({round_id}) {
                                 onClick={() => window.open(file?.url, '_blank')}
                               />
                             </Tooltip>
-                            <Tooltip title="تحميل">
-                              <Button
-                                type="text"
-                                size="small"
-                                icon={<Download className="w-4 h-4" />}
-                                onClick={() => {
-                                  const link = document.createElement('a');
-                                  link.href = file?.url;
-                                  link.download = file?.title;
-                                  link.click();
-                                }}
-                              />
-                            </Tooltip>
+                          
                           </div>
 
                         </div>

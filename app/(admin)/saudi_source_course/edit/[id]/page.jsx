@@ -1,5 +1,5 @@
 "use client";
-import { useParams, useSearchParams , useRouter } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import { Check } from "lucide-react";
@@ -7,7 +7,11 @@ import { Upload, message } from "antd";
 import AddCourseSourceBasicInfo from "../../../../../components/SaudiCourseSource/AddCourseSourceBasicInfo";
 import Features from "../../../../../components/SaudiCourseSource/Features";
 import AddCourseSourceResource from "../../../../../components/SaudiCourseSource/AddCourseSourceResource";
-import { add_round_data, handleGetAllRounds, handleGetSourceRound } from "../../../../../lib/features/roundsSlice";
+import {
+  add_round_data,
+  handleGetAllRounds,
+  handleGetSourceRound,
+} from "../../../../../lib/features/roundsSlice";
 import { useDispatch } from "react-redux";
 
 // Helper لتحويل الصورة لـ base64 (للمعاينة)
@@ -46,71 +50,71 @@ export default function Page() {
   const [rowData, setRowData] = useState({});
   const dispatch = useDispatch();
 
-  const page = params.get("page")
-  const pageSize = params.get("pageSize")
-  const isSource = params.get("isSource")
+  const page = params.get("page");
+  const pageSize = params.get("pageSize");
+  const isSource = params.get("isSource");
   const Cat_id = params.get("category_id");
 
   const router = useRouter();
 
   useEffect(() => {
-    if(!isSource) {
-      dispatch(handleGetSourceRound({page , per_page: 1000000000}))
-      .unwrap()
-      .then((res) => {
-        if (res?.data?.status === "success") {
-          const found = res?.data?.message?.data?.find(
-            (item) => String(item?.id) === String(id)
-          );
-          setRowData(found || null);
-          if (found?.id) {
-            setRoundId(found.id);
+    if (!isSource) {
+      dispatch(handleGetSourceRound({ page, per_page: 1000000000 }))
+        .unwrap()
+        .then((res) => {
+          if (res?.data?.status === "success") {
+            const found = res?.data?.message?.data?.find(
+              (item) => String(item?.id) === String(id)
+            );
+            setRowData(found || null);
+            if (found?.id) {
+              setRoundId(found.id);
+            }
           }
-        }
-      });
-    }else {
-       dispatch(
-            handleGetAllRounds({
-              course_category_id: Cat_id,
-              page,
-              per_page: 100000000
-            })
-          )
-          .unwrap()
-          .then(res =>
-          {
-             if (res?.data?.status === "success") {
-          const found = res?.data?.message?.data?.find(
-            (item) => String(item?.id) === String(id)
-          );
-          setRowData(found || null);
-          if (found?.id) {
-            setRoundId(found.id);
+        });
+    } else {
+      dispatch(
+        handleGetAllRounds({
+          course_category_id: Cat_id,
+          page,
+          per_page: 100000000,
+        })
+      )
+        .unwrap()
+        .then((res) => {
+          if (res?.data?.status === "success") {
+            const found = res?.data?.message?.data?.find(
+              (item) => String(item?.id) === String(id)
+            );
+            setRowData(found || null);
+            if (found?.id) {
+              setRoundId(found.id);
+            }
           }
-        }
-          }
-           )
+        });
     }
-  }, [id, dispatch , page,pageSize]);
+  }, [id, dispatch, page, pageSize]);
 
   // --- Navigation Logic ---
   const goToNextStep = () => {
-     if (currentStep == STEPS.length) {
-      if(!isSource) {
-       router.push(`/saudi_source_course`);
-      }else {
+    if (currentStep == STEPS.length) {
+      if (!isSource) {
+        router.push(`/saudi_source_course`);
+      } else {
         router.push(`/teachers-courses`);
       }
-    }else {
-    setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
+    } else {
+      setCurrentStep((prev) => Math.min(prev + 1, STEPS.length));
     }
   };
 
   const goToPrevStep = () => {
-    if(isSource) {
-       dispatch(add_round_data(""));
-       setCurrentStep((prev) => Math.max(prev - 1, 1));
-    }else {
+    if (isSource) {
+      dispatch(add_round_data(""));
+      window.location.reload();
+      setCurrentStep((prev) => Math.max(prev - 1, 1));
+    } else {
+      window.location.reload();
       setCurrentStep((prev) => Math.max(prev - 1, 1));
     }
   };
@@ -120,6 +124,29 @@ export default function Page() {
     if (stepId < currentStep) return "complete";
     if (stepId === currentStep) return "current";
     return "upcoming";
+  };
+
+  // ✅ NEW: Go to specific step when clicking on it
+  const goToStep = (stepId) => {
+    if (stepId === currentStep) return;
+
+    const isFuture = stepId > currentStep;
+
+    // لو رايح لقدّام لخطوة 2 لازم roundId يكون موجود (عشان Features تعتمد عليه)
+    if (isFuture && stepId === 2 && !roundId) {
+      message.warning(
+        "لازم يتم حفظ بيانات الدورة أولاً قبل الدخول لمميزات الدورة."
+      );
+      return;
+    }
+
+    // نفس منطق الرجوع عندك لما isSource
+    if (isSource && stepId < currentStep) {
+      dispatch(add_round_data(""));
+      window.location.reload();
+    }
+
+    setCurrentStep(stepId);
   };
 
   const beforeUpload = async (file) => {
@@ -146,8 +173,6 @@ export default function Page() {
     ]);
     return false; // منع الرفع التلقائي
   };
-
-
 
   const getStatusClasses = (status) => {
     switch (status) {
@@ -202,7 +227,7 @@ export default function Page() {
     if (currentStep === 2) {
       return (
         <Features
-        isSource={isSource}
+          isSource={isSource}
           roundId={roundId}
           currentStep={currentStep}
           goToNextStep={goToNextStep}
@@ -258,9 +283,44 @@ export default function Page() {
             const { dot, text, line } = getStatusClasses(status);
             const isLast = index === STEPS.length - 1;
 
+            // ✅ allow click to completed/current steps always
+            // ✅ allow click to future step 2 only if roundId exists (handled in goToStep)
+            const clickable = step.id <= currentStep || (step.id === 2 && roundId);
+
             return (
               <React.Fragment key={step.id}>
-                <div className="flex w-1/4 min-w-0 flex-shrink-0 flex-col items-center">
+                <div
+                  onClick={() => {
+                    if (!clickable) {
+                      // نفس رسالة الحماية
+                      if (step.id === 2 && !roundId) {
+                        message.warning(
+                          "لازم يتم حفظ بيانات الدورة أولاً قبل الدخول لمميزات الدورة."
+                        );
+                      }
+                      return;
+                    }
+                    goToStep(step.id);
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      if (!clickable) {
+                        if (step.id === 2 && !roundId) {
+                          message.warning(
+                            "لازم يتم حفظ بيانات الدورة أولاً قبل الدخول لمميزات الدورة."
+                          );
+                        }
+                        return;
+                      }
+                      goToStep(step.id);
+                    }
+                  }}
+                  className={`flex w-1/4 min-w-0 flex-shrink-0 flex-col items-center ${
+                    clickable ? "cursor-pointer" : "cursor-not-allowed opacity-60"
+                  }`}
+                >
                   <div
                     className={`relative flex h-10 w-10 items-center justify-center rounded-full transition duration-300 ${dot}`}
                   >

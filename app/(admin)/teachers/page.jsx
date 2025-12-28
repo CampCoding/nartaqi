@@ -278,14 +278,14 @@ const TeachersManagement = () => {
           extra={
             <div className="flex items-center gap-4 gap-reverse">
               
-              <Button
+              {/* <Button
                 type="secondary"
                 icon={<Download className="w-4 h-4" />}
                 onClick={handleExportExcel}
                 loading={loading}
               >
                 تصدير
-              </Button>
+              </Button> */}
               <Button
                 onClick={() => setAddNewModal(true)}
                 type="primary"

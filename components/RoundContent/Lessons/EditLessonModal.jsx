@@ -28,7 +28,7 @@ export default function EditLessonModal({
 
   const isFormValid = isSource
     ? Boolean(rowData?.lesson_title?.trim?.())
-    : Boolean(rowData?.title?.trim?.() && dateStr);
+    : Boolean(rowData?.lesson_title?.trim?.() && dateStr);
 
   useEffect(() => {
     const raw = rowData?.lesson_show_date;

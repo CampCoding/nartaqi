@@ -256,12 +256,12 @@ const CourseSourceSubjectCard = ({
             </div>
             <div className="flex items-center gap-[5px]">
               <img
-                className="w-6 h-6 rounded-xl"
-                src={subject?.teacher?.image_url}
+                className="w-6 h-6 rounded-xl object-cover"
+                src={subject?.teachers[0]?.image_url}
                 alt="instructor"
               />
               <div className="text-text text-[10px] font-medium">
-                المدرس: {subject?.teacher?.name || "—"}
+                المدربين: {subject?.teachers[0]?.name || "—"}
               </div>
 
               {subject?.teachers?.length > 1 && <div className="w-7 h-7 !text-sm font-bold rounded-full flex justify-center items-center bg-orange-400/50 text-orange-600">

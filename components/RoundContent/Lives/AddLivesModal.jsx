@@ -30,7 +30,7 @@ export default function AddLivesModal({
   const [dateStr, setDateStr] = useState(""); // string
   const { store_live_loading } = useSelector((state) => state?.lives);
 
-  const isFormValid = isSource ? Boolean(lessonData?.title) :Boolean(lessonData?.title && dateStr  && lessonData?.link);
+  const isFormValid = isSource ? Boolean(lessonData?.title) :Boolean(lessonData?.title && dateStr);
 
   function handleInputChange(e) {
     const { name, value } = e.target;

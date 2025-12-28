@@ -105,6 +105,8 @@ export default function EditFeatureModal({ open, setOpen, id, rowData, setRowDat
         // Case 2: Existing URL (User didn't change the image, send the URL back)
         formData.append("image", rowData.image); 
       } else if (rowData.image === null) {
+                formData.append("image", null); 
+
         // Case 3: Image explicitly removed (Send a signal to delete if needed)
         // Check your API documentation for how to handle image removal. 
         // Example: formData.append("delete_image", "true"); 
@@ -120,7 +122,7 @@ export default function EditFeatureModal({ open, setOpen, id, rowData, setRowDat
             dispatch(handleGetAllRoundFeatures({ body: { round_id: id } }));
             handleClose();
           } else {
-            toast.error(res?.data?.message || "هناك خطأ أثناء تعديل الميزة");
+            toast.error(res?.error?.response?.data?.message || "هناك خطأ أثناء تعديل الميزة");
           }
         })
         .catch(e => {

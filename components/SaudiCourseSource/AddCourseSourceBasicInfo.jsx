@@ -312,7 +312,7 @@ export default function AddCourseSourceBasicInfo({
         goal: rowData.goal || "",
         // terms_condition: rowData.terms_condition || "",
         certificate: Boolean(
-          rowData?.certificate ?? rowData?.has_certificate ?? rowData?.hasCertificate ?? false
+          rowData?.have_certificate == "1" ?? false
         ),
       };
 
@@ -372,7 +372,7 @@ export default function AddCourseSourceBasicInfo({
         goal: store_round?.goal || "",
         // terms_condition: store_round?.terms_condition || "",
         certificate: Boolean(
-          store_round?.certificate ?? store_round?.has_certificate ?? store_round?.hasCertificate ?? false
+          store_round?.certificate ?? store_round?.have_certificate == "1" ?? store_round?.hasCertificate ?? false
         ),
       };
 
@@ -587,9 +587,15 @@ export default function AddCourseSourceBasicInfo({
       formData.append("source", isSource ? "0" : "1");
       formData.append("capacity", values?.capacity?.toString() || "20");
 
+      // if (timeString) {
+      //   formData.append("time_show", timeString);
+      // } else if (isEditMode && touchedFields.time) {
+      //   formData.append("time_show", "");
+      // }
+
       if (timeString) {
         formData.append("time_show", timeString);
-      } else if (isEditMode && touchedFields.time) {
+      } else  {
         formData.append("time_show", "");
       }
 
@@ -611,7 +617,7 @@ export default function AddCourseSourceBasicInfo({
         } else if (oldFilesToDelete.round_book) {
           // formData.append("round_book", "");
         } else if (rowData?.round_book_url && !oldFilesToDelete.round_book) {
-          formData.append("round_book", rowData.round_book_url);
+          // formData.append("round_book", rowData.round_book_url);
         } else {
           // formData.append("round_book", "");
         }
@@ -621,7 +627,7 @@ export default function AddCourseSourceBasicInfo({
         } else if (oldFilesToDelete.round_road_map_book) {
           // formData.append("round_road_map_book", "");
         } else if (rowData?.round_road_map_book_url && !oldFilesToDelete.round_road_map_book) {
-          formData.append("round_road_map_book", rowData.round_road_map_book_url);
+          // formData.append("round_road_map_book", rowData.round_road_map_book_url);
         } else {
           // formData.append("round_road_map_book", "");
         }
@@ -679,7 +685,7 @@ export default function AddCourseSourceBasicInfo({
           page,
           per_page: 6
         }))
-        if (isEditMode) {
+        if (isEditMode && result?.data?.status == "success") {
           toast.success(
             result?.data?.message?.message || "تم تحديث الدورة بنجاح"
           );
@@ -692,7 +698,8 @@ export default function AddCourseSourceBasicInfo({
           toast.success(result?.data?.message || "تم إضافة الدورة بنجاح");
         }
         goToNextStep();
-      } else {
+      } 
+      else {
         console.log("errorrrr", result);
         toast.error(
           result?.error?.response?.data?.message || "حدث خطأ أثناء حفظ البيانات"

@@ -1194,7 +1194,7 @@ const emptyQuestion = () => ({
   text: "",
   attachments: [],
   correctIndex: 0,
-  options: [emptyOption(), emptyOption(), emptyOption(), emptyOption()],
+  options: [emptyOption(), emptyOption()],
 });
 
 const emptyGroup = () => ({

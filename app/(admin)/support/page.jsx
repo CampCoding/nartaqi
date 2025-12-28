@@ -314,12 +314,7 @@ export default function SupportPage() {
           subtitle="مقالات فيديو موجّهة للمستخدمين: إنشاء حساب، الدفع، الواجبات…"
           extra={
             <div className="flex items-center gap-4 gap-reverse">
-              <Button type="default" icon={<Upload className="w-4 h-4" />}>
-                استيراد
-              </Button>
-              <Button type="secondary" icon={<Download className="w-4 h-4" />}>
-                تصدير
-              </Button>
+             
               <Button
                 onClick={() => setNewModal(true)}
                 type="primary"

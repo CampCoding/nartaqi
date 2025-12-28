@@ -112,7 +112,7 @@ const ExamCard = ({
             </div>
           </div>
 
-          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-gray-100">
+          {/* <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-gray-100">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-100 rounded-lg">
                 <SquareCheck className="w-4 h-4 text-green-600" />
@@ -124,7 +124,7 @@ const ExamCard = ({
                 </p>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Action Buttons */}

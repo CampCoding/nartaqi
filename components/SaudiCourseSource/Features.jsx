@@ -57,12 +57,12 @@ export default function Features({
   {/* Feature Image Area */}
   <div className="relative w-full h-[250px]">
     <img
-      src={feature.image_url}
+      src={feature?.image ? (feature?.image_url) : "/images/logo.svg"}
       alt={feature.title}
       className="w-full h-full object-cover rounded-t-xl"
       onError={(e) => {
         e.target.src =
-          "https://via.placeholder.com/400x300?text=صورة+غير+متوفرة";
+          "/images/logo.svg";
         e.target.className =
           "w-full h-full object-contain bg-gray-100 p-8 opacity-80"; // Adjust styling for placeholder
       }}

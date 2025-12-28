@@ -241,14 +241,14 @@ const StudentsManagement = () => {
           subtitle={"مراجعة وإدارة طلبات المتدربين وملفاتهم"}
           extra={
             <div className="flex items-center gap-4 gap-reverse">
-              <Button
+              {/* <Button
                 onClick={() => setAddNewModal(true)}
                 type="primary"
                 size="large"
                 icon={<Plus className="w-5 h-5" />}
               >
                 إضافة متدرب
-              </Button>
+              </Button> */}
             </div>
           }
         />

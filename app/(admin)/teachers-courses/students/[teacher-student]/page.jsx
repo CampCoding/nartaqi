@@ -534,9 +534,9 @@ export default function Page() {
               >
                 سحب من الدورة
               </Button>
-              <Button type="secondary" icon={<Download className="w-4 h-4" />} onClick={handleExportExcel}>
+              {/* <Button type="secondary" icon={<Download className="w-4 h-4" />} onClick={handleExportExcel}>
                 تصدير
-              </Button>
+              </Button> */}
             
             </div>
           }

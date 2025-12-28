@@ -202,6 +202,7 @@ export default function Page() {
           toast.success("تم تحديث الروابط بنجاح");
           dispatch(handleGetAllRoundResourcesLinks({ body: { round_id: roundId } }));
           setOpenEditLinksModal(false);
+          form.resetFields();
         } else {
           toast.error(result?.error?.response?.data?.message || "فشل في تحديث الروابط");
         }
@@ -219,6 +220,11 @@ export default function Page() {
           toast.success("تم إضافة الروابط بنجاح");
           dispatch(handleGetAllRoundResourcesLinks({ body: { round_id: roundId } }));
           setOpenAddLinksModal(false);
+          setLinksData({
+            whatsapp_link: "",
+            telegram_link: ""
+          })
+          form.resetFields();
         } else {
           toast.error(result?.error?.response?.data?.message || "فشل في إضافة الروابط");
         }
@@ -226,6 +232,10 @@ export default function Page() {
     } catch (error) {
       console.error("Error submitting links:", error);
       toast.error("حدث خطأ أثناء حفظ الروابط");
+    }
+    finally {
+
+      form.resetFields();
     }
   };
 
@@ -571,7 +581,7 @@ export default function Page() {
                   <p className="text-sm text-gray-500 m-0">إدارة ملفات الدورة التعليمية</p>
                 </div>
               </div>
-             
+
             </div>
           }
         >
@@ -651,19 +661,7 @@ export default function Page() {
                                 onClick={() => window.open(file?.url, '_blank')}
                               />
                             </Tooltip>
-                            <Tooltip title="تحميل">
-                              <Button
-                                type="text"
-                                size="small"
-                                icon={<Download className="w-4 h-4" />}
-                                onClick={() => {
-                                  const link = document.createElement('a');
-                                  link.href = file?.url;
-                                  link.download = file?.title;
-                                  link.click();
-                                }}
-                              />
-                            </Tooltip>
+
                           </div>
 
                           <div className="flex items-center gap-2">
@@ -719,7 +717,10 @@ export default function Page() {
       {/* Add Links Modal */}
       <Modal
         open={openAddLinksModal}
-        onCancel={() => setOpenAddLinksModal(false)}
+        onCancel={() => {
+          setOpenAddLinksModal(false)
+          form.resetFields();
+        }}
         title={
           <div className="flex items-center gap-3">
             <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-2 rounded-lg">
@@ -736,6 +737,7 @@ export default function Page() {
         centered
       >
         <Form
+          form={form}
           layout="vertical"
           className="space-y-6"
           onFinish={handleLinksSubmit}

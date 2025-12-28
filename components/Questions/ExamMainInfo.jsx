@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Input from "./ExamInput";
 import { FileText } from "lucide-react";
 import Card from "./ExamCard";
@@ -18,6 +18,10 @@ export default function ExamMainInfo({
 }) {
   const params = useParams();
   const currentDate = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    console.log(lessonId , examInfoData)
+  } ,[lessonId , examInfoData])
 
   return (
     <Card title="معلومات الاختبار الأساسية" icon={FileText}>
@@ -116,21 +120,19 @@ export default function ExamMainInfo({
           </div>
         )}
 
-        {examInfoData?.type == "intern" && (
+        {(examInfoData?.type == "intern" || lessonId)  && (
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Input
                 label="الوقت"
-                placeholder="مثال: 01:30:00 أو 30:00"
+                placeholder="ادخل وقت الاختبار"
                 type="text"
                 name="time"
+                
                 value={examInfoData?.time || ""}
                 onChange={(e) => handleBasicDataChange("time", e.target.value)}
               />
-              <p className="text-xs text-gray-500">
-                الصيغة المقبولة: <span className="font-semibold">HH:MM:SS</span> أو{" "}
-                <span className="font-semibold">MM:SS</span>
-              </p>
+             
             </div>
           </div>
         )}

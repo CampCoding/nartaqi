@@ -14,8 +14,8 @@ export default function AddVideoModal({ open, setOpen, id, content_id }) {
   const [videoData, setVideoData] = useState({
     title: "",
     description: "",
-    youtube_link: null,
-    vimeo_link: null,
+    youtube_link: "",
+    vimeo_link: "",
     time: ""
   });
 
@@ -63,7 +63,13 @@ export default function AddVideoModal({ open, setOpen, id, content_id }) {
             })
           );
           setOpen(false);
-          setVideoData({ time: "", title: "", description: "", video: "" });
+          setVideoData({
+            title: "",
+            description: "",
+            youtube_link: "",
+            vimeo_link: "",
+            time: ""
+          });
         } else {
           toast.error(res?.data?.message || "هناك خطأ أثناء اضافه الفيديو");
         }

@@ -780,13 +780,7 @@ export default function Page() {
           subtitle={"نظّم وأدر فئات الدورات"}
           extra={
             <div className="flex items-center gap-3">
-              <Button
-                type="secondary"
-                icon={<Download className="w-4 h-4" />}
-                onClick={handleExport}
-              >
-                تصدير
-              </Button>
+             
               <Button
                 onClick={handleAdd}
                 type="primary"

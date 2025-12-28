@@ -20,6 +20,9 @@ const initialState = {
   get_exam_questions_list : [],
   get_exam_question_loading : false, 
 
+  all_exam_lessons_list : [],
+  all_exam_lesson_loading : false,
+
   add_question_loading : false,
   get_exam_details_loading: false,
   edit_question_loading : false,
@@ -49,6 +52,11 @@ const initialState = {
 
 export const handleGetAllExamByRoundId = createAsyncThunk("examSlice/handleGetAllExamByRoundId",async({body , page , per_page})=> {
   const response = await api.post(`admin/exams/getAllExamsByRoundId?page=${page}&per_page=${per_page}`,{body});
+  return response
+})
+
+export const handleGetAllExamByLessonId = createAsyncThunk("examSlice/handleGetAllExamByLessonId",async({body})=> {
+  const response = await api.post(`admin/exams/GetAllExamsLessonByLessonId`,{body});
   return response
 })
 
@@ -470,6 +478,19 @@ export const examSlice = createSlice({
     })
     .addCase(handleAddParagraphQuestion.rejected ,(state) => {
       state.add_paragraph_question_loading = false;
+    })
+
+    
+
+     .addCase(handleGetAllExamByLessonId.pending ,(state) => {
+      state.all_exam_lesson_loading = true;
+    })
+    .addCase(handleGetAllExamByLessonId.fulfilled ,(state , action) => {
+      state.all_exam_lesson_loading = false;
+      state.all_exam_lessons_list = action.payload
+    })
+    .addCase(handleGetAllExamByLessonId.rejected ,(state) => {
+      state.all_exam_lesson_loading = false;
     })
   }
 })

@@ -14,6 +14,7 @@ import {
   Segmented,
   Badge,
   Modal,
+  Empty,
 } from "antd";
 import {
   EyeOutlined,
@@ -187,12 +188,12 @@ function StudentsGrid({
   const moreMenu = (teacher) => ({
     items: [
       { type: "divider" },
-      {
-        key: "delete",
-        danger: true,
-        icon: <DeleteOutlined />,
-        label: "حذف",
-      },
+      // {
+      //   key: "delete",
+      //   danger: true,
+      //   icon: <DeleteOutlined />,
+      //   label: "حذف",
+      // },
        {
         key: "assign",
         danger: false,
@@ -310,7 +311,7 @@ function StudentsGrid({
         */}
 
         {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        {pageData?.length > 0 ?<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
           {pageData.map((t) => {
             return (
               <Card
@@ -474,7 +475,7 @@ function StudentsGrid({
               </Card>
             );
           })}
-        </div>
+        </div> :<Empty />}
 
         {/* Footer: pagination + range info */}
         <div className="flex items-center justify-between pt-2">
