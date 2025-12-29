@@ -278,7 +278,7 @@ const CourseSourceSubjectCard = ({
               </div>
             </div>
 
-            {subject?.teachers?.length > 0 && <div className="flex items-center gap-[5px]">
+            {subject?.teachers?.length > 0 ? <div className="flex items-center gap-[5px]">
               {subject?.teachers[0]?.image && (
                 <img
                   className="w-6 h-6 rounded-xl object-cover"
@@ -295,7 +295,7 @@ const CourseSourceSubjectCard = ({
                   {subject?.teachers?.length - 1}+
                 </div>
               )}
-            </div>}
+            </div> : ""}
           </div>
 
           <div className="flex gap-2 items-center">

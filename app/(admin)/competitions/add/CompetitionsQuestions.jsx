@@ -207,14 +207,14 @@ const EnhancedQuillEditor = ({
     >
       {/* Inline “insert image” button */}
       <div className="flex justify-end p-2 border-b bg-gray-50">
-        <Button
+        {/* <Button
           size="small"
           onClick={openPicker}
           icon={<ImageIcon className="w-4 h-4" />}
           className="rounded-lg"
         >
           أدرج صورة
-        </Button>
+        </Button> */}
         <input
           ref={fileInputRef}
           type="file"

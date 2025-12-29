@@ -20,6 +20,8 @@ import studentReducer from  '../features/studentSlice';
 import livesReducer from '../features/livesSlice';
 import termsConditionReducer from '../features/termsConditionSlice';
 import freeVideoReducer from '../features/freeVideoSlice';
+import ratingReducer from '../features/ratingSlice';
+
 
 export const rootReducer = combineReducers({
    auth : authReducer,
@@ -42,5 +44,6 @@ export const rootReducer = combineReducers({
    students: studentReducer,
    lives: livesReducer,
    terms : termsConditionReducer,
-   free_videos: freeVideoReducer
+   free_videos: freeVideoReducer,
+   rating  : ratingReducer
 });

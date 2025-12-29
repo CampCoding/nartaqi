@@ -266,6 +266,11 @@ export default function ArabicCourseCurriculum({ id, source }) {
                     فيديو اختبار
                   </span>
                 )}
+                {video?.time && (
+                  <Tag className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full flex-shrink-0">
+                    المدة : {video?.time}
+                  </Tag>
+                )}
               </div>
               <p className="mt-1 text-sm text-gray-600">{video?.description}</p>
               <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
@@ -358,6 +363,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
                 </a>
               )}
             </div>
+            {pdf?.type && <Tag className="mt-3" color="green">{pdf?.type}</Tag>}
           </div>
           <div className="flex gap-3 actions">
             {/* <div class="flex gap-3 items-center space-x-4">
@@ -406,7 +412,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
 
   const ExamCard = ({ exam, lesson, content }) => {
     const [deleteOpen, setDeleteOpen] = useState(false);
-    const examData = exam?.exam || {};
+    const examData = exam?.exams || {};
     const examId = exam?.id || examData.id;
     const isExamExpanded = expandedExams[examId];
     const [addOpen, setAddOpen] = useState(false);
@@ -457,15 +463,15 @@ export default function ArabicCourseCurriculum({ id, source }) {
             {examData?.id ? (
               <div className="flex gap-3 mt-3 actions">
                 <button
-                    type="button"
-                    data-drawer-target="drawer-update-product"
-                    data-drawer-show="drawer-update-product"
-                    aria-controls="drawer-update-product"
-                    class="py-2 px-3 flex items-center text-sm font-medium text-center text-white bg-primary rounded-lg hover:bg-primary focus:ring-4 focus:outline-none focus:ring-primary-300 dark:bg-primary dark:hover:bg-primary dark:focus:ring-primary"
-                    onClick={() => router.push(`/exams/${examData?.id}?lessonId=${lesson?.lesson_id || lesson?.id}`)}
-                  >
-                    تفاصيل الاختبار
-                  </button>
+                  type="button"
+                  data-drawer-target="drawer-update-product"
+                  data-drawer-show="drawer-update-product"
+                  aria-controls="drawer-update-product"
+                  class="py-2 px-3 flex items-center text-sm font-medium text-center text-white bg-primary rounded-lg hover:bg-primary focus:ring-4 focus:outline-none focus:ring-primary-300 dark:bg-primary dark:hover:bg-primary dark:focus:ring-primary"
+                  onClick={() => router.push(`/exams/${examData?.id}?lessonId=${lesson?.lesson_id || lesson?.id}`)}
+                >
+                  تفاصيل الاختبار
+                </button>
                 {/* <div class="flex gap-3 items-center space-x-4">
                   <button
                     type="button"
@@ -1018,7 +1024,7 @@ export default function ArabicCourseCurriculum({ id, source }) {
   const [isEditing, setIsEditing] = useState(false);
 
 
-  const textWrapClass = "break-words whitespace-normal overflow-hidden max-w-[50%] [&_*]:break-words [&_*]:whitespace-normal ";
+  const textWrapClass = "break-words whitespace-normal overflow-hidden max-w-[90%] [&_*]:break-words [&_*]:whitespace-normal ";
 
 
   const ContentSection = ({

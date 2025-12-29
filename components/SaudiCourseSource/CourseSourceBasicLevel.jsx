@@ -1456,6 +1456,8 @@ export default function CourseSourceBasicLevel({ id, isSource }) {
                 </a>
               )}
             </div>
+
+            {pdf?.type &&<Tag className="mt-3" color="green">{pdf?.type}</Tag>}
           </div>
         </div>
         <div className="flex space-x-2 space-x-reverse ml-4 flex-shrink-0">
@@ -1489,10 +1491,14 @@ export default function CourseSourceBasicLevel({ id, isSource }) {
     const [exams, setExams] = useState({});
     const [videos, setVideos] = useState([]);
     const [pdfs, setPdfs] = useState([]);
+    
+    useEffect(() => {
+      console.log(exam , lessonExams);
+    } , [exam , lessonExams])
 
     useEffect(() => {
       if (lessonExams && lessonExams?.length > 0) {
-        setExams(lessonExams[0]?.exam);
+        setExams(lessonExams[0]?.exams);
         setVideos(lessonExams[0]?.videos);
         setPdfs(lessonExams[0]?.exam_pdfs)
       }
@@ -1556,6 +1562,15 @@ export default function CourseSourceBasicLevel({ id, isSource }) {
                       }}
                     >
                       حذف الاختبار
+                    </ActionButton>
+                    <ActionButton
+                      className="bg-green-500 text-white p-2 rounded-md"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/exams/${exams?.id}?lessonId=${lessonId}`)
+                      }}
+                    >
+                      تفاصيل الاختبار
                     </ActionButton>
                   </div>
                 </div>

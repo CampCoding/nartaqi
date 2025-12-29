@@ -152,9 +152,14 @@ export default function Sidebar() {
       path:"/teams"
     },
     {
-      name:"التقييم",
+      name:"التقييمات",
       icon :  Star ,
       path:"/rating"
+    },
+    {
+      name:"تقييمات المستخدمين",
+      icon :  Star ,
+      path:"/user-rating"
     },
     {
       name:"الإشعارات",

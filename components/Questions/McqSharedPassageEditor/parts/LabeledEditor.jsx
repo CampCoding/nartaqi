@@ -98,13 +98,14 @@ export default function LabeledEditor({
         {hint ? (
           <span className="text-[11px] text-gray-400">{hint}</span>
         ) : (
-          <button
-            type="button"
-            onClick={openPicker}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs hover:bg-gray-50"
-          >
-            <ImageIcon className="h-4 w-4" /> أدرج صورة
-          </button>
+          ""
+          // <button
+          //   type="button"
+          //   onClick={openPicker}
+          //   className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs hover:bg-gray-50"
+          // >
+          //   {/* <ImageIcon className="h-4 w-4" /> أدرج صورة */}
+          // </button>
         )}
       </div>
 

@@ -254,7 +254,7 @@ const CourseSourceSubjectCard = ({
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-[5px]">
+            {subject?.teachers?.length ?<div className="flex items-center gap-[5px]">
               <img
                 className="w-6 h-6 rounded-xl object-cover"
                 src={subject?.teachers[0]?.image_url}
@@ -267,7 +267,7 @@ const CourseSourceSubjectCard = ({
               {subject?.teachers?.length > 1 && <div className="w-7 h-7 !text-sm font-bold rounded-full flex justify-center items-center bg-orange-400/50 text-orange-600">
                 {subject?.teachers?.length - 1}+
               </div>}
-            </div>
+            </div> : ""}
           </div>
 
           <div className="flex gap-2 items-center">

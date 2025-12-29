@@ -6,6 +6,7 @@ import Button from "../atoms/Button";
 import { Check, X, Eraser, Image as ImageIcon } from "lucide-react";
 import { useQuillConfig } from "@/utils/quillConfig";
 import MathTypeEditor from "../MathTypeEditor/MathTypeEditor";
+import LabeledEditor from "./McqSharedPassageEditor/parts/LabeledEditor";
 
 // SSR-safe
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
@@ -25,56 +26,56 @@ const LabeledQuill = ({
   const quillRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  const openPicker = useCallback(() => fileInputRef.current?.click(), []);
-  const { modules, formats } = useQuillConfig({ allowImages: true, onImageRequest: openPicker });
+  // const openPicker = useCallback(() => fileInputRef.current?.click(), []);
+  const { modules, formats } = useQuillConfig({});
 
-  const applyFixedSizeToAllImages = useCallback(() => {
-    const q = quillRef.current?.getEditor?.();
-    const root = q?.root;
-    if (!root) return;
-    root.querySelectorAll("img").forEach((img) => {
-      img.style.width = `${imageSize.width}px`;
-      img.style.height = `${imageSize.height}px`;
-      img.style.objectFit = imageSize.objectFit || "contain";
-      img.style.display = "inline-block";
-    });
-  }, [imageSize.height, imageSize.objectFit, imageSize.width]);
+  // const applyFixedSizeToAllImages = useCallback(() => {
+  //   const q = quillRef.current?.getEditor?.();
+  //   const root = q?.root;
+  //   if (!root) return;
+  //   root.querySelectorAll("img").forEach((img) => {
+  //     img.style.width = `${imageSize.width}px`;
+  //     img.style.height = `${imageSize.height}px`;
+  //     img.style.objectFit = imageSize.objectFit || "contain";
+  //     img.style.display = "inline-block";
+  //   });
+  // }, [imageSize.height, imageSize.objectFit, imageSize.width]);
 
-  const fileToDataUrl = (file) =>
-    new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(String(r.result || ""));
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
+  // const fileToDataUrl = (file) =>
+  //   new Promise((resolve, reject) => {
+  //     const r = new FileReader();
+  //     r.onload = () => resolve(String(r.result || ""));
+  //     r.onerror = reject;
+  //     r.readAsDataURL(file);
+  //   });
 
-  const handleFiles = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const url = (await (uploadImage ? uploadImage(file) : fileToDataUrl(file))) || "";
-    const editor = quillRef.current?.getEditor?.();
-    if (!editor || !url) return;
-    const range = editor.getSelection(true) || { index: editor.getLength(), length: 0 };
-    editor.insertEmbed(range.index, "image", url, "user");
-    editor.setSelection(range.index + 1, 0);
-    requestAnimationFrame(applyFixedSizeToAllImages);
-    e.target.value = "";
-  };
+  // const handleFiles = async (e) => {
+  //   const file = e.target.files?.[0];
+  //   if (!file) return;
+  //   const url = (await (uploadImage ? uploadImage(file) : fileToDataUrl(file))) || "";
+  //   const editor = quillRef.current?.getEditor?.();
+  //   if (!editor || !url) return;
+  //   const range = editor.getSelection(true) || { index: editor.getLength(), length: 0 };
+  //   // editor.insertEmbed(range.index, "image", url, "user");
+  //   editor.setSelection(range.index + 1, 0);
+  //   // requestAnimationFrame(applyFixedSizeToAllImages);
+  //   e.target.value = "";
+  // };
 
-  useEffect(() => {
-    const q = quillRef.current?.getEditor?.();
-    if (!q) return;
-    const h = () => requestAnimationFrame(applyFixedSizeToAllImages);
-    q.on("text-change", h);
-    requestAnimationFrame(applyFixedSizeToAllImages);
-    return () => q.off("text-change", h);
-  }, [applyFixedSizeToAllImages]);
+  // useEffect(() => {
+  //   const q = quillRef.current?.getEditor?.();
+  //   if (!q) return;
+  //   const h = () => requestAnimationFrame(applyFixedSizeToAllImages);
+  //   q.on("text-change", h);
+  //   requestAnimationFrame(applyFixedSizeToAllImages);
+  //   return () => q.off("text-change", h);
+  // }, [applyFixedSizeToAllImages]);
 
   return (
     <div className={`space-y-2 ${className}`}>
       <div className="flex items-center justify-between">
         <label className="block text-xs font-semibold text-gray-700">{label}</label>
-        <Button
+        {/* <Button
           variant="outline"
           size="xs"
           onClick={openPicker}
@@ -82,7 +83,7 @@ const LabeledQuill = ({
           icon={<ImageIcon className="w-4 h-4" />}
         >
           أدرج صورة
-        </Button>
+        </Button> */}
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
@@ -96,7 +97,7 @@ const LabeledQuill = ({
         />
       </div>
 
-      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFiles} />
+      {/* <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFiles} /> */}
 
       <style jsx global>{`
         [dir="rtl"] .ql-editor {
@@ -147,14 +148,22 @@ export default function TrueFalseQuestions({
             setQ(data);
           }}
         /> */}
-        <LabeledQuill
+        {/* <LabeledQuill
           label="نص السؤال"
           value={qValue}
           onChange={setQ}
           placeholder="اكتب نص السؤال… (يدعم الألوان والخلفية وكتابة H₂O باستخدام x₂)"
           minH={160}
-          uploadImage={uploadImage}
-        />
+          // uploadImage={uploadImage}
+        /> */}
+        <LabeledEditor
+                                 label="نص السؤال"
+          value={qValue}
+          onChange={setQ}
+          placeholder="اكتب نص السؤال… (يدعم الألوان والخلفية وكتابة H₂O باستخدام x₂)"
+                                  editorMinH={180}
+                                  allowImages
+                                />
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -195,13 +204,12 @@ export default function TrueFalseQuestions({
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-        <LabeledQuill
+        <LabeledEditor
           label="شرح الإجابة (اختياري)"
           value={trueFalseExplanation}
           onChange={setTrueFalseExplanation}
           placeholder="اكتب سبب صحة/خطأ العبارة… (يدعم الألوان والخلفية وsub/sup)"
           minH={140}
-          uploadImage={uploadImage}
         />
       </div>
     </div>

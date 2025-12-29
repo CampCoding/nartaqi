@@ -2589,6 +2589,7 @@ export default function CourseSourceLecturesContent({ id, isSource }) {
                 </a>
               )}
             </div>
+             {pdf?.type &&<Tag className="mt-3" color="green">{pdf?.type}</Tag>}
           </div>
         </div>
         <div className="flex space-x-2 space-x-reverse ml-4 flex-shrink-0">
@@ -2625,7 +2626,7 @@ export default function CourseSourceLecturesContent({ id, isSource }) {
 
     useEffect(() => {
       if (lessonExams && lessonExams?.length > 0) {
-        setExams(lessonExams[0]?.exam);
+        setExams(lessonExams[0]?.exams);
         setVideos(lessonExams[0]?.videos);
         setPdfs(lessonExams[0]?.exam_pdfs)
       }
@@ -2689,6 +2690,15 @@ export default function CourseSourceLecturesContent({ id, isSource }) {
                       }}
                     >
                       حذف الاختبار
+                    </ActionButton>
+                    <ActionButton
+                      className="bg-green-500 text-white p-2 rounded-md"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/exams/${exams?.id}?lessonId=${lessonId}`)
+                      }}
+                    >
+                      تفاصيل الاختبار
                     </ActionButton>
                   </div>
                 </div>

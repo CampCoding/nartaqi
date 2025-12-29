@@ -13,19 +13,20 @@ export default function useQuillConfig({ allowImages = true, onImageRequest } = 
       [{ color: [] }, { background: [] }],
       ["link", "blockquote", "code-block", "clean"],
     ];
-    if (allowImages) toolbar.push(["image"]);
+    // if (allowImages) toolbar.push(["image"]);
 
     return {
-      toolbar: allowImages
-        ? {
-            container: toolbar,
-            handlers: { image: () => typeof onImageRequest === "function" && onImageRequest() },
-          }
-        : toolbar,
+      toolbar: toolbar,
+      // toolbar: allowImages
+      //   ? {
+      //       container: toolbar,
+      //       handlers: { image: () => typeof onImageRequest === "function" && onImageRequest() },
+      //     }
+      //   : toolbar,
       clipboard: { matchVisual: false },
       history: { delay: 500, maxStack: 200, userOnly: true },
     };
-  }, [allowImages, onImageRequest]);
+  }, []);
 
   const formats = useMemo(
     () => [
@@ -44,9 +45,9 @@ export default function useQuillConfig({ allowImages = true, onImageRequest } = 
       "link",
       "blockquote",
       "code-block",
-      ...(allowImages ? ["image"] : []),
+      ...([]),
     ],
-    [allowImages]
+    []
   );
 
   return { modules, formats };

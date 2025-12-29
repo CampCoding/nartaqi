@@ -36,27 +36,33 @@ function flattenAllQuestions(sections) {
   const allQuestions = [];
   
   sections?.forEach((section) => {
-    // Add standalone MCQs from the section
+    // Add standalone MCQs from the section (including t_f type)
     if (section.mcq && Array.isArray(section.mcq)) {
       section.mcq.forEach((question) => {
         allQuestions.push({
           ...question,
           sectionTitle: section.title,
           sectionId: section.id,
-          question_type: "mcq",
+          // Use the question_type from the API (mcq or t_f)
+          question_type: question.question_type || "mcq",
         });
       });
     }
     
     // Add paragraph-based questions
-    if (section.questions && Array.isArray(section.questions)) {
-      section.questions.forEach((question) => {
-        allQuestions.push({
-          ...question,
-          sectionTitle: section.title,
-          sectionId: section.id,
-          question_type: question.question_type || "paragraph_mcq",
-          paragraph: section.paragraphs?.find(p => p.id === question.paragraph_id) || null,
+    if (section.paragraphs && Array.isArray(section.paragraphs)) {
+      section.paragraphs.forEach((paragraphData) => {
+        const paragraph = paragraphData.paragraph;
+        const paragraphQuestions = paragraphData.questions || [];
+        
+        paragraphQuestions.forEach((question) => {
+          allQuestions.push({
+            ...question,
+            sectionTitle: section.title,
+            sectionId: section.id,
+            question_type: "paragraph_mcq", // All paragraph questions are paragraph_mcq
+            paragraph: paragraph,
+          });
         });
       });
     }
@@ -70,7 +76,15 @@ function getTotalQuestionCount(sections) {
   
   let count = 0;
   sections?.forEach((section) => {
-    count += (section.mcq?.length || 0) + (section.questions?.length || 0);
+    // Count standalone MCQs (including t_f)
+    count += (section.mcq?.length || 0);
+    
+    // Count paragraph questions
+    if (section.paragraphs && Array.isArray(section.paragraphs)) {
+      section.paragraphs.forEach((paragraphData) => {
+        count += (paragraphData.questions?.length || 0);
+      });
+    }
   });
   
   return count;
@@ -139,7 +153,7 @@ const QuestionTypeBadge = ({ type }) => {
   const types = {
     mcq: { label: "اختيار من متعدد", color: "bg-indigo-100 text-indigo-800 border-indigo-200", icon: Hash },
     paragraph_mcq: { label: "اختيار من متعدد (قطعة)", color: "bg-purple-100 text-purple-800 border-purple-200", icon: FileText },
-    tf: { label: "صح / خطأ", color: "bg-emerald-100 text-emerald-800 border-emerald-200", icon: CheckCircle2 },
+    t_f: { label: "صح / خطأ", color: "bg-emerald-100 text-emerald-800 border-emerald-200", icon: CheckCircle2 },
     written: { label: "سؤال مقالي", color: "bg-amber-100 text-amber-800 border-amber-200", icon: Edit3 },
     fill: { label: "أكمل الفراغ", color: "bg-cyan-100 text-cyan-800 border-cyan-200", icon: Hash },
   };
@@ -156,7 +170,7 @@ const QuestionTypeBadge = ({ type }) => {
 
 /* ---------- Enhanced Question Renderers ---------- */
 function MCQView({ answers, showCorrectOnly }) {
-  const list = showCorrectOnly ? answers.filter((a) => a.is_correct === 1) : answers;
+  const list = showCorrectOnly ? answers.filter((a) => Number(a.is_correct) === 1) : answers;
   
   if (list.length === 0) return null;
   
@@ -170,15 +184,15 @@ function MCQView({ answers, showCorrectOnly }) {
         <div
           key={a.id}
           className={`flex items-start gap-3 rounded-xl border p-3 transition-all duration-200 ${
-            a?.is_correct === 1 
+            Number(a?.is_correct) === 1 
               ? "border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 shadow-sm" 
               : "border-gray-200 bg-white hover:bg-gray-50"
           }`}
         >
           <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
-            a?.is_correct === 1 ? "bg-emerald-100" : "bg-gray-100"
+            Number(a?.is_correct) === 1 ? "bg-emerald-100" : "bg-gray-100"
           }`}>
-            {a?.is_correct === 1 ? (
+            {Number(a?.is_correct) === 1 ? (
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             ) : (
               <XCircle className="w-4 h-4 text-gray-400" />
@@ -202,26 +216,54 @@ function MCQView({ answers, showCorrectOnly }) {
   );
 }
 
-function TFView({ correct }) {
+function TFView({ answers, showCorrectOnly }) {
+  // For T/F questions, find the correct answer
+  const correctAnswer = answers?.find(a => Number(a.is_correct) === 1);
+  const isTrue = correctAnswer?.option_text?.toLowerCase().includes("صحيح") || 
+                correctAnswer?.option_text?.toLowerCase().includes("صح");
+  
+  if (showCorrectOnly && !correctAnswer) return null;
+  
+  const displayAnswers = showCorrectOnly ? [correctAnswer].filter(Boolean) : answers;
+  
   return (
-    <div className="flex items-center gap-2">
-      <div className="rounded-xl bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-            {correct ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+        <BarChart3 className="w-3.5 h-3.5" />
+        الإجابات ({displayAnswers.length})
+      </div>
+      {displayAnswers.map((a) => (
+        <div
+          key={a.id}
+          className={`flex items-start gap-3 rounded-xl border p-3 transition-all duration-200 ${
+            Number(a?.is_correct) === 1 
+              ? "border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 shadow-sm" 
+              : "border-gray-200 bg-white hover:bg-gray-50"
+          }`}
+        >
+          <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
+            Number(a?.is_correct) === 1 ? "bg-emerald-100" : "bg-gray-100"
+          }`}>
+            {Number(a?.is_correct) === 1 ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             ) : (
-              <XCircle className="w-5 h-5 text-red-500" />
+              <XCircle className="w-4 h-4 text-gray-400" />
             )}
           </div>
-          <div>
-            <div className="text-sm font-medium text-gray-700">الإجابة الصحيحة:</div>
-            <div className={`text-lg font-bold ${correct ? 'text-emerald-700' : 'text-red-600'}`}>
-              {correct ? "صح ✓" : "خطأ ✗"}
-            </div>
+          <div className="flex-1">
+            <div className="text-sm text-gray-800 leading-relaxed" dangerouslySetInnerHTML={{ __html: a?.option_text }}></div>
+            {a.question_explanation && a.question_explanation !== "<p></p>" && (
+              <div className="mt-2 p-2 bg-gray-50/70 rounded-lg border border-gray-100">
+                <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                  <Lightbulb className="w-3 h-3" />
+                  شرح الإجابة
+                </div>
+                <div className="text-xs text-gray-600 leading-relaxed" dangerouslySetInnerHTML={{ __html: a?.question_explanation }}></div>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 }
@@ -294,7 +336,6 @@ function FillView({ gaps, answerText }) {
 }
 
 /* ---------- Enhanced Questions Panel ---------- */
-/* ---------- Enhanced Questions Panel ---------- */
 function QuestionsPanel({ sections, query, setQuery, showCorrectOnly, setShowCorrectOnly }) {
   const [expandedSections, setExpandedSections] = useState(new Set());
   const allQuestions = useMemo(() => flattenAllQuestions(sections), [sections]);
@@ -333,7 +374,7 @@ function QuestionsPanel({ sections, query, setQuery, showCorrectOnly, setShowCor
       const inParagraph = question?.paragraph?.paragraph_content?.toLowerCase().includes(q);
       if (inParagraph) return true;
       
-      if (question.question_type === "mcq" || question.question_type === "paragraph_mcq") {
+      if (question.question_type === "mcq" || question.question_type === "paragraph_mcq" || question.question_type === "t_f") {
         return (question.options || []).some((option) => 
           (option.option_text || "").toLowerCase().includes(q)
         );
@@ -536,8 +577,8 @@ function QuestionsPanel({ sections, query, setQuery, showCorrectOnly, setShowCor
                                   {(question.question_type === "mcq" || question.question_type === "paragraph_mcq") && (
                                     <MCQView answers={question.options || []} showCorrectOnly={showCorrectOnly} />
                                   )}
-                                  {question.question_type === "tf" && (
-                                    <TFView correct={question.options?.[0]?.is_correct === 1} />
+                                  {question.question_type === "t_f" && (
+                                    <TFView answers={question.options || []} showCorrectOnly={showCorrectOnly} />
                                   )}
                                   {question.question_type === "written" && (
                                     <WrittenView sampleAnswer={question.answer} />
@@ -565,7 +606,17 @@ function QuestionsPanel({ sections, query, setQuery, showCorrectOnly, setShowCor
                           </div>
                           <div className="text-gray-500 text-lg mb-2">قسم فارغ</div>
                           
-                        
+                          {/* Count questions by type */}
+                          <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto mt-4">
+                            <div className="text-center p-3 bg-indigo-50 rounded-lg">
+                              <div className="text-sm text-indigo-600">MCQ</div>
+                              <div className="text-lg font-bold text-indigo-700">{section.mcq_count || 0}</div>
+                            </div>
+                            <div className="text-center p-3 bg-purple-50 rounded-lg">
+                              <div className="text-sm text-purple-600">قطعة</div>
+                              <div className="text-lg font-bold text-purple-700">{section.paragraph_count || 0}</div>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -609,8 +660,8 @@ export default function ExamDetailsPage({ exam: examProp }) {
   } ,[lessonId])
 
   useEffect(() => {
-    console.log(all_exam_lessons_list)
-  } , [all_exam_lessons_list])
+    console.log("Exam sections data:", examDetailsSelector?.data?.message);
+  } , [examDetailsSelector])
 
   useEffect(() => {
     dispatch(handleGetAllExams({ page: 1, per_page: 100000000 }));
@@ -627,7 +678,7 @@ export default function ExamDetailsPage({ exam: examProp }) {
       const filtered = all_exam_lessons_list?.data?.message?.find(item => item?.id == params?.id);
       setSelectedExam(filtered);
     }
-  }, [params?.id, all_exam_list , lessonId]);
+  }, [params?.id, all_exam_list, all_exam_lessons_list, lessonId]);
 
   useEffect(() => {
     if (params?.id) {
@@ -636,7 +687,8 @@ export default function ExamDetailsPage({ exam: examProp }) {
   }, [params]);
 
   useEffect(() => {
-    if (examDetailsSelector?.data?.message && Array.isArray(examDetailsSelector?.data?.message)) {
+    if (examDetailsSelector?.data?.message) {
+      // The API returns an array of sections
       setExamDetails(examDetailsSelector?.data?.message || []);
     }
   }, [examDetailsSelector]);

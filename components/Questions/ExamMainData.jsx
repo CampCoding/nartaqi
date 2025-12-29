@@ -907,6 +907,7 @@ export default function ExamMainData({ examData: editExamData, examid }) {
 
       {(openExamSection || isEditMode) && (
         <QuestionSections
+        lessonId={lessonId}
         examInfoData={exmaInfoData}
         examId={examId}
           editData={filteredData}
