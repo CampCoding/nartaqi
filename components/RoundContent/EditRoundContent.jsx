@@ -202,7 +202,7 @@ export default function EditRoundContent({
                 ? "border-red-500 focus:ring-red-400" 
                 : "border-gray-400 focus:ring-orange-400"
             }`}
-            placeholder="مثل: أساسيات برمجة React"
+            placeholder="قم بإدخال عنوان المحتوي"
           />
           {errors.content_title && (
             <p className="text-red-500 text-sm mt-1">{errors.content_title}</p>
@@ -228,7 +228,7 @@ export default function EditRoundContent({
                 ? "border-red-500 focus:ring-red-400" 
                 : "border-gray-400 focus:ring-orange-400"
             }`}
-            placeholder="شرح موجز لأهداف هذا المحتوى وما سيتم تغطيته"
+            placeholder="قم بإدخال وصف المحتوي"
           />
          
         </div>

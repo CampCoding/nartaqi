@@ -80,7 +80,7 @@ export default function TermsPage() {
 
   const refreshData = useCallback(() => {
     fetchData();
-    toast.success('تم تحديث البيانات بنجاح');
+    // toast.success('تم تحديث البيانات بنجاح');
   }, [fetchData]);
 
   const handleAddPoint = () => setPoints([...points, '']);

@@ -125,7 +125,7 @@ export default function EditVideoModal({ open, setOpen, id,round_id, rowData, se
             onChange={handleInputChange}
             rows={3} // Allows for a better description entry experience
             className='border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400 resize-none'
-            placeholder='شرح موجز لأهداف هذا المحتوى وما سيتم تغطيته'
+            placeholder="قم بإدخال وصف الفيديو"
           />
         </div>
 

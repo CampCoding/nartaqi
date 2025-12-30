@@ -151,11 +151,11 @@ export default function Sidebar() {
       icon:Users2  ,
       path:"/teams"
     },
-    {
-      name:"التقييمات",
-      icon :  Star ,
-      path:"/rating"
-    },
+    // {
+    //   name:"التقييمات",
+    //   icon :  Star ,
+    //   path:"/rating"
+    // },
     {
       name:"تقييمات المستخدمين",
       icon :  Star ,

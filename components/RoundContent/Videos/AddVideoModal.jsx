@@ -1,8 +1,8 @@
 "use client";
-import { Modal, Button, Spin } from "antd"; // Import Button and Spin from Ant Design
-import React, { useState } from "react";
+import { Modal, Button, Spin, Alert } from "antd"; // Import Button and Spin from Ant Design
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { PlusOutlined } from "@ant-design/icons"; // Import icons
+import { PlusOutlined, YoutubeOutlined, VideoCameraOutlined, InfoCircleOutlined } from "@ant-design/icons"; // Import icons
 import { toast } from "react-toastify";
 import {
   handleAddLessonVideo,
@@ -19,12 +19,137 @@ export default function AddVideoModal({ open, setOpen, id, content_id }) {
     time: ""
   });
 
+  const [errors, setErrors] = useState({
+    title: "",
+    youtube_link: "",
+    vimeo_link: "",
+    time: "",
+    general: ""
+  });
+
+  const [hasAtLeastOneLink, setHasAtLeastOneLink] = useState(false);
+
   const dispatch = useDispatch();
   const { add_video_loading } = useSelector(
     (state) => state?.videos || { store_content_loading: false }
   );
 
-  const isFormValid = videoData.title;
+  // YouTube URL patterns
+  const youtubePatterns = [
+    // youtube.com/watch?v=VIDEO_ID
+    /^(https?:\/\/(?:www\.)?youtube\.com\/watch\?(?:.*&)?v=[\w-]{11}(?:&.*)?)$/,
+    
+    // youtu.be/VIDEO_ID
+    /^(https?:\/\/(?:www\.)?youtu\.be\/[\w-]{11})$/,
+    
+    // youtube.com/embed/VIDEO_ID
+    /^(https?:\/\/(?:www\.)?youtube\.com\/embed\/[\w-]{11})$/,
+    
+    // youtube.com/shorts/VIDEO_ID
+    /^(https?:\/\/(?:www\.)?youtube\.com\/shorts\/[\w-]{11})$/,
+    
+    // youtube.com/v/VIDEO_ID
+    /^(https?:\/\/(?:www\.)?youtube\.com\/v\/[\w-]{11})$/,
+    
+    // youtube.com/live/VIDEO_ID
+    /^(https?:\/\/(?:www\.)?youtube\.com\/live\/[\w-]+)$/,
+  ];
+
+  // Vimeo URL patterns
+  const vimeoPatterns = [
+    // vimeo.com/VIDEO_ID
+    /^(https?:\/\/(?:www\.)?vimeo\.com\/\d+)$/,
+    
+    // vimeo.com/album/ALBUM_ID/video/VIDEO_ID
+    /^(https?:\/\/(?:www\.)?vimeo\.com\/album\/\d+\/video\/\d+)$/,
+    
+    // vimeo.com/channels/CHANNEL/VIDEO_ID
+    /^(https?:\/\/(?:www\.)?vimeo\.com\/channels\/[^\/]+\/\d+)$/,
+    
+    // vimeo.com/groups/GROUP/videos/VIDEO_ID
+    /^(https?:\/\/(?:www\.)?vimeo\.com\/groups\/[^\/]+\/videos\/\d+)$/,
+    
+    // vimeo.com/ondemand/TITLE/VIDEO_ID
+    /^(https?:\/\/(?:www\.)?vimeo\.com\/ondemand\/[^\/]+\/\d+)$/,
+    
+    // player.vimeo.com/video/VIDEO_ID
+    /^(https?:\/\/player\.vimeo\.com\/video\/\d+)$/,
+  ];
+
+  // Validation functions
+  const validateYouTubeLink = (value) => {
+    if (!value) return "";
+    
+    // Check if it starts with http:// or https://
+    if (!value.startsWith('http://') && !value.startsWith('https://')) {
+      return "يجب أن يبدأ الرابط بـ http:// أو https://";
+    }
+
+    // Check if the URL matches any YouTube pattern
+    const isValidYouTube = youtubePatterns.some(pattern => pattern.test(value));
+    
+    if (!isValidYouTube) {
+      return "رابط YouTube غير صحيح. أمثلة صحيحة:\nhttps://youtube.com/watch?v=dQw4w9WgXcQ\nhttps://youtu.be/dQw4w9WgXcQ";
+    }
+
+    return "";
+  };
+
+  const validateVimeoLink = (value) => {
+    if (!value) return "";
+    
+    // Check if it starts with http:// or https://
+    if (!value.startsWith('http://') && !value.startsWith('https://')) {
+      return "يجب أن يبدأ الرابط بـ http:// أو https://";
+    }
+
+    // Check if the URL matches any Vimeo pattern
+    const isValidVimeo = vimeoPatterns.some(pattern => pattern.test(value));
+    
+    if (!isValidVimeo) {
+      return "رابط Vimeo غير صحيح. مثال صحيح:\nhttps://vimeo.com/123456789";
+    }
+
+    return "";
+  };
+
+  const validateTime = (value) => {
+    if (!value) {
+      return "الرجاء إدخال مدة الفيديو";
+    }
+    
+    // تحقق من تنسيق MM:SS
+    const mmssPattern = /^(?:[0-5]?[0-9]):(?:[0-5][0-9])$/;
+    // تحقق من تنسيق HH:MM:SS
+    const hhmmssPattern = /^(?:[01]?[0-9]|2[0-3]):(?:[0-5][0-9]):(?:[0-5][0-9])$/;
+    
+    if (mmssPattern.test(value) || hhmmssPattern.test(value)) {
+      return "";
+    }
+    
+    return "الرجاء إدخال الوقت بالتنسيق HH:MM:SS أو MM:SS (مثال: 14:30:45 أو 05:30)";
+  };
+
+  const validateTitle = (value) => {
+    if (!value) {
+      return "يرجى إدخال عنوان الفيديو";
+    }
+    if (value.length < 3) {
+      return "العنوان يجب أن يكون 3 أحرف على الأقل";
+    }
+    return "";
+  };
+
+  // Check if at least one link is provided
+  const checkLinks = () => {
+    const hasYouTube = videoData.youtube_link && videoData.youtube_link.trim() !== '';
+    const hasVimeo = videoData.vimeo_link && videoData.vimeo_link.trim() !== '';
+    setHasAtLeastOneLink(hasYouTube || hasVimeo);
+  };
+
+  useEffect(() => {
+    checkLinks();
+  }, [videoData.youtube_link, videoData.vimeo_link]);
 
   function handleInputChange(e) {
     const { name, value } = e.target;
@@ -32,10 +157,62 @@ export default function AddVideoModal({ open, setOpen, id, content_id }) {
       ...prev,
       [name]: value
     }));
+
+    // Validate the changed field
+    let error = "";
+    switch (name) {
+      case "title":
+        error = validateTitle(value);
+        break;
+      case "youtube_link":
+        error = validateYouTubeLink(value);
+        break;
+      case "vimeo_link":
+        error = validateVimeoLink(value);
+        break;
+      case "time":
+        error = validateTime(value);
+        break;
+      default:
+        error = "";
+    }
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: error
+    }));
   }
 
+  // Validate all fields
+  const validateAll = () => {
+    const newErrors = {
+      title: validateTitle(videoData.title),
+      // youtube_link: validateYouTubeLink(videoData.youtube_link),
+      // vimeo_link: validateVimeoLink(videoData.vimeo_link),
+      time: validateTime(videoData.time),
+      general: ""
+    };
+
+    setErrors(newErrors);
+
+    // Check if there are any errors
+    const hasErrors = Object.values(newErrors).some(error => error !== "");
+    
+    // Check if at least one link is provided
+    if (!hasAtLeastOneLink && !hasErrors) {
+      newErrors.general = "يجب إدخال رابط واحد على الأقل (YouTube أو Vimeo)";
+      setErrors(prev => ({ ...prev, general: "يجب إدخال رابط واحد على الأقل (YouTube أو Vimeo)" }));
+      return false;
+    }
+
+    return !hasErrors && hasAtLeastOneLink;
+  };
+
   function handleSubmit() {
-    if (!isFormValid) return;
+    if (!validateAll()) {
+      toast.error("يرجى تصحيح الأخطاء قبل الإرسال");
+      return;
+    }
 
     const data_send = {
       ...videoData,
@@ -70,6 +247,14 @@ export default function AddVideoModal({ open, setOpen, id, content_id }) {
             vimeo_link: "",
             time: ""
           });
+          setErrors({
+            title: "",
+            youtube_link: "",
+            vimeo_link: "",
+            time: "",
+            general: ""
+          });
+          setHasAtLeastOneLink(false);
         } else {
           toast.error(res?.data?.message || "هناك خطأ أثناء اضافه الفيديو");
         }
@@ -79,6 +264,27 @@ export default function AddVideoModal({ open, setOpen, id, content_id }) {
       })
       .finally(() => setOpen(false));
   }
+
+  const handleClose = () => {
+    setOpen(false);
+    setVideoData({
+      title: "",
+      description: "",
+      youtube_link: "",
+      vimeo_link: "",
+      time: ""
+    });
+    setErrors({
+      title: "",
+      youtube_link: "",
+      vimeo_link: "",
+      time: "",
+      general: ""
+    });
+    setHasAtLeastOneLink(false);
+  };
+
+  const isFormValid = videoData.title && hasAtLeastOneLink && !errors.title && !errors.time;
 
   // Custom footer for better control over button design and loading state
   const modalFooter = (
@@ -96,7 +302,7 @@ export default function AddVideoModal({ open, setOpen, id, content_id }) {
       </Button>
       <Button
         key="back"
-        onClick={() => setOpen(false)}
+        onClick={handleClose}
         className="rounded-md px-6"
       >
         إلغاء
@@ -107,29 +313,44 @@ export default function AddVideoModal({ open, setOpen, id, content_id }) {
   return (
     <Modal
       open={open}
-      onCancel={() => setOpen(false)}
+      onCancel={handleClose}
       footer={modalFooter}
-      title="إضافة الفيديو "
+      title={
+        <div className="flex items-center gap-3">
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-2 rounded-lg">
+            <PlusOutlined className="text-white text-xl" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-800 m-0">إضافة فيديو</h2>
+            <p className="text-sm text-gray-500 m-0">املأ البيانات لإضافة فيديو</p>
+          </div>
+        </div>
+      }
       wrapClassName="rtl-modal-wrap"
       style={{ direction: "rtl" }}
+      width={600}
+      centered
     >
       <div className="flex flex-col gap-4 mt-4">
         {/* Title Input */}
         <div className="flex flex-col gap-2">
           <label htmlFor="title" className="text-lg font-medium text-gray-700">
-            عنوان الفيديو
+            عنوان الفيديو *
           </label>
           <input
             id="title"
             name="title"
             value={videoData?.title}
             onChange={handleInputChange}
-            className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
-            placeholder="مثل: أساسيات برمجة React"
+            className={`border ${errors.title ? 'border-red-500' : 'border-gray-400'} focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400`}
+            placeholder="ادخل عنوان الفيديو"
           />
+          {errors.title && (
+            <div className="text-red-500 text-sm mt-1">{errors.title}</div>
+          )}
         </div>
 
-        {/* Description Input (using textarea for multi-line description) */}
+        {/* Description Input */}
         <div className="flex flex-col gap-2">
           <label
             htmlFor="description"
@@ -142,75 +363,112 @@ export default function AddVideoModal({ open, setOpen, id, content_id }) {
             name="description"
             value={videoData?.description}
             onChange={handleInputChange}
-            rows={3} // Allows for a better description entry experience
+            rows={3}
             className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400 resize-none"
-            placeholder="شرح موجز لأهداف هذا المحتوى وما سيتم تغطيته"
+            placeholder="ادخل وصف الفيديو (اختياري)"
           />
         </div>
 
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="youtube_link"
-            className="text-lg font-medium text-gray-700"
-          >
-            (Youtube) لينك الفيديو
-          </label>
-          <input
-            id="youtube_link"
-            name="youtube_link"
-            value={videoData?.youtube_link}
-            onChange={handleInputChange}
-            className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
-          />
-        </div>
+        {/* Video Links Section */}
+        <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg mb-4">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <InfoCircleOutlined className="text-blue-500" />
+            روابط الفيديو *
+          </h3>
 
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="vimeo_link"
-            className="text-lg font-medium text-gray-700"
-          >
-            (Vimeo) لينك الفيديو
-          </label>
-          <input
-            id="vimeo_link"
-            name="vimeo_link"
-            value={videoData?.vimeo_link}
-            onChange={handleInputChange}
-            className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
-          />
-        </div>
-        {/* <div className="flex flex-col gap-2">
-          <label htmlFor="time" className="text-lg font-medium text-gray-700">
-            مجاني
-          </label>
+          <div className="space-y-4">
+            {/* YouTube Link */}
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="youtube_link"
+                className="text-lg font-medium text-gray-700 flex items-center gap-2"
+              >
+                <YoutubeOutlined className="text-red-500" />
+                رابط YouTube
+              </label>
+              <input
+                id="youtube_link"
+                name="youtube_link"
+                value={videoData?.youtube_link}
+                onChange={handleInputChange}
+                className={`border ${errors.youtube_link ? 'border-red-500' : 'border-gray-400'} focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400`}
+                placeholder="https://youtube.com/watch?v=VIDEO_ID"
+              />
+              {errors.youtube_link && (
+                <div className="text-red-500 text-sm mt-1 whitespace-pre-line">{errors.youtube_link}</div>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              مجاني
-            </label>
-            <select
-              value={videoData?.free}
-              onChange={handleInputChange}
-              name="free"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="0">لا</option>
-              <option value="1">نعم</option>
-            </select>
+            {/* Vimeo Link */}
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="vimeo_link"
+                className="text-lg font-medium text-gray-700 flex items-center gap-2"
+              >
+                <VideoCameraOutlined className="text-blue-500" />
+                رابط Vimeo
+              </label>
+              <input
+                id="vimeo_link"
+                name="vimeo_link"
+                value={videoData?.vimeo_link}
+                onChange={handleInputChange}
+                className={`border ${errors.vimeo_link ? 'border-red-500' : 'border-gray-400'} focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400`}
+                placeholder="https://vimeo.com/123456789"
+              />
+              {errors.vimeo_link && (
+                <div className="text-red-500 text-sm mt-1 whitespace-pre-line">{errors.vimeo_link}</div>
+              )}
+            </div>
           </div>
-        </div> */}
+
+          {!hasAtLeastOneLink && (
+            <Alert
+              message="تنبيه"
+              description="يجب إدخال رابط YouTube أو Vimeo واحد على الأقل"
+              type="warning"
+              showIcon
+              className="rounded-lg mt-4"
+            />
+          )}
+
+          <div className="mt-4 text-sm text-gray-600">
+            <p className="font-semibold mb-1">أمثلة على الروابط الصحيحة:</p>
+            <p className="mb-1">YouTube: https://youtube.com/watch?v=dQw4w9WgXcQ</p>
+            <p>Vimeo: https://vimeo.com/123456789</p>
+          </div>
+        </div>
+
+        {/* Duration Input */}
         <div className="flex flex-col gap-2">
           <label htmlFor="time" className="text-lg font-medium text-gray-700">
-            مدة الفيديو
+            مدة الفيديو *
           </label>
           <input
             id="time"
             name="time"
             value={videoData?.time}
             onChange={handleInputChange}
-            className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
+            className={`border ${errors.time ? 'border-red-500' : 'border-gray-400'} focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400`}
+            placeholder="مثال: 14:30:45 أو 05:30"
           />
+          {errors.time && (
+            <div className="text-red-500 text-sm mt-1">{errors.time}</div>
+          )}
+          <div className="text-sm text-gray-500 mt-1">
+            أدخل المدة بالتنسيق HH:MM:SS أو MM:SS
+          </div>
         </div>
+
+        {errors.general && (
+          <Alert
+            message="خطأ"
+            description={errors.general}
+            type="error"
+            showIcon
+            className="rounded-lg"
+          />
+        )}
       </div>
     </Modal>
   );

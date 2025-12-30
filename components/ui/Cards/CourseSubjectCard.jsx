@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreVertical, Edit, Trash2, Copy, File } from "lucide-react";
+import { MoreVertical, Edit, Trash2, Copy, File, EyeOff, Eye } from "lucide-react";
 import { Modal, Typography, Button } from "antd";
 import { ExclamationCircleOutlined, DeleteOutlined } from "@ant-design/icons";
 
@@ -18,6 +18,7 @@ const CourseSourceSubjectCard = ({
   page,
   cat_id,
   onRequestDuplicate,
+  onActive
 }) => {
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -31,9 +32,14 @@ const CourseSourceSubjectCard = ({
   }, [subject]);
 
   const goToCourse = () => {
-    router.push(`/subjects/${subject?.id}/units?category_id=${subject?.category_part_id}&page=${page}`);
+    router.push(`/subjects/${subject?.id}/units?category_id=${cat_id}&page=${page}`);
 
   };
+
+  const isActive =
+    subject?.active === "1" ||
+    subject?.active === 1 ||
+    subject?.active === true;
 
   const handleEdit = (e) => {
     e?.stopPropagation?.();
@@ -144,6 +150,24 @@ const CourseSourceSubjectCard = ({
                     <File size={14} className="text-blue-600" />
                     <span>مصادر الدورة</span>
                   </button>
+                  {subject?.source == "0" ? (
+                    <button
+                      onClick={(e) => {
+                        console.log("subject", subject)
+                        e.stopPropagation();
+                        setShowDropdown(false);
+                        onActive?.(subject);
+                      }}
+                      className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      {isActive ? (
+                        <EyeOff size={14} className="text-emerald-600" />
+                      ) : (
+                        <Eye size={14} className="text-emerald-600" />
+                      )}
+                      <span>{isActive ? "غير نشط" : "نشط"}</span>
+                    </button>
+                  ) : null}
                   <button
                     onClick={handleEdit}
                     className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
@@ -254,7 +278,7 @@ const CourseSourceSubjectCard = ({
                 </span>
               )}
             </div>
-            {subject?.teachers?.length ?<div className="flex items-center gap-[5px]">
+            {subject?.teachers?.length ? <div className="flex items-center gap-[5px]">
               <img
                 className="w-6 h-6 rounded-xl object-cover"
                 src={subject?.teachers[0]?.image_url}

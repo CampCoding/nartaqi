@@ -128,7 +128,8 @@ function SectionFormModal({
             { min: 3, message: "يجب أن لا يقل الاسم عن 3 أحرف" },
           ]}
         >
-          <Input
+          <Input 
+          
             placeholder="أدخل اسم القسم"
             className="h-11 rounded-lg border-gray-300 focus:border-blue-500"
           />
@@ -143,7 +144,10 @@ function SectionFormModal({
             {preview && (
               <button
                 type="button"
-                onClick={() => setPreview(null)}
+                onClick={() => {
+                  setPreview(null)
+                  setImgFile(null)
+                }}
                 className="text-xs text-red-600 hover:text-red-700 hover:underline transition-colors"
               >
                 إزالة الصورة
@@ -165,7 +169,7 @@ function SectionFormModal({
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              className="hidden"
+              className="invisible"
               onChange={handleFileChange}
             />
             {preview ? (
@@ -271,7 +275,7 @@ function SectionCard({ section, onEdit, onToggleVisibility, onDelete }) {
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-purple-50/30 to-pink-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
         {/* Image header with enhanced styling */}
-        <div className="relative h-48 bg-gradient-to-br from-gray-100 via-gray-50 to-white overflow-hidden">
+        <div className="relative min-h-36 max-h-40 bg-gradient-to-br from-gray-100 via-gray-50 to-white overflow-hidden">
           {section?.image_url ? (
             <div className="flex gap-2 items-center">
               <img

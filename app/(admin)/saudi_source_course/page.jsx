@@ -178,6 +178,10 @@ const SubjectsManagementPage = () => {
     });
   }, [normalizedSubjects, activeTab, searchTerm]);
 
+  useEffect(() => {
+    console.log("filteredSubjects", filteredSubjects);
+  } , [filteredSubjects])
+
   /* ===== Handlers ===== */
 
   // ✅ افتح مودال "دورة كاملة جديدة" مباشرة

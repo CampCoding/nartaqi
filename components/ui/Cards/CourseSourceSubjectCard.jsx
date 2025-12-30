@@ -114,7 +114,7 @@ const CourseSourceSubjectCard = ({
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* تفعيل / إلغاء تفعيل – يفتح مودال في الأب */}
-                  {subject?.source == 0 ? (
+                  {subject?.source == "0" ? (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

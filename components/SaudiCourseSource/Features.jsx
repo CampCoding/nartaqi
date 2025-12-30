@@ -59,7 +59,7 @@ export default function Features({
     <img
       src={feature?.image ? (feature?.image_url) : "/images/logo.svg"}
       alt={feature.title}
-      className="w-full h-full object-cover rounded-t-xl"
+      className="w-full h-full object-contain rounded-t-xl"
       onError={(e) => {
         e.target.src =
           "/images/logo.svg";

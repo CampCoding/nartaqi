@@ -62,14 +62,14 @@ const SearchAndFilters = ({
             >
               جدول
             </Button> */}
-            <Button
+            {/* <Button
               type={viewMode === "grid" ? "primary" : "default"}
               size="small"
               onClick={() => setViewMode("grid")}
               icon={<Grid className="w-4 h-4" />}
             >
               شبكة
-            </Button>
+            </Button> */}
           </div>
         )}
       </div>

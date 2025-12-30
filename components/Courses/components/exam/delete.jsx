@@ -22,7 +22,7 @@ export default function DeleteExamModal({ open, setOpen , round_id , page , per_
         payload?.payload?.status == 200 &&
         payload?.payload?.data?.status === "success"
       ) {
-        toast.success("Exam Deleted successfully");
+        toast.success(payload?.payload?.data?.message || "تم حذف الاختبار بنجاح");
         dispatch(
           handleGetAllRoundContent({ body: { round_id: open.round_id } })
         );
@@ -31,7 +31,7 @@ export default function DeleteExamModal({ open, setOpen , round_id , page , per_
         );
         setOpen(null);
       } else {
-        toast.error(payload?.payload?.error?.response?.data?.message);
+        toast.error(payload?.payload?.error?.response?.data?.message ||"هناك خطأ أثناء حذف الاختبار");
       }
     });
   };

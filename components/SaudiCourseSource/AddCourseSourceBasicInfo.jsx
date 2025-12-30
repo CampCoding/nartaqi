@@ -1197,11 +1197,11 @@ export default function AddCourseSourceBasicInfo({
                 </span>
               }
               name="courseBook"
-
               valuePropName="fileList"
               getValueFromEvent={normFile}
             >
               <Dragger
+              maxCount={1}
                 multiple={false}
                 accept=".pdf,.doc,.docx,.txt"
                 beforeUpload={customBeforeUpload}
@@ -1263,6 +1263,7 @@ export default function AddCourseSourceBasicInfo({
               getValueFromEvent={normFile}
             >
               <Dragger
+              maxCount={1}
                 multiple={false}
                 accept=".pdf,.doc,.docx,.txt"
                 beforeUpload={customBeforeUpload}

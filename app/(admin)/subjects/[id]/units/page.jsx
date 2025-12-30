@@ -38,153 +38,7 @@ import EditUnitForm from "../../../../../components/Units/EditUnit.modal";
 import ArabicCourseCurriculum from "../../../../../components/Courses/ArabicCourseCurriculum";
 import ResourceContent from "../../../../../components/RoundContent/ResourceContent/ResourceContent";
 
-const courseData = {
-  id: 1,
-  title: "الأحياء المتقدم",
-  description:
-    "مقدمة شاملة في علوم الحياة، علم الوراثة، والبيولوجيا الجزيئية مع التطبيقات العملية",
-  instructor: {
-    name: "د. أحمد محمد الصالح",
-    avatar: "/images/banner.png",
-    specialization: "علوم الحاسوب والبرمجة",
-    experience: "8 سنوات",
-    rating: 4.9,
-    studentsCount: 1247,
-    coursesCount: 12,
-    bio: "دكتور في علوم الحاسوب مع خبرة واسعة في التعليم الإلكتروني وتطوير المناهج التفاعلية",
-    email: "ahmed.saleh@school.edu.sa",
-    phone: "+966501234567",
-  },
-  courseDetails: {
-    price: 399,
-    originalPrice: 599,
-    discount: 33,
-    duration: "3 شهور",
-    hours: 45,
-    lessons: 24,
-    level: "متوسط",
-    language: "العربية",
-    certificate: true,
-    startDate: "15 فبراير 2024",
-    endDate: "15 مايو 2024",
-    enrolledStudents: 156,
-    availableSeats: 44,
-    totalSeats: 200,
-    room: "F10/f/4",
-    schedule: "الأحد والثلاثاء - 7:00 م",
-  },
-  rating: {
-    average: 4.8,
-    totalReviews: 142,
-    breakdown: {
-      5: 89,
-      4: 32,
-      3: 15,
-      2: 4,
-      1: 2,
-    },
-  },
-  features: [
-    {
-      title: "دروس تفاعلية",
-      description: "محتوى تفاعلي مع أمثلة عملية",
-      icon: "🎯",
-    },
-    {
-      title: "شهادة معتمدة",
-      description: "احصل على شهادة إتمام معتمدة",
-      icon: "🏆",
-    },
-    {
-      title: "دعم مباشر",
-      description: "دعم فني ومتابعة مستمرة",
-      icon: "💬",
-    },
-    {
-      title: "مواد تكميلية",
-      description: "كتب وملفات PDF مجانية",
-      icon: "📚",
-    },
-  ],
-  curriculum: [
-    {
-      title: "مقدمة في علم الأحياء",
-      duration: "3 ساعات",
-      lessons: 4,
-      videos: [
-        { title: "ما هو علم الأحياء؟", duration: "12:30", isPreview: true },
-        { title: "تاريخ علم الأحياء", duration: "15:45", isPreview: false },
-        { title: "فروع علم الأحياء", duration: "18:20", isPreview: false },
-        { title: "أهمية دراسة الأحياء", duration: "14:15", isPreview: false },
-      ],
-    },
-    {
-      title: "الخلية والأنسجة",
-      duration: "5 ساعات",
-      lessons: 6,
-      videos: [
-        { title: "بنية الخلية", duration: "22:15", isPreview: false },
-        { title: "أنواع الخلايا", duration: "18:30", isPreview: false },
-        { title: "الأنسجة النباتية", duration: "16:45", isPreview: false },
-        { title: "الأنسجة الحيوانية", duration: "20:10", isPreview: false },
-        { title: "وظائف الأنسجة", duration: "17:25", isPreview: false },
-        { title: "التطبيقات العملية", duration: "19:40", isPreview: false },
-      ],
-    },
-    {
-      title: "الوراثة والجينات",
-      duration: "4 ساعات",
-      lessons: 5,
-      videos: [
-        { title: "مبادئ الوراثة", duration: "21:00", isPreview: false },
-        { title: "قوانين مندل", duration: "24:15", isPreview: false },
-        {
-          title: "الكروموسومات والجينات",
-          duration: "19:30",
-          isPreview: false,
-        },
-        { title: "الطفرات الوراثية", duration: "16:45", isPreview: false },
-        { title: "الهندسة الوراثية", duration: "22:20", isPreview: false },
-      ],
-    },
-  ],
-  reviews: [
-    {
-      id: 1,
-      user: {
-        name: "فاطمة أحمد",
-        avatar: "/images/student1.jpg",
-        level: "طالبة متقدمة",
-      },
-      rating: 5,
-      date: "منذ أسبوعين",
-      comment:
-        "دورة ممتازة جداً! الشرح واضح والمحتوى منظم بشكل رائع. استفدت كثيراً من الأمثلة العملية.",
-      helpful: 12,
-    },
-    {
-      id: 2,
-      user: {
-        name: "محمد علي",
-        avatar: "/images/student2.jpg",
-        level: "طالب جديد",
-      },
-      rating: 4,
-      date: "منذ شهر",
-      comment:
-        "محتوى قيم ومفيد، لكن كنت أتمنى وجود المزيد من التمارين التطبيقية.",
-      helpful: 8,
-    },
-  ],
-  learningOutcomes: [
-    "فهم المفاهيم الأساسية في علم الأحياء",
-    "التعرف على بنية ووظائف الخلايا المختلفة",
-    "دراسة أنواع الأنسجة وخصائصها",
-    "فهم مبادئ الوراثة وقوانين مندل",
-    "التعرف على الطفرات الوراثية وتأثيرها",
-    "تطبيق المعرفة النظرية في حل المسائل العملية",
-  ],
-};
+
 
 const Units = () => {
   const { id } = useParams();
@@ -202,6 +56,7 @@ const Units = () => {
   } , [params])
 
   const source = params.get("source");
+  const category_id = params?.get("category_id");
 
   const selectedSubject = useMemo(() => {
     const subject = subjects.find((subject) => subject.code === id);
@@ -210,7 +65,7 @@ const Units = () => {
 
   const breadcrumbs = [
     { label: "الرئيسية", href: "/", icon: BarChart3 },
-    { label: "الدورات", href: "/teachers-courses", icon: Book },
+    { label: "الدورات", href: source ? "/saudi_source_course" : `/teachers-courses?category_id=${category_id}`, icon: Book },
     { label: selectedUnit, href: "#", current: true },
   ];
 

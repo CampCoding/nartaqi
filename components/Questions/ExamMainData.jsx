@@ -137,7 +137,7 @@ export default function ExamMainData({ examData: editExamData, examid }) {
     date: "",
     type: "mock",
     level: "medium",
-    success_percentage: 0,
+    success_percentage: 50,
   });
 
   const [openExamSection, setOpenExamSection] = useState(false);
@@ -211,7 +211,7 @@ export default function ExamMainData({ examData: editExamData, examid }) {
         date: filteredItem?.date,
         time: filteredItem?.time,
         type: filteredItem?.type,
-        success_percentage: filteredItem?.success_percentage,
+        success_percentage: "50",
       }));
 
       setExamData((prev) => ({
@@ -241,7 +241,7 @@ export default function ExamMainData({ examData: editExamData, examid }) {
         date: filteredItem?.date,
         time: filteredItem?.time,
         type: "intern",
-        success_percentage: filteredItem?.success_percentage,
+        success_percentage: "50",
       }));
 
       setExamData((prev) => ({
@@ -323,7 +323,7 @@ export default function ExamMainData({ examData: editExamData, examid }) {
       return;
     }
     
-    if(exmaInfoData?.type == "intern" && !exmaInfoData?.time.trim()) {
+    if(lessonId && !exmaInfoData?.time.trim()) {
        toast.warn("ادخل وقت الاختبار  أولا");
       return;
     }
@@ -341,8 +341,8 @@ export default function ExamMainData({ examData: editExamData, examid }) {
         time: exmaInfoData?.time?.trim() ? exmaInfoData.time.trim() : null,
         date: exmaInfoData.date,
         level: exmaInfoData?.level,
-        type: lessonId ? "intern" : exmaInfoData?.type,
-        success_percentage: exmaInfoData?.success_percentage,
+        type: lessonId ? "intern" : "mock",
+        success_percentage: "50",
       };
 
       dispatch(handleEditExam({ body: data_send }))
@@ -366,8 +366,8 @@ export default function ExamMainData({ examData: editExamData, examid }) {
         time: exmaInfoData?.time?.trim() ? exmaInfoData.time.trim() : null,
         date: exmaInfoData.date,
         level: exmaInfoData?.level,
-        type: lessonId ? "intern" : exmaInfoData?.type,
-        success_percentage: exmaInfoData?.success_percentage,
+        type: lessonId ? "intern" : "mock",
+        success_percentage: "50",
       };
 
       dispatch(handleCreateExam({ body: data_send }))

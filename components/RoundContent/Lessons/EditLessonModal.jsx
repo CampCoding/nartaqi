@@ -158,7 +158,7 @@ export default function EditLessonModal({
             value={rowData?.lesson_title || ""}
             onChange={handleInputChange}
             className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
-            placeholder="مثل: أساسيات برمجة React"
+            placeholder="قم بإدخال عنوان الدرس"
           />
         </div>
 
@@ -201,7 +201,7 @@ export default function EditLessonModal({
             onChange={handleInputChange}
             rows={3}
             className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400 resize-none"
-            placeholder="شرح موجز لأهداف هذا المحتوى وما سيتم تغطيته"
+            placeholder="قم بإدخال وصف الدرس"
           />
         </div>
       </div>

@@ -197,7 +197,7 @@ export default function AddRoundContent({
             value={roundContentData.title}
             onChange={handleInputChange}
             className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400"
-            placeholder="مثل: أساسيات برمجة React"
+            placeholder="قم بإدخال عنوان المحتوي"
           />
         </div>
 
@@ -216,7 +216,7 @@ export default function AddRoundContent({
             onChange={handleInputChange}
             rows={3} // Allows for a better description entry experience
             className="border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400 resize-none"
-            placeholder="شرح موجز لأهداف هذا المحتوى وما سيتم تغطيته"
+            placeholder="قم بإدخال وصف المحتوي"
           />
         </div>
 

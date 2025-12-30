@@ -66,7 +66,7 @@ export default function ExamMainInfo({
           </div>
         </div>
 
-        {!lessonId && (
+        {/* {!lessonId && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-4">
               نوع الاختبار
@@ -118,9 +118,9 @@ export default function ExamMainInfo({
               })}
             </div>
           </div>
-        )}
+        )} */}
 
-        {(examInfoData?.type == "intern" || lessonId)  && (
+        {(lessonId)  && (
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Input
