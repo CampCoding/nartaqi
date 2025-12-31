@@ -2865,7 +2865,7 @@ export default function DisplayQuestions({
           </div>
 
           {/* Instruction field for all question types */}
-          <div className="space-y-2">
+          {!isParagraph && <div className="space-y-2">
             <label htmlFor="instruction" className="block text-sm font-medium text-gray-700">
               تعليمات السؤال (اختياري)
             </label>
@@ -2880,7 +2880,7 @@ export default function DisplayQuestions({
             <p className="text-xs text-gray-500">
               هذه التعليمات ستظهر للطالب قبل الإجابة على السؤال
             </p>
-          </div>
+          </div>}
 
           <Divider />
 
