@@ -1,73 +1,49 @@
 "use client";
-import { Modal, Button, Spin, Alert } from 'antd' // Import Button and Spin from Ant Design
-import React, { useState, useEffect } from 'react'
+import { Modal, Button, Spin, Alert } from 'antd'
+import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { PlusOutlined, YoutubeOutlined, VideoCameraOutlined, InfoCircleOutlined } from '@ant-design/icons'; // Import icons
+import { PlusOutlined, YoutubeOutlined, VideoCameraOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { toast } from 'react-toastify';
 import { handleAddLessonVideo, handleEditLessonVideo, handleGetAllLessonVideo } from '../../../lib/features/videoSlice';
 import { handleGetAllContentFreeVideos } from '../../../lib/features/roundContentSlice';
 
-
 export default function EditContentVideoModal({ open, setOpen, id, round_id, rowData, setRowData }) {
-
   const [errors, setErrors] = useState({
     title: "",
     youtube_link: "",
     vimeo_link: "",
-    time: "",
-    general: ""
+    time: ""
   });
-
-  const [hasAtLeastOneLink, setHasAtLeastOneLink] = useState(false);
 
   const dispatch = useDispatch();
   const { edit_video_laoding } = useSelector(state => state?.videos || { store_content_loading: false });
 
   // YouTube URL patterns
   const youtubePatterns = [
-    // youtube.com/watch?v=VIDEO_ID
     /^(https?:\/\/(?:www\.)?youtube\.com\/watch\?(?:.*&)?v=[\w-]{11}(?:&.*)?)$/,
-    
-    // youtu.be/VIDEO_ID
     /^(https?:\/\/(?:www\.)?youtu\.be\/[\w-]{11})$/,
-    
-    // youtube.com/embed/VIDEO_ID
     /^(https?:\/\/(?:www\.)?youtube\.com\/embed\/[\w-]{11})$/,
-    
-    // youtube.com/shorts/VIDEO_ID
     /^(https?:\/\/(?:www\.)?youtube\.com\/shorts\/[\w-]{11})$/,
-    
-    // youtube.com/v/VIDEO_ID
     /^(https?:\/\/(?:www\.)?youtube\.com\/v\/[\w-]{11})$/,
-    
-    // youtube.com/live/VIDEO_ID
     /^(https?:\/\/(?:www\.)?youtube\.com\/live\/[\w-]+)$/,
   ];
 
   // Vimeo URL patterns
   const vimeoPatterns = [
-    // vimeo.com/VIDEO_ID
     /^(https?:\/\/(?:www\.)?vimeo\.com\/\d+)$/,
-    
-    // vimeo.com/album/ALBUM_ID/video/VIDEO_ID
     /^(https?:\/\/(?:www\.)?vimeo\.com\/album\/\d+\/video\/\d+)$/,
-    
-    // vimeo.com/channels/CHANNEL/VIDEO_ID
     /^(https?:\/\/(?:www\.)?vimeo\.com\/channels\/[^\/]+\/\d+)$/,
-    
-    // vimeo.com/groups/GROUP/videos/VIDEO_ID
     /^(https?:\/\/(?:www\.)?vimeo\.com\/groups\/[^\/]+\/videos\/\d+)$/,
-    
-    // vimeo.com/ondemand/TITLE/VIDEO_ID
     /^(https?:\/\/(?:www\.)?vimeo\.com\/ondemand\/[^\/]+\/\d+)$/,
-    
-    // player.vimeo.com/video/VIDEO_ID
     /^(https?:\/\/player\.vimeo\.com\/video\/\d+)$/,
   ];
 
   // Validation functions
   const validateYouTubeLink = (value) => {
-    if (!value || value.trim() === "") return "";
+    // If field is empty, no error (completely optional)
+    if (!value || value.trim() === "") {
+      return "";
+    }
     
     // Check if it starts with http:// or https://
     if (!value.startsWith('http://') && !value.startsWith('https://')) {
@@ -85,7 +61,10 @@ export default function EditContentVideoModal({ open, setOpen, id, round_id, row
   };
 
   const validateVimeoLink = (value) => {
-    if (!value || value.trim() === "") return "";
+    // If field is empty, no error (completely optional)
+    if (!value || value.trim() === "") {
+      return "";
+    }
     
     // Check if it starts with http:// or https://
     if (!value.startsWith('http://') && !value.startsWith('https://')) {
@@ -129,19 +108,6 @@ export default function EditContentVideoModal({ open, setOpen, id, round_id, row
     return "";
   };
 
-  // Check if at least one link is provided
-  const checkLinks = () => {
-    const hasYouTube = rowData.youtube_link && rowData.youtube_link.trim() !== '';
-    const hasVimeo = rowData.vimeo_link && rowData.vimeo_link.trim() !== '';
-    setHasAtLeastOneLink(hasYouTube || hasVimeo);
-  };
-
-  useEffect(() => {
-    if (rowData) {
-      checkLinks();
-    }
-  }, [rowData]);
-
   function handleInputChange(e) {
     const { name, value } = e.target;
     setRowData(prev => ({
@@ -168,7 +134,7 @@ export default function EditContentVideoModal({ open, setOpen, id, round_id, row
         error = "";
     }
 
-    setErrors((prev) => ({
+    setErrors(prev => ({
       ...prev,
       [name]: error
     }));
@@ -180,28 +146,18 @@ export default function EditContentVideoModal({ open, setOpen, id, round_id, row
       title: validateTitle(rowData.title),
       youtube_link: validateYouTubeLink(rowData.youtube_link),
       vimeo_link: validateVimeoLink(rowData.vimeo_link),
-      time: validateTime(rowData.time),
-      general: ""
+      time: validateTime(rowData.time)
     };
 
     setErrors(newErrors);
 
-    // Check if there are any errors
-    const hasErrors = Object.values(newErrors).some(error => error !== "");
+    // Check if there are any validation errors
+    const hasValidationErrors = Object.values(newErrors).some(error => error !== "");
     
-    // Check if at least one link is provided
-    if (!hasAtLeastOneLink && !hasErrors) {
-      newErrors.general = "يجب إدخال رابط واحد على الأقل (YouTube أو Vimeo)";
-      setErrors(prev => ({ ...prev, general: "يجب إدخال رابط واحد على الأقل (YouTube أو Vimeo)" }));
-      return false;
-    }
-
-    return !hasErrors && hasAtLeastOneLink;
+    return !hasValidationErrors;
   };
 
   function handleSubmit() {
-    console.log(rowData);
-    
     if (!validateAll()) {
       toast.error("يرجى تصحيح الأخطاء قبل الإرسال");
       return;
@@ -240,13 +196,13 @@ export default function EditContentVideoModal({ open, setOpen, id, round_id, row
       title: "",
       youtube_link: "",
       vimeo_link: "",
-      time: "",
-      general: ""
+      time: ""
     });
-    setHasAtLeastOneLink(false);
   };
 
-  const isFormValid = rowData.title && hasAtLeastOneLink && !errors.title && !errors.time;
+  const isFormValid = rowData.title && rowData.time && 
+                     !errors.title && !errors.time && 
+                     !errors.youtube_link && !errors.vimeo_link;
 
   // Custom footer for better control over button design and loading state
   const modalFooter = (
@@ -283,8 +239,8 @@ export default function EditContentVideoModal({ open, setOpen, id, round_id, row
             <PlusOutlined className="text-white text-xl" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-800 m-0">تعديل الفيديو</h2>
-            <p className="text-sm text-gray-500 m-0">تعديل بيانات الفيديو</p>
+            <h2 className="text-xl font-bold text-gray-800 m-0">تعديل الفيديو المجاني</h2>
+            <p className="text-sm text-gray-500 m-0">قم بتعديل بيانات الفيديو المجاني</p>
           </div>
         </div>
       }
@@ -324,7 +280,7 @@ export default function EditContentVideoModal({ open, setOpen, id, round_id, row
             onChange={handleInputChange}
             rows={3}
             className='border border-gray-400 focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400 resize-none'
-            placeholder='شرح موجز لأهداف هذا المحتوى وما سيتم تغطيته'
+            placeholder='شرح موجز لأهداف هذا المحتوى وما سيتم تغطيته (اختياري)'
           />
         </div>
 
@@ -332,7 +288,7 @@ export default function EditContentVideoModal({ open, setOpen, id, round_id, row
         <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg mb-4">
           <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
             <InfoCircleOutlined className="text-blue-500" />
-            روابط الفيديو *
+            روابط الفيديو (اختيارية)
           </h3>
 
           <div className="space-y-4">
@@ -340,7 +296,7 @@ export default function EditContentVideoModal({ open, setOpen, id, round_id, row
             <div className='flex flex-col gap-2'>
               <label htmlFor='youtube_link' className='text-lg font-medium text-gray-700 flex items-center gap-2'>
                 <YoutubeOutlined className="text-red-500" />
-                رابط YouTube
+                رابط YouTube (اختياري)
               </label>
               <input
                 id='youtube_link'
@@ -348,7 +304,7 @@ export default function EditContentVideoModal({ open, setOpen, id, round_id, row
                 value={rowData?.youtube_link || ""}
                 onChange={handleInputChange}
                 className={`border ${errors.youtube_link ? 'border-red-500' : 'border-gray-400'} focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400`}
-                placeholder='https://youtube.com/watch?v=VIDEO_ID'
+                placeholder='https://youtube.com/watch?v=VIDEO_ID (اختياري)'
               />
               {errors.youtube_link && (
                 <div className="text-red-500 text-sm mt-1 whitespace-pre-line">{errors.youtube_link}</div>
@@ -359,7 +315,7 @@ export default function EditContentVideoModal({ open, setOpen, id, round_id, row
             <div className='flex flex-col gap-2'>
               <label htmlFor='vimeo_link' className='text-lg font-medium text-gray-700 flex items-center gap-2'>
                 <VideoCameraOutlined className="text-blue-500" />
-                رابط Vimeo
+                رابط Vimeo (اختياري)
               </label>
               <input
                 id='vimeo_link'
@@ -367,7 +323,7 @@ export default function EditContentVideoModal({ open, setOpen, id, round_id, row
                 value={rowData?.vimeo_link || ""}
                 onChange={handleInputChange}
                 className={`border ${errors.vimeo_link ? 'border-red-500' : 'border-gray-400'} focus:outline-none rounded-md p-2 focus:ring-1 focus:ring-orange-400`}
-                placeholder='https://vimeo.com/123456789'
+                placeholder='https://vimeo.com/123456789 (اختياري)'
               />
               {errors.vimeo_link && (
                 <div className="text-red-500 text-sm mt-1 whitespace-pre-line">{errors.vimeo_link}</div>
@@ -375,18 +331,11 @@ export default function EditContentVideoModal({ open, setOpen, id, round_id, row
             </div>
           </div>
 
-          {!hasAtLeastOneLink && (
-            <Alert
-              message="تنبيه"
-              description="يجب إدخال رابط YouTube أو Vimeo واحد على الأقل"
-              type="warning"
-              showIcon
-              className="rounded-lg mt-4"
-            />
-          )}
-
           <div className="mt-4 text-sm text-gray-600">
-            <p className="font-semibold mb-1">أمثلة على الروابط الصحيحة:</p>
+            <p className="font-semibold mb-1">ملاحظة:</p>
+            <p className="mb-1">• يمكنك إدخال رابط YouTube أو Vimeo أو كلاهما أو لا شيء</p>
+            <p className="mb-1">• الروابط اختيارية تماماً</p>
+            <p className="font-semibold mt-2 mb-1">أمثلة على الروابط الصحيحة:</p>
             <p className="mb-1">YouTube: https://youtube.com/watch?v=dQw4w9WgXcQ</p>
             <p>Vimeo: https://vimeo.com/123456789</p>
           </div>
@@ -395,7 +344,7 @@ export default function EditContentVideoModal({ open, setOpen, id, round_id, row
         {/* Duration Input */}
         <div className='flex flex-col gap-2'>
           <label htmlFor='time' className='text-lg font-medium text-gray-700'>
-            مدة الفيديو *
+            مدة الفيديو 
           </label>
           <input
             id='time'
@@ -412,16 +361,6 @@ export default function EditContentVideoModal({ open, setOpen, id, round_id, row
             أدخل المدة بالتنسيق HH:MM:SS أو MM:SS
           </div>
         </div>
-
-        {errors.general && (
-          <Alert
-            message="خطأ"
-            description={errors.general}
-            type="error"
-            showIcon
-            className="rounded-lg"
-          />
-        )}
       </div>
     </Modal>
   );

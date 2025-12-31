@@ -173,13 +173,24 @@
 //       const options = q?.options || [];
 
 //       if (q.question_type === "t_f") {
-//         // Handle T/F question
-//         const isTrue = options.some(opt => {
-//           console.log(opt);
-//           return  (opt?.option_text?.toLowerCase().includes("صحيح") ||  opt?.is_correct == 1) 
-//         }
+//         // Handle T/F question - find which option is marked as correct
+//         // Don't check text content, just check is_correct flag
+//         const trueOption = options.find(opt => 
+//           (opt?.option_text?.toLowerCase().includes("صحيح") || 
+//            opt?.option_text?.toLowerCase().includes("صح")) &&
+//           Number(opt?.is_correct) === 1
 //         );
-
+        
+//         const isTrue = !!trueOption; // If "صحيح" is correct, then answer is true
+        
+//         console.log("T/F Question analysis:", {
+//           id: q.id,
+//           options: options,
+//           trueOptionFound: !!trueOption,
+//           isTrue: isTrue,
+//           option1: options[0]?.option_text + " - is_correct: " + options[0]?.is_correct,
+//           option2: options[1]?.option_text + " - is_correct: " + options[1]?.is_correct
+//         });
 
 //         return {
 //           id: q.id,
@@ -248,7 +259,7 @@
 //   // =========================
 //   // CSS class for text wrapping
 //   // =========================
-//   const textWrapClass = "break-words whitespace-normal overflow-hidden max-w-full [&_*]:break-words [&_*]:whitespace-normal [&_*]:max-w-[99%] px-4";
+//   const textWrapClass = "break-words whitespace-normal overflow-hidden max-w-full [&_*]:break-words [&_*]:whitespace-normal  px-4";
 
 //   // =========================
 //   // Expand/collapse helpers
@@ -276,7 +287,13 @@
 //   // Start editing - opens collapse
 //   // =========================
 //   const startEditing = (q) => {
-//     console.log("q", q);
+//     console.log("Starting edit for T/F question:", {
+//       q: q,
+//       correctAnswer: q.correctAnswer,
+//       options: q.options,
+//       rawData: q.rawData
+//     });
+    
 //     if (!q || !q.id) {
 //       console.error("Invalid question object:", q);
 //       return;
@@ -303,10 +320,34 @@
 //         (prev || []).map((o, idx) => ({ ...o, isCorrect: idx === safeIndex }))
 //       );
 //     } else if (q.type === "t_f") {
-//       console.log("q true,false", q);
+//       console.log("Editing T/F question details:", {
+//         question: q.question,
+//         correctAnswer: q.correctAnswer,
+//         options: q.options,
+//         correctOption: q.options?.find(opt => opt.isCorrect)
+//       });
+      
 //       setEditingTFContent(q.question || "");
-//       setEditingTFAnswer(q?.correctAnswer || true);
-//       setEditingTFExplanation(q.options?.[0]?.explanation || "");
+      
+//       // Determine correct answer from options
+//       let correctAnswer = true; // default
+      
+//       if (q.options && q.options.length >= 2) {
+//         // Find which option is marked as correct
+//         const correctOption = q.options.find(opt => opt.isCorrect);
+//         if (correctOption) {
+//           // Check if the correct option is "صحيح" (true) or "خطأ" (false)
+//           const optionText = correctOption.text?.toLowerCase() || "";
+//           correctAnswer = optionText.includes("صحيح") || optionText.includes("صح");
+//         }
+//       }
+      
+//       console.log("Setting editingTFAnswer to:", correctAnswer);
+//       setEditingTFAnswer(correctAnswer);
+      
+//       // Get explanation from any option (they should all have the same explanation)
+//       const explanation = q.options?.find(opt => opt.explanation)?.explanation || "";
+//       setEditingTFExplanation(explanation);
 //     } else if (q.type === "paragraph_mcq") {
 //       setEditingParagraphContent(q.paragraphContent || "");
 //       // Initialize with isEditing set to false for all questions
@@ -373,6 +414,9 @@
 //         }
 //         setExpandedQuestions(initial);
 
+//         // Also reset editing state
+//         cancelEditing();
+
 //       } catch (error) {
 //         console.error("Error refreshing questions:", error);
 //       }
@@ -381,7 +425,21 @@
 
 //   useEffect(() => {
 //     refreshQuestions();
-//   }, [selectedSection, selectedSectionId])
+//   }, [selectedSection, selectedSectionId]);
+
+//   // Add this effect to watch for editing completion and refresh
+//   // useEffect(() => {
+//   //   if (!edit_question_loading && editingQuestionId) {
+//   //     refreshQuestions();      
+//   //   }
+//   // }, [edit_question_loading, editingQuestionId]);
+
+//   // // Also add this to refresh when question is deleted
+//   // useEffect(() => {
+//   //   if (!delete_question_loading && !delete_paragraph_loading) {
+//   //     refreshQuestions();
+//   //   }
+//   // }, [delete_question_loading, delete_paragraph_loading]);
 
 //   // =========================
 //   // Add/Remove options functions
@@ -534,8 +592,16 @@
 
 //       if (res?.data?.status === "success") {
 //         toast.success("تم تعديل السؤال بنجاح");
-//         refreshQuestions();
+        
+//         // Force immediate state update
 //         cancelEditing();
+        
+//         // Close the expanded view
+//         const key = `t_f-${q.id}`;
+//         setExpandedQuestions(prev => ({ ...prev, [key]: false }));        
+//         // Refresh after a short delay to ensure API has updated
+//           refreshQuestions();
+        
 //       } else {
 //         toast.error(res?.data?.message || "فشل تعديل السؤال");
 //       }
@@ -788,13 +854,11 @@
 //   // Render Question Content (editing vs normal)
 //   // =========================
 //   useEffect(() => {
-//     console.log("editing Tf Question" , editingTFAnswer)
-//   } , [editingTFAnswer])
+//     console.log("editing Tf Question", editingTFAnswer)
+//   }, [editingTFAnswer])
 
 //   const renderQuestionContent = (q) => {
 //     const isEditing = editingQuestionId === q.id;
-
-
 
 //     if (isEditing) {
 //       const isMCQ = q.type === "mcq";
@@ -874,92 +938,92 @@
 //                   </span>
 //                 </div>
 
-//                 {editingOptions.map((opt, idx) => 
-//                 {
+//                 {editingOptions.map((opt, idx) => {
 //                   console.log("opt", opt);
-//                 return(
-//                   <div
-//                     key={opt.id}
-//                     className={`p-4 border rounded-lg relative ${editingCorrectAnswer === idx ? "border-green-400 bg-green-50" : "border-gray-300"
-//                       }`}
-//                   >
-//                     <div className="flex items-center justify-between mb-3">
-//                       <div className="flex items-center gap-3">
-//                         <input
-//                           type="radio"
-//                           checked={editingCorrectAnswer === idx}
-//                           onChange={() => {
-//                             setEditingCorrectAnswer(idx);
-//                             setEditingOptions(prev =>
-//                               prev.map((o, ii) => ({
-//                                 ...o,
-//                                 isCorrect: ii === idx,
-//                               }))
-//                             );
-//                           }}
-//                           className="w-5 h-5"
-//                         />
-//                         <span className="font-medium">
-//                           {editingCorrectAnswer === idx ? "إجابة صحيحة" : "تحديد كإجابة صحيحة"}
-//                         </span>
-//                       </div>
-//                       <Space>
-//                         <span className="px-3 py-1 bg-gray-100 rounded">
-//                           {String.fromCharCode(1632 + idx + 1)}
-//                         </span>
-//                         {editingOptions.length > 2 && (
-//                           <Button
-//                             danger
-//                             type="text"
-//                             icon={<Minus className="w-4 h-4" />}
-//                             onClick={() => removeOptionFromMCQ(idx)}
-//                             size="small"
-//                           />
-//                         )}
-//                       </Space>
-//                     </div>
-
-//                     <div className="space-y-3 pl-8">
-//                       <div>
-//                         <label className="text-sm mb-1 block">نص الخيار</label>
-//                         <div className="border border-gray-300 rounded">
-//                           <ReactQuill
-//                             value={opt.text}
-//                             onChange={(v) => {
-//                               setEditingOptions(prev => {
-//                                 const copy = [...prev];
-//                                 copy[idx] = { ...copy[idx], text: v };
-//                                 return copy;
-//                               });
+//                   return (
+//                     <div
+//                       key={opt.id}
+//                       className={`p-4 border rounded-lg relative ${editingCorrectAnswer === idx ? "border-green-400 bg-green-50" : "border-gray-300"
+//                         }`}
+//                     >
+//                       <div className="flex items-center justify-between mb-3">
+//                         <div className="flex items-center gap-3">
+//                           <input
+//                             type="radio"
+//                             checked={editingCorrectAnswer === idx}
+//                             onChange={() => {
+//                               setEditingCorrectAnswer(idx);
+//                               setEditingOptions(prev =>
+//                                 prev.map((o, ii) => ({
+//                                   ...o,
+//                                   isCorrect: ii === idx,
+//                                 }))
+//                               );
 //                             }}
-//                             modules={quillModules}
-//                             formats={quillFormats}
-//                             className="min-h-[80px]"
+//                             className="w-5 h-5"
 //                           />
+//                           <span className="font-medium">
+//                             {editingCorrectAnswer === idx ? "إجابة صحيحة" : "تحديد كإجابة صحيحة"}
+//                           </span>
 //                         </div>
+//                         <Space>
+//                           <span className="px-3 py-1 bg-gray-100 rounded">
+//                             {String.fromCharCode(1632 + idx + 1)}
+//                           </span>
+//                           {editingOptions.length > 2 && (
+//                             <Button
+//                               danger
+//                               type="text"
+//                               icon={<Minus className="w-4 h-4" />}
+//                               onClick={() => removeOptionFromMCQ(idx)}
+//                               size="small"
+//                             />
+//                           )}
+//                         </Space>
 //                       </div>
 
-//                       <div>
-//                         <label className="text-sm mb-1 block">الشرح (اختياري)</label>
-//                         <div className="border border-gray-300 rounded">
-//                           <ReactQuill
-//                             value={opt.explanation}
-//                             onChange={(v) => {
-//                               setEditingOptions(prev => {
-//                                 const copy = [...prev];
-//                                 copy[idx] = { ...copy[idx], explanation: v };
-//                                 return copy;
-//                               });
-//                             }}
-//                             modules={quillModules}
-//                             formats={quillFormats}
-//                             className="min-h-[80px]"
-//                           />
+//                       <div className="space-y-3 pl-8">
+//                         <div>
+//                           <label className="text-sm mb-1 block">نص الخيار</label>
+//                           <div className="border border-gray-300 rounded">
+//                             <ReactQuill
+//                               value={opt.text}
+//                               onChange={(v) => {
+//                                 setEditingOptions(prev => {
+//                                   const copy = [...prev];
+//                                   copy[idx] = { ...copy[idx], text: v };
+//                                   return copy;
+//                                 });
+//                               }}
+//                               modules={quillModules}
+//                               formats={quillFormats}
+//                               className="min-h-[80px]"
+//                             />
+//                           </div>
+//                         </div>
+
+//                         <div>
+//                           <label className="text-sm mb-1 block">الشرح (اختياري)</label>
+//                           <div className="border border-gray-300 rounded">
+//                             <ReactQuill
+//                               value={opt.explanation}
+//                               onChange={(v) => {
+//                                 setEditingOptions(prev => {
+//                                   const copy = [...prev];
+//                                   copy[idx] = { ...copy[idx], explanation: v };
+//                                   return copy;
+//                                 });
+//                               }}
+//                               modules={quillModules}
+//                               formats={quillFormats}
+//                               className="min-h-[80px]"
+//                             />
+//                           </div>
 //                         </div>
 //                       </div>
 //                     </div>
-//                   </div>
-//                 )}
+//                   );
+//                 }
 //                 )}
 
 //                 <div className="flex justify-between items-center pt-4">
@@ -1501,9 +1565,9 @@
 //               {/* Render T/F answer */}
 //               {q.type === "t_f" && (
 //                 <div className="mt-4">
-//                   <div className={`p-4 rounded-lg ${item.correctAnswer ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+//                   <div className={`p-4 rounded-lg ${q.correctAnswer ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
 //                     <div className="flex items-center gap-3">
-//                       {item.correctAnswer ? (
+//                       {q.correctAnswer ? (
 //                         <>
 //                           <CheckCircle className="w-5 h-5 text-green-600" />
 //                           <span className="font-bold text-green-700">الإجابة الصحيحة: صح</span>
@@ -1794,7 +1858,7 @@
 //         ) : (
 //           <div className="space-y-6">
 //             <div className="mb-6">
-//               <div className="flex items-center gap-3 mb-4">
+//               <div className="flex items-center justify-between gap-3 mb-4">
 //                 <div
 //                   dangerouslySetInnerHTML={{ __html: selectedSection?.title || "قسم الامتحان" }}
 //                   className={`text-2xl font-bold text-gray-900 ${textWrapClass}`}
@@ -1923,6 +1987,7 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
+  Info,
 } from "lucide-react";
 import {
   Empty,
@@ -2000,6 +2065,7 @@ export default function DisplayQuestions({
   const [editingContent, setEditingContent] = useState("");
   const [editingOptions, setEditingOptions] = useState([]);
   const [editingCorrectAnswer, setEditingCorrectAnswer] = useState(0);
+  const [editingInstruction, setEditingInstruction] = useState(""); // Add instruction state
 
   // T/F editing
   const [editingTFContent, setEditingTFContent] = useState("");
@@ -2105,6 +2171,7 @@ export default function DisplayQuestions({
           type: "t_f", // Use t_f type for T/F questions
           question: q?.question_text || "",
           correctAnswer: isTrue,
+          instruction: q?.instructions || "", // Add instruction field
           options: options.map((opt) => ({
             id: opt?.id,
             text: opt.option_text || "",
@@ -2123,6 +2190,7 @@ export default function DisplayQuestions({
           id: q.id,
           type: "mcq",
           question: q?.question_text || "",
+          instruction: q?.instructions || "", // Add instruction field
           correctAnswer: correctIndex >= 0 ? correctIndex : 0,
           options: options.map((opt) => ({
             id: opt?.id,
@@ -2150,6 +2218,7 @@ export default function DisplayQuestions({
       questions: (p?.questions || []).map((q) => ({
         id: q?.id,
         questionText: q?.question_text || "",
+        instruction: q?.instructions || "", // Add instruction field
         options: (q?.options || []).map((opt) => ({
           id: opt?.id,
           text: opt?.option_text || "",
@@ -2167,7 +2236,7 @@ export default function DisplayQuestions({
   // =========================
   // CSS class for text wrapping
   // =========================
-  const textWrapClass = "break-words whitespace-normal overflow-hidden max-w-full [&_*]:break-words [&_*]:whitespace-normal [&_*]:max-w-[99%] px-4";
+  const textWrapClass = "break-words whitespace-normal overflow-hidden max-w-full [&_*]:break-words [&_*]:whitespace-normal  px-4";
 
   // =========================
   // Expand/collapse helpers
@@ -2216,6 +2285,9 @@ export default function DisplayQuestions({
     setEditingQuestionId(q.id);
     setEditingType(q.type);
 
+    // Set instruction for all question types
+    setEditingInstruction(q.instruction || "");
+
     if (q.type === "mcq") {
       setEditingContent(q.question || "");
       setEditingOptions((q.options || []).map((opt) => ({ ...opt })));
@@ -2263,6 +2335,7 @@ export default function DisplayQuestions({
         (q.questions || []).map((pq) => ({
           id: pq.id,
           questionText: pq.questionText || "",
+          instruction: pq.instruction || "", // Set instruction for paragraph questions
           options: (pq.options || []).map((opt) => ({ ...opt })),
           rawData: pq.rawData,
           isEditing: false // Initialize as false
@@ -2290,6 +2363,7 @@ export default function DisplayQuestions({
     setEditingQuestionId(null);
     setEditingType(null);
     setEditingContent("");
+    setEditingInstruction(""); // Reset instruction
     setEditingOptions([]);
     setEditingCorrectAnswer(0);
     setEditingTFContent("");
@@ -2334,20 +2408,6 @@ export default function DisplayQuestions({
   useEffect(() => {
     refreshQuestions();
   }, [selectedSection, selectedSectionId]);
-
-  // Add this effect to watch for editing completion and refresh
-  // useEffect(() => {
-  //   if (!edit_question_loading && editingQuestionId) {
-  //     refreshQuestions();      
-  //   }
-  // }, [edit_question_loading, editingQuestionId]);
-
-  // // Also add this to refresh when question is deleted
-  // useEffect(() => {
-  //   if (!delete_question_loading && !delete_paragraph_loading) {
-  //     refreshQuestions();
-  //   }
-  // }, [delete_question_loading, delete_paragraph_loading]);
 
   // =========================
   // Add/Remove options functions
@@ -2442,7 +2502,7 @@ export default function DisplayQuestions({
     const payload = {
       id: q.id,
       question_text: editingContent,
-      instructions: "Read carefully before answering",
+      instructions: editingInstruction || "Read carefully before answering", // Use instruction field
       mcq_array: (editingOptions || []).map((opt) => ({
         answer: opt?.text || "",
         question_explanation: opt?.explanation || "",
@@ -2490,7 +2550,7 @@ export default function DisplayQuestions({
     const payload = {
       id: q.id,
       question_text: editingTFContent,
-      instructions: "اختر الإجابة الصحيحة",
+      instructions: editingInstruction || "اختر الإجابة الصحيحة", // Use instruction field
       question_type: "t_f", // Set question_type to t_f
       mcq_array: [trueOption, falseOption],
     };
@@ -2547,7 +2607,7 @@ export default function DisplayQuestions({
     const payload = {
       id: editingQuestion?.rawData?.id,
       question_text: editingQuestion?.questionText,
-      instructions: "Read carefully before answering",
+      instructions: editingQuestion.instruction || "Read carefully before answering", // Use instruction field
       mcq_array: (editingQuestion?.options || []).map((opt) => ({
         answer: opt.text,
         correct_or_not: opt.isCorrect ? "1" : "0",
@@ -2761,10 +2821,6 @@ export default function DisplayQuestions({
   // =========================
   // Render Question Content (editing vs normal)
   // =========================
-  useEffect(() => {
-    console.log("editing Tf Question", editingTFAnswer)
-  }, [editingTFAnswer])
-
   const renderQuestionContent = (q) => {
     const isEditing = editingQuestionId === q.id;
 
@@ -2807,6 +2863,26 @@ export default function DisplayQuestions({
               )}
             </Space>
           </div>
+
+          {/* Instruction field for all question types */}
+          <div className="space-y-2">
+            <label htmlFor="instruction" className="block text-sm font-medium text-gray-700">
+              تعليمات السؤال (اختياري)
+            </label>
+            <input
+              id="instruction"
+              type="text"
+              value={editingInstruction}
+              onChange={(e) => setEditingInstruction(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="مثال: اختر الإجابة الصحيحة، أكمل الجملة التالية، إلخ..."
+            />
+            <p className="text-xs text-gray-500">
+              هذه التعليمات ستظهر للطالب قبل الإجابة على السؤال
+            </p>
+          </div>
+
+          <Divider />
 
           {/* MCQ EDIT */}
           {isMCQ && (
@@ -3120,8 +3196,42 @@ export default function DisplayQuestions({
                           </Space>
                         </div>
 
+                        {/* Instruction for paragraph question */}
+                        {pq.instruction && !pq.isEditing && (
+                          <div className="mb-3 p-3 bg-blue-50 rounded-lg">
+                            <div className="flex items-center gap-2 text-blue-700">
+                              <Info className="w-4 h-4" />
+                              <span className="font-medium">التعليمات:</span>
+                            </div>
+                            <div className="mt-1 text-sm text-blue-800">
+                              {pq.instruction}
+                            </div>
+                          </div>
+                        )}
+
                         {pq.isEditing ? (
                           <div className="space-y-4">
+                            {/* Instruction field for paragraph question in edit mode */}
+                            <div className="space-y-2">
+                              <label htmlFor="paragraph-question-instruction" className="block text-sm font-medium text-gray-700">
+                                تعليمات السؤال (اختياري)
+                              </label>
+                              <input
+                                id="paragraph-question-instruction"
+                                type="text"
+                                value={pq.instruction}
+                                onChange={(e) => {
+                                  setEditingParagraphQuestions(prev => {
+                                    const copy = [...prev];
+                                    copy[qIdx] = { ...copy[qIdx], instruction: e.target.value };
+                                    return copy;
+                                  });
+                                }}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="مثال: اختر الإجابة الصحيحة بناءً على الفقرة..."
+                              />
+                            </div>
+
                             <div>
                               <label className="text-sm mb-1 block">نص السؤال</label>
                               <div className="border border-gray-300 rounded">
@@ -3259,6 +3369,19 @@ export default function DisplayQuestions({
                           </div>
                         ) : (
                           <div className={textWrapClass}>
+                            {/* Display instruction if exists */}
+                            {pq.instruction && (
+                              <div className="mb-3 p-3 bg-blue-50 rounded-lg">
+                                <div className="flex items-center gap-2 text-blue-700">
+                                  <Info className="w-4 h-4" />
+                                  <span className="font-medium">التعليمات:</span>
+                                </div>
+                                <div className="mt-1 text-sm text-blue-800">
+                                  {pq.instruction}
+                                </div>
+                              </div>
+                            )}
+                            
                             <div
                               className="mb-3"
                               dangerouslySetInnerHTML={{ __html: pq.questionText }}
@@ -3358,6 +3481,7 @@ export default function DisplayQuestions({
               {
                 id: q.id,
                 questionText: q.question,
+                instruction: q.instruction, // Include instruction
                 options: q.options,
                 correctAnswer: q.correctAnswer,
                 type: "mcq",
@@ -3368,6 +3492,7 @@ export default function DisplayQuestions({
                 {
                   id: q.id,
                   questionText: q.question,
+                  instruction: q.instruction, // Include instruction
                   correctAnswer: q.correctAnswer,
                   explanation: q.options?.[0]?.explanation || "",
                   type: "t_f",
@@ -3464,6 +3589,19 @@ export default function DisplayQuestions({
                   )}
                 </Space>
               </div>
+
+              {/* Display instruction if exists */}
+              {item.instruction && (
+                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                  <div className="flex items-center gap-2 text-blue-700">
+                    <Info className="w-4 h-4" />
+                    <span className="font-medium">التعليمات:</span>
+                  </div>
+                  <div className="mt-1 text-sm text-blue-800">
+                    {item.instruction}
+                  </div>
+                </div>
+              )}
 
               <div
                 className={`mb-4 ${textWrapClass}`}
@@ -3766,7 +3904,7 @@ export default function DisplayQuestions({
         ) : (
           <div className="space-y-6">
             <div className="mb-6">
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-between gap-3 mb-4">
                 <div
                   dangerouslySetInnerHTML={{ __html: selectedSection?.title || "قسم الامتحان" }}
                   className={`text-2xl font-bold text-gray-900 ${textWrapClass}`}
@@ -3817,6 +3955,13 @@ export default function DisplayQuestions({
                                 : stripHtml(q.paragraphContent).substring(0, 50) + "..."
                             }
                           </div>
+                          {/* Show instruction in collapsed view if exists */}
+                          {q.instruction && !isExp && (
+                            <div className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                              <Info className="w-3 h-3" />
+                              <span className="truncate">{q.instruction}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
