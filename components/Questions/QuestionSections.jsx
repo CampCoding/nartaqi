@@ -897,7 +897,7 @@ export default function QuestionSections({
         ...editingSection,
         title: styledNameHtml,
         description: styledDescHtml,
-        type: (examInfoData?.type == "intern" || lessonId) ? "intern" : "mock",
+        type:  lessonId ? "intern" : "mock",
         // Only include time_if_free for intern type
         time_if_free: null,
       };
@@ -941,7 +941,7 @@ export default function QuestionSections({
           title: styledNameHtml,
           description: styledDescHtml,
           // type: "mock",
-          type: (examInfoData?.type == "intern" || lessonId) ? "intern" : "mock",
+          type:  lessonId ? "intern" : "mock",
           // Only include time_if_free for intern type
           time_if_free: null,
         };
@@ -1008,7 +1008,7 @@ export default function QuestionSections({
       params["exam-id"] || params?.examId || data?.sections?.exam_id || data?.id;
 
     if (examId && sectionId) {
-      dispatch(handleDeleteExamSection({ body: { id: sectionId } }))
+      dispatch(handleDeleteExamSection({ body: { id: sectionId , type:  lessonId ?"intern" :"mock"} }))
         .unwrap()
         .then((res) => {
           if (res?.data?.status === "success") {
