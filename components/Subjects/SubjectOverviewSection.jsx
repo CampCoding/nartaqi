@@ -863,10 +863,9 @@ const SubjectDetails = ({ subjectId, setSelectedUnit }) => {
 
             <p class="max-w-[100%] whitespace-pre-wrap"><strong>الفئة المستهدفة:</strong> ${filteredRound.for || "الجميع"
           }</p>
-            <p class="max-w-[100%] whitespace-pre-wrap"><strong>الوقت:</strong> ${filteredRound.time_show || "غير محدد"
+            <p class="max-w-[100%] whitespace-pre-wrap"><strong>وقت ظهور الدورة:</strong> ${filteredRound.time_show || "غير محدد"
           }</p>
-            <p class="max-w-[100%] whitespace-pre-wrap"><strong>المدة الإجمالية:</strong> ${filteredRound.total_hours || "غير محدد"
-          } ساعات</p>
+          
           </div>
         `,
         features, // ✅ خليها Array مش HTML

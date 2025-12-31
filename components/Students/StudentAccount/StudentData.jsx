@@ -53,7 +53,8 @@ export default function StudentData({
         <div className="text-center">
           <div className="relative inline-block mb-6">
             <img
-              src={get_student_by_phone_list?.data?.message?.image}
+              src={get_student_by_phone_list?.data?.message?.image ||"https://avatar.iran.liara.run/public"  }
+              onError={(e) => e.currentTarget.src="https://avatar.iran.liara.run/public"}
               alt="صورة المتدرب"
               className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-xl"
             />
@@ -79,13 +80,13 @@ export default function StudentData({
           </h3>
 
           <div className="space-y-3 mb-6">
-            <div className="flex items-center justify-center gap-2 text-gray-600">
+            {get_student_by_phone_list?.data?.message?.email && <div className="flex items-center justify-center gap-2 text-gray-600">
               <Mail size={14} />
               <span className="text-sm">{get_student_by_phone_list?.data?.message?.email || '—'}</span>
               {/* {student.emailVerified && (
                 <Check size={14} className="text-green-500" />
               )} */}
-            </div>
+            </div>}
           </div>
 
           {/* Overall progress */}

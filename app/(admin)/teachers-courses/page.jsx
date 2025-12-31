@@ -166,7 +166,7 @@ const SubjectsManagementPage = () => {
             })
           );
         } else {
-          toast.error(res?.data?.message || "حدث خطأ أثناء تحديث الحالة");
+          toast.error(res?.error?.response?.data?.message || "حدث خطأ أثناء تحديث الحالة");
         }
       })
       .catch((e) => {

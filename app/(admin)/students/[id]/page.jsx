@@ -470,7 +470,7 @@ export default function StudentAccountPage() {
         <BreadcrumbsShowcase items={breadcrumbs} variant="pill" />
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <StatCard
             icon={BookOpen}
             title="الدورات النشطة"
@@ -506,7 +506,7 @@ export default function StudentAccountPage() {
             subtitle="شهادة معتمدة"
             color="from-purple-400 to-purple-600"
           />
-        </div>
+        </div> */}
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-3 mb-8 p-2 bg-white rounded-2xl border border-gray-200 shadow-sm">
@@ -522,17 +522,17 @@ export default function StudentAccountPage() {
           <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="payment" icon={BookOpen}>
             المدفوعات
           </TabButton>
-          <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="badges" icon={Award}>
+          {/* <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="badges" icon={Award}>
             شاراتي
-          </TabButton>
-          <TabButton
+          </TabButton> */}
+          {/* <TabButton
           setActiveTab={setActiveTab} activeTab={activeTab}
             id="certificates"
             icon={FileText}
           >
             شهاداتي
-          </TabButton>
-          <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="rating" icon={Star}>التقييمات</TabButton>
+          </TabButton> */}
+          {/* <TabButton setActiveTab={setActiveTab} activeTab={activeTab} id="rating" icon={Star}>التقييمات</TabButton> */}
         </div>
 
         {/* -------- Account Tab -------- */}
