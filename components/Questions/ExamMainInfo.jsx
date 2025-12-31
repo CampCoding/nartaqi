@@ -15,6 +15,7 @@ export default function ExamMainInfo({
   exam_types,
   add_exam_loading,
   edit_exam_loading,
+  addExam
 }) {
   const params = useParams();
   const currentDate = new Date().toISOString().split("T")[0];
@@ -138,18 +139,18 @@ export default function ExamMainInfo({
         )}
       </div>
 
-      <button
+      {!addExam && <button
         type="button"
         className="bg-blue-500 text-white p-3 rounded-md mt-3 disabled:opacity-60"
         onClick={handleSubmitBasicData}
-        disabled={add_exam_loading || edit_exam_loading}
+        disabled={addExam || add_exam_loading || edit_exam_loading}
       >
         {add_exam_loading || edit_exam_loading
           ? "جاري الحفظ..."
           : params["exam-id"]
           ? "تعديل"
           : "إضافة"}
-      </button>
+      </button>}
     </Card>
   );
 }

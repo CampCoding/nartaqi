@@ -207,6 +207,7 @@ export default function AddCourseSourceBasicInfo({
 
   useEffect(() => {
     if (get_categories_parts_list?.data?.message) {
+      console.log("get_categories_parts_list", get_categories_parts_list?.data?.message);
       const options = get_categories_parts_list.data.message
         .filter((item) => Number(item?.course_category_id) === Number(selectedCategory))
         .map((part) => ({

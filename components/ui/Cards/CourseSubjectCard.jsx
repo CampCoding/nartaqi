@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MoreVertical, Edit, Trash2, Copy, File, EyeOff, Eye } from "lucide-react";
-import { Modal, Typography, Button } from "antd";
+import { Modal, Typography, Button, Tag } from "antd";
 import { ExclamationCircleOutlined, DeleteOutlined } from "@ant-design/icons";
 
 const { Text } = Typography;
@@ -161,11 +161,11 @@ const CourseSourceSubjectCard = ({
                       className="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2"
                     >
                       {isActive ? (
-                        <EyeOff size={14} className="text-emerald-600" />
+                        <EyeOff size={14} className="text-red-600" />
                       ) : (
                         <Eye size={14} className="text-emerald-600" />
                       )}
-                      <span>{isActive ? "غير نشط" : "نشط"}</span>
+                      <span>{isActive ? "إلغاء تفعيل الدورة" : "تفعيل الدورة"}</span>
                     </button>
                   ) : null}
                   <button
@@ -247,13 +247,17 @@ const CourseSourceSubjectCard = ({
           </div>
         </div>
 
-        <div className="self-stretch px-3 flex flex-col justify-start items-start gap-1">
-          <div className="self-stretch text-right text-text text-base font-bold">
+        <div className=" px-3 flex w-full justify-between items-center gap-1">
+          <div className="self-stretch px-3 flex flex-col justify-start items-start gap-1">
+            <div className="self-stretch text-right text-text text-base font-bold">
             {subject?.name}
           </div>
           <div className="self-stretch w-[250px] truncate text-right text-zinc-600 text-sm">
             {subject?.description}
           </div>
+          </div>
+
+          <Tag color={subject?.active == "1" ? "green" :"red"}>{subject?.active == "1" ? "نشط" :"غير نشط"}</Tag>
         </div>
 
         <div className="text-black self-stretch p-3 flex flex-col justify-start items-start gap-3">

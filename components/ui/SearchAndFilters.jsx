@@ -37,9 +37,9 @@ const SearchAndFilters = ({
   noMode,
 }) => {
   return (
-    <Card className="p-6 mb-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4 flex-1">
+    <Card className="p-6 w-full mb-8">
+      <div className="flex  items-center justify-between">
+        <div className="flex w-full items-center gap-4 flex-1">
           <div className="flex-1 max-w-md">
             <Input
               placeholder={searchPlacehodler || "البحث في الجداول..."}

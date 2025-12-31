@@ -47,6 +47,9 @@ const initialState = {
   delete_paragraph_loading : false,
 
   add_paragraph_question_loading : false,
+
+  student_exam_score_list:[],
+  student_exam_score_loading : false
 }
 
 
@@ -212,7 +215,10 @@ export const handleAddParagraphQuestion  = createAsyncThunk("examSlice/handleAdd
   return response;
 })
 
-
+export const handleGetAllStudentExamScore = createAsyncThunk("examSlice/handleGetAllStudentExamScore",async({body}) =>{
+  const response = await api.post("admin/exams/GetStudentScoresByExamId",{body});
+  return response;
+})
 
 
 export const examSlice = createSlice({
@@ -491,6 +497,18 @@ export const examSlice = createSlice({
     })
     .addCase(handleGetAllExamByLessonId.rejected ,(state) => {
       state.all_exam_lesson_loading = false;
+    })
+
+    
+     .addCase(handleGetAllStudentExamScore.pending ,(state) => {
+      state.student_exam_score_loading = true;
+    })
+    .addCase(handleGetAllStudentExamScore.fulfilled ,(state , action) => {
+      state.student_exam_score_loading = false;
+      state.student_exam_score_list = action.payload
+    })
+    .addCase(handleGetAllStudentExamScore.rejected ,(state) => {
+      state.student_exam_score_loading = false;
     })
   }
 })

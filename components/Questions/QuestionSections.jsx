@@ -50,6 +50,23 @@
 //   "link",
 // ];
 
+// // Helper function to sanitize HTML for display
+// const sanitizeHTMLForDisplay = (html) => {
+//   if (!html) return "";
+  
+//   // Remove problematic inline styles that cause overflow
+//   let sanitized = html
+//     .replace(/style="[^"]*"/g, '')
+//     .replace(/width:\s*\d+px/g, '')
+//     .replace(/width:\s*\d+%/g, '')
+//     .replace(/min-width:\s*\d+px/g, '')
+//     .replace(/max-width:\s*\d+px/g, '')
+//     .replace(/<img/g, '<img class="max-w-full h-auto"')
+//     .replace(/<table/g, '<table class="max-w-full overflow-auto block"');
+  
+//   return sanitized;
+// };
+
 // export default function QuestionSections({
 //   examData,
 //   filteredSection,
@@ -87,8 +104,8 @@
 
 //   // Load sections when component mounts or when params change
 //   useEffect(() => {
-//     console.log("data", data  , examData , examInfoData);
-//   }, [data , examData , examInfoData]);
+//     console.log("data", data, examData, examInfoData);
+//   }, [data, examData, examInfoData]);
 
 //   useEffect(() => {
 //     if (params["exam-id"] || data) {
@@ -155,7 +172,7 @@
 //         ...editingSection,
 //         title: nameHtml,
 //         description: descHtml || null,
-//         type: (examInfoData?.type == "intern" || lessonId) ? "intern" :"mock",
+//         type: (examInfoData?.type == "intern" || lessonId) ? "intern" : "mock",
 //         // Only include time_if_free for intern type
 //         time_if_free: null,
 //       };
@@ -199,9 +216,9 @@
 //           title: nameHtml,
 //           description: descHtml || null,
 //           // type: "mock",
-//           type: (examInfoData?.type == "intern" || lessonId) ? "intern" :"mock",
+//           type: (examInfoData?.type == "intern" || lessonId) ? "intern" : "mock",
 //           // Only include time_if_free for intern type
-//         time_if_free:  null,
+//           time_if_free: null,
 //         };
 
 //         dispatch(handleCreateExamSection({ body: newSection }))
@@ -231,7 +248,7 @@
 //           title: nameHtml,
 //           description: descHtml || null,
 //           // Only include time_if_free for intern type
-//         time_if_free:  null,
+//           time_if_free: null,
 //           questions: [],
 //         };
 
@@ -305,7 +322,7 @@
 
 //   useEffect(() => {
 //     console.log(data, examData)
-//   } , [data, examData])
+//   }, [data, examData])
 
 //   if (!examInfoData?.type && !data?.type) return null;
 
@@ -420,15 +437,14 @@
 //                 type="button"
 //                 disabled={
 //                   !nameHtml?.replace(/<p>|<\/p>/g, "")?.trim() ||
-//                    // Disable if intern type and no time
+//                   // Disable if intern type and no time
 //                   add_exam_section_loading ||
 //                   update_exam_section_loading
 //                 }
 //                 title={
 //                   !nameHtml?.replace(/<p>|<\/p>/g, "")?.trim()
 //                     ? "اسم القسم مطلوب"
-                    
-//                       : undefined
+//                     : undefined
 //                 }
 //               >
 //                 {getButtonText()}
@@ -455,33 +471,46 @@
 //                 localSections.map((section) => (
 //                   <div
 //                     key={section.id}
-
-//  className="flex items-start justify-between p-3 border border-gray-100 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors min-w-0"                    >
-//                     <div className="flex-1 min-w-0">
-//                       <h4
-//                         className="font-medium break-words text-wrap text-gray-800"
-//                         dangerouslySetInnerHTML={{ __html: section.title }}
-//                       />
-//                       {section.description && (
-//                         <p
-//                           className="text-sm text-wrap break-words text-gray-600 mt-1"
+//                     className="flex items-start justify-between p-3 border border-gray-100 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors min-w-0"
+//                   >
+//                     <div className="flex-1 min-w-0 overflow-hidden">
+//                       {/* Title with proper overflow handling */}
+//                       <div className="max-w-full overflow-hidden">
+//                         <h4
+//                           className="font-medium text-gray-800 break-words"
 //                           dangerouslySetInnerHTML={{
-//                             __html: section.description,
+//                             __html: sanitizeHTMLForDisplay(section.title)
 //                           }}
 //                         />
+//                       </div>
+
+//                       {/* Description with proper overflow handling */}
+//                       {section.description && (
+//                         <div className="max-w-full overflow-hidden mt-1">
+//                           <div
+//                             className="text-sm text-gray-600 break-words"
+//                             dangerouslySetInnerHTML={{
+//                               __html: sanitizeHTMLForDisplay(section.description)
+//                             }}
+//                           />
+//                         </div>
 //                       )}
+
 //                       {/* Show time for intern type sections */}
 //                       {/* {(isInternType || lessonId) && section.time_if_free && (
-                       
-//                        <div className="text-xs text-blue-600 mt-1">
+//                         <div className="text-xs text-blue-600 mt-1">
 //                           ⏱️ الوقت: {section.time_if_free} 
 //                         </div>
 //                       )} */}
+
+//                       {/* Question count */}
 //                       <div className="text-xs text-gray-500 mt-1">
 //                         عدد الأسئلة: {section.mcq?.length || 0}
 //                       </div>
 //                     </div>
-//                     <div className="flex gap-2">
+
+//                     {/* Action buttons */}
+//                     <div className="flex gap-2 flex-shrink-0 ml-2">
 //                       <button
 //                         onClick={() => startEditing(section)}
 //                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -524,7 +553,12 @@
 //           )}
 
 //         {/* Delete confirmation modal */}
-//         <Modal open={isDeleteModalOpen} footer={null} onCancel={() => setIsDeleteModalOpen(false)}>
+//         <Modal
+//           open={isDeleteModalOpen}
+//           footer={null}
+//           onCancel={() => setIsDeleteModalOpen(false)}
+//           className="[&_.ant-modal-content]:p-0"
+//         >
 //           <div className="rounded-2xl w-full mx-4 p-6">
 //             <h3 className="text-lg font-semibold text-gray-900 mb-2">
 //               تأكيد حذف القسم
@@ -533,16 +567,20 @@
 //               هل أنت متأكد أنك تريد حذف هذا القسم؟ سيتم حذف القسم وكل
 //               الأسئلة المرتبطة به.
 //             </p>
-//             <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-4">
+//             <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-4 max-w-full overflow-hidden">
+//               {/* Title in delete modal */}
 //               <div
-//                 className="text-sm font-medium text-gray-800"
-//                 dangerouslySetInnerHTML={{ __html: sectionToDelete?.title }}
+//                 className="text-sm font-medium text-gray-800 break-words"
+//                 dangerouslySetInnerHTML={{
+//                   __html: sanitizeHTMLForDisplay(sectionToDelete?.title)
+//                 }}
 //               />
+//               {/* Description in delete modal */}
 //               {sectionToDelete?.description && (
 //                 <div
-//                   className="text-xs text-gray-600 mt-1"
+//                   className="text-xs text-gray-600 mt-1 break-words"
 //                   dangerouslySetInnerHTML={{
-//                     __html: sectionToDelete?.description,
+//                     __html: sanitizeHTMLForDisplay(sectionToDelete?.description)
 //                   }}
 //                 />
 //               )}
@@ -575,6 +613,33 @@
 //           </div>
 //         </Modal>
 //       </div>
+
+//       {/* Add custom styles for Quill content */}
+//       <style jsx global>{`
+//         /* Ensure Quill editor content doesn't overflow */
+//         .ql-editor {
+//           max-width: 100% !important;
+//         }
+        
+//         .ql-editor * {
+//           max-width: 100% !important;
+//           overflow-wrap: break-word !important;
+//           word-break: break-word !important;
+//         }
+        
+//         /* Ensure images in Quill content are responsive */
+//         .ql-editor img {
+//           max-width: 100% !important;
+//           height: auto !important;
+//         }
+        
+//         /* Ensure tables in Quill content are scrollable */
+//         .ql-editor table {
+//           max-width: 100% !important;
+//           display: block !important;
+//           overflow-x: auto !important;
+//         }
+//       `}</style>
 //     </Card>
 //   );
 // }
@@ -602,7 +667,7 @@ import { Modal, Input } from "antd";
 // SSR-safe import
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
-// Quill toolbar config
+// Custom toolbar with large font default and RTL direction
 const quillModules = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
@@ -647,6 +712,51 @@ const sanitizeHTMLForDisplay = (html) => {
   
   return sanitized;
 };
+
+// Custom styles for Quill editor
+const customQuillStyles = `
+  .ql-editor {
+    font-size: 18px !important; /* Large font size */
+    text-align: right !important; /* Right alignment */
+    direction: rtl !important; /* RTL direction */
+    line-height: 1.6 !important;
+  }
+  
+  .ql-editor * {
+    text-align: right !important; /* Ensure all elements are right-aligned */
+    direction: rtl !important; /* Ensure RTL for all elements */
+  }
+  
+  .ql-editor p, .ql-editor h1, .ql-editor h2, .ql-editor h3, .ql-editor li {
+    text-align: right !important;
+    direction: rtl !important;
+  }
+  
+  .ql-editor ol, .ql-editor ul {
+    text-align: right !important;
+    direction: rtl !important;
+  }
+  
+  /* Ensure RTL for lists */
+  .ql-editor.ql-rtl .ql-list.list-bullet::before {
+    content: '\\2022' !important;
+  }
+  
+  /* Larger font for toolbar */
+  .ql-toolbar {
+    font-size: 16px !important;
+  }
+  
+  /* Ensure proper RTL for toolbar buttons */
+  .ql-toolbar.ql-rtl {
+    direction: rtl !important;
+  }
+  
+  .ql-toolbar.ql-rtl .ql-formats {
+    margin-right: 15px !important;
+    margin-left: 0 !important;
+  }
+`;
 
 export default function QuestionSections({
   examData,
@@ -705,11 +815,35 @@ export default function QuestionSections({
     }
   }, [get_exam_sections_list, sections]);
 
+  // Add default large font and RTL direction to initial HTML
+  const addDefaultStyles = (html) => {
+    if (!html) return '<p style="font-size: 18px; text-align: right; direction: rtl;"></p>';
+    
+    // Check if the HTML already has a p tag
+    if (!html.includes('<p>')) {
+      return `<p style="font-size: 18px; text-align: right; direction: rtl;">${html}</p>`;
+    }
+    
+    // Add styles to existing p tags
+    let styledHtml = html;
+    styledHtml = styledHtml.replace(/<p>/g, '<p style="font-size: 18px; text-align: right; direction: rtl;">');
+    
+    // Also add to other common text elements
+    styledHtml = styledHtml.replace(/<h1>/g, '<h1 style="font-size: 24px; text-align: right; direction: rtl;">');
+    styledHtml = styledHtml.replace(/<h2>/g, '<h2 style="font-size: 22px; text-align: right; direction: rtl;">');
+    styledHtml = styledHtml.replace(/<h3>/g, '<h3 style="font-size: 20px; text-align: right; direction: rtl;">');
+    styledHtml = styledHtml.replace(/<li>/g, '<li style="text-align: right; direction: rtl;">');
+    styledHtml = styledHtml.replace(/<div>/g, '<div style="text-align: right; direction: rtl;">');
+    
+    return styledHtml;
+  };
+
   // Reset form
   const resetEditors = () => {
-    setNameHtml("");
+    // Set default with large font and RTL
+    setNameHtml('<p style="font-size: 18px; text-align: right; direction: rtl;"></p>');
     setTime(""); // Reset time
-    setDescHtml("");
+    setDescHtml('<p style="font-size: 18px; text-align: right; direction: rtl;"></p>');
     setEditingSection(null);
     setIsEditing(false);
   };
@@ -717,8 +851,9 @@ export default function QuestionSections({
   // Set up editing mode
   const startEditing = (section) => {
     setEditingSection(section);
-    setNameHtml(section.title || "");
-    setDescHtml(section.description || "");
+    // Add default styles if not present
+    setNameHtml(addDefaultStyles(section.title || ""));
+    setDescHtml(addDefaultStyles(section.description || ""));
     // Set time for editing if it exists
     setTime(section.time_if_free || "");
     setIsEditing(true);
@@ -732,6 +867,11 @@ export default function QuestionSections({
   useEffect(() => {
     console.log(isEditing, editingSection);
   }, [isEditing, editingSection]);
+
+  // Initialize with default styles on component mount
+  useEffect(() => {
+    resetEditors();
+  }, []);
 
   // Add or Update section
   const handleSaveSection = () => {
@@ -747,12 +887,16 @@ export default function QuestionSections({
     //   return;
     // }
 
+    // Ensure the HTML has proper styling before saving
+    const styledNameHtml = addDefaultStyles(nameHtml);
+    const styledDescHtml = descHtml ? addDefaultStyles(descHtml) : null;
+
     // If we're editing an existing section
     if (isEditing && editingSection) {
       const updatedSection = {
         ...editingSection,
-        title: nameHtml,
-        description: descHtml || null,
+        title: styledNameHtml,
+        description: styledDescHtml,
         type: (examInfoData?.type == "intern" || lessonId) ? "intern" : "mock",
         // Only include time_if_free for intern type
         time_if_free: null,
@@ -794,8 +938,8 @@ export default function QuestionSections({
         // Create via API for existing exam
         const newSection = {
           exam_id: params["exam-id"] || examId,
-          title: nameHtml,
-          description: descHtml || null,
+          title: styledNameHtml,
+          description: styledDescHtml,
           // type: "mock",
           type: (examInfoData?.type == "intern" || lessonId) ? "intern" : "mock",
           // Only include time_if_free for intern type
@@ -826,8 +970,8 @@ export default function QuestionSections({
         const newSection = {
           id: Date.now(), // Temporary ID for local state
           exam_id: data?.id,
-          title: nameHtml,
-          description: descHtml || null,
+          title: styledNameHtml,
+          description: styledDescHtml || null,
           // Only include time_if_free for intern type
           time_if_free: null,
           questions: [],
@@ -946,6 +1090,7 @@ export default function QuestionSections({
                   modules={quillModules}
                   formats={quillFormats}
                   placeholder="اكتب اسم القسم..."
+                  style={{ direction: 'rtl' }}
                 />
               </div>
             </div>
@@ -963,6 +1108,7 @@ export default function QuestionSections({
                   modules={quillModules}
                   formats={quillFormats}
                   placeholder="اكتب وصفًا مختصرًا للقسم..."
+                  style={{ direction: 'rtl' }}
                 />
               </div>
 
@@ -1058,7 +1204,8 @@ export default function QuestionSections({
                       {/* Title with proper overflow handling */}
                       <div className="max-w-full overflow-hidden">
                         <h4
-                          className="font-medium text-gray-800 break-words"
+                          className="font-medium text-gray-800 break-words text-lg text-right"
+                          style={{ fontSize: '18px', direction: 'rtl', textAlign: 'right' }}
                           dangerouslySetInnerHTML={{
                             __html: sanitizeHTMLForDisplay(section.title)
                           }}
@@ -1069,7 +1216,8 @@ export default function QuestionSections({
                       {section.description && (
                         <div className="max-w-full overflow-hidden mt-1">
                           <div
-                            className="text-sm text-gray-600 break-words"
+                            className="text-sm text-gray-600 break-words text-right"
+                            style={{ fontSize: '16px', direction: 'rtl', textAlign: 'right' }}
                             dangerouslySetInnerHTML={{
                               __html: sanitizeHTMLForDisplay(section.description)
                             }}
@@ -1124,10 +1272,10 @@ export default function QuestionSections({
           !get_exam_sections_loading && (
             <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center">
               <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <h3 className="font-medium text-gray-700 mb-2">
+              <h3 className="font-medium text-gray-700 mb-2" style={{ fontSize: '18px', direction: 'rtl', textAlign: 'right' }}>
                 لا توجد أقسام مضافة
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500" style={{ direction: 'rtl', textAlign: 'right' }}>
                 ابدأ بإضافة قسم جديد لتنظيم أسئلة الاختبار
               </p>
             </div>
@@ -1141,17 +1289,18 @@ export default function QuestionSections({
           className="[&_.ant-modal-content]:p-0"
         >
           <div className="rounded-2xl w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2" style={{ direction: 'rtl', textAlign: 'right' }}>
               تأكيد حذف القسم
             </h3>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 mb-4" style={{ direction: 'rtl', textAlign: 'right' }}>
               هل أنت متأكد أنك تريد حذف هذا القسم؟ سيتم حذف القسم وكل
               الأسئلة المرتبطة به.
             </p>
             <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-4 max-w-full overflow-hidden">
               {/* Title in delete modal */}
               <div
-                className="text-sm font-medium text-gray-800 break-words"
+                className="text-sm font-medium text-gray-800 break-words text-right"
+                style={{ fontSize: '18px', direction: 'rtl', textAlign: 'right' }}
                 dangerouslySetInnerHTML={{
                   __html: sanitizeHTMLForDisplay(sectionToDelete?.title)
                 }}
@@ -1159,7 +1308,8 @@ export default function QuestionSections({
               {/* Description in delete modal */}
               {sectionToDelete?.description && (
                 <div
-                  className="text-xs text-gray-600 mt-1 break-words"
+                  className="text-xs text-gray-600 mt-1 break-words text-right"
+                  style={{ fontSize: '16px', direction: 'rtl', textAlign: 'right' }}
                   dangerouslySetInnerHTML={{
                     __html: sanitizeHTMLForDisplay(sectionToDelete?.description)
                   }}
@@ -1200,12 +1350,30 @@ export default function QuestionSections({
         /* Ensure Quill editor content doesn't overflow */
         .ql-editor {
           max-width: 100% !important;
+          font-size: 18px !important; /* Large font size */
+          text-align: right !important; /* Right alignment */
+          direction: rtl !important; /* RTL direction */
+          line-height: 1.6 !important;
         }
         
         .ql-editor * {
           max-width: 100% !important;
           overflow-wrap: break-word !important;
           word-break: break-word !important;
+          text-align: right !important; /* Ensure all elements are right-aligned */
+          direction: rtl !important; /* Ensure RTL for all elements */
+        }
+        
+        .ql-editor p, .ql-editor h1, .ql-editor h2, .ql-editor h3, .ql-editor li, .ql-editor div {
+          text-align: right !important;
+          direction: rtl !important;
+        }
+        
+        .ql-editor ol, .ql-editor ul {
+          text-align: right !important;
+          direction: rtl !important;
+          padding-right: 1.5em !important;
+          padding-left: 0 !important;
         }
         
         /* Ensure images in Quill content are responsive */
@@ -1219,8 +1387,74 @@ export default function QuestionSections({
           max-width: 100% !important;
           display: block !important;
           overflow-x: auto !important;
+          text-align: right !important;
+          direction: rtl !important;
+        }
+        
+        /* Style the toolbar for RTL */
+        .ql-toolbar.ql-rtl {
+          direction: rtl !important;
+        }
+        
+        .ql-toolbar.ql-rtl .ql-formats {
+          margin-right: 15px !important;
+          margin-left: 0 !important;
+        }
+        
+        /* Larger font for toolbar */
+        .ql-toolbar {
+          font-size: 20px !important;
+        }
+        
+        /* Ensure placeholder text is RTL */
+        .ql-editor.ql-blank::before {
+          text-align: right !important;
+          direction: rtl !important;
+          right: 15px !important;
+          left: auto !important;
+        }
+        
+        /* Style for displayed content in sections list */
+        .section-content-display {
+          font-size: 24px !important;
+          text-align: right !important;
+          direction: rtl !important;
+        }
+        
+        /* Ensure proper spacing for RTL */
+        .ql-editor.ql-rtl {
+          padding-right: 12px !important;
+          padding-left: 12px !important;
+        }
+        
+        /* Make sure bullet points are on the right */
+        .ql-editor.ql-rtl li:before {
+          margin-right: 0 !important;
+          margin-left: 0.3em !important;
+        }
+        
+        /* For displayed HTML content */
+        .display-html-content {
+          font-size: 24px !important;
+          text-align: right !important;
+          direction: rtl !important;
+        }
+        
+        .display-html-content p, 
+        .display-html-content h1, 
+        .display-html-content h2, 
+        .display-html-content h3, 
+        .display-html-content li, 
+        .display-html-content div {
+          text-align: right !important;
+          direction: rtl !important;
         }
       `}</style>
+      
+      {/* Inject custom Quill styles */}
+      <style jsx global>
+        {customQuillStyles}
+      </style>
     </Card>
   );
 }
