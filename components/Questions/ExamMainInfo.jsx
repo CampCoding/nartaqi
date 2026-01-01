@@ -54,7 +54,7 @@ export default function ExamMainInfo({
           />
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">المستوي</label>
+            <label className="block text-lg font-medium text-gray-700">المستوي</label>
             <select
               value={examInfoData?.level || "medium"}
               onChange={(e) => handleBasicDataChange("level", e.target.value)}
@@ -69,7 +69,7 @@ export default function ExamMainInfo({
 
         {/* {!lessonId && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-4">
+            <label className="block text-lg font-medium text-gray-700 mb-4">
               نوع الاختبار
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -107,7 +107,7 @@ export default function ExamMainInfo({
                         </h3>
                         <p
                           className={
-                            isSelected ? "text-sm text-white" : "text-sm text-gray-600"
+                            isSelected ? "text-lg text-white" : "text-lg text-gray-600"
                           }
                         >
                           {type.description}

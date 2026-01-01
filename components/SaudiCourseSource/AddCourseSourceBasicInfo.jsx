@@ -1711,7 +1711,7 @@ export default function AddCourseSourceBasicInfo({
 
   /* ====================== Prefill when editing ====================== */
   useEffect(() => {
-    
+  console.log("rowData", rowData);
     if (id && rowData) {
       const formValues = {
         name: rowData.name || "",

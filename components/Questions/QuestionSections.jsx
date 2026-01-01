@@ -1057,7 +1057,7 @@ export default function QuestionSections({
         {/* Section Creation/Editing Form */}
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="font-semibold text-gray-900">
+            <p className="font-semibold text-xl text-gray-900">
               {isEditing ? "تعديل القسم" : "إنشاء قسم مخصص"}
             </p>
             {isEditing && (
@@ -1069,17 +1069,13 @@ export default function QuestionSections({
                   : ""}
               </span>
             )}
-            {examInfoData?.type === "mock" && (
-              <span className="text-xs text-gray-500">
-                للمحاكاة: أضِف أسئلة لاحقًا للوصول إلى 24 سؤالًا كحد أدنى
-              </span>
-            )}
+           
           </div>
 
           <div className="mt-3 space-y-4">
             {/* Section Name */}
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-gray-600">
+              <label className="block text-lg font-semibold text-gray-600">
                 اسم القسم
               </label>
               <div className="bg-white rounded-xl border border-gray-200">
@@ -1097,7 +1093,7 @@ export default function QuestionSections({
 
             {/* Section Description */}
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-gray-600">
+              <label className="block text-lg font-semibold text-gray-600">
                 وصف القسم
               </label>
               <div className="bg-white rounded-xl border border-gray-200">
@@ -1139,7 +1135,7 @@ export default function QuestionSections({
               {isEditing && (
                 <button
                   onClick={cancelEditing}
-                  className="px-3 py-2 rounded-lg border text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="px-3 py-2 rounded-lg border text-lg text-gray-700 hover:bg-gray-50 transition-colors"
                   type="button"
                   disabled={
                     add_exam_section_loading || update_exam_section_loading
@@ -1150,7 +1146,7 @@ export default function QuestionSections({
               )}
               <button
                 onClick={resetEditors}
-                className="px-3 py-2 rounded-lg border text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-3 py-2 rounded-lg border text-lg text-gray-700 hover:bg-gray-50 transition-colors"
                 type="button"
                 disabled={
                   add_exam_section_loading || update_exam_section_loading
@@ -1160,7 +1156,7 @@ export default function QuestionSections({
               </button>
               <button
                 onClick={handleSaveSection}
-                className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-3 py-2 rounded-lg bg-blue-600 text-white text-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 type="button"
                 disabled={
                   !nameHtml?.replace(/<p>|<\/p>/g, "")?.trim() ||
@@ -1183,14 +1179,14 @@ export default function QuestionSections({
         {/* Existing Sections List */}
         {localSections && localSections.length > 0 && (
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-            <h3 className="font-semibold text-gray-900 mb-4">
+            <h3 className="font-semibold text-lg text-gray-900 mb-4">
               الأقسام المضافة
             </h3>
             <div className="space-y-3">
               {get_exam_sections_loading ? (
                 <div className="text-center py-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-lg text-gray-500 mt-2">
                     جاري تحميل الأقسام...
                   </p>
                 </div>
@@ -1204,7 +1200,7 @@ export default function QuestionSections({
                       {/* Title with proper overflow handling */}
                       <div className="max-w-full overflow-hidden">
                         <h4
-                          className="font-medium text-gray-800 break-words text-lg text-right"
+                          className="font-medium text-gray-800 break-words text-xl text-right"
                           style={{ fontSize: '18px', direction: 'rtl', textAlign: 'right' }}
                           dangerouslySetInnerHTML={{
                             __html: sanitizeHTMLForDisplay(section.title)
@@ -1216,7 +1212,7 @@ export default function QuestionSections({
                       {section.description && (
                         <div className="max-w-full overflow-hidden mt-1">
                           <div
-                            className="text-sm text-gray-600 break-words text-right"
+                            className="text-lg text-gray-600 break-words text-right"
                             style={{ fontSize: '16px', direction: 'rtl', textAlign: 'right' }}
                             dangerouslySetInnerHTML={{
                               __html: sanitizeHTMLForDisplay(section.description)
@@ -1233,7 +1229,7 @@ export default function QuestionSections({
                       )} */}
 
                       {/* Question count */}
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-lg text-gray-500 mt-1">
                         عدد الأسئلة: {section.mcq?.length || 0}
                       </div>
                     </div>
@@ -1350,7 +1346,7 @@ export default function QuestionSections({
         /* Ensure Quill editor content doesn't overflow */
         .ql-editor {
           max-width: 100% !important;
-          font-size: 18px !important; /* Large font size */
+          font-size: 22px !important; /* Large font size */
           text-align: right !important; /* Right alignment */
           direction: rtl !important; /* RTL direction */
           line-height: 1.6 !important;
@@ -1403,7 +1399,7 @@ export default function QuestionSections({
         
         /* Larger font for toolbar */
         .ql-toolbar {
-          font-size: 20px !important;
+          font-size: 22px !important;
         }
         
         /* Ensure placeholder text is RTL */
@@ -1416,7 +1412,7 @@ export default function QuestionSections({
         
         /* Style for displayed content in sections list */
         .section-content-display {
-          font-size: 24px !important;
+          font-size: 22px !important;
           text-align: right !important;
           direction: rtl !important;
         }
@@ -1435,7 +1431,7 @@ export default function QuestionSections({
         
         /* For displayed HTML content */
         .display-html-content {
-          font-size: 24px !important;
+          font-size: 22px !important;
           text-align: right !important;
           direction: rtl !important;
         }

@@ -22,7 +22,7 @@ const emptyOption = () => ({
 const emptyQuestion = () => ({
   id: uid(),
   text: "",
-  instructions: "",
+  instructions: "", // Add instructions field here
   attachments: [],
   correctIndex: 0,
   options: [emptyOption(), emptyOption()],
@@ -90,7 +90,7 @@ function convertEditingQuestionToGroups(editingQuestion) {
     return {
       id: uid(),
       text: q?.questionText || q?.question_text || q?.text || "",
-      instructions: q?.instructions || "",
+      instructions: q?.instructions || "", // Preserve instructions
       attachments: Array.isArray(q?.attachments) ? q.attachments : [],
       correctIndex,
       options: opts,
@@ -116,6 +116,8 @@ export default function McqSharedPassageEditor({
   mcqSubType = "passage",
   initialData,
   onPassagesChange,
+  questionInstruction, // Global instruction prop
+  setQuestionInstruction, // Global instruction setter
 }) {
   const [groups, setGroups] = useState([emptyGroup()]);
   const hydratedKeyRef = useRef(null);
@@ -339,7 +341,7 @@ export default function McqSharedPassageEditor({
 
           {/* Shared content */}
           <div className="space-y-2">
-            <div className="text-sm font-medium text-gray-700">
+            <div className="text-lg font-medium text-gray-700">
               {mcqSubType === "chemical" ? "المعادلة / المحتوى" : "القطعة"}
             </div>
 
@@ -370,27 +372,6 @@ export default function McqSharedPassageEditor({
             </Button>
           </div>
 
-            {/* <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    تعليمات السؤال (اختياري)
-                  </label>
-                  <input
-                    type="text"
-                    value={q.instructions || ""}
-                    onChange={(e) =>
-                      updateQuestion(groupIndex, questionIndex, {
-                        instructions: e.target.value,
-                      })
-                    }
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="مثال: اختر الإجابة الصحيحة، أكمل الجملة التالية، إلخ..."
-                  />
-                  <p className="text-xs text-gray-500">
-                    هذه التعليمات ستظهر للطالب قبل الإجابة على السؤال
-                  </p>
-                </div> */}
-
-
           <div className="space-y-6">
             {(group.questions || []).map((q, questionIndex) => (
               <div
@@ -413,9 +394,30 @@ export default function McqSharedPassageEditor({
                 </div>
 
                 {/* Instructions field for each question */}
-              
                 <div className="space-y-2">
-                  <div className="text-sm font-medium text-gray-700">
+                  <label className="block text-lg font-medium text-gray-700">
+                    تعليمات السؤال (اختياري)
+                  </label>
+                  <input
+                    type="text"
+                    value={q.instructions || ""}
+                    onChange={(e) =>{
+                      updateQuestion(groupIndex, questionIndex, {
+                        instructions: e.target.value,
+                      })
+                      setQuestionInstruction(e.target.value)
+                    }
+                    }
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="مثال: اختر الإجابة الصحيحة، أكمل الجملة التالية، إلخ..."
+                  />
+                  <p className="text-md text-gray-500">
+                    هذه التعليمات ستظهر للطالب قبل الإجابة على هذا السؤال
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-lg font-medium text-gray-700">
                     نص السؤال
                   </div>
 
@@ -434,12 +436,12 @@ export default function McqSharedPassageEditor({
                 {/* Options */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <div className="text-sm font-medium text-gray-700">
+                    <div className="text-lg font-medium text-gray-700">
                       خيارات الإجابة
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500">
+                      <span className="text-md text-gray-500">
                         {(q.options || []).filter(opt => opt.answer?.trim()).length} من {(q.options || []).length} مكتملة
                       </span>
                       <Button
@@ -465,7 +467,7 @@ export default function McqSharedPassageEditor({
                           } ${isCorrect ? "border-green-300" : ""}`}
                         >
                           {isEmpty && (
-                            <div className="flex items-center gap-1 text-red-600 text-xs mb-2">
+                            <div className="flex items-center gap-1 text-red-600 text-md mb-2">
                               <ExclamationCircleOutlined />
                               <span>هذا الخيار فارغ</span>
                             </div>
@@ -489,12 +491,12 @@ export default function McqSharedPassageEditor({
                                 disabled={isEmpty}
                                 className={`h-4 w-4 ${isEmpty ? "cursor-not-allowed opacity-50" : ""}`}
                               />
-                              <span className={`text-sm font-medium ${isEmpty ? "text-red-600" : "text-gray-700"}`}>
+                              <span className={`text-lg font-medium ${isEmpty ? "text-red-600" : "text-gray-700"}`}>
                                 خيار #{optionIndex + 1}
                               </span>
 
                               {isCorrect && !isEmpty && (
-                                <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                                <span className="inline-flex items-center gap-1 text-md font-semibold text-green-700 bg-green-100 px-2 py-1 rounded-full">
                                   <CheckCircleOutlined />
                                   صحيح
                                 </span>
@@ -515,7 +517,7 @@ export default function McqSharedPassageEditor({
 
                           <div className="mt-3 space-y-3">
                             <div className="space-y-1">
-                              <div className="text-xs font-medium text-gray-600">
+                              <div className="text-md font-medium text-gray-600">
                                 نص الخيار *
                               </div>
                               <LabeledEditor
@@ -531,12 +533,12 @@ export default function McqSharedPassageEditor({
                                 placeholder="اكتب نص الخيار..."
                               />
                               {isEmpty && (
-                                <p className="text-red-600 text-xs mt-1">هذا الحقل مطلوب</p>
+                                <p className="text-red-600 text-md mt-1">هذا الحقل مطلوب</p>
                               )}
                             </div>
 
                             <div className="space-y-1">
-                              <div className="text-xs font-medium text-gray-600">
+                              <div className="text-md font-medium text-gray-600">
                                 شرح الخيار (اختياري)
                               </div>
                               <LabeledEditor
